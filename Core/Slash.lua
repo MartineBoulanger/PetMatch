@@ -95,20 +95,16 @@ commands.team = function()
 end
 
 commands.teams = function()
-  local teams =
-      addon.Services.Team:GetTeams()
-  local count = 0
-  for _, team in pairs(teams) do
-    count = count + 1
-    Print(
-      team.name,
-      team.id
+  local teams = addon.Services.Team:GetTeams()
+  print(
+    "[PetMatch] Teams:"
+  )
+  for id, team in pairs(teams) do
+    print(
+      "-",
+      team.name
     )
   end
-  Print(
-    "Total teams:",
-    count
-  )
 end
 
 commands.activeteam = function()
@@ -146,8 +142,7 @@ commands.pets = function()
 end
 
 commands.teaminfo = function()
-  local team =
-      addon.Services.Team:GetActive()
+  local team = addon.Services.Team:GetActive()
   if not team then
     Print(
       "No active team"
@@ -243,6 +238,33 @@ commands.listpets = function()
   Print(
     "Showing first 10 pets"
   )
+end
+
+commands.slots = function()
+  addon.Services.BattleSlot:Debug()
+end
+
+commands.savecurrent = function(name)
+  if not name then
+    Print(
+      "Usage: /pm savecurrent TeamName"
+    )
+    return
+  end
+  local team =
+      addon.Services.Team:CreateFromBattleSlots(
+        name
+      )
+  if team then
+    Print(
+      "Saved team:",
+      team.name
+    )
+  else
+    Print(
+      "Failed saving team"
+    )
+  end
 end
 
 function Slash:Initialize()

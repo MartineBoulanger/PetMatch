@@ -7,14 +7,12 @@ function ProfileService:GetCurrent()
 end
 
 function ProfileService:GetSetting(key)
-  local profile =
-      self:GetCurrent()
+  local profile = self:GetCurrent()
   return profile.settings[key]
 end
 
 function ProfileService:SetSetting(key, value)
-  local profile =
-      self:GetCurrent()
+  local profile = self:GetCurrent()
   profile.settings[key] = value
   addon.EventBus:Fire(
     addon.Events.SETTINGS_CHANGED,

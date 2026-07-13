@@ -37,9 +37,19 @@ Models/Tag.lua
 Services/ProfileService.lua
 Services/PetService.lua
 Services/PetJournalService.lua
+Services/BattleSlotService.lua
 Services/TeamService.lua
 
 Core/Blizzard.lua
+
+UI/Theme/Colors.lua
+UI/Theme/Fonts.lua
+UI/Theme/Sizes.lua
+
+UI/Base/Component.lua
+UI/Base/Frame.lua
+
+UI/Components/Panel.lua
 
 UI/PetJournal/Hook.lua
 UI/PetJournal/TeamPanel.lua

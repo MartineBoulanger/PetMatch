@@ -8,27 +8,42 @@ end
 
 function TeamService:GetTeams()
   local profile = GetProfile()
-  profile.teams =
-      profile.teams or {}
+  if not profile
+      or not profile.teams then
+    return {}
+  end
   return profile.teams
 end
 
+-- function TeamService:GetAllTeams()
+--   local profile = addon.Profiles:GetCurrentProfile()
+--   if not profile
+--       or not profile.teams then
+--     return {}
+--   end
+--   return profile.teams
+-- end
+
 function TeamService:GetFolders()
   local profile = GetProfile()
-  profile.folders =
-      profile.folders or {}
+  profile.folders = profile.folders or {}
   return profile.folders
 end
 
 function TeamService:Create(name)
-  local team =
-      addon.Models.Team:Create(
-        name
-      )
+  local team = addon.Models.Team:Create(name)
   self:GetTeams()[team.id] = team
   addon.EventBus:Fire(
     addon.Events.TEAM_CREATED,
     team
+  )
+  print(
+    "[PetMatch DEBUG] Team saved:",
+    name
+  )
+  print(
+    "[PetMatch DEBUG] Total teams:",
+    #self:GetAll()
   )
   return team
 end
@@ -38,10 +53,8 @@ function TeamService:Get(id)
 end
 
 function TeamService:Delete(id)
-  local teams =
-      self:GetTeams()
-  local team =
-      teams[id]
+  local teams = self:GetTeams()
+  local team = teams[id]
   if not team then
     return false
   end
@@ -59,8 +72,7 @@ function TeamService:SetActive(id)
   if not team then
     return false
   end
-  local profile =
-      GetProfile()
+  local profile = GetProfile()
   profile.activeTeam = id
   addon.EventBus:Fire(
     addon.Events.TEAM_SELECTED,
@@ -70,8 +82,7 @@ function TeamService:SetActive(id)
 end
 
 function TeamService:GetActive()
-  local profile =
-      GetProfile()
+  local profile = GetProfile()
   if not profile.activeTeam then
     return nil
   end
@@ -84,8 +95,7 @@ function TeamService:AddToFolder(
     teamID,
     folderID
 )
-  local team =
-      self:Get(teamID)
+  local team = self:Get(teamID)
   if not team then
     return false
   end
@@ -99,8 +109,7 @@ function TeamService:SetPet(
     slot,
     petGUID
 )
-  local team =
-      self:Get(teamID)
+  local team = self:Get(teamID)
   if not team then
     return false
   end
@@ -117,8 +126,7 @@ function TeamService:SetPet(
 end
 
 function TeamService:GetPets(teamID)
-  local team =
-      self:Get(teamID)
+  local team = self:Get(teamID)
   if not team then
     return {}
   end
@@ -130,8 +138,7 @@ function TeamService:AddPet(
     slot,
     petGUID
 )
-  local team =
-      self:Get(teamID)
+  local team = self:Get(teamID)
   if not team then
     return false
   end
@@ -162,8 +169,7 @@ function TeamService:RemovePet(
     teamID,
     slot
 )
-  local team =
-      self:Get(teamID)
+  local team = self:Get(teamID)
   if not team then
     return false
   end
@@ -175,6 +181,41 @@ function TeamService:RemovePet(
     slot
   )
   return true
+end
+
+function TeamService:CreateFromBattleSlots(name)
+  local slots = addon.Services.BattleSlot:GetCurrentSlots()
+  local team = self:Create(name)
+
+  print(
+    "[PetMatch DEBUG] Created team:",
+    team.name,
+    team.id
+  )
+
+  if not team then
+    return nil
+  end
+
+  for slot = 1, 3 do
+    team.pets[slot] = slots[slot]
+  end
+
+  team.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  print(
+    "[PetMatch DEBUG] Pets saved:",
+    team.pets[1],
+    team.pets[2],
+    team.pets[3]
+  )
+
+  return team
 end
 
 addon.Services.Team = TeamService
