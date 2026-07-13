@@ -123,6 +123,25 @@ commands.activeteam = function()
   end
 end
 
+commands.pets = function()
+  local pets =
+      addon.Services.PetJournal:GetAll()
+  local count = 0
+  for _, pet in pairs(pets) do
+    count = count + 1
+
+    Print(
+      pet.name,
+      "Level",
+      pet.level
+    )
+  end
+  Print(
+    "Pets found:",
+    count
+  )
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"

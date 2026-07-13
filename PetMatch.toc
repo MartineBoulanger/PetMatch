@@ -36,6 +36,7 @@ Models/Tag.lua
 
 Services/ProfileService.lua
 Services/PetService.lua
+Services/PetJournalService.lua
 Services/TeamService.lua
 
 Core/Slash.lua

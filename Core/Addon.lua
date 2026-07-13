@@ -31,6 +31,12 @@ local function Enable()
   addon.Logger:Info(
     "PetMatch loaded successfully"
   )
+  C_Timer.After(
+    2,
+    function()
+      addon.Services.PetJournal:Scan()
+    end
+  )
 end
 
 frame:RegisterEvent("ADDON_LOADED")
