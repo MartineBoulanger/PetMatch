@@ -84,8 +84,11 @@ commands.team = function()
       addon.Services.Team:Create(
         "Mijn eerste team"
       )
+  addon.Services.Team:SetActive(
+    team.id
+  )
   Print(
-    "Team created:",
+    "Team created and selected:",
     team.name,
     team.id
   )
@@ -142,19 +145,82 @@ commands.pets = function()
   )
 end
 
+commands.teaminfo = function()
+  local team =
+      addon.Services.Team:GetActive()
+  if not team then
+    Print(
+      "No active team"
+    )
+    return
+  end
+  Print(
+    "Team:",
+    team.name
+  )
+  for slot = 1, 3 do
+    local guid =
+        team.pets[slot]
+    if guid then
+      local pet =
+          addon.Services.PetJournal:GetPet(
+            guid
+          )
+      if pet then
+        Print(
+          slot,
+          pet.name
+        )
+      end
+    else
+      Print(
+        slot,
+        "Empty"
+      )
+    end
+  end
+end
+
+commands.select = function(id)
+  local success =
+      addon.Services.Team:SetActive(
+        id
+      )
+  if success then
+    Print(
+      "Team selected"
+    )
+  else
+    Print(
+      "Team not found"
+    )
+  end
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"
   SlashCmdList.PETMATCH = function(message)
-    local command = string.lower(
-      message or ""
+    local args =
+        addon.Utils:Split(
+          message or ""
+        )
+    local command =
+        string.lower(
+          args[1] or ""
+        )
+    table.remove(
+      args,
+      1
     )
     if commands[command] then
-      commands[command]()
+      commands[command](
+        unpack(args)
+      )
     else
       Print(
         "Commands:",
-        "version, modules, database, debug"
+        "version, modules, database, debug, team, teams, select, activeteam, teaminfo"
       )
     end
   end

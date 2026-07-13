@@ -22,6 +22,9 @@ function Team:Create(name)
     [2] = nil,
     [3] = nil,
   }
+  team.createdBy = "PetMatch"
+  team.strategy = ""
+  team.difficulty = nil
   team.favorite = false
   team.notes = ""
   return team

@@ -94,4 +94,35 @@ function TeamService:AddToFolder(
   return true
 end
 
+function TeamService:SetPet(
+    teamID,
+    slot,
+    petGUID
+)
+  local team =
+      self:Get(teamID)
+  if not team then
+    return false
+  end
+  if slot < 1 or slot > 3 then
+    return false
+  end
+  team.pets[slot] = petGUID
+  team.modified = time()
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+  return true
+end
+
+function TeamService:GetPets(teamID)
+  local team =
+      self:Get(teamID)
+  if not team then
+    return {}
+  end
+  return team.pets
+end
+
 addon.Services.Team = TeamService
