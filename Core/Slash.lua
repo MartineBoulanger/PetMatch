@@ -65,6 +65,7 @@ commands.settings = function()
   )
 end
 
+-- testing models teams
 commands.model = function()
   local team =
       addon.Models.Team:Create(
@@ -72,6 +73,19 @@ commands.model = function()
       )
   Print(
     "Created team:",
+    team.name,
+    team.id
+  )
+end
+
+-- testing services teams
+commands.team = function()
+  local team =
+      addon.Services.Team:Create(
+        "Mijn eerste team"
+      )
+  Print(
+    "Team created:",
     team.name,
     team.id
   )
