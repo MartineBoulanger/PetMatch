@@ -1,8 +1,21 @@
-local _, PetMatch = ...
+local addonName, addon = ...
 
-PetMatch.Constants = {
+addon.Constants = {
   ADDON_NAME = "PetMatch",
   VERSION = "0.1.0",
   DATABASE_VERSION = 1,
   CHAT_PREFIX = "|cff00ccff[PetMatch]|r",
+}
+
+addon.Events = {
+  DATABASE_READY = "DATABASE_READY",
+  PROFILE_CHANGED = "PROFILE_CHANGED",
+  SETTINGS_CHANGED = "SETTINGS_CHANGED",
+  TEAM_CREATED = "TEAM_CREATED",
+  TEAM_UPDATED = "TEAM_UPDATED",
+  TEAM_DELETED = "TEAM_DELETED",
+  TEAM_SELECTED = "TEAM_SELECTED",
+  PET_SELECTED = "PET_SELECTED",
+  BATTLE_STARTED = "BATTLE_STARTED",
+  BATTLE_ENDED = "BATTLE_ENDED",
 }

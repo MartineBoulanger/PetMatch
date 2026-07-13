@@ -48,6 +48,9 @@ function Database:Initialize()
   addon.Logger:Info(
     "Database initialized"
   )
+  addon.EventBus:Fire(
+    addon.Events.DATABASE_READY
+  )
 end
 
 function Database:GetProfile()

@@ -13,8 +13,8 @@ local function Initialize()
     "Initializing PetMatch",
     addon.Version
   )
-  addon.Database:Initialize()
   addon.ModuleManager:Initialize()
+  addon.Database:Initialize()
   addon.Initialized = true
 end
 
