@@ -21,5 +21,6 @@ PetMatch.lua
 
 Core/Constants.lua
 Core/Logger.lua
+Core/Database.lua
 Core/Modules.lua
 Core/Addon.lua
