@@ -23,6 +23,8 @@ Core/Constants.lua
 Core/Logger.lua
 Core/Events.lua
 Core/Database.lua
+Core/Utils.lua
 Core/Modules.lua
 Core/Test.lua
+Core/Slash.lua
 Core/Addon.lua
