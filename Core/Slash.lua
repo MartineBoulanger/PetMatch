@@ -65,6 +65,18 @@ commands.settings = function()
   )
 end
 
+commands.model = function()
+  local team =
+      addon.Models.Team:Create(
+        "Test Team"
+      )
+  Print(
+    "Created team:",
+    team.name,
+    team.id
+  )
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"

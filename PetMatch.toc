@@ -27,6 +27,12 @@ Core/Utils.lua
 Core/Modules.lua
 Core/Profiles.lua
 Core/Settings.lua
-Core/Test.lua
+
+Models/Base.lua
+Models/Pet.lua
+Models/Team.lua
+Models/Folder.lua
+Models/Tag.lua
+
 Core/Slash.lua
 Core/Addon.lua
