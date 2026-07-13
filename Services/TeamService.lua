@@ -125,4 +125,56 @@ function TeamService:GetPets(teamID)
   return team.pets
 end
 
+function TeamService:AddPet(
+    teamID,
+    slot,
+    petGUID
+)
+  local team =
+      self:Get(teamID)
+  if not team then
+    return false
+  end
+  if slot < 1 or slot > 3 then
+    return false
+  end
+  if not addon.Services.PetJournal:GetPet(
+        petGUID
+      ) then
+    return false
+  end
+  team.pets[slot] = petGUID
+  team.modified = time()
+  addon.EventBus:Fire(
+    addon.Events.PET_ADDED_TO_TEAM,
+    team,
+    slot,
+    petGUID
+  )
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+  return true
+end
+
+function TeamService:RemovePet(
+    teamID,
+    slot
+)
+  local team =
+      self:Get(teamID)
+  if not team then
+    return false
+  end
+  team.pets[slot] = nil
+  team.modified = time()
+  addon.EventBus:Fire(
+    addon.Events.PET_REMOVED_FROM_TEAM,
+    team,
+    slot
+  )
+  return true
+end
+
 addon.Services.Team = TeamService

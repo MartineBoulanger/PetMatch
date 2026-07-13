@@ -197,6 +197,54 @@ commands.select = function(id)
   end
 end
 
+commands.addpet = function(
+    slot,
+    guid
+)
+  local team =
+      addon.Services.Team:GetActive()
+  if not team then
+    Print(
+      "No active team"
+    )
+    return
+  end
+  local success =
+      addon.Services.Team:AddPet(
+        team.id,
+        tonumber(slot),
+        guid
+      )
+  if success then
+    Print(
+      "Pet added to slot",
+      slot
+    )
+  else
+    Print(
+      "Could not add pet"
+    )
+  end
+end
+
+commands.listpets = function()
+  local pets =
+      addon.Services.PetJournal:GetAll()
+  local count = 0
+  for guid, pet in pairs(pets) do
+    count = count + 1
+    if count <= 10 then
+      Print(
+        pet.name,
+        guid
+      )
+    end
+  end
+  Print(
+    "Showing first 10 pets"
+  )
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"
