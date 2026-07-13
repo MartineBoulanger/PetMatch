@@ -5,7 +5,6 @@ local Utils = {}
 -------------------------------------------------
 -- Table utilities
 -------------------------------------------------
-
 ---@param source table
 ---@return table
 function Utils:DeepCopy(source)
@@ -28,7 +27,6 @@ end
 -------------------------------------------------
 -- String utilities
 -------------------------------------------------
-
 ---@param value string
 ---@return string
 function Utils:Trim(value)
@@ -56,7 +54,6 @@ end
 -------------------------------------------------
 -- Math utilities
 -------------------------------------------------
-
 ---@param value number
 ---@param minimum number
 ---@param maximum number
@@ -74,7 +71,6 @@ end
 -------------------------------------------------
 -- IDs
 -------------------------------------------------
-
 ---@return string
 function Utils:GenerateID()
   return string.format(

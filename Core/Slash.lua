@@ -54,6 +54,17 @@ commands.debug = function()
   )
 end
 
+commands.settings = function()
+  Print(
+    "Theme:",
+    addon.Settings:Get("theme")
+  )
+  Print(
+    "Scale:",
+    addon.Settings:Get("scale")
+  )
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"

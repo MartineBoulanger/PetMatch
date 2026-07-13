@@ -45,12 +45,6 @@ function Database:Initialize()
     PetMatchDB
   )
   addon.DB = PetMatchDB
-  addon.Logger:Info(
-    "Database initialized"
-  )
-  addon.EventBus:Fire(
-    addon.Events.DATABASE_READY
-  )
 end
 
 function Database:GetProfile()
@@ -58,3 +52,7 @@ function Database:GetProfile()
 end
 
 addon.Database = Database
+
+addon.Logger:Info(
+  "Database initialized"
+)
