@@ -60,4 +60,19 @@ function PetJournalService:GetAll()
   return self.Cache
 end
 
+function PetJournalService:GetPetName(guid)
+  local speciesID,
+  customName,
+  level,
+  xp,
+  maxXP,
+  displayID,
+  isFavorite,
+  name
+  = C_PetJournal.GetPetInfoByPetID(
+    guid
+  )
+  return customName or name
+end
+
 addon.Services.PetJournal = PetJournalService

@@ -1,10 +1,13 @@
-PetMatch.PetJournal = {}
+local addonName, addon = ...
 
-function PetMatch.PetJournal:Initialize()
-  if not PetJournalFrame then
-    return
-  end
+local PetJournalHook = {}
+
+function PetJournalHook:Initialize()
   addon.Logger:Info(
-    "Pet Journal detected"
+    "PetJournalHook ready"
   )
 end
+
+addon.UI = addon.UI or {}
+
+addon.UI.PetJournalHook = PetJournalHook

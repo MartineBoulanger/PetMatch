@@ -39,5 +39,10 @@ Services/PetService.lua
 Services/PetJournalService.lua
 Services/TeamService.lua
 
+Core/Blizzard.lua
+
+UI/PetJournal/Hook.lua
+UI/PetJournal/TeamPanel.lua
+
 Core/Slash.lua
 Core/Addon.lua
