@@ -12,12 +12,16 @@ setmetatable(
 function Team:Create(name)
   local team =
       addon.Models.Base:New()
-  team.name = name
+  team.name = name or "New Team"
   team.description = ""
   team.icon = nil
-  team.folder = nil
+  team.folderID = nil
   team.tags = {}
-  team.pets = {}
+  team.pets = {
+    [1] = nil,
+    [2] = nil,
+    [3] = nil,
+  }
   team.favorite = false
   team.notes = ""
   return team

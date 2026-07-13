@@ -9,6 +9,8 @@ local DEFAULT_PROFILE = {
   tags = {},
   favorites = {},
   settings = {},
+  folders = {},
+  activeTeam = nil,
 }
 
 function Profiles:GetCurrentProfile()

@@ -2,13 +2,22 @@ local addonName, addon = ...
 
 local TeamService = {}
 
+local function GetProfile()
+  return addon.Profiles:GetCurrentProfile()
+end
+
 function TeamService:GetTeams()
-  local profile =
-      addon.Profiles:GetCurrentProfile()
-  if not profile.teams then
-    profile.teams = {}
-  end
+  local profile = GetProfile()
+  profile.teams =
+      profile.teams or {}
   return profile.teams
+end
+
+function TeamService:GetFolders()
+  local profile = GetProfile()
+  profile.folders =
+      profile.folders or {}
+  return profile.folders
 end
 
 function TeamService:Create(name)
@@ -16,10 +25,7 @@ function TeamService:Create(name)
       addon.Models.Team:Create(
         name
       )
-  table.insert(
-    self:GetTeams(),
-    team
-  )
+  self:GetTeams()[team.id] = team
   addon.EventBus:Fire(
     addon.Events.TEAM_CREATED,
     team
@@ -27,34 +33,65 @@ function TeamService:Create(name)
   return team
 end
 
-function TeamService:Delete(team)
-  local teams =
-      self:GetTeams()
-  for index, item in ipairs(teams) do
-    if item.id == team.id then
-      table.remove(
-        teams,
-        index
-      )
-      addon.EventBus:Fire(
-        addon.Events.TEAM_DELETED,
-        team
-      )
-      return true
-    end
-  end
-  return false
+function TeamService:Get(id)
+  return self:GetTeams()[id]
 end
 
-function TeamService:FindByName(name)
-  for _, team in ipairs(
-    self:GetTeams()
-  ) do
-    if team.name == name then
-      return team
-    end
+function TeamService:Delete(id)
+  local teams =
+      self:GetTeams()
+  local team =
+      teams[id]
+  if not team then
+    return false
   end
-  return nil
+  teams[id] = nil
+  addon.EventBus:Fire(
+    addon.Events.TEAM_DELETED,
+    team
+  )
+  return true
+end
+
+function TeamService:SetActive(id)
+  local team =
+      self:Get(id)
+  if not team then
+    return false
+  end
+  local profile =
+      GetProfile()
+  profile.activeTeam = id
+  addon.EventBus:Fire(
+    addon.Events.TEAM_SELECTED,
+    team
+  )
+  return true
+end
+
+function TeamService:GetActive()
+  local profile =
+      GetProfile()
+  if not profile.activeTeam then
+    return nil
+  end
+  return self:Get(
+    profile.activeTeam
+  )
+end
+
+function TeamService:AddToFolder(
+    teamID,
+    folderID
+)
+  local team =
+      self:Get(teamID)
+  if not team then
+    return false
+  end
+  team.folderID = folderID
+  team.modified = time()
+  return true
 end
 
 addon.Services.Team = TeamService

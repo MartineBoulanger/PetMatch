@@ -91,6 +91,38 @@ commands.team = function()
   )
 end
 
+commands.teams = function()
+  local teams =
+      addon.Services.Team:GetTeams()
+  local count = 0
+  for _, team in pairs(teams) do
+    count = count + 1
+    Print(
+      team.name,
+      team.id
+    )
+  end
+  Print(
+    "Total teams:",
+    count
+  )
+end
+
+commands.activeteam = function()
+  local team =
+      addon.Services.Team:GetActive()
+  if team then
+    Print(
+      "Active:",
+      team.name
+    )
+  else
+    Print(
+      "No active team"
+    )
+  end
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"

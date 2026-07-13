@@ -12,10 +12,10 @@ setmetatable(
 function Folder:Create(name)
   local folder =
       addon.Models.Base:New()
-  folder.name = name
-  folder.parent = nil
-  folder.children = {}
-  folder.teams = {}
+  folder.name =
+      name or "New Folder"
+  folder.parentID = nil
+  folder.order = 0
   return folder
 end
 
