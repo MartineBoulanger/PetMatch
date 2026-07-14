@@ -267,6 +267,40 @@ commands.savecurrent = function(name)
   end
 end
 
+commands.testui = function()
+  if not addon.Initialized then
+    print(
+      "[PetMatch] Not initialized yet"
+    )
+    return
+  end
+
+  local frame =
+      CreateFrame(
+        "Frame",
+        "PetMatchTeamListTest",
+        UIParent
+      )
+
+  frame:SetSize(
+    400,
+    500
+  )
+
+  frame:SetPoint(
+    "CENTER"
+  )
+
+  local list =
+      addon.UI.Components.TeamList:Create(
+        frame
+      )
+
+  list:SetPoint(
+    "CENTER"
+  )
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"

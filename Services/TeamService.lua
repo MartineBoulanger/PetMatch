@@ -15,14 +15,14 @@ function TeamService:GetTeams()
   return profile.teams
 end
 
--- function TeamService:GetAllTeams()
---   local profile = addon.Profiles:GetCurrentProfile()
---   if not profile
---       or not profile.teams then
---     return {}
---   end
---   return profile.teams
--- end
+function TeamService:GetAllTeams()
+  local profile = addon.Profiles:GetCurrentProfile()
+  if not profile
+      or not profile.teams then
+    return {}
+  end
+  return profile.teams
+end
 
 function TeamService:GetFolders()
   local profile = GetProfile()

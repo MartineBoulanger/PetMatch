@@ -59,9 +59,8 @@ function Blizzard:TryHook()
 end
 
 function Blizzard:CreatePetJournalPanel()
-  if addon.UI
-      and addon.UI.TeamPanel then
-    addon.UI.TeamPanel:Initialize()
+  if addon.UI and addon.UI.Manager then
+    addon.UI.Manager:ShowPetJournal()
   end
 end
 

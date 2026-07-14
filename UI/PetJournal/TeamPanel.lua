@@ -4,102 +4,21 @@ local TeamPanel = {}
 TeamPanel.Rows = {}
 
 function TeamPanel:Create()
-  if self.Frame then
-    return
-  end
-
   local frame =
-      CreateFrame(
-        "Frame",
-        "PetMatchTeamPanel",
-        UIParent,
-        "BackdropTemplate"
-      )
-
-  frame:SetSize(
-    220,
-    300
-  )
-
-  frame:SetPoint(
-    "CENTER",
-    UIParent,
-    "CENTER",
-    300,
-    0
-  )
-
-  frame:SetFrameStrata(
-    "DIALOG"
-  )
-
-  frame:SetBackdrop({
-    bgFile =
-    "Interface/DialogFrame/UI-DialogBox-Background",
-    edgeFile =
-    "Interface/DialogFrame/UI-DialogBox-Border",
-    edgeSize = 16,
-  })
-
-  local title =
-      frame:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-      )
-
-  title:SetPoint(
-    "TOP",
-    0,
-    -15
-  )
-
-  title:SetText(
-    "PetMatch Team"
-  )
-
-  self.Title = title
-
-  for slot = 1, 3 do
-    print(
-      "[PetMatch DEBUG] Slot",
-      slot
-    )
-    local row =
-        frame:CreateFontString(
-          nil,
-          "OVERLAY",
-          "GameFontNormal"
-        )
-
-    row:SetPoint(
-      "TOPLEFT",
-      20,
-      -50 - ((slot - 1) * 35)
-    )
-
-    row:SetText(
-      "Slot " .. slot .. ": Empty"
-    )
-
-    self.Rows[slot] = row
-  end
-
-  frame:Hide()
-
+      addon.UI.Components.Panel:Create(UIParent, {
+        width = 350,
+        height = 450
+      })
   self.Frame = frame
-
-  frame:SetMovable(true)
-  frame:EnableMouse(true)
-  frame:RegisterForDrag("LeftButton")
-  frame:SetScript(
-    "OnDragStart",
-    frame.StartMoving
-  )
-  frame:SetScript(
-    "OnDragStop",
-    frame.StopMovingOrSizing
-  )
+  frame:SetPoint("CENTER", UIParent, "CENTER", 300, 0)
+  frame:Show()
+  self.Toolbar = addon.UI.Views.Toolbar:Create(frame)
+  self.Toolbar:SetPoint("TOP", 0, -10)
+  self.Title = addon.UI.Components.Label:Create(frame, { text = "PetMatch" })
+  self.Title:SetPoint("TOPLEFT", 5, -60)
+  self.TeamList = addon.UI.Views.TeamList:Create(frame)
+  self.TeamList:SetPoint("TOP", 0, -90)
+  return frame
 end
 
 function TeamPanel:Update()
@@ -121,12 +40,14 @@ function TeamPanel:Update()
     )
   end
 
-  for i = 1, 3 do
-    print(
-      "[PetMatch DEBUG] Slot",
-      i,
-      team.pets[i]
-    )
+  if team then
+    for i = 1, 3 do
+      print(
+        "[PetMatch DEBUG] Slot",
+        i,
+        team.pets[i]
+      )
+    end
   end
 
   if not team then
@@ -166,9 +87,12 @@ function TeamPanel:Update()
       slot,
       text
     )
-    self.Rows[slot]:SetText(
-      text
-    )
+    if self.Rows
+        and self.Rows[slot] then
+      self.Rows[slot]:SetText(
+        text
+      )
+    end
   end
 end
 
@@ -217,4 +141,5 @@ function TeamPanel:Initialize()
   )
 end
 
-addon.UI.TeamPanel = TeamPanel
+addon.UI.Views = addon.UI.Views or {}
+addon.UI.Views.TeamPanel = TeamPanel

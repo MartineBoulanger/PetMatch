@@ -1,6 +1,11 @@
 local addonName, addon = ...
 
+addon.UI = addon.UI or {}
+
+addon.UI.Theme = addon.UI.Theme or {}
+addon.UI.Base = addon.UI.Base or {}
 addon.UI.Components = addon.UI.Components or {}
+addon.UI.Views = addon.UI.Views or {}
 
 local Component = {}
 
