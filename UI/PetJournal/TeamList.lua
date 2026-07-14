@@ -3,16 +3,10 @@ local addonName, addon = ...
 local TeamList = {}
 
 function TeamList:Create(parent)
-  local frame =
-      addon.UI.Components.Panel:Create(
-        parent,
-        {
-          width = 320,
-          height = 400
-        }
-      )
+  local frame = addon.UI.Components.ScrollBox:Create(parent, { width = 320, height = 360 })
   frame.cards = {}
   self.Frame = frame
+  frame.cards = {}
   self:Refresh()
   frame:Show()
   return frame
@@ -31,18 +25,15 @@ function TeamList:Refresh()
   local teams = addon.Services.Team:GetAllTeams()
   local offset = -15
   for _, team in pairs(teams) do
-    local card =
-        addon.UI.Components.TeamCard:Create(
-          self.Frame,
-          team
-        )
+    local card = addon.UI.Components.TeamCard:Create(self.Frame.Content, team)
     card:SetPoint("TOP", 0, offset)
     offset = offset - 100
-    table.insert(
-      self.Frame.cards,
-      card
-    )
+    table.insert(self.Frame.cards, card)
   end
+
+  self.Frame.Content:SetHeight(
+    math.abs(offset) + 20
+  )
 end
 
 addon.UI.Views = addon.UI.Views or {}
