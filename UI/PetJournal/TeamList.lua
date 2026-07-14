@@ -6,6 +6,19 @@ function TeamList:Create(parent)
   local frame = addon.UI.Components.ScrollBox:Create(parent, { width = 320, height = 360 })
   frame.cards = {}
   self.Frame = frame
+  addon.EventBus:Register(
+    "TEAM_SELECTED",
+    function(card)
+      for _, item in ipairs(
+        self.Frame.cards
+      ) do
+        if item.SetSelected then
+          item:SetSelected(item, item == card
+          )
+        end
+      end
+    end
+  )
   frame.cards = {}
   self:Refresh()
   frame:Show()
