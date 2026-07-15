@@ -1,0 +1,198 @@
+local addonName, addon = ...
+
+addon.UI = addon.UI or {}
+addon.UI.Views = addon.UI.Views or {}
+
+local SaveTeamDialog = {}
+
+local DIALOG_WIDTH = 320
+local DIALOG_HEIGHT = 145
+
+function SaveTeamDialog:Create()
+  if self.Frame then
+    return self.Frame
+  end
+
+  local parent = PetJournal or UIParent
+
+  local frame =
+      addon.UI.Components.Panel:Create(
+        parent,
+        {
+          width = DIALOG_WIDTH,
+          height = DIALOG_HEIGHT,
+        }
+      )
+
+  frame:SetFrameStrata("DIALOG")
+  frame:SetClampedToScreen(true)
+
+  frame:ClearAllPoints()
+  frame:SetPoint(
+    "CENTER",
+    parent,
+    "CENTER",
+    0,
+    0
+  )
+
+  self.Frame = frame
+
+  self.Title =
+      addon.UI.Components.Label:Create(
+        frame,
+        {
+          text = "Save Current Team",
+          font = addon.UI.Theme.Fonts.Header,
+          width = DIALOG_WIDTH - 24,
+          justify = "LEFT",
+        }
+      )
+
+  self.Title:SetPoint(
+    "TOPLEFT",
+    frame,
+    "TOPLEFT",
+    12,
+    -12
+  )
+
+  self.NameInput =
+      CreateFrame(
+        "EditBox",
+        nil,
+        frame,
+        "InputBoxTemplate"
+      )
+
+  self.NameInput:SetSize(
+    DIALOG_WIDTH - 30,
+    28
+  )
+
+  self.NameInput:SetPoint(
+    "TOPLEFT",
+    self.Title,
+    "BOTTOMLEFT",
+    4,
+    -14
+  )
+
+  self.NameInput:SetAutoFocus(false)
+  self.NameInput:SetMaxLetters(80)
+
+  self.SaveButton =
+      addon.UI.Components.Button:Create(
+        frame,
+        {
+          text = "Save",
+          width = 100,
+
+          onClick = function()
+            self:Save()
+          end,
+        }
+      )
+
+  self.SaveButton:SetPoint(
+    "BOTTOMRIGHT",
+    frame,
+    "BOTTOMRIGHT",
+    -12,
+    12
+  )
+
+  self.CancelButton =
+      addon.UI.Components.Button:Create(
+        frame,
+        {
+          text = "Cancel",
+          width = 100,
+
+          onClick = function()
+            self:Hide()
+          end,
+        }
+      )
+
+  self.CancelButton:SetPoint(
+    "RIGHT",
+    self.SaveButton,
+    "LEFT",
+    -8,
+    0
+  )
+
+  self.NameInput:SetScript(
+    "OnEnterPressed",
+    function()
+      self:Save()
+    end
+  )
+
+  self.NameInput:SetScript(
+    "OnEscapePressed",
+    function()
+      self:Hide()
+    end
+  )
+
+  frame:Hide()
+
+  return frame
+end
+
+function SaveTeamDialog:Show()
+  local frame = self:Create()
+
+  self.NameInput:SetText("")
+  self.NameInput:SetFocus()
+  self.NameInput:HighlightText()
+
+  frame:Show()
+end
+
+function SaveTeamDialog:Hide()
+  if not self.Frame then
+    return
+  end
+
+  self.NameInput:ClearFocus()
+  self.Frame:Hide()
+end
+
+function SaveTeamDialog:Save()
+  local name =
+      addon.Utils:Trim(
+        self.NameInput:GetText() or ""
+      )
+
+  local team, errorMessage =
+      addon.Services.Team:CreateFromBattleSlots(
+        name
+      )
+
+  if not team then
+    addon.Logger:Warn(
+      errorMessage or "Unable to save team"
+    )
+
+    self.NameInput:SetFocus()
+    self.NameInput:HighlightText()
+
+    return
+  end
+
+  addon.Services.Team:SetActive(
+    team.id
+  )
+
+  addon.Logger:Info(
+    "Saved team:",
+    team.name
+  )
+
+  self:Hide()
+end
+
+addon.UI.Views.SaveTeamDialog = SaveTeamDialog

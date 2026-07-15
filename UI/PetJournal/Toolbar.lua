@@ -10,7 +10,7 @@ function Toolbar:Create(parent)
         text = "Save Current Team",
         width = 180,
         onClick = function()
-          print("[PetMatch] Save dialog (coming soon)")
+          addon.UI.Views.SaveTeamDialog:Show()
         end
       })
   saveButton:SetPoint("TOP", 0, -7)

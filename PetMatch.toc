@@ -62,6 +62,7 @@ UI/Host.lua
 UI/PetJournal/Hook.lua
 UI/PetJournal/TeamList.lua
 UI/PetJournal/TeamDetail.lua
+UI/PetJournal/SaveTeamDialog.lua
 UI/PetJournal/Toolbar.lua
 UI/PetJournal/TeamPanel.lua
 

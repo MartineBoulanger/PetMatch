@@ -43,27 +43,13 @@ function TeamService:Create(name)
   )
   print(
     "[PetMatch DEBUG] Total teams:",
-    #self:GetAll()
+    #self:GetAllTeams()
   )
   return team
 end
 
 function TeamService:Get(id)
   return self:GetTeams()[id]
-end
-
-function TeamService:Delete(id)
-  local teams = self:GetTeams()
-  local team = teams[id]
-  if not team then
-    return false
-  end
-  teams[id] = nil
-  addon.EventBus:Fire(
-    addon.Events.TEAM_DELETED,
-    team
-  )
-  return true
 end
 
 function TeamService:SetActive(id)
@@ -190,38 +176,48 @@ function TeamService:Delete(teamID)
   return true
 end
 
+-- function TeamService:Delete(id)
+--   local teams = self:GetTeams()
+--   local team = teams[id]
+--   if not team then
+--     return false
+--   end
+--   teams[id] = nil
+--   addon.EventBus:Fire(
+--     addon.Events.TEAM_DELETED,
+--     team
+--   )
+--   return true
+-- end
+
 function TeamService:CreateFromBattleSlots(name)
-  local slots = addon.Services.BattleSlot:GetCurrentSlots()
-  local team = self:Create(name)
-
-  print(
-    "[PetMatch DEBUG] Created team:",
-    team.name,
-    team.id
-  )
-
-  if not team then
-    return nil
+  name = addon.Utils:Trim(name or "")
+  if name == "" then
+    return nil, "Enter a team name"
   end
-
+  local slots = addon.Services.BattleSlot:GetCurrentSlots()
+  local hasPet = false
+  for slot = 1, 3 do
+    if slots[slot] then
+      hasPet = true
+      break
+    end
+  end
+  if not hasPet then
+    return nil, "The current Battle Pet Slots are empty"
+  end
+  local team = self:Create(name)
+  if not team then
+    return nil, "Unable to create team"
+  end
   for slot = 1, 3 do
     team.pets[slot] = slots[slot]
   end
-
   team.modified = time()
-
   addon.EventBus:Fire(
     addon.Events.TEAM_UPDATED,
     team
   )
-
-  print(
-    "[PetMatch DEBUG] Pets saved:",
-    team.pets[1],
-    team.pets[2],
-    team.pets[3]
-  )
-
   return team
 end
 
