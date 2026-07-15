@@ -176,20 +176,6 @@ function TeamService:Delete(teamID)
   return true
 end
 
--- function TeamService:Delete(id)
---   local teams = self:GetTeams()
---   local team = teams[id]
---   if not team then
---     return false
---   end
---   teams[id] = nil
---   addon.EventBus:Fire(
---     addon.Events.TEAM_DELETED,
---     team
---   )
---   return true
--- end
-
 function TeamService:CreateFromBattleSlots(name)
   name = addon.Utils:Trim(name or "")
   if name == "" then
@@ -245,6 +231,89 @@ function TeamService:Load(teamID)
   )
 
   return true
+end
+
+function TeamService:Rename(teamID, name)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  name = addon.Utils:Trim(name or "")
+
+  if name == "" then
+    return nil, "Enter a team name"
+  end
+
+  team.name = name
+  team.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  return team
+end
+
+function TeamService:ReplacePetsFromBattleSlots(teamID)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  local slots =
+      addon.Services.BattleSlot:GetCurrentSlots()
+
+  local hasPet = false
+
+  for slot = 1, 3 do
+    if slots[slot] then
+      hasPet = true
+      break
+    end
+  end
+
+  if not hasPet then
+    return nil, "The current Battle Pet Slots are empty"
+  end
+
+  team.pets = team.pets or {}
+
+  for slot = 1, 3 do
+    team.pets[slot] = slots[slot]
+  end
+
+  team.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  return team
+end
+
+function TeamService:Edit(teamID, name, replacePets)
+  local team, errorMessage =
+      self:Rename(teamID, name)
+
+  if not team then
+    return nil, errorMessage
+  end
+
+  if replacePets then
+    team, errorMessage =
+        self:ReplacePetsFromBattleSlots(teamID)
+
+    if not team then
+      return nil, errorMessage
+    end
+  end
+
+  return team
 end
 
 addon.Services.Team = TeamService

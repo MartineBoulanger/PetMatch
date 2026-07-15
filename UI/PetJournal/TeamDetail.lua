@@ -58,7 +58,7 @@ function TeamDetail:Create(parent)
         frame,
         {
           text = "Load Team",
-          width = 120,
+          width = 90,
           onClick = function()
             self:LoadSelectedTeam()
           end,
@@ -78,7 +78,7 @@ function TeamDetail:Create(parent)
         frame,
         {
           text = "Delete",
-          width = 100,
+          width = 80,
           onClick = function()
             self:DeleteSelectedTeam()
           end,
@@ -88,6 +88,27 @@ function TeamDetail:Create(parent)
   self.DeleteButton:SetPoint(
     "LEFT",
     self.LoadButton,
+    "RIGHT",
+    8,
+    0
+  )
+
+  self.EditButton =
+      addon.UI.Components.Button:Create(
+        frame,
+        {
+          text = "Edit",
+          width = 70,
+
+          onClick = function()
+            self:EditSelectedTeam()
+          end,
+        }
+      )
+
+  self.EditButton:SetPoint(
+    "LEFT",
+    self.DeleteButton,
     "RIGHT",
     8,
     0
@@ -198,6 +219,18 @@ function TeamDetail:DeleteSelectedTeam()
   )
 
   self:SetTeam(nil)
+end
+
+function TeamDetail:EditSelectedTeam()
+  if not self.SelectedTeam then
+    addon.Logger:Warn(
+      "Select a team first"
+    )
+    return
+  end
+  addon.UI.Views.EditTeamDialog:Show(
+    self.SelectedTeam
+  )
 end
 
 addon.UI.Views.TeamDetail = TeamDetail
