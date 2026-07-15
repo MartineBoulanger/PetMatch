@@ -165,21 +165,28 @@ function TeamService:AddPet(
   return true
 end
 
-function TeamService:RemovePet(
-    teamID,
-    slot
-)
-  local team = self:Get(teamID)
+function TeamService:Delete(teamID)
+  local teams = self:GetTeams()
+  local team = teams[teamID]
+
   if not team then
     return false
   end
-  team.pets[slot] = nil
-  team.modified = time()
+
+  teams[teamID] = nil
+
+  local profile =
+      addon.Profiles:GetCurrentProfile()
+
+  if profile.activeTeam == teamID then
+    profile.activeTeam = nil
+  end
+
   addon.EventBus:Fire(
-    addon.Events.PET_REMOVED_FROM_TEAM,
-    team,
-    slot
+    addon.Events.TEAM_DELETED,
+    team
   )
+
   return true
 end
 
@@ -216,6 +223,32 @@ function TeamService:CreateFromBattleSlots(name)
   )
 
   return team
+end
+
+function TeamService:Load(teamID)
+  local team = self:Get(teamID)
+
+  if not team then
+    return false, "Team not found"
+  end
+
+  local success, errorMessage =
+      addon.Services.BattleSlot:LoadPets(
+        team.pets
+      )
+
+  if not success then
+    return false, errorMessage
+  end
+
+  self:SetActive(team.id)
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_LOADED,
+    team
+  )
+
+  return true
 end
 
 addon.Services.Team = TeamService

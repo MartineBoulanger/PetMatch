@@ -1,115 +1,117 @@
 local addonName, addon = ...
 
+addon.UI = addon.UI or {}
+addon.UI.Views = addon.UI.Views or {}
+
 local TeamPanel = {}
-TeamPanel.Rows = {}
+
+local PANEL_WIDTH = 620
+local PANEL_HEIGHT = 460
+
+local TOOLBAR_HEIGHT = 40
+local CONTENT_TOP_OFFSET = -58
+
+local TEAM_LIST_WIDTH = 300
+local TEAM_LIST_HEIGHT = 390
+
+local DETAIL_WIDTH = 280
+local DETAIL_HEIGHT = 210
 
 function TeamPanel:Create()
-  local frame = addon.UI.Components.Panel:Create(PetJournal, { width = 360, height = 600 })
-  self.Frame = frame
-  frame:ClearAllPoints()
-  frame:SetPoint("TOPLEFT", PetJournal, "TOPRIGHT", 1, -1)
-  frame:Show()
-  self.Toolbar = addon.UI.Views.Toolbar:Create(frame)
-  self.Toolbar:SetPoint("TOP", 0, -10)
-  self.Title = addon.UI.Components.Label:Create(frame, { text = "PetMatch" })
-  self.Title:SetPoint("TOPLEFT", 5, -60)
-  self.TeamList = addon.UI.Views.TeamList:Create(frame)
-  self.TeamList:SetPoint("TOPLEFT", 10, -90)
-  self.TeamDetails = addon.UI.Views.TeamDetails:Create(frame)
-  self.TeamDetails:SetPoint("TOPRIGHT", -10, -90)
-  addon.EventBus:Register(
-    "TEAM_SELECTED",
-    function(team)
-      self.TeamDetails:ShowTeam(
-        team
+  if self.Frame then
+    return self.Frame
+  end
+
+  assert(PetJournal, "PetMatch: PetJournal is unavailable")
+
+  local frame =
+      addon.UI.Components.Panel:Create(
+        PetJournal,
+        {
+          width = PANEL_WIDTH,
+          height = PANEL_HEIGHT,
+        }
       )
-    end
+
+  frame:ClearAllPoints()
+  frame:SetPoint(
+    "TOPLEFT",
+    PetJournal,
+    "TOPRIGHT",
+    6,
+    0
   )
+
+  self.Frame = frame
+
+  -- Toolbar
+  self.Toolbar =
+      addon.UI.Views.Toolbar:Create(frame)
+
+  self.Toolbar:ClearAllPoints()
+  self.Toolbar:SetPoint(
+    "TOPLEFT",
+    frame,
+    "TOPLEFT",
+    10,
+    -10
+  )
+
+  self.Toolbar:SetSize(
+    PANEL_WIDTH - 20,
+    TOOLBAR_HEIGHT
+  )
+
+  -- Team list, links
+  self.TeamList =
+      addon.UI.Views.TeamList:Create(frame)
+
+  self.TeamList:ClearAllPoints()
+  self.TeamList:SetPoint(
+    "TOPLEFT",
+    frame,
+    "TOPLEFT",
+    10,
+    CONTENT_TOP_OFFSET
+  )
+
+  self.TeamList:SetSize(
+    TEAM_LIST_WIDTH,
+    TEAM_LIST_HEIGHT
+  )
+
+  -- Team details, rechts
+  self.TeamDetail =
+      addon.UI.Views.TeamDetail:Create(frame)
+
+  self.TeamDetail:ClearAllPoints()
+  self.TeamDetail:SetPoint(
+    "TOPLEFT",
+    self.TeamList,
+    "TOPRIGHT",
+    10,
+    0
+  )
+
+  self.TeamDetail:SetSize(
+    DETAIL_WIDTH,
+    DETAIL_HEIGHT
+  )
+
+  frame:Hide()
+
   return frame
 end
 
-function TeamPanel:Update()
-  print("[PetMatch DEBUG] Updating TeamPanel")
-  if not self.Frame then
-    return
-  end
-
-  local team = addon.Services.Team:GetActive()
-
-  if team then
-    print(
-      "[PetMatch DEBUG] Active team:",
-      team.name
-    )
-  else
-    print(
-      "[PetMatch DEBUG] No active team"
-    )
-  end
-
-  if team then
-    for i = 1, 3 do
-      print(
-        "[PetMatch DEBUG] Slot",
-        i,
-        team.pets[i]
-      )
-    end
-  end
-
-  if not team then
-    self.Title:SetText(
-      "PetMatch\nNo active team"
-    )
-    return
-  end
-
-  self.Title:SetText(
-    "PetMatch\n" .. team.name
-  )
-
-  for slot = 1, 3 do
-    local petGUID = team.pets[slot]
-
-    local text =
-        "Slot " .. slot .. ": Empty"
-
-    if petGUID then
-      local name =
-          addon.Services.PetJournal:GetPetName(
-            petGUID
-          )
-      if name then
-        text =
-            "Slot " .. slot .. ": "
-            .. name
-      else
-        text =
-            "Slot " .. slot .. ": "
-            .. petGUID
-      end
-    end
-    print(
-      "[PetMatch DEBUG] Setting row",
-      slot,
-      text
-    )
-    if self.Rows
-        and self.Rows[slot] then
-      self.Rows[slot]:SetText(
-        text
-      )
-    end
-  end
-end
-
 function TeamPanel:Show()
-  print("[PetMatch DEBUG] TeamPanel Show")
-  self:Create()
-  self.Frame:Show()
-  if self.Update then
-    self:Update()
+  local frame = self:Create()
+
+  if self.TeamList
+      and addon.UI.Views.TeamList.Refresh then
+    addon.UI.Views.TeamList:Refresh()
   end
+
+  frame:Show()
 end
 
 function TeamPanel:Hide()
@@ -118,36 +120,11 @@ function TeamPanel:Hide()
   end
 end
 
-function TeamPanel:Initialize()
-  print("[PetMatch DEBUG] Initialize called")
-  if self.Frame then
-    self.Frame:Show()
-    return
+function TeamPanel:Refresh()
+  if self.TeamList
+      and addon.UI.Views.TeamList.Refresh then
+    addon.UI.Views.TeamList:Refresh()
   end
-
-  self:Create()
-
-  print("[PetMatch DEBUG] Frame created")
-
-  print(
-    "[PetMatch] TeamPanel shown:",
-    self.Frame:IsShown()
-  )
-
-  if self.Update then
-    self:Update()
-  else
-    print(
-      "[PetMatch DEBUG] Update function missing"
-    )
-  end
-
-  addon.Logger:Info(
-    "PetMatch TeamPanel initialized"
-  )
-
-  self.Frame:Hide()
 end
 
-addon.UI.Views = addon.UI.Views or {}
 addon.UI.Views.TeamPanel = TeamPanel

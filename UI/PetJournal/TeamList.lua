@@ -3,7 +3,7 @@ local addonName, addon = ...
 local TeamList = {}
 
 function TeamList:Create(parent)
-  local frame = addon.UI.Components.ScrollBox:Create(parent, { width = 320, height = 450 })
+  local frame = addon.UI.Components.ScrollBox:Create(parent, { width = 300, height = 450 })
   frame.cards = {}
   self.Frame = frame
   if not self.SelectionListenerRegistered then
@@ -24,6 +24,28 @@ function TeamList:Create(parent)
           )
         end
       end
+    )
+  end
+  if not self.TeamEventsRegistered then
+    self.TeamEventsRegistered = true
+
+    local function RefreshList()
+      self:Refresh()
+    end
+
+    addon.EventBus:Register(
+      addon.Events.TEAM_CREATED,
+      RefreshList
+    )
+
+    addon.EventBus:Register(
+      addon.Events.TEAM_UPDATED,
+      RefreshList
+    )
+
+    addon.EventBus:Register(
+      addon.Events.TEAM_DELETED,
+      RefreshList
     )
   end
   addon.EventBus:Fire(
@@ -59,10 +81,10 @@ function TeamList:Refresh()
         )
 
     card:SetPoint(
-      "TOP",
+      "TOPLEFT",
       self.Frame.Content,
-      "TOP",
-      0,
+      "TOPLEFT",
+      6,
       -8 - ((cardCount - 1) * 124)
     )
 
@@ -72,6 +94,7 @@ function TeamList:Refresh()
     )
   end
 
+  self.Frame.Content:SetWidth(275)
   self.Frame.Content:SetHeight(
     math.max(
       1,

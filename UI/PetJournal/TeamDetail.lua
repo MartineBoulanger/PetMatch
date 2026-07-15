@@ -1,63 +1,203 @@
 local addonName, addon = ...
 
-local TeamDetails = {}
+addon.UI = addon.UI or {}
+addon.UI.Views = addon.UI.Views or {}
 
-function TeamDetails:Create(parent)
-  local frame = addon.UI.Components.Panel:Create(parent, { width = 250, height = 360 })
+local TeamDetail = {}
+
+function TeamDetail:Create(parent)
+  local frame =
+      addon.UI.Components.Panel:Create(
+        parent,
+        {
+          width = 280,
+          height = 210,
+        }
+      )
+
   self.Frame = frame
-  self.Title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-  self.Title:SetPoint("TOPLEFT", 15, -15)
-  self.Pets = {}
-  for i = 1, 3 do
-    local text = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    text:SetPoint("TOPLEFT", 15, -30 - ((i - 1) * 25))
-    self.Pets[i] = text
-  end
   self.SelectedTeam = nil
+  self.PetSlots = {}
+
+  self.Title =
+      addon.UI.Components.Label:Create(
+        frame,
+        {
+          text = "No team selected",
+          font = addon.UI.Theme.Fonts.Header,
+          width = 250,
+          justify = "LEFT",
+        }
+      )
+
+  self.Title:SetPoint(
+    "TOPLEFT",
+    frame,
+    "TOPLEFT",
+    12,
+    -12
+  )
+
+  for slot = 1, 3 do
+    local petSlot =
+        addon.UI.Components.PetSlot:Create(frame)
+
+    petSlot:GetFrame():SetPoint(
+      "TOPLEFT",
+      frame,
+      "TOPLEFT",
+      12 + ((slot - 1) * 86),
+      -45
+    )
+
+    self.PetSlots[slot] = petSlot
+  end
+
+  self.LoadButton =
+      addon.UI.Components.Button:Create(
+        frame,
+        {
+          text = "Load Team",
+          width = 120,
+          onClick = function()
+            self:LoadSelectedTeam()
+          end,
+        }
+      )
+
+  self.LoadButton:SetPoint(
+    "BOTTOMLEFT",
+    frame,
+    "BOTTOMLEFT",
+    12,
+    12
+  )
+
+  self.DeleteButton =
+      addon.UI.Components.Button:Create(
+        frame,
+        {
+          text = "Delete",
+          width = 100,
+          onClick = function()
+            self:DeleteSelectedTeam()
+          end,
+        }
+      )
+
+  self.DeleteButton:SetPoint(
+    "LEFT",
+    self.LoadButton,
+    "RIGHT",
+    8,
+    0
+  )
+
+  if not self.TeamSelectionRegistered then
+    self.TeamSelectionRegistered = true
+
+    addon.EventBus:Register(
+      addon.Events.TEAM_SELECTED,
+      function(team)
+        self:SetTeam(team)
+      end
+    )
+  end
+
+  self:SetTeam(nil)
+
   return frame
 end
 
-function TeamDetails:ShowTeam(team)
+function TeamDetail:SetTeam(team)
   self.SelectedTeam = team
+
   if not team then
-    self.Title:SetText("No team selected")
-    for i = 1, 3 do
-      self.Pets[i]:SetText("")
+    self.Title:SetText(
+      "No team selected"
+    )
+
+    for slot = 1, 3 do
+      self.PetSlots[slot]:Clear()
     end
+
+    self.LoadButton:Disable()
+    self.DeleteButton:Disable()
+
     return
   end
-  self.Title:SetText("⭐ " .. team.name)
-  for i = 1, 3 do
-    local petGUID = team.pets[i]
-    if petGUID then
-      local speciesID,
-      customName,
-      level,
-      favorite,
-      isRevoked,
-      name,
-      icon,
-      petType,
-      creatureID,
-      sourceText,
-      description,
-      isWild,
-      canBattle,
-      tradable,
-      uniqueID = C_PetJournal.GetPetInfoByPetID(petGUID)
-      if icon then
-        self.PetIcons[i]:SetTexture(icon)
-        self.PetIcons[i]:Show()
-      end
-      local displayName = customName or name or "Unknown"
-      self.Pets[i]:SetText(displayName)
-    else
-      self.PetIcons[i]:SetTexture(nil)
-      self.PetIcons[i]:Hide()
-      self.Pets[i]:SetText("Empty")
-    end
+
+  self.Title:SetText(
+    team.name or "Unnamed Team"
+  )
+
+  for slot = 1, 3 do
+    self.PetSlots[slot]:SetPet(
+      team.pets
+      and team.pets[slot]
+      or nil
+    )
   end
+
+  self.LoadButton:Enable()
+  self.DeleteButton:Enable()
 end
 
-addon.UI.Views = addon.UI.Views or {}
-addon.UI.Views.TeamDetails = TeamDetails
+function TeamDetail:LoadSelectedTeam()
+  local team = self.SelectedTeam
+
+  if not team then
+    addon.Logger:Warn(
+      "Select a team first"
+    )
+    return
+  end
+
+  local success, errorMessage =
+      addon.Services.Team:Load(
+        team.id
+      )
+
+  if not success then
+    addon.Logger:Error(
+      errorMessage or "Unable to load team"
+    )
+    return
+  end
+
+  addon.Logger:Info(
+    "Loaded team:",
+    team.name
+  )
+end
+
+function TeamDetail:DeleteSelectedTeam()
+  local team = self.SelectedTeam
+
+  if not team then
+    return
+  end
+
+  local deleted =
+      addon.Services.Team:Delete(
+        team.id
+      )
+
+  if not deleted then
+    addon.Logger:Error(
+      "Unable to delete team:",
+      team.name
+    )
+
+    return
+  end
+
+  addon.Logger:Info(
+    "Deleted team:",
+    team.name
+  )
+
+  self:SetTeam(nil)
+end
+
+addon.UI.Views.TeamDetail = TeamDetail

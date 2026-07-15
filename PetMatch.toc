@@ -60,10 +60,10 @@ UI/Manager.lua
 UI/Host.lua
 
 UI/PetJournal/Hook.lua
-UI/PetJournal/Toolbar.lua
-UI/PetJournal/TeamPanel.lua
 UI/PetJournal/TeamList.lua
 UI/PetJournal/TeamDetail.lua
+UI/PetJournal/Toolbar.lua
+UI/PetJournal/TeamPanel.lua
 
 Core/Slash.lua
 Core/Addon.lua

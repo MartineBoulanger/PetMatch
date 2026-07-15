@@ -2,6 +2,12 @@ local addonName, addon = ...
 
 local BattleSlotService = {}
 
+local function RefreshBlizzardLoadout()
+  if type(PetJournal_UpdatePetLoadOut) == "function" then
+    PetJournal_UpdatePetLoadOut()
+  end
+end
+
 -------------------------------------------------
 -- Get pet GUID from Blizzard battle slot
 -------------------------------------------------
@@ -69,6 +75,64 @@ function BattleSlotService:Debug()
       )
     end
   end
+end
+
+function BattleSlotService:LoadPets(pets)
+  if type(pets) ~= "table" then
+    return false, "Invalid pet list"
+  end
+
+  if C_PetBattles.IsInBattle() then
+    return false, "Cannot load a team during a pet battle"
+  end
+
+  if InCombatLockdown() then
+    return false, "Cannot load a team during combat"
+  end
+
+  local changedSlots = 0
+
+  for slot = 1, 3 do
+    local petGUID = pets[slot]
+
+    if petGUID then
+      local pet =
+          addon.Services.PetJournal:GetPet(petGUID)
+
+      if not pet then
+        return false, string.format(
+          "Pet in slot %d is unavailable",
+          slot
+        )
+      end
+
+      local _, _, _, _, locked =
+          C_PetJournal.GetPetLoadOutInfo(slot)
+
+      if locked then
+        return false, string.format(
+          "Battle pet slot %d is locked",
+          slot
+        )
+      end
+
+      C_PetJournal.SetPetLoadOutInfo(
+        slot,
+        petGUID
+      )
+
+      changedSlots = changedSlots + 1
+    end
+  end
+
+  if changedSlots == 0 then
+    return false, "The team contains no pets"
+  end
+
+  -- Laat Blizzard de originele Battle Pet Slots opnieuw tekenen.
+  RefreshBlizzardLoadout()
+
+  return true
 end
 
 addon.Services = addon.Services or {}
