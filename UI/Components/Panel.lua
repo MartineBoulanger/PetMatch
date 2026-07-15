@@ -19,9 +19,9 @@ function Panel:Create(parent, options)
   )
 
   frame:SetBackdrop({
-    bgFile = "Interface/DialogFrame/UI-DialogBox-Background",
-    edgeFile = "Interface/DialogFrame/UI-DialogBox-Border",
-    edgeSize = 16
+    bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+    edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
+    edgeSize = 8
   })
 
   local color = addon.UI.Theme.Colors.Background

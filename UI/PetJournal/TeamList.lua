@@ -3,21 +3,32 @@ local addonName, addon = ...
 local TeamList = {}
 
 function TeamList:Create(parent)
-  local frame = addon.UI.Components.ScrollBox:Create(parent, { width = 320, height = 360 })
+  local frame = addon.UI.Components.ScrollBox:Create(parent, { width = 320, height = 450 })
   frame.cards = {}
   self.Frame = frame
-  addon.EventBus:Register(
-    "TEAM_SELECTED",
-    function(card)
-      for _, item in ipairs(
-        self.Frame.cards
-      ) do
-        if item.SetSelected then
-          item:SetSelected(item, item == card
+  if not self.SelectionListenerRegistered then
+    self.SelectionListenerRegistered = true
+
+    addon.EventBus:Register(
+      addon.Events.TEAM_SELECTED,
+      function(team, selectedCard)
+        if not self.Frame then
+          return
+        end
+
+        for _, card in ipairs(
+          self.Frame.cards or {}
+        ) do
+          card:SetSelected(
+            card == selectedCard
           )
         end
       end
-    end
+    )
+  end
+  addon.EventBus:Fire(
+    "TEAM_SELECTED",
+    frame.team
   )
   frame.cards = {}
   self:Refresh()
@@ -36,16 +47,36 @@ function TeamList:Refresh()
 
   wipe(self.Frame.cards)
   local teams = addon.Services.Team:GetAllTeams()
-  local offset = -15
+  local cardCount = 0
+
   for _, team in pairs(teams) do
-    local card = addon.UI.Components.TeamCard:Create(self.Frame.Content, team)
-    card:SetPoint("TOP", 0, offset)
-    offset = offset - 100
-    table.insert(self.Frame.cards, card)
+    cardCount = cardCount + 1
+
+    local card =
+        addon.UI.Components.TeamCard:Create(
+          self.Frame.Content,
+          team
+        )
+
+    card:SetPoint(
+      "TOP",
+      self.Frame.Content,
+      "TOP",
+      0,
+      -8 - ((cardCount - 1) * 124)
+    )
+
+    table.insert(
+      self.Frame.cards,
+      card
+    )
   end
 
   self.Frame.Content:SetHeight(
-    math.abs(offset) + 20
+    math.max(
+      1,
+      8 + (cardCount * 124)
+    )
   )
 end
 

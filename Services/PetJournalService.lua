@@ -6,8 +6,7 @@ PetJournalService.Cache = {}
 
 function PetJournalService:Scan()
   wipe(self.Cache)
-  local numPets =
-      C_PetJournal.GetNumPets()
+  local numPets = C_PetJournal.GetNumPets()
   for index = 1, numPets do
     local petGUID,
     speciesID,
@@ -25,10 +24,7 @@ function PetJournalService:Scan()
     isHatchable,
     canBattle,
     tradable,
-    unique =
-        C_PetJournal.GetPetInfoByIndex(
-          index
-        )
+    unique = C_PetJournal.GetPetInfoByIndex(index)
     if isOwned then
       local pet = {
         petGUID = petGUID,
@@ -52,27 +48,64 @@ function PetJournalService:Scan()
   )
 end
 
-function PetJournalService:GetPet(guid)
-  return self.Cache[guid]
-end
+function PetJournalService:GetPet(petGUID)
+  if type(petGUID) ~= "string" or petGUID == "" then
+    return nil
+  end
 
-function PetJournalService:GetAll()
-  return self.Cache
-end
-
-function PetJournalService:GetPetName(guid)
   local speciesID,
   customName,
   level,
   xp,
   maxXP,
   displayID,
-  isFavorite,
-  name
-  = C_PetJournal.GetPetInfoByPetID(
-    guid
-  )
-  return customName or name
+  favorite,
+  speciesName,
+  icon,
+  petType,
+  creatureID,
+  sourceText,
+  description,
+  isWild,
+  canBattle,
+  tradable,
+  unique,
+  obtainable = C_PetJournal.GetPetInfoByPetID(petGUID)
+
+  if not speciesID then
+    return nil
+  end
+
+  return {
+    guid = petGUID,
+    speciesID = speciesID,
+    customName = customName,
+    name = customName or speciesName or "Unknown",
+    level = level or 0,
+    xp = xp or 0,
+    maxXP = maxXP or 0,
+    displayID = displayID,
+    favorite = favorite == true,
+    icon = icon,
+    petType = petType,
+    creatureID = creatureID,
+    sourceText = sourceText,
+    description = description,
+    isWild = isWild == true,
+    canBattle = canBattle == true,
+    tradable = tradable == true,
+    unique = unique == true,
+    obtainable = obtainable ~= false,
+  }
+end
+
+function PetJournalService:GetAll()
+  return self.Cache
+end
+
+function PetJournalService:GetPetName(petGUID)
+  local pet = self:GetPet(petGUID)
+  return pet and pet.name or nil
 end
 
 addon.Services.PetJournal = PetJournalService

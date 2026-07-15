@@ -2,71 +2,50 @@ local addonName, addon = ...
 
 local Blizzard = {}
 
-function Blizzard:Initialize()
-  addon.Logger:Info(
-    "Blizzard.lua initialized"
-  )
-  local watcher =
-      CreateFrame("Frame")
-  watcher:RegisterEvent(
-    "ADDON_LOADED"
-  )
-  watcher:RegisterEvent(
-    "PLAYER_LOGIN"
-  )
-  watcher:RegisterEvent(
-    "PLAYER_ENTERING_WORLD"
-  )
-  watcher:SetScript(
-    "OnEvent",
-    function(_, event)
-      if event == "ADDON_LOADED"
-          or event == "PLAYER_LOGIN"
-          or event == "PLAYER_ENTERING_WORLD" then
-        C_Timer.After(
-          1,
-          function()
-            self:TryHook()
-          end
-        )
-      end
-    end
-  )
-end
+Blizzard.Hooked = false
 
-function Blizzard:TryHook()
+function Blizzard:Initialize()
   if self.Hooked then
     return
   end
-  if not C_PetJournal then
+
+  if not PetJournal then
     return
   end
-  addon.Logger:Info(
-    "Pet Journal API available"
-  )
+
   self.Hooked = true
-  hooksecurefunc(
-    "ToggleCollectionsJournal",
+
+  PetJournal:HookScript(
+    "OnShow",
     function()
-      C_Timer.After(
-        0.1,
-        function()
-          self:CreatePetJournalPanel()
-        end
-      )
+      print("[PetMatch DEBUG] PetJournal OnShow")
+      addon.UI.Host:Update()
     end
   )
+
+  PetJournal:HookScript(
+    "OnHide",
+    function()
+      print("[PetMatch DEBUG] PetJournal OnHide")
+      addon.UI.Host:Update()
+    end
+  )
+
+  print("[PetMatch] PetJournal visibility hooks active")
 end
 
-function Blizzard:CreatePetJournalPanel()
-  if addon.UI and addon.UI.Manager then
-    addon.UI.Manager:ShowPetJournal()
+local frame = CreateFrame("Frame")
+
+frame:RegisterEvent("ADDON_LOADED")
+frame:SetScript(
+  "OnEvent",
+  function(_, event, name)
+    if event == "ADDON_LOADED"
+        and name == "Blizzard_Collections" then
+      print("[PetMatch DEBUG] Blizzard_Collections loaded")
+      Blizzard:Initialize()
+    end
   end
-end
+)
 
 addon.Blizzard = Blizzard
-
-addon.ModuleManager:Register(
-  "Blizzard",
-  Blizzard
-)

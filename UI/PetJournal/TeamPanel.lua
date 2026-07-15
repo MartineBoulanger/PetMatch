@@ -4,20 +4,27 @@ local TeamPanel = {}
 TeamPanel.Rows = {}
 
 function TeamPanel:Create()
-  local frame =
-      addon.UI.Components.Panel:Create(UIParent, {
-        width = 350,
-        height = 450
-      })
+  local frame = addon.UI.Components.Panel:Create(PetJournal, { width = 360, height = 600 })
   self.Frame = frame
-  frame:SetPoint("CENTER", UIParent, "CENTER", 300, 0)
+  frame:ClearAllPoints()
+  frame:SetPoint("TOPLEFT", PetJournal, "TOPRIGHT", 1, -1)
   frame:Show()
   self.Toolbar = addon.UI.Views.Toolbar:Create(frame)
   self.Toolbar:SetPoint("TOP", 0, -10)
   self.Title = addon.UI.Components.Label:Create(frame, { text = "PetMatch" })
   self.Title:SetPoint("TOPLEFT", 5, -60)
   self.TeamList = addon.UI.Views.TeamList:Create(frame)
-  self.TeamList:SetPoint("TOP", 0, -90)
+  self.TeamList:SetPoint("TOPLEFT", 10, -90)
+  self.TeamDetails = addon.UI.Views.TeamDetails:Create(frame)
+  self.TeamDetails:SetPoint("TOPRIGHT", -10, -90)
+  addon.EventBus:Register(
+    "TEAM_SELECTED",
+    function(team)
+      self.TeamDetails:ShowTeam(
+        team
+      )
+    end
+  )
   return frame
 end
 
@@ -97,6 +104,7 @@ function TeamPanel:Update()
 end
 
 function TeamPanel:Show()
+  print("[PetMatch DEBUG] TeamPanel Show")
   self:Create()
   self.Frame:Show()
   if self.Update then
@@ -121,8 +129,6 @@ function TeamPanel:Initialize()
 
   print("[PetMatch DEBUG] Frame created")
 
-  self.Frame:Show()
-
   print(
     "[PetMatch] TeamPanel shown:",
     self.Frame:IsShown()
@@ -139,6 +145,8 @@ function TeamPanel:Initialize()
   addon.Logger:Info(
     "PetMatch TeamPanel initialized"
   )
+
+  self.Frame:Hide()
 end
 
 addon.UI.Views = addon.UI.Views or {}

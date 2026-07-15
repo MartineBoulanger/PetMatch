@@ -301,6 +301,34 @@ commands.testui = function()
   )
 end
 
+commands.testpetslot = function()
+  local frame = CreateFrame(
+    "Frame",
+    "PetMatchPetSlotTest",
+    UIParent,
+    "BackdropTemplate"
+  )
+
+  frame:SetSize(120, 120)
+  frame:SetPoint("CENTER")
+  frame:SetBackdrop({
+    bgFile = "Interface/Buttons/WHITE8X8",
+    edgeFile = "Interface/Buttons/WHITE8X8",
+    edgeSize = 1,
+  })
+  frame:SetBackdropColor(0, 0, 0, 0.85)
+
+  local slot = addon.UI.Components.PetSlot:Create(frame)
+  slot:GetFrame():SetPoint("CENTER")
+
+  local battlePetGUID =
+      addon.Services.BattleSlot:GetSlot(1)
+
+  slot:SetPet(battlePetGUID)
+
+  frame:Show()
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"

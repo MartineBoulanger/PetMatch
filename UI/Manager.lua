@@ -4,12 +4,18 @@ addon.UI = addon.UI or {}
 
 local Manager = {}
 
-function Manager:ShowPetJournal()
-  if not addon.UI.Views or not addon.UI.Views.TeamPanel then
-    print("[PetMatch] TeamPanel not available")
-    return
+function Manager:Show()
+  print("[PetMatch DEBUG] Manager Show")
+
+  if addon.UI.Views.TeamPanel then
+    addon.UI.Views.TeamPanel:Show()
   end
-  addon.UI.Views.TeamPanel:Initialize()
+end
+
+function Manager:Hide()
+  if addon.UI.Views.TeamPanel then
+    addon.UI.Views.TeamPanel:Hide()
+  end
 end
 
 addon.UI.Manager = Manager
