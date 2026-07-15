@@ -406,25 +406,33 @@ function TeamService:GetVisibleTeams(folderKey)
   local result = {}
 
   for _, team in pairs(self:GetTeams()) do
-    local isVisible = false
+    local matchesFolder = false
 
-    if folderKey == addon.Services.Folder.ALL then
-      isVisible = true
-    elseif folderKey == addon.Services.Folder.UNSORTED then
-      isVisible = team.folderID == nil
+    if folderKey
+        == addon.Services.Folder.ALL then
+      matchesFolder = true
+    elseif folderKey
+        == addon.Services.Folder.UNSORTED then
+      matchesFolder =
+          team.folderID == nil
     else
-      isVisible = team.folderID == folderKey
+      matchesFolder =
+          team.folderID == folderKey
     end
 
-    if isVisible then
+    local matchesSearch =
+        addon.Services.Search:MatchesTeam(
+          team
+        )
+
+    if matchesFolder and matchesSearch then
       table.insert(result, team)
     end
   end
 
   SortTeams(
     result,
-    addon.Settings:GetUI("teamSortMode")
-    or "name"
+    self:GetSortMode()
   )
 
   return result
@@ -502,8 +510,8 @@ function TeamService:SetSortMode(sortMode)
   )
 
   addon.EventBus:Fire(
-    addon.Events.TEAM_UPDATED,
-    nil
+    addon.Events.TEAM_SORT_CHANGED,
+    sortMode
   )
 
   return true

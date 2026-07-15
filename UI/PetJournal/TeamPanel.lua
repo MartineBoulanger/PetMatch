@@ -74,11 +74,13 @@ function TeamPanel:Create()
     CONTENT_TOP_OFFSET
   )
 
-  self.TeamList =
-      addon.UI.Views.TeamList:Create(frame)
+  self.TeamListControls =
+      addon.UI.Views.TeamListControls:Create(
+        frame
+      )
 
-  self.TeamList:ClearAllPoints()
-  self.TeamList:SetPoint(
+  self.TeamListControls:ClearAllPoints()
+  self.TeamListControls:SetPoint(
     "TOPLEFT",
     self.FolderTabs,
     "TOPRIGHT",
@@ -86,9 +88,21 @@ function TeamPanel:Create()
     0
   )
 
+  self.TeamList =
+      addon.UI.Views.TeamList:Create(frame)
+
+  self.TeamList:ClearAllPoints()
+  self.TeamList:SetPoint(
+    "TOPLEFT",
+    self.TeamListControls,
+    "BOTTOMLEFT",
+    0,
+    -6
+  )
+
   self.TeamList:SetSize(
     300,
-    TEAM_LIST_HEIGHT
+    314
   )
 
   self.TeamDetail =
@@ -97,9 +111,9 @@ function TeamPanel:Create()
   self.TeamDetail:ClearAllPoints()
   self.TeamDetail:SetPoint(
     "TOPLEFT",
-    self.TeamList,
+    self.TeamListControls,
     "TOPRIGHT",
-    8,
+    10,
     0
   )
 

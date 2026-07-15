@@ -37,6 +37,7 @@ Models/Tag.lua
 Services/ProfileService.lua
 Services/PetService.lua
 Services/PetJournalService.lua
+Services/SearchService.lua
 Services/BattleSlotService.lua
 Services/TeamService.lua
 Services/FolderService.lua
@@ -63,6 +64,7 @@ UI/Host.lua
 UI/PetJournal/TeamList.lua
 UI/PetJournal/FolderDialog.lua
 UI/PetJournal/FolderTabs.lua
+UI/PetJournal/TeamListControls.lua
 UI/PetJournal/EditTeamDialog.lua
 UI/PetJournal/MoveTeamDialog.lua
 UI/PetJournal/TeamDetail.lua

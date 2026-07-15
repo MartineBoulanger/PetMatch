@@ -51,6 +51,24 @@ function TeamList:Create(parent)
     )
   end
 
+  if not self.FilterEventsRegistered then
+    self.FilterEventsRegistered = true
+
+    addon.EventBus:Register(
+      addon.Events.SEARCH_CHANGED,
+      function()
+        self:Refresh()
+      end
+    )
+
+    addon.EventBus:Register(
+      addon.Events.TEAM_SORT_CHANGED,
+      function()
+        self:Refresh()
+      end
+    )
+  end
+
   if not self.FolderEventRegistered then
     self.FolderEventRegistered = true
 
