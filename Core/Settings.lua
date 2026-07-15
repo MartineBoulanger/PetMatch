@@ -8,16 +8,44 @@ local DEFAULT_SETTINGS = {
   debug = false,
   showTooltips = true,
   animations = true,
+
+  ui = {
+    selectedFolderKey = "__ALL__",
+    selectedTeamID = nil,
+    teamSortMode = "name",
+    teamCardMode = "comfortable",
+  },
 }
+
+local function ApplyDefaults(defaults, target)
+  for key, defaultValue in pairs(defaults) do
+    if type(defaultValue) == "table" then
+      if type(target[key]) ~= "table" then
+        target[key] = {}
+      end
+
+      ApplyDefaults(defaultValue, target[key])
+    elseif target[key] == nil then
+      target[key] = defaultValue
+    end
+  end
+end
 
 function Settings:Initialize()
   local profile =
       addon.Profiles:GetCurrentProfile()
-  for key, value in pairs(DEFAULT_SETTINGS) do
-    if profile.settings[key] == nil then
-      profile.settings[key] = value
-    end
-  end
+
+  profile.settings =
+      profile.settings or {}
+
+  ApplyDefaults(
+    DEFAULT_SETTINGS,
+    profile.settings
+  )
+
+  addon.Logger:Info(
+    "Settings initialized"
+  )
 end
 
 function Settings:Get(key)
@@ -33,6 +61,32 @@ function Settings:Set(key, value)
   addon.EventBus:Fire(
     addon.Events.SETTINGS_CHANGED,
     key,
+    value
+  )
+end
+
+function Settings:GetUI(key)
+  local profile =
+      addon.Profiles:GetCurrentProfile()
+
+  profile.settings.ui =
+      profile.settings.ui or {}
+
+  return profile.settings.ui[key]
+end
+
+function Settings:SetUI(key, value)
+  local profile =
+      addon.Profiles:GetCurrentProfile()
+
+  profile.settings.ui =
+      profile.settings.ui or {}
+
+  profile.settings.ui[key] = value
+
+  addon.EventBus:Fire(
+    addon.Events.SETTINGS_CHANGED,
+    "ui." .. key,
     value
   )
 end

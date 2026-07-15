@@ -146,7 +146,9 @@ function TeamDetail:Create(parent)
     )
   end
 
-  self:SetTeam(nil)
+  self:SetTeam(
+    addon.Services.Team:GetSelected()
+  )
 
   return frame
 end

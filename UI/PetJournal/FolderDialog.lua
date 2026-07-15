@@ -139,7 +139,7 @@ function FolderDialog:ShowCreate()
   self.Folder = nil
 
   self.Title:SetText("Create Folder")
-  self.NameInput:SetText("")
+  self.NameInput:SetText("New Folder")
 
   frame:Show()
 

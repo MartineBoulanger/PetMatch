@@ -114,6 +114,28 @@ function TeamList:Refresh()
     )
   end
 
+  local selectedTeamID =
+      addon.Services.Team:GetSelectedID()
+
+  local selectedTeam = nil
+  local selectedCard = nil
+
+  for _, card in ipairs(
+    self.Frame.cards or {}
+  ) do
+    local isSelected =
+        selectedTeamID ~= nil
+        and card.Team
+        and card.Team.id == selectedTeamID
+
+    card:SetSelected(isSelected)
+
+    if isSelected then
+      selectedTeam = card.Team
+      selectedCard = card
+    end
+  end
+
   self.Frame.Content:SetWidth(275)
   self.Frame.Content:SetHeight(
     math.max(

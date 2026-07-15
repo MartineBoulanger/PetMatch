@@ -120,8 +120,14 @@ function FolderService:Delete(folderID)
 
   local profile = GetProfile()
 
-  if profile.selectedFolderKey == folderID then
-    profile.selectedFolderKey = self.ALL
+  -- if profile.selectedFolderKey == folderID then
+  --   profile.selectedFolderKey = self.ALL
+  -- end
+  if self:GetSelectedKey() == folderID then
+    addon.Settings:SetUI(
+      "selectedFolderKey",
+      self.UNSORTED
+    )
   end
 
   addon.EventBus:Fire(
@@ -141,8 +147,10 @@ function FolderService:Select(folderKey)
     return false
   end
 
-  local profile = GetProfile()
-  profile.selectedFolderKey = folderKey
+  addon.Settings:SetUI(
+    "selectedFolderKey",
+    folderKey
+  )
 
   addon.EventBus:Fire(
     addon.Events.FOLDER_SELECTED,
@@ -153,10 +161,22 @@ function FolderService:Select(folderKey)
 end
 
 function FolderService:GetSelectedKey()
-  local profile = GetProfile()
+  local selectedKey =
+      addon.Settings:GetUI(
+        "selectedFolderKey"
+      )
 
-  return profile.selectedFolderKey
-      or self.ALL
+  if selectedKey == self.ALL
+      or selectedKey == self.UNSORTED then
+    return selectedKey
+  end
+
+  if selectedKey
+      and self:Get(selectedKey) then
+    return selectedKey
+  end
+
+  return self.ALL
 end
 
 function FolderService:GetSortedFolders()

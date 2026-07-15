@@ -126,6 +126,11 @@ function TeamCard:Create(parent, team)
   end)
 
   frame:SetScript("OnClick", function(self)
+    addon.Settings:SetUI(
+      "selectedTeamID",
+      self.Team.id
+    )
+
     addon.EventBus:Fire(
       addon.Events.TEAM_SELECTED,
       self.Team,

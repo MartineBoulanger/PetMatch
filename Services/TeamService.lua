@@ -6,6 +6,35 @@ local function GetProfile()
   return addon.Profiles:GetCurrentProfile()
 end
 
+local function SortTeams(teams, sortMode)
+  table.sort(teams, function(left, right)
+    if sortMode == "modified" then
+      local leftModified =
+          left.modified or 0
+
+      local rightModified =
+          right.modified or 0
+
+      if leftModified ~= rightModified then
+        return leftModified > rightModified
+      end
+    elseif sortMode == "favorites" then
+      local leftFavorite =
+          left.favorite == true
+
+      local rightFavorite =
+          right.favorite == true
+
+      if leftFavorite ~= rightFavorite then
+        return leftFavorite
+      end
+    end
+
+    return string.lower(left.name or "")
+        < string.lower(right.name or "")
+  end)
+end
+
 function TeamService:GetTeams()
   local profile = GetProfile()
   if not profile
@@ -166,6 +195,19 @@ function TeamService:Delete(teamID)
 
   if profile.activeTeam == teamID then
     profile.activeTeam = nil
+  end
+
+  if self:GetSelectedID() == teamID then
+    addon.Settings:SetUI(
+      "selectedTeamID",
+      nil
+    )
+
+    addon.EventBus:Fire(
+      addon.Events.TEAM_SELECTED,
+      nil,
+      nil
+    )
   end
 
   addon.EventBus:Fire(
@@ -379,12 +421,98 @@ function TeamService:GetVisibleTeams(folderKey)
     end
   end
 
-  table.sort(result, function(left, right)
-    return string.lower(left.name or "")
-        < string.lower(right.name or "")
-  end)
+  SortTeams(
+    result,
+    addon.Settings:GetUI("teamSortMode")
+    or "name"
+  )
 
   return result
+end
+
+function TeamService:SelectForUI(teamID)
+  if teamID == nil then
+    addon.Settings:SetUI(
+      "selectedTeamID",
+      nil
+    )
+
+    addon.EventBus:Fire(
+      addon.Events.TEAM_SELECTED,
+      nil,
+      nil
+    )
+
+    return nil
+  end
+
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil
+  end
+
+  addon.Settings:SetUI(
+    "selectedTeamID",
+    teamID
+  )
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_SELECTED,
+    team,
+    nil
+  )
+
+  return team
+end
+
+function TeamService:GetSelectedID()
+  local teamID =
+      addon.Settings:GetUI(
+        "selectedTeamID"
+      )
+
+  if teamID and self:Get(teamID) then
+    return teamID
+  end
+
+  return nil
+end
+
+function TeamService:GetSelected()
+  local teamID = self:GetSelectedID()
+
+  return teamID and self:Get(teamID) or nil
+end
+
+function TeamService:SetSortMode(sortMode)
+  local validModes = {
+    name = true,
+    modified = true,
+    favorites = true,
+  }
+
+  if not validModes[sortMode] then
+    return false
+  end
+
+  addon.Settings:SetUI(
+    "teamSortMode",
+    sortMode
+  )
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    nil
+  )
+
+  return true
+end
+
+function TeamService:GetSortMode()
+  return addon.Settings:GetUI(
+    "teamSortMode"
+  ) or "name"
 end
 
 addon.Services.Team = TeamService
