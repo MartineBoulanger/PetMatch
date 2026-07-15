@@ -5,7 +5,7 @@ addon.UI.Components = addon.UI.Components or {}
 
 local TeamCard = {}
 
-local CARD_WIDTH = 280
+local CARD_WIDTH = 270
 local CARD_HEIGHT = 116
 local SLOT_SPACING = 8
 local SLOT_START_X = 10
@@ -21,6 +21,51 @@ local function ApplyVisualState(frame)
     frame:SetBackdropColor(0.04, 0.04, 0.04, 0.70)
     frame:SetBackdropBorderColor(0.35, 0.30, 0.20, 0.85)
   end
+end
+
+local function CreateActionButton(
+    parent,
+    texture,
+    tooltip,
+    onClick
+)
+  local button =
+      CreateFrame(
+        "Button",
+        nil,
+        parent
+      )
+
+  button:SetSize(18, 18)
+
+  button.Icon =
+      button:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  button.Icon:SetAllPoints()
+  button.Icon:SetTexture(texture)
+
+  button:SetScript("OnClick", function(self)
+    onClick(parent.Team)
+  end)
+
+  button:SetScript("OnEnter", function(self)
+    GameTooltip:SetOwner(
+      self,
+      "ANCHOR_RIGHT"
+    )
+
+    GameTooltip:SetText(tooltip)
+    GameTooltip:Show()
+  end)
+
+  button:SetScript("OnLeave", function()
+    GameTooltip:Hide()
+  end)
+
+  return button
 end
 
 function TeamCard:Create(parent, team)
@@ -79,8 +124,9 @@ function TeamCard:Create(parent, team)
   )
 
   frame.Title:SetWidth(
-    CARD_WIDTH - 48
+    CARD_WIDTH - 110
   )
+
 
   frame.Title:SetJustifyH("LEFT")
   frame.Title:SetWordWrap(false)
@@ -192,6 +238,65 @@ function TeamCard:Create(parent, team)
     end
   )
 
+  frame.EditButton =
+      CreateActionButton(
+        frame,
+        addon.UI.Theme.Icons.Edit,
+        "Edit Team",
+        function(team)
+          addon.UI.Views.EditTeamDialog:Show(team)
+        end
+      )
+
+  frame.EditButton:SetPoint(
+    "TOPRIGHT",
+    frame.FavoriteButton,
+    "TOPLEFT",
+    -3,
+    0
+  )
+
+  frame.MoveButton =
+      CreateActionButton(
+        frame,
+        addon.UI.Theme.Icons.Move,
+        "Move Team",
+        function(team)
+          addon.UI.Views.MoveTeamDialog:Show(team)
+        end
+      )
+
+  frame.MoveButton:SetPoint(
+    "RIGHT",
+    frame.EditButton,
+    "LEFT",
+    -3,
+    0
+  )
+
+  frame.DeleteButton =
+      CreateActionButton(
+        frame,
+        addon.UI.Theme.Icons.Delete,
+        "Delete Team",
+        function(team)
+          StaticPopup_Show(
+            "PETMATCH_DELETE_TEAM",
+            team.name,
+            nil,
+            team
+          )
+        end
+      )
+
+  frame.DeleteButton:SetPoint(
+    "RIGHT",
+    frame.MoveButton,
+    "LEFT",
+    -3,
+    0
+  )
+
   for slotIndex = 1, 3 do
     local petSlot = addon.UI.Components.PetSlot:Create(frame)
     local petSlotFrame = petSlot:GetFrame()
@@ -258,20 +363,46 @@ function TeamCard:Create(parent, team)
     ApplyVisualState(self)
   end)
 
-  frame:SetScript("OnClick", function(self)
+  frame:SetScript("OnClick", function(self, button)
     if self.WasDragged then
+      return
+    end
+
+    if button ~= "LeftButton" then
+      return
+    end
+
+    local team = self.Team
+
+    if not team then
+      return
+    end
+
+    local success, errorMessage =
+        addon.Services.Team:Load(team.id)
+
+    if not success then
+      addon.Logger:Warn(
+        errorMessage or "Unable to load team"
+      )
+
       return
     end
 
     addon.Settings:SetUI(
       "selectedTeamID",
-      self.Team.id
+      team.id
     )
 
     addon.EventBus:Fire(
       addon.Events.TEAM_SELECTED,
-      self.Team,
+      team,
       self
+    )
+
+    addon.Logger:Info(
+      "Loaded team:",
+      team.name
     )
   end)
 
@@ -280,5 +411,33 @@ function TeamCard:Create(parent, team)
 
   return frame
 end
+
+StaticPopupDialogs.PETMATCH_DELETE_TEAM = {
+  text = "Delete team \"%s\"?",
+  button1 = "Delete",
+  button2 = "Cancel",
+
+  OnAccept = function(_, team)
+    if not team then
+      return
+    end
+
+    local deleted =
+        addon.Services.Team:Delete(
+          team.id
+        )
+
+    if not deleted then
+      addon.Logger:Warn(
+        "Unable to delete team"
+      )
+    end
+  end,
+
+  timeout = 0,
+  whileDead = true,
+  hideOnEscape = true,
+  preferredIndex = 3,
+}
 
 addon.UI.Components.TeamCard = TeamCard

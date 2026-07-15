@@ -16,7 +16,7 @@ function TeamListControls:Create(parent)
       addon.UI.Components.Panel:Create(
         parent,
         {
-          width = 300,
+          width = 295,
           height = 70,
         }
       )
@@ -33,7 +33,7 @@ function TeamListControls:Create(parent)
       )
 
   self.SearchInput:SetSize(
-    278,
+    270,
     26
   )
 
@@ -41,8 +41,8 @@ function TeamListControls:Create(parent)
     "TOPLEFT",
     frame,
     "TOPLEFT",
-    10,
-    -8
+    15,
+    -10
   )
 
   self.SearchInput:SetAutoFocus(false)
@@ -122,7 +122,7 @@ function TeamListControls:Create(parent)
           frame,
           {
             text = SORT_LABELS[sortMode],
-            width = 88,
+            width = 90,
             height = 24,
 
             onClick = function()
@@ -147,7 +147,7 @@ function TeamListControls:Create(parent)
         frame,
         "BOTTOMLEFT",
         10,
-        7
+        10
       )
     end
 

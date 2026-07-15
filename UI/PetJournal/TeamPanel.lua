@@ -5,8 +5,8 @@ addon.UI.Views = addon.UI.Views or {}
 
 local TeamPanel = {}
 
-local PANEL_WIDTH = 750
-local PANEL_HEIGHT = 460
+local PANEL_WIDTH = 450
+local PANEL_HEIGHT = 604
 
 local TOOLBAR_HEIGHT = 40
 local CONTENT_TOP_OFFSET = -58
@@ -38,8 +38,8 @@ function TeamPanel:Create()
     "TOPLEFT",
     PetJournal,
     "TOPRIGHT",
-    6,
-    0
+    0,
+    -1
   )
 
   self.Frame = frame
@@ -96,25 +96,13 @@ function TeamPanel:Create()
     "TOPLEFT",
     self.TeamListControls,
     "BOTTOMLEFT",
-    0,
-    -6
+    -4,
+    -5
   )
 
   self.TeamList:SetSize(
-    300,
-    314
-  )
-
-  self.TeamDetail =
-      addon.UI.Views.TeamDetail:Create(frame)
-
-  self.TeamDetail:ClearAllPoints()
-  self.TeamDetail:SetPoint(
-    "TOPLEFT",
-    self.TeamListControls,
-    "TOPRIGHT",
-    10,
-    0
+    280,
+    455
   )
 
   frame:Hide()

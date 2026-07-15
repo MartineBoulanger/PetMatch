@@ -2,15 +2,15 @@ local addonName, addon = ...
 
 local TeamList = {}
 
-local CARD_SPACING = 8
-local CONTENT_PADDING = 8
+local CARD_SPACING = 5
+local CONTENT_PADDING = 5
 
 function TeamList:Create(parent)
   local frame =
       addon.UI.Components.ScrollBox:Create(
         parent,
         {
-          width = 300,
+          width = 250,
           height = 450,
         }
       )

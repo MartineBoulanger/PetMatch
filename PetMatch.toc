@@ -70,7 +70,6 @@ UI/PetJournal/FolderTabs.lua
 UI/PetJournal/TeamListControls.lua
 UI/PetJournal/EditTeamDialog.lua
 UI/PetJournal/MoveTeamDialog.lua
-UI/PetJournal/TeamDetail.lua
 UI/PetJournal/SaveTeamDialog.lua
 UI/PetJournal/Toolbar.lua
 UI/PetJournal/TeamPanel.lua

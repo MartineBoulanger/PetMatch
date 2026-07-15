@@ -15,7 +15,7 @@ function FolderTabs:Create(parent)
         parent,
         {
           width = 126,
-          height = 390,
+          height = 535,
         }
       )
 

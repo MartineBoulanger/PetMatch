@@ -40,7 +40,7 @@ function PetSlot:Create(parent)
 
   instance.Icon = frame:CreateTexture(nil, "ARTWORK")
   instance.Icon:SetSize(ICON_SIZE, ICON_SIZE)
-  instance.Icon:SetPoint("TOP", frame, "TOP", 0, -5)
+  instance.Icon:SetPoint("TOP", frame, "TOP", 0, -10)
   instance.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
   instance.EmptyIcon = frame:CreateTexture(nil, "ARTWORK")
@@ -75,7 +75,7 @@ function PetSlot:Create(parent)
     0,
     -4
   )
-  instance.Name:SetWidth(SLOT_WIDTH - 4)
+  instance.Name:SetWidth(SLOT_WIDTH - 6)
   instance.Name:SetJustifyH("CENTER")
   instance.Name:SetWordWrap(false)
 

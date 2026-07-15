@@ -4,6 +4,6 @@ addon.UI.Theme.Icons = {
   Favorite = "Interface\\COMMON\\FavoritesIcon",
   Folder = "Interface\\Buttons\\UI-PlusButton-Up",
   Delete = "Interface\\Buttons\\UI-GroupLoot-Pass-Up",
-  Edit = "...",
-  Search = "...",
+  Edit = "Interface\\Buttons\\UI-GuildButton-PublicNote-Up",
+  Move = "Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up",
 }
