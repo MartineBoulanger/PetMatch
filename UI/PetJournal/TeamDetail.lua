@@ -114,6 +114,27 @@ function TeamDetail:Create(parent)
     0
   )
 
+  self.MoveButton =
+      addon.UI.Components.Button:Create(
+        frame,
+        {
+          text = "Move",
+          width = 100,
+
+          onClick = function()
+            self:MoveSelectedTeam()
+          end,
+        }
+      )
+
+  self.MoveButton:SetPoint(
+    "BOTTOMLEFT",
+    self.LoadButton,
+    "TOPLEFT",
+    0,
+    6
+  )
+
   if not self.TeamSelectionRegistered then
     self.TeamSelectionRegistered = true
 
@@ -144,6 +165,8 @@ function TeamDetail:SetTeam(team)
 
     self.LoadButton:Disable()
     self.DeleteButton:Disable()
+    self.EditButton:Disable()
+    self.MoveButton:Disable()
 
     return
   end
@@ -162,6 +185,8 @@ function TeamDetail:SetTeam(team)
 
   self.LoadButton:Enable()
   self.DeleteButton:Enable()
+  self.EditButton:Enable()
+  self.MoveButton:Enable()
 end
 
 function TeamDetail:LoadSelectedTeam()
@@ -229,6 +254,19 @@ function TeamDetail:EditSelectedTeam()
     return
   end
   addon.UI.Views.EditTeamDialog:Show(
+    self.SelectedTeam
+  )
+end
+
+function TeamDetail:MoveSelectedTeam()
+  if not self.SelectedTeam then
+    addon.Logger:Warn(
+      "Select a team first"
+    )
+    return
+  end
+
+  addon.UI.Views.MoveTeamDialog:Show(
     self.SelectedTeam
   )
 end

@@ -65,63 +65,6 @@ commands.settings = function()
   )
 end
 
--- testing models teams
-commands.model = function()
-  local team =
-      addon.Models.Team:Create(
-        "Test Team"
-      )
-  Print(
-    "Created team:",
-    team.name,
-    team.id
-  )
-end
-
--- testing services teams
-commands.team = function()
-  local team =
-      addon.Services.Team:Create(
-        "Mijn eerste team"
-      )
-  addon.Services.Team:SetActive(
-    team.id
-  )
-  Print(
-    "Team created and selected:",
-    team.name,
-    team.id
-  )
-end
-
-commands.teams = function()
-  local teams = addon.Services.Team:GetTeams()
-  print(
-    "[PetMatch] Teams:"
-  )
-  for id, team in pairs(teams) do
-    print(
-      "-",
-      team.name
-    )
-  end
-end
-
-commands.activeteam = function()
-  local team =
-      addon.Services.Team:GetActive()
-  if team then
-    Print(
-      "Active:",
-      team.name
-    )
-  else
-    Print(
-      "No active team"
-    )
-  end
-end
-
 commands.pets = function()
   local pets =
       addon.Services.PetJournal:GetAll()
@@ -139,87 +82,6 @@ commands.pets = function()
     "Pets found:",
     count
   )
-end
-
-commands.teaminfo = function()
-  local team = addon.Services.Team:GetActive()
-  if not team then
-    Print(
-      "No active team"
-    )
-    return
-  end
-  Print(
-    "Team:",
-    team.name
-  )
-  for slot = 1, 3 do
-    local guid =
-        team.pets[slot]
-    if guid then
-      local pet =
-          addon.Services.PetJournal:GetPet(
-            guid
-          )
-      if pet then
-        Print(
-          slot,
-          pet.name
-        )
-      end
-    else
-      Print(
-        slot,
-        "Empty"
-      )
-    end
-  end
-end
-
-commands.select = function(id)
-  local success =
-      addon.Services.Team:SetActive(
-        id
-      )
-  if success then
-    Print(
-      "Team selected"
-    )
-  else
-    Print(
-      "Team not found"
-    )
-  end
-end
-
-commands.addpet = function(
-    slot,
-    guid
-)
-  local team =
-      addon.Services.Team:GetActive()
-  if not team then
-    Print(
-      "No active team"
-    )
-    return
-  end
-  local success =
-      addon.Services.Team:AddPet(
-        team.id,
-        tonumber(slot),
-        guid
-      )
-  if success then
-    Print(
-      "Pet added to slot",
-      slot
-    )
-  else
-    Print(
-      "Could not add pet"
-    )
-  end
 end
 
 commands.listpets = function()
@@ -244,89 +106,85 @@ commands.slots = function()
   addon.Services.BattleSlot:Debug()
 end
 
-commands.savecurrent = function(name)
-  if not name then
-    Print(
-      "Usage: /pm savecurrent TeamName"
-    )
-    return
-  end
-  local team =
-      addon.Services.Team:CreateFromBattleSlots(
-        name
-      )
-  if team then
-    Print(
-      "Saved team:",
+-- testing models teams
+commands.teams = function()
+  local teams = addon.Services.Team:GetTeams()
+  print(
+    "[PetMatch] Teams:"
+  )
+  for id, team in pairs(teams) do
+    print(
+      "-",
       team.name
     )
-  else
-    Print(
-      "Failed saving team"
-    )
   end
 end
 
-commands.testui = function()
-  if not addon.Initialized then
-    print(
-      "[PetMatch] Not initialized yet"
-    )
+commands.team = function()
+  local team =
+      addon.Services.Team:Create(
+        "Mijn eerste team"
+      )
+  addon.Services.Team:SetActive(
+    team.id
+  )
+  Print(
+    "Team created and selected:",
+    team.name,
+    team.id
+  )
+end
+
+-- testing folders
+commands.createfolder = function(...)
+  local name = table.concat({ ... }, " ")
+
+  local folder, errorMessage =
+      addon.Services.Folder:Create(name)
+
+  if not folder then
+    Print(errorMessage or "Unable to create folder")
     return
   end
 
-  local frame =
-      CreateFrame(
-        "Frame",
-        "PetMatchTeamListTest",
-        UIParent
-      )
-
-  frame:SetSize(
-    400,
-    500
-  )
-
-  frame:SetPoint(
-    "CENTER"
-  )
-
-  local list =
-      addon.UI.Components.TeamList:Create(
-        frame
-      )
-
-  list:SetPoint(
-    "CENTER"
+  Print(
+    "Created folder:",
+    folder.name,
+    folder.id
   )
 end
 
-commands.testpetslot = function()
-  local frame = CreateFrame(
-    "Frame",
-    "PetMatchPetSlotTest",
-    UIParent,
-    "BackdropTemplate"
+commands.folders = function()
+  local folders =
+      addon.Services.Folder:GetSortedFolders()
+
+  Print("Folders:")
+
+  for _, folder in ipairs(folders) do
+    Print(
+      "-",
+      folder.name,
+      folder.id
+    )
+  end
+end
+
+commands.moveteam = function(teamID, folderID)
+  local team, errorMessage =
+      addon.Services.Team:MoveToFolder(
+        teamID,
+        folderID
+      )
+
+  if not team then
+    Print(errorMessage or "Unable to move team")
+    return
+  end
+
+  Print(
+    "Moved team:",
+    team.name
   )
-
-  frame:SetSize(120, 120)
-  frame:SetPoint("CENTER")
-  frame:SetBackdrop({
-    bgFile = "Interface/Buttons/WHITE8X8",
-    edgeFile = "Interface/Buttons/WHITE8X8",
-    edgeSize = 1,
-  })
-  frame:SetBackdropColor(0, 0, 0, 0.85)
-
-  local slot = addon.UI.Components.PetSlot:Create(frame)
-  slot:GetFrame():SetPoint("CENTER")
-
-  local battlePetGUID =
-      addon.Services.BattleSlot:GetSlot(1)
-
-  slot:SetPet(battlePetGUID)
-
-  frame:Show()
 end
 
 function Slash:Initialize()
@@ -352,7 +210,7 @@ function Slash:Initialize()
     else
       Print(
         "Commands:",
-        "version, modules, database, debug, team, teams, select, activeteam, teaminfo"
+        "version, modules, database, debug, settings, pets, listpets, slots"
       )
     end
   end

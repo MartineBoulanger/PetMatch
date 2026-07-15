@@ -316,4 +316,75 @@ function TeamService:Edit(teamID, name, replacePets)
   return team
 end
 
+function TeamService:MoveToFolder(teamID, folderID)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  if folderID
+      and not addon.Services.Folder:Get(folderID) then
+    return nil, "Folder not found"
+  end
+
+  team.folderID = folderID
+  team.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  return team
+end
+
+function TeamService:GetTeamsInFolder(folderID)
+  local result = {}
+
+  for _, team in pairs(self:GetTeams()) do
+    if team.folderID == folderID then
+      table.insert(result, team)
+    end
+  end
+
+  table.sort(result, function(left, right)
+    return string.lower(left.name or "")
+        < string.lower(right.name or "")
+  end)
+
+  return result
+end
+
+function TeamService:GetVisibleTeams(folderKey)
+  folderKey =
+      folderKey
+      or addon.Services.Folder.ALL
+
+  local result = {}
+
+  for _, team in pairs(self:GetTeams()) do
+    local isVisible = false
+
+    if folderKey == addon.Services.Folder.ALL then
+      isVisible = true
+    elseif folderKey == addon.Services.Folder.UNSORTED then
+      isVisible = team.folderID == nil
+    else
+      isVisible = team.folderID == folderKey
+    end
+
+    if isVisible then
+      table.insert(result, team)
+    end
+  end
+
+  table.sort(result, function(left, right)
+    return string.lower(left.name or "")
+        < string.lower(right.name or "")
+  end)
+
+  return result
+end
+
 addon.Services.Team = TeamService

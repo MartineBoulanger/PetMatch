@@ -6,6 +6,7 @@ function TeamList:Create(parent)
   local frame = addon.UI.Components.ScrollBox:Create(parent, { width = 300, height = 450 })
   frame.cards = {}
   self.Frame = frame
+
   if not self.SelectionListenerRegistered then
     self.SelectionListenerRegistered = true
 
@@ -26,6 +27,7 @@ function TeamList:Create(parent)
       end
     )
   end
+
   if not self.TeamEventsRegistered then
     self.TeamEventsRegistered = true
 
@@ -48,6 +50,18 @@ function TeamList:Create(parent)
       RefreshList
     )
   end
+
+  if not self.FolderEventRegistered then
+    self.FolderEventRegistered = true
+
+    addon.EventBus:Register(
+      addon.Events.FOLDER_SELECTED,
+      function()
+        self:Refresh()
+      end
+    )
+  end
+
   addon.EventBus:Fire(
     "TEAM_SELECTED",
     frame.team
@@ -68,7 +82,13 @@ function TeamList:Refresh()
   end
 
   wipe(self.Frame.cards)
-  local teams = addon.Services.Team:GetAllTeams()
+  local selectedFolderKey =
+      addon.Services.Folder:GetSelectedKey()
+
+  local teams =
+      addon.Services.Team:GetVisibleTeams(
+        selectedFolderKey
+      )
   local cardCount = 0
 
   for _, team in pairs(teams) do

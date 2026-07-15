@@ -5,7 +5,7 @@ addon.UI.Views = addon.UI.Views or {}
 
 local TeamPanel = {}
 
-local PANEL_WIDTH = 620
+local PANEL_WIDTH = 750
 local PANEL_HEIGHT = 460
 
 local TOOLBAR_HEIGHT = 40
@@ -62,12 +62,11 @@ function TeamPanel:Create()
     TOOLBAR_HEIGHT
   )
 
-  -- Team list, links
-  self.TeamList =
-      addon.UI.Views.TeamList:Create(frame)
+  self.FolderTabs =
+      addon.UI.Views.FolderTabs:Create(frame)
 
-  self.TeamList:ClearAllPoints()
-  self.TeamList:SetPoint(
+  self.FolderTabs:ClearAllPoints()
+  self.FolderTabs:SetPoint(
     "TOPLEFT",
     frame,
     "TOPLEFT",
@@ -75,12 +74,23 @@ function TeamPanel:Create()
     CONTENT_TOP_OFFSET
   )
 
+  self.TeamList =
+      addon.UI.Views.TeamList:Create(frame)
+
+  self.TeamList:ClearAllPoints()
+  self.TeamList:SetPoint(
+    "TOPLEFT",
+    self.FolderTabs,
+    "TOPRIGHT",
+    8,
+    0
+  )
+
   self.TeamList:SetSize(
-    TEAM_LIST_WIDTH,
+    300,
     TEAM_LIST_HEIGHT
   )
 
-  -- Team details, rechts
   self.TeamDetail =
       addon.UI.Views.TeamDetail:Create(frame)
 
@@ -89,13 +99,8 @@ function TeamPanel:Create()
     "TOPLEFT",
     self.TeamList,
     "TOPRIGHT",
-    10,
+    8,
     0
-  )
-
-  self.TeamDetail:SetSize(
-    DETAIL_WIDTH,
-    DETAIL_HEIGHT
   )
 
   frame:Hide()
