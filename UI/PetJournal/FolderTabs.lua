@@ -160,6 +160,20 @@ function FolderTabs:CreateTab(label, folderKey, index)
 
   button.FolderKey = folderKey
 
+  local acceptsTeams =
+      folderKey == addon.Services.Folder.UNSORTED
+      or (
+        folderKey ~= addon.Services.Folder.ALL
+        and folderKey ~= addon.Services.Folder.FAVORITES
+      )
+
+  if acceptsTeams then
+    addon.UI.DragDrop:RegisterFolderTarget(
+      button,
+      folderKey
+    )
+  end
+
   table.insert(
     self.Buttons,
     button
@@ -172,6 +186,8 @@ function FolderTabs:Refresh()
   if not self.Frame then
     return
   end
+
+  addon.UI.DragDrop:ClearFolderTargets()
 
   self:ClearButtons()
 

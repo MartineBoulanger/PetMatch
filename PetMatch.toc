@@ -52,9 +52,11 @@ UI/Theme/Icons.lua
 UI/Base/Component.lua
 UI/Base/Frame.lua
 
+
 UI/Components/Panel.lua
 UI/Components/Label.lua
 UI/Components/Button.lua
+UI/Components/DragDrop.lua
 UI/Components/ScrollBox.lua
 UI/Components/PetSlot.lua
 UI/Components/TeamCard.lua

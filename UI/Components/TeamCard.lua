@@ -34,6 +34,22 @@ function TeamCard:Create(parent, team)
     "BackdropTemplate"
   )
 
+  frame:RegisterForDrag("LeftButton")
+  frame:SetScript("OnDragStart", function(self)
+    self.WasDragged = true
+    addon.UI.DragDrop:StartTeam(
+      self.Team,
+      self
+    )
+  end)
+
+  frame:SetScript("OnDragStop", function(self)
+    addon.UI.DragDrop:StopTeam()
+    C_Timer.After(0, function()
+      self.WasDragged = false
+    end)
+  end)
+
   frame:SetSize(CARD_WIDTH, CARD_HEIGHT)
 
   frame:SetBackdrop({
@@ -243,6 +259,10 @@ function TeamCard:Create(parent, team)
   end)
 
   frame:SetScript("OnClick", function(self)
+    if self.WasDragged then
+      return
+    end
+
     addon.Settings:SetUI(
       "selectedTeamID",
       self.Team.id
