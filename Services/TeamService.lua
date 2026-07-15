@@ -412,6 +412,10 @@ function TeamService:GetVisibleTeams(folderKey)
         == addon.Services.Folder.ALL then
       matchesFolder = true
     elseif folderKey
+        == addon.Services.Folder.FAVORITES then
+      matchesFolder =
+          team.favorite == true
+    elseif folderKey
         == addon.Services.Folder.UNSORTED then
       matchesFolder =
           team.folderID == nil
@@ -521,6 +525,49 @@ function TeamService:GetSortMode()
   return addon.Settings:GetUI(
     "teamSortMode"
   ) or "name"
+end
+
+function TeamService:SetFavorite(teamID, favorite)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  favorite = favorite == true
+
+  if team.favorite == favorite then
+    return team
+  end
+
+  team.favorite = favorite
+  team.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_FAVORITE_CHANGED,
+    team,
+    favorite
+  )
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  return team
+end
+
+function TeamService:ToggleFavorite(teamID)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  return self:SetFavorite(
+    teamID,
+    not team.favorite
+  )
 end
 
 addon.Services.Team = TeamService

@@ -53,6 +53,7 @@ function TeamCard:Create(parent, team)
     "GameFontNormal"
   )
 
+  frame.Title:ClearAllPoints()
   frame.Title:SetPoint(
     "TOPLEFT",
     frame,
@@ -61,16 +62,119 @@ function TeamCard:Create(parent, team)
     -9
   )
 
-  frame.Title:SetPoint(
-    "TOPRIGHT",
-    frame,
-    "TOPRIGHT",
-    -10,
-    -9
+  frame.Title:SetWidth(
+    CARD_WIDTH - 48
   )
 
   frame.Title:SetJustifyH("LEFT")
   frame.Title:SetWordWrap(false)
+
+  frame.FavoriteButton =
+      CreateFrame(
+        "Button",
+        nil,
+        frame
+      )
+
+  frame.FavoriteButton:SetSize(
+    24,
+    24
+  )
+
+  frame.FavoriteButton:SetPoint(
+    "TOPRIGHT",
+    frame,
+    "TOPRIGHT",
+    -2,
+    -5
+  )
+
+  frame.FavoriteButton.Icon =
+      frame.FavoriteButton:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  frame.FavoriteButton.Icon:SetSize(
+    30,
+    30
+  )
+
+  frame.FavoriteButton.Icon:SetPoint(
+    "CENTER"
+  )
+
+  frame.FavoriteButton.Icon:SetTexture(
+    addon.UI.Theme.Icons.Favorite
+  )
+
+  frame.FavoriteButton.Text =
+      frame.FavoriteButton:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontNormalLarge"
+      )
+
+  frame.FavoriteButton.Text:SetPoint(
+    "CENTER"
+  )
+
+  frame.FavoriteButton:SetScript(
+    "OnClick",
+    function()
+      local team = frame.Team
+
+      if not team then
+        return
+      end
+
+      local updatedTeam, errorMessage =
+          addon.Services.Team:ToggleFavorite(
+            team.id
+          )
+
+      if not updatedTeam then
+        addon.Logger:Warn(
+          errorMessage
+          or "Unable to update favorite"
+        )
+
+        return
+      end
+
+      frame:SetTeam(updatedTeam)
+    end
+  )
+
+  frame.FavoriteButton:SetScript(
+    "OnEnter",
+    function(button)
+      GameTooltip:SetOwner(
+        button,
+        "ANCHOR_RIGHT"
+      )
+
+      if frame.Team
+          and frame.Team.favorite then
+        GameTooltip:SetText(
+          "Remove from Favorites"
+        )
+      else
+        GameTooltip:SetText(
+          "Add to Favorites"
+        )
+      end
+
+      GameTooltip:Show()
+    end
+  )
+
+  frame.FavoriteButton:SetScript(
+    "OnLeave",
+    function()
+      GameTooltip:Hide()
+    end
+  )
 
   for slotIndex = 1, 3 do
     local petSlot = addon.UI.Components.PetSlot:Create(frame)
@@ -92,14 +196,27 @@ function TeamCard:Create(parent, team)
   function frame:SetTeam(newTeam)
     self.Team = newTeam
 
-    local prefix =
-        newTeam.favorite
-        and "★ "
-        or ""
-
     self.Title:SetText(
-      prefix .. (newTeam.name or "Unnamed Team")
+      newTeam.name or "Unnamed Team"
     )
+
+    if newTeam.favorite then
+      self.FavoriteButton.Icon:SetDesaturated(false)
+      self.FavoriteButton.Icon:SetVertexColor(
+        1,
+        0.82,
+        0
+      )
+      self.FavoriteButton.Icon:SetAlpha(1)
+    else
+      self.FavoriteButton.Icon:SetDesaturated(true)
+      self.FavoriteButton.Icon:SetVertexColor(
+        0.7,
+        0.7,
+        0.7
+      )
+      self.FavoriteButton.Icon:SetAlpha(0.45)
+    end
 
     for slotIndex = 1, 3 do
       self.PetSlots[slotIndex]:SetPet(

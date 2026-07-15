@@ -69,6 +69,17 @@ function TeamList:Create(parent)
     )
   end
 
+  if not self.FavoriteEventRegistered then
+    self.FavoriteEventRegistered = true
+
+    addon.EventBus:Register(
+      addon.Events.TEAM_FAVORITE_CHANGED,
+      function()
+        self:Refresh()
+      end
+    )
+  end
+
   if not self.FolderEventRegistered then
     self.FolderEventRegistered = true
 

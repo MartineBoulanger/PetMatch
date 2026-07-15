@@ -38,6 +38,27 @@ function TeamDetail:Create(parent)
     -12
   )
 
+  self.FavoriteButton =
+      addon.UI.Components.Button:Create(
+        frame,
+        {
+          text = "Add Favorite",
+          width = 110,
+
+          onClick = function()
+            self:ToggleSelectedFavorite()
+          end,
+        }
+      )
+
+  self.FavoriteButton:SetPoint(
+    "TOPRIGHT",
+    frame,
+    "TOPRIGHT",
+    -12,
+    -10
+  )
+
   for slot = 1, 3 do
     local petSlot =
         addon.UI.Components.PetSlot:Create(frame)
@@ -146,6 +167,21 @@ function TeamDetail:Create(parent)
     )
   end
 
+  if not self.FavoriteEventRegistered then
+    self.FavoriteEventRegistered = true
+
+    addon.EventBus:Register(
+      addon.Events.TEAM_FAVORITE_CHANGED,
+      function(team)
+        if self.SelectedTeam
+            and team
+            and self.SelectedTeam.id == team.id then
+          self:SetTeam(team)
+        end
+      end
+    )
+  end
+
   self:SetTeam(
     addon.Services.Team:GetSelected()
   )
@@ -169,6 +205,7 @@ function TeamDetail:SetTeam(team)
     self.DeleteButton:Disable()
     self.EditButton:Disable()
     self.MoveButton:Disable()
+    self.FavoriteButton:Disable()
 
     return
   end
@@ -185,10 +222,21 @@ function TeamDetail:SetTeam(team)
     )
   end
 
+  if team.favorite then
+    self.FavoriteButton:SetText(
+      "Remove Favorite"
+    )
+  else
+    self.FavoriteButton:SetText(
+      "Add Favorite"
+    )
+  end
+
   self.LoadButton:Enable()
   self.DeleteButton:Enable()
   self.EditButton:Enable()
   self.MoveButton:Enable()
+  self.FavoriteButton:Enable()
 end
 
 function TeamDetail:LoadSelectedTeam()
@@ -245,7 +293,11 @@ function TeamDetail:DeleteSelectedTeam()
     team.name
   )
 
-  self:SetTeam(nil)
+  self.FavoriteButton:SetText(
+    "Add Favorite"
+  )
+
+  self.FavoriteButton:Disable()
 end
 
 function TeamDetail:EditSelectedTeam()
@@ -271,6 +323,34 @@ function TeamDetail:MoveSelectedTeam()
   addon.UI.Views.MoveTeamDialog:Show(
     self.SelectedTeam
   )
+end
+
+function TeamDetail:ToggleSelectedFavorite()
+  local team = self.SelectedTeam
+
+  if not team then
+    addon.Logger:Warn(
+      "Select a team first"
+    )
+
+    return
+  end
+
+  local updatedTeam, errorMessage =
+      addon.Services.Team:ToggleFavorite(
+        team.id
+      )
+
+  if not updatedTeam then
+    addon.Logger:Warn(
+      errorMessage
+      or "Unable to update favorite"
+    )
+
+    return
+  end
+
+  self:SetTeam(updatedTeam)
 end
 
 addon.UI.Views.TeamDetail = TeamDetail

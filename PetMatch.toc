@@ -47,6 +47,7 @@ Core/Blizzard.lua
 UI/Theme/Colors.lua
 UI/Theme/Fonts.lua
 UI/Theme/Sizes.lua
+UI/Theme/Icons.lua
 
 UI/Base/Component.lua
 UI/Base/Frame.lua

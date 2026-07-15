@@ -3,6 +3,7 @@ local addonName, addon = ...
 local FolderService = {}
 FolderService.ALL = "__ALL__"
 FolderService.UNSORTED = "__UNSORTED__"
+FolderService.FAVORITES = "__FAVORITES__"
 
 local function GetProfile()
   return addon.Profiles:GetCurrentProfile()
@@ -141,8 +142,12 @@ end
 function FolderService:Select(folderKey)
   folderKey = folderKey or self.ALL
 
-  if folderKey ~= self.ALL
-      and folderKey ~= self.UNSORTED
+  local isVirtualFolder =
+      folderKey == self.ALL
+      or folderKey == self.UNSORTED
+      or folderKey == self.FAVORITES
+
+  if not isVirtualFolder
       and not self:Get(folderKey) then
     return false
   end
@@ -167,7 +172,8 @@ function FolderService:GetSelectedKey()
       )
 
   if selectedKey == self.ALL
-      or selectedKey == self.UNSORTED then
+      or selectedKey == self.UNSORTED
+      or selectedKey == self.FAVORITES then
     return selectedKey
   end
 

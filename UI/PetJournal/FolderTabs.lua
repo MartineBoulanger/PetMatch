@@ -186,6 +186,14 @@ function FolderTabs:Refresh()
   index = index + 1
 
   self:CreateTab(
+    "Favorites",
+    addon.Services.Folder.FAVORITES,
+    index
+  )
+
+  index = index + 1
+
+  self:CreateTab(
     "Unsorted",
     addon.Services.Folder.UNSORTED,
     index
@@ -222,6 +230,7 @@ function FolderTabs:Refresh()
   local customFolderSelected =
       selectedKey ~= addon.Services.Folder.ALL
       and selectedKey ~= addon.Services.Folder.UNSORTED
+      and selectedKey ~= addon.Services.Folder.FAVORITES
 
   if customFolderSelected then
     self.RenameButton:Enable()
@@ -276,7 +285,8 @@ function FolderTabs:GetSelectedFolder()
       addon.Services.Folder:GetSelectedKey()
 
   if selectedKey == addon.Services.Folder.ALL
-      or selectedKey == addon.Services.Folder.UNSORTED then
+      or selectedKey == addon.Services.Folder.UNSORTED
+      or selectedKey == addon.Services.Folder.FAVORITES then
     return nil
   end
 
