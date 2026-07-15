@@ -218,34 +218,52 @@ function TeamService:Delete(teamID)
   return true
 end
 
-function TeamService:CreateFromBattleSlots(name)
+function TeamService:CreateFromBattleSlots(name, folderID)
   name = addon.Utils:Trim(name or "")
+
   if name == "" then
     return nil, "Enter a team name"
   end
-  local slots = addon.Services.BattleSlot:GetCurrentSlots()
+
+  if folderID
+      and not addon.Services.Folder:Get(folderID) then
+    return nil, "Folder not found"
+  end
+
+  local slots =
+      addon.Services.BattleSlot:GetCurrentSlots()
+
   local hasPet = false
+
   for slot = 1, 3 do
     if slots[slot] then
       hasPet = true
       break
     end
   end
+
   if not hasPet then
     return nil, "The current Battle Pet Slots are empty"
   end
+
   local team = self:Create(name)
+
   if not team then
     return nil, "Unable to create team"
   end
+
   for slot = 1, 3 do
     team.pets[slot] = slots[slot]
   end
+
+  team.folderID = folderID
   team.modified = time()
+
   addon.EventBus:Fire(
     addon.Events.TEAM_UPDATED,
     team
   )
+
   return team
 end
 

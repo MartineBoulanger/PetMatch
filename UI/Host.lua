@@ -18,8 +18,16 @@ function Host:Update()
 
   if PetJournal:IsVisible() then
     addon.UI.Manager:Show()
+
+    if addon.UI.Views.SaveTeamButton then
+      addon.UI.Views.SaveTeamButton:Show()
+    end
   else
     addon.UI.Manager:Hide()
+
+    if addon.UI.Views.SaveTeamButton then
+      addon.UI.Views.SaveTeamButton:Hide()
+    end
   end
 end
 

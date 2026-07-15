@@ -167,9 +167,13 @@ function SaveTeamDialog:Save()
         self.NameInput:GetText() or ""
       )
 
+  local folderID =
+      addon.Services.Folder:GetSelectedStorageFolderID()
+
   local team, errorMessage =
       addon.Services.Team:CreateFromBattleSlots(
-        name
+        name,
+        folderID
       )
 
   if not team then
@@ -187,9 +191,22 @@ function SaveTeamDialog:Save()
     team.id
   )
 
+  local destinationName = "Unsorted"
+
+  if folderID then
+    local folder =
+        addon.Services.Folder:Get(folderID)
+
+    if folder then
+      destinationName = folder.name
+    end
+  end
+
   addon.Logger:Info(
     "Saved team:",
-    team.name
+    team.name,
+    "in",
+    destinationName
   )
 
   self:Hide()

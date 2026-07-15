@@ -7,15 +7,9 @@ local TeamPanel = {}
 
 local PANEL_WIDTH = 450
 local PANEL_HEIGHT = 604
-
-local TOOLBAR_HEIGHT = 40
-local CONTENT_TOP_OFFSET = -58
-
-local TEAM_LIST_WIDTH = 300
-local TEAM_LIST_HEIGHT = 390
-
-local DETAIL_WIDTH = 280
-local DETAIL_HEIGHT = 210
+local PANEL_PADDING = 8
+local HEADER_HEIGHT = 28
+local CONTENT_GAP = 5
 
 function TeamPanel:Create()
   if self.Frame then
@@ -44,22 +38,25 @@ function TeamPanel:Create()
 
   self.Frame = frame
 
-  -- Toolbar
-  self.Toolbar =
-      addon.UI.Views.Toolbar:Create(frame)
+  self.Title =
+      addon.UI.Components.Label:Create(
+        frame,
+        {
+          text = addon.Name or "PetMatch",
+          font = addon.UI.Theme.Fonts.Header,
+          width = PANEL_WIDTH - (PANEL_PADDING * 2),
+          justify = "LEFT",
+        }
+      )
 
-  self.Toolbar:ClearAllPoints()
-  self.Toolbar:SetPoint(
-    "TOPLEFT",
+  self.Title:ClearAllPoints()
+
+  self.Title:SetPoint(
+    "TOP",
     frame,
-    "TOPLEFT",
-    10,
-    -10
-  )
-
-  self.Toolbar:SetSize(
-    PANEL_WIDTH - 20,
-    TOOLBAR_HEIGHT
+    "TOP",
+    0,
+    -PANEL_PADDING
   )
 
   self.FolderTabs =
@@ -70,8 +67,15 @@ function TeamPanel:Create()
     "TOPLEFT",
     frame,
     "TOPLEFT",
-    10,
-    CONTENT_TOP_OFFSET
+    PANEL_PADDING,
+    -(HEADER_HEIGHT + CONTENT_GAP)
+  )
+
+  self.FolderTabs:SetHeight(
+    PANEL_HEIGHT
+    - HEADER_HEIGHT
+    - CONTENT_GAP
+    - PANEL_PADDING
   )
 
   self.TeamListControls =
@@ -84,7 +88,7 @@ function TeamPanel:Create()
     "TOPLEFT",
     self.FolderTabs,
     "TOPRIGHT",
-    8,
+    CONTENT_GAP,
     0
   )
 
@@ -96,13 +100,25 @@ function TeamPanel:Create()
     "TOPLEFT",
     self.TeamListControls,
     "BOTTOMLEFT",
-    -4,
-    -5
+    -CONTENT_GAP,
+    -CONTENT_GAP
   )
 
   self.TeamList:SetSize(
     280,
     455
+  )
+
+  local availableListHeight =
+      PANEL_HEIGHT
+      - HEADER_HEIGHT
+      - CONTENT_GAP
+      - self.TeamListControls:GetHeight()
+      - CONTENT_GAP
+      - PANEL_PADDING
+
+  self.TeamList:SetHeight(
+    availableListHeight
   )
 
   frame:Hide()

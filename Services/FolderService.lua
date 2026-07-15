@@ -207,4 +207,20 @@ function FolderService:GetSortedFolders()
   return result
 end
 
+function FolderService:GetSelectedStorageFolderID()
+  local selectedKey = self:GetSelectedKey()
+
+  if selectedKey == self.ALL
+      or selectedKey == self.FAVORITES
+      or selectedKey == self.UNSORTED then
+    return nil
+  end
+
+  if self:Get(selectedKey) then
+    return selectedKey
+  end
+
+  return nil
+end
+
 addon.Services.Folder = FolderService
