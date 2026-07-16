@@ -13,11 +13,9 @@ function SaveTeamDialog:Create()
     return self.Frame
   end
 
-  local parent = PetJournal or UIParent
-
   local frame =
       addon.UI.Components.Panel:Create(
-        parent,
+        UIParent,
         {
           width = DIALOG_WIDTH,
           height = DIALOG_HEIGHT,
@@ -30,7 +28,7 @@ function SaveTeamDialog:Create()
   frame:ClearAllPoints()
   frame:SetPoint(
     "CENTER",
-    parent,
+    UIParent,
     "CENTER",
     0,
     0
@@ -45,7 +43,8 @@ function SaveTeamDialog:Create()
           text = "Save Current Team",
           font = addon.UI.Theme.Fonts.Header,
           width = DIALOG_WIDTH - 24,
-          justify = "LEFT",
+          justify = "CENTER",
+          color = addon.UI.Theme.Colors.Header
         }
       )
 
@@ -54,6 +53,24 @@ function SaveTeamDialog:Create()
     frame,
     "TOPLEFT",
     12,
+    -12
+  )
+
+  self.NameLabel =
+      addon.UI.Components.Label:Create(
+        frame,
+        {
+          text = "Team name",
+          width = DIALOG_WIDTH - 24,
+          justify = "LEFT",
+        }
+      )
+
+  self.NameLabel:SetPoint(
+    "TOPLEFT",
+    self.Title,
+    "BOTTOMLEFT",
+    0,
     -12
   )
 
@@ -72,10 +89,10 @@ function SaveTeamDialog:Create()
 
   self.NameInput:SetPoint(
     "TOPLEFT",
-    self.Title,
+    self.NameLabel,
     "BOTTOMLEFT",
     4,
-    -14
+    -4
   )
 
   self.NameInput:SetAutoFocus(false)

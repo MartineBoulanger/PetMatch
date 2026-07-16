@@ -6,8 +6,8 @@ addon.UI.Views = addon.UI.Views or {}
 local FolderTabs = {}
 
 local TAB_WIDTH = 112
-local TAB_HEIGHT = 28
-local TAB_SPACING = 4
+local TAB_HEIGHT = 26
+local TAB_SPACING = 2
 
 function FolderTabs:Create(parent)
   local frame =
@@ -27,7 +27,7 @@ function FolderTabs:Create(parent)
         frame,
         {
           text = "New",
-          width = 54,
+          width = 48,
           height = 24,
 
           onClick = function()
@@ -49,7 +49,7 @@ function FolderTabs:Create(parent)
         frame,
         {
           text = "Rename",
-          width = 54,
+          width = 60,
           height = 24,
 
           onClick = function()

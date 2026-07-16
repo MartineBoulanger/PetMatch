@@ -13,11 +13,9 @@ function FolderDialog:Create()
     return self.Frame
   end
 
-  local parent = PetJournal or UIParent
-
   local frame =
       addon.UI.Components.Panel:Create(
-        parent,
+        UIParent,
         {
           width = WIDTH,
           height = HEIGHT,
@@ -26,7 +24,7 @@ function FolderDialog:Create()
 
   frame:SetFrameStrata("DIALOG")
   frame:SetClampedToScreen(true)
-  frame:SetPoint("CENTER", parent, "CENTER")
+  frame:SetPoint("CENTER", UIParent, "CENTER")
 
   self.Frame = frame
   self.Mode = "create"
@@ -39,7 +37,8 @@ function FolderDialog:Create()
           text = "Create Folder",
           font = addon.UI.Theme.Fonts.Header,
           width = WIDTH - 24,
-          justify = "LEFT",
+          justify = "CENTER",
+          color = addon.UI.Theme.Colors.Header
         }
       )
 
@@ -48,6 +47,24 @@ function FolderDialog:Create()
     frame,
     "TOPLEFT",
     12,
+    -12
+  )
+
+  self.NameLabel =
+      addon.UI.Components.Label:Create(
+        frame,
+        {
+          text = "Folder name",
+          width = WIDTH - 24,
+          justify = "LEFT",
+        }
+      )
+
+  self.NameLabel:SetPoint(
+    "TOPLEFT",
+    self.Title,
+    "BOTTOMLEFT",
+    0,
     -12
   )
 
@@ -62,10 +79,10 @@ function FolderDialog:Create()
   self.NameInput:SetSize(WIDTH - 32, 28)
   self.NameInput:SetPoint(
     "TOPLEFT",
-    self.Title,
+    self.NameLabel,
     "BOTTOMLEFT",
     4,
-    -14
+    -4
   )
 
   self.NameInput:SetAutoFocus(false)

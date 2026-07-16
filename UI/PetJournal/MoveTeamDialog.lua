@@ -17,11 +17,9 @@ function MoveTeamDialog:Create()
     return self.Frame
   end
 
-  local parent = PetJournal or UIParent
-
   local frame =
       addon.UI.Components.Panel:Create(
-        parent,
+        UIParent,
         {
           width = DIALOG_WIDTH,
           height = DIALOG_HEIGHT,
@@ -34,7 +32,7 @@ function MoveTeamDialog:Create()
   frame:ClearAllPoints()
   frame:SetPoint(
     "CENTER",
-    parent,
+    UIParent,
     "CENTER",
     0,
     0
@@ -51,7 +49,8 @@ function MoveTeamDialog:Create()
           text = "Move Team",
           font = addon.UI.Theme.Fonts.Header,
           width = DIALOG_WIDTH - 24,
-          justify = "LEFT",
+          justify = "CENTER",
+          color = addon.UI.Theme.Colors.Header
         }
       )
 
@@ -67,8 +66,8 @@ function MoveTeamDialog:Create()
       addon.UI.Components.ScrollBox:Create(
         frame,
         {
-          width = DIALOG_WIDTH - 30,
-          height = 255,
+          width = DIALOG_WIDTH - 40,
+          height = 270,
         }
       )
 
@@ -207,7 +206,7 @@ function MoveTeamDialog:Show(team)
   self.Team = team
 
   self.Title:SetText(
-    "Move: " .. (team.name or "Unnamed Team")
+    "Move team: " .. (team.name or "Unnamed Team")
   )
 
   self:RefreshFolders()

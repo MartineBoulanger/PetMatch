@@ -13,11 +13,9 @@ function EditTeamDialog:Create()
     return self.Frame
   end
 
-  local parent = PetJournal or UIParent
-
   local frame =
       addon.UI.Components.Panel:Create(
-        parent,
+        UIParent,
         {
           width = DIALOG_WIDTH,
           height = DIALOG_HEIGHT,
@@ -30,7 +28,7 @@ function EditTeamDialog:Create()
   frame:ClearAllPoints()
   frame:SetPoint(
     "CENTER",
-    parent,
+    UIParent,
     "CENTER",
     0,
     0
@@ -47,7 +45,8 @@ function EditTeamDialog:Create()
           text = "Edit Team",
           font = addon.UI.Theme.Fonts.Header,
           width = DIALOG_WIDTH - 24,
-          justify = "LEFT",
+          justify = "CENTER",
+          color = addon.UI.Theme.Colors.Header
         }
       )
 
