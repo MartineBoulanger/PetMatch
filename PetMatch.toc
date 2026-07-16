@@ -39,7 +39,9 @@ Services/PetService.lua
 Services/PetJournalService.lua
 Services/SearchService.lua
 Services/BattleSlotService.lua
+Services/TeamCompareService.lua
 Services/TeamService.lua
+Services/LoadoutMonitorService.lua
 Services/FolderService.lua
 
 Core/Blizzard.lua

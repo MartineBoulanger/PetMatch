@@ -6,7 +6,7 @@ addon.UI.Components = addon.UI.Components or {}
 local TeamCard = {}
 
 local CARD_WIDTH = 270
-local CARD_HEIGHT = 116
+local CARD_HEIGHT = 128
 local SLOT_SPACING = 8
 local SLOT_START_X = 10
 
@@ -127,9 +127,30 @@ function TeamCard:Create(parent, team)
     CARD_WIDTH - 110
   )
 
-
   frame.Title:SetJustifyH("LEFT")
   frame.Title:SetWordWrap(false)
+
+  frame.FolderLabel =
+      frame:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontDisableSmall"
+      )
+
+  frame.FolderLabel:SetPoint(
+    "TOPLEFT",
+    frame.Title,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  frame.FolderLabel:SetWidth(
+    CARD_WIDTH - 80
+  )
+
+  frame.FolderLabel:SetJustifyH("LEFT")
+  frame.FolderLabel:SetWordWrap(false)
 
   frame.FavoriteButton =
       CreateFrame(
@@ -297,6 +318,51 @@ function TeamCard:Create(parent, team)
     0
   )
 
+  frame.UpdateButton =
+      addon.UI.Components.Button:Create(
+        frame,
+        {
+          text = "Update",
+          width = 60,
+          height = 20,
+          onClick = function()
+            local team = frame.Team
+            if not team then
+              return
+            end
+            local updatedTeam, errorMessage =
+                addon.Services.Team:
+                ReplacePetsFromBattleSlots(
+                  team.id
+                )
+            if not updatedTeam then
+              addon.Logger:Warn(
+                errorMessage
+                or "Unable to update team"
+              )
+              return
+            end
+            frame:SetTeam(updatedTeam)
+            addon.Services.LoadoutMonitor:
+                ScheduleCheck()
+            addon.Logger:Info(
+              "Updated team:",
+              updatedTeam.name
+            )
+          end,
+        }
+      )
+
+  frame.UpdateButton:SetPoint(
+    "TOP",
+    frame,
+    "TOP",
+    0,
+    -10
+  )
+
+  frame.UpdateButton:Hide()
+
   for slotIndex = 1, 3 do
     local petSlot = addon.UI.Components.PetSlot:Create(frame)
     local petSlotFrame = petSlot:GetFrame()
@@ -308,10 +374,40 @@ function TeamCard:Create(parent, team)
       SLOT_START_X
       + ((slotIndex - 1)
         * (petSlotFrame:GetWidth() + SLOT_SPACING)),
-      -30
+      -42
     )
 
     frame.PetSlots[slotIndex] = petSlot
+  end
+
+  function frame:SetDirty(dirty)
+    if dirty then
+      self.UpdateButton:Show()
+    else
+      self.UpdateButton:Hide()
+    end
+  end
+
+  function frame:RefreshState()
+    local team = self.Team
+
+    if not team then
+      return
+    end
+
+    self:SetDirty(
+      addon.Services.LoadoutMonitor
+      and addon.Services.LoadoutMonitor:
+      IsTeamDirty(team.id)
+    )
+
+    if team.favorite then
+      self.FavoriteButton.Icon:SetDesaturated(false)
+      self.FavoriteButton.Icon:SetAlpha(1)
+    else
+      self.FavoriteButton.Icon:SetDesaturated(true)
+      self.FavoriteButton.Icon:SetAlpha(0.4)
+    end
   end
 
   function frame:SetTeam(newTeam)
@@ -339,6 +435,22 @@ function TeamCard:Create(parent, team)
       self.FavoriteButton.Icon:SetAlpha(0.45)
     end
 
+    local folderName = "Unsorted"
+    if newTeam.folderID then
+      local folder =
+          addon.Services.Folder:Get(
+            newTeam.folderID
+          )
+
+      if folder then
+        folderName = folder.name
+      end
+    end
+
+    self.FolderLabel:SetText(
+      folderName
+    )
+
     for slotIndex = 1, 3 do
       self.PetSlots[slotIndex]:SetPet(
         newTeam.pets
@@ -346,6 +458,14 @@ function TeamCard:Create(parent, team)
         or nil
       )
     end
+
+    self:SetDirty(
+      addon.Services.LoadoutMonitor
+      and addon.Services.LoadoutMonitor:
+      IsTeamDirty(newTeam.id)
+    )
+
+    self:RefreshState()
   end
 
   function frame:SetSelected(selected)
@@ -399,6 +519,9 @@ function TeamCard:Create(parent, team)
       team,
       self
     )
+
+    addon.Services.LoadoutMonitor:
+        ScheduleCheck()
 
     addon.Logger:Info(
       "Loaded team:",

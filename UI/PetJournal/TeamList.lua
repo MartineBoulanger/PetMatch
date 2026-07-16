@@ -111,6 +111,17 @@ function TeamList:Create(parent)
     )
   end
 
+  if not self.LoadoutMonitorRegistered then
+    self.LoadoutMonitorRegistered = true
+
+    addon.EventBus:Register(
+      addon.Events.CURRENT_TEAM_DIRTY_CHANGED,
+      function()
+        self:Refresh()
+      end
+    )
+  end
+
   self:Refresh()
   frame:Show()
 

@@ -4,8 +4,6 @@ local SearchService = {}
 
 SearchService.Query = ""
 
----@param value string?
----@return string
 local function Normalize(value)
   value = addon.Utils:Trim(value or "")
   return string.lower(value)

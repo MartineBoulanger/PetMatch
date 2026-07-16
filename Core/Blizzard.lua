@@ -31,6 +31,10 @@ function Blizzard:Initialize()
     end
   )
 
+  if addon.Services.LoadoutMonitor then
+    addon.Services.LoadoutMonitor:Initialize()
+  end
+
   print("[PetMatch] PetJournal visibility hooks active")
 end
 
