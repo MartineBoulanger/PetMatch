@@ -295,6 +295,45 @@ function TeamCard:Create(parent, team)
     0
   )
 
+  -- frame.TagsButton =
+  --     CreateActionButton(
+  --       frame,
+  --       "Interface\\Buttons\\UI-GuildButton-PublicNote-Up",
+  --       "Edit Tags",
+  --       function(team)
+  --         addon.UI.Views.TeamTagsDialog:Show(
+  --           team
+  --         )
+  --       end
+  --     )
+
+  -- frame.TagsButton:SetPoint(
+  --   "RIGHT",
+  --   frame.MoveButton,
+  --   "LEFT",
+  --   -3,
+  --   0
+  -- )
+
+  -- frame.TagsLabel =
+  --     frame:CreateFontString(
+  --       nil,
+  --       "OVERLAY",
+  --       "GameFontDisableSmall"
+  --     )
+
+  -- frame.TagsLabel:SetPoint(
+  --   "LEFT",
+  --   frame.FolderLabel,
+  --   "RIGHT",
+  --   8,
+  --   0
+  -- )
+
+  -- frame.TagsLabel:SetWidth(150)
+  -- frame.TagsLabel:SetJustifyH("LEFT")
+  -- frame.TagsLabel:SetWordWrap(false)
+
   frame.DeleteButton =
       CreateActionButton(
         frame,
@@ -450,6 +489,31 @@ function TeamCard:Create(parent, team)
     self.FolderLabel:SetText(
       folderName
     )
+
+    -- local tags =
+    --     addon.Services.Tag:GetTagsForTeam(
+    --       newTeam
+    --     )
+
+    -- local visibleTagNames = {}
+
+    -- for index = 1, math.min(2, #tags) do
+    --   table.insert(
+    --     visibleTagNames,
+    --     tags[index].name
+    --   )
+    -- end
+
+    -- if #tags > 2 then
+    --   table.insert(
+    --     visibleTagNames,
+    --     "+" .. (#tags - 2)
+    --   )
+    -- end
+
+    -- self.TagsLabel:SetText(
+    --   table.concat(visibleTagNames, ", ")
+    -- )
 
     for slotIndex = 1, 3 do
       self.PetSlots[slotIndex]:SetPet(

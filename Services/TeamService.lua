@@ -588,4 +588,88 @@ function TeamService:ToggleFavorite(teamID)
   )
 end
 
+function TeamService:AddTag(teamID, tagID)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  if not addon.Services.Tag:Get(tagID) then
+    return nil, "Tag not found"
+  end
+
+  team.tags = team.tags or {}
+
+  if team.tags[tagID] then
+    return team
+  end
+
+  team.tags[tagID] = true
+  team.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_TAGS_CHANGED,
+    team
+  )
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  return team
+end
+
+function TeamService:RemoveTag(teamID, tagID)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  team.tags = team.tags or {}
+
+  if not team.tags[tagID] then
+    return team
+  end
+
+  team.tags[tagID] = nil
+  team.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_TAGS_CHANGED,
+    team
+  )
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  return team
+end
+
+function TeamService:ToggleTag(teamID, tagID)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  team.tags = team.tags or {}
+
+  if team.tags[tagID] then
+    return self:RemoveTag(teamID, tagID)
+  end
+
+  return self:AddTag(teamID, tagID)
+end
+
+function TeamService:HasTag(team, tagID)
+  return team ~= nil
+      and team.tags ~= nil
+      and team.tags[tagID] == true
+end
+
 addon.Services.Team = TeamService

@@ -107,6 +107,22 @@ function SearchService:MatchesTeam(team)
     end
   end
 
+  -- local tags =
+  --     addon.Services.Tag:GetTagsForTeam(team)
+
+  -- for _, tag in ipairs(tags) do
+  --   local tagName = Normalize(tag.name)
+
+  --   if string.find(
+  --         tagName,
+  --         query,
+  --         1,
+  --         true
+  --       ) then
+  --     return true
+  --   end
+  -- end
+
   return false
 end
 
