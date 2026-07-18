@@ -24,6 +24,7 @@ function FolderDialog:Create()
 
   frame:SetFrameStrata("DIALOG")
   frame:SetClampedToScreen(true)
+  frame:EnableMouse(true)
   frame:SetPoint("CENTER", UIParent, "CENTER")
 
   self.Frame = frame

@@ -28,6 +28,7 @@ function MoveTeamDialog:Create()
 
   frame:SetFrameStrata("DIALOG")
   frame:SetClampedToScreen(true)
+  frame:EnableMouse(true)
 
   frame:ClearAllPoints()
   frame:SetPoint(

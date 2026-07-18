@@ -10,8 +10,7 @@ setmetatable(
 )
 
 function Team:Create(name)
-  local team =
-      addon.Models.Base:New()
+  local team = addon.Models.Base:New()
   team.name = name or "New Team"
   team.description = ""
   team.icon = nil
@@ -22,11 +21,21 @@ function Team:Create(name)
     [2] = nil,
     [3] = nil,
   }
+  team.abilities = {
+    [1] = nil,
+    [2] = nil,
+    [3] = nil,
+  }
+  team.breeds = {}
+  team.specialSlots = {}
+  team.targetNPCIDs = {}
   team.createdBy = "PetMatch"
   team.strategy = ""
   team.difficulty = nil
   team.favorite = false
   team.notes = ""
+  team.scripts = ""
+  team.importSource = nil
   return team
 end
 

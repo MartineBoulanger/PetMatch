@@ -44,6 +44,7 @@ Services/TeamService.lua
 Services/LoadoutMonitorService.lua
 Services/FolderService.lua
 Services/TagService.lua
+Services/ImportExportService.lua
 
 Core/Blizzard.lua
 
@@ -75,6 +76,7 @@ UI/PetJournal/FolderDialog.lua
 UI/PetJournal/FolderTabs.lua
 UI/PetJournal/TeamListControls.lua
 UI/PetJournal/EditTeamDialog.lua
+UI/PetJournal/ImportDialog.lua
 UI/PetJournal/MoveTeamDialog.lua
 UI/PetJournal/SaveTeamDialog.lua
 UI/PetJournal/SaveTeamButton.lua

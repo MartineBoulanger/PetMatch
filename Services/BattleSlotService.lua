@@ -2,6 +2,130 @@ local addonName, addon = ...
 
 local BattleSlotService = {}
 
+local MAX_ABILITY_ATTEMPTS = 6
+local ABILITY_RETRY_DELAY = 0.08
+
+local function AbilitiesMatch(
+    expectedAbilities
+)
+  if type(expectedAbilities) ~= "table" then
+    return true
+  end
+
+  for teamSlot = 1, 3 do
+    local expected =
+        expectedAbilities[teamSlot]
+
+    if type(expected) == "table" then
+      local _,
+      currentAbility1,
+      currentAbility2,
+      currentAbility3 =
+          C_PetJournal.GetPetLoadOutInfo(
+            teamSlot
+          )
+
+      local current = {
+        currentAbility1,
+        currentAbility2,
+        currentAbility3,
+      }
+
+      for abilitySlot = 1, 3 do
+        if expected[abilitySlot]
+            and current[abilitySlot]
+            ~= expected[abilitySlot] then
+          return false
+        end
+      end
+    end
+  end
+
+  return true
+end
+
+local function ApplyAbilities(
+    pets,
+    abilities
+)
+  if type(abilities) ~= "table" then
+    return
+  end
+
+  for teamSlot = 1, 3 do
+    local petGUID = pets[teamSlot]
+    local slotAbilities =
+        abilities[teamSlot]
+
+    if petGUID
+        and type(slotAbilities) == "table" then
+      for abilitySlot = 1, 3 do
+        local abilityID =
+            slotAbilities[abilitySlot]
+
+        if abilityID then
+          C_PetJournal.SetAbility(
+            teamSlot,
+            abilitySlot,
+            abilityID
+          )
+        end
+      end
+    end
+  end
+end
+
+local function ApplyAbilitiesWithRetry(
+    pets,
+    abilities,
+    attempt
+)
+  attempt = attempt or 1
+
+  ApplyAbilities(
+    pets,
+    abilities
+  )
+
+  C_Timer.After(
+    ABILITY_RETRY_DELAY,
+    function()
+      if AbilitiesMatch(abilities) then
+        if type(PetJournal_UpdatePetLoadOut)
+            == "function" then
+          PetJournal_UpdatePetLoadOut()
+        end
+
+        if addon.Services.LoadoutMonitor then
+          addon.Services.LoadoutMonitor:
+              Resume()
+        end
+
+        return
+      end
+
+      if attempt < MAX_ABILITY_ATTEMPTS then
+        ApplyAbilitiesWithRetry(
+          pets,
+          abilities,
+          attempt + 1
+        )
+
+        return
+      end
+
+      if addon.Services.LoadoutMonitor then
+        addon.Services.LoadoutMonitor:
+            Resume()
+      end
+
+      addon.Logger:Warn(
+        "Some pet abilities could not be applied"
+      )
+    end
+  )
+end
+
 local function RefreshBlizzardLoadout()
   if type(PetJournal_UpdatePetLoadOut) == "function" then
     PetJournal_UpdatePetLoadOut()
@@ -65,27 +189,39 @@ function BattleSlotService:Debug()
   end
 end
 
-function BattleSlotService:LoadPets(pets)
+function BattleSlotService:LoadPets(
+    pets,
+    abilities
+)
   if type(pets) ~= "table" then
     return false, "Invalid pet list"
   end
 
   if C_PetBattles.IsInBattle() then
-    return false, "Cannot load a team during a pet battle"
+    return false,
+        "Cannot load a team during a pet battle"
   end
 
   if InCombatLockdown() then
-    return false, "Cannot load a team during combat"
+    return false,
+        "Cannot load a team during combat"
   end
 
   local changedSlots = 0
+
+  if addon.Services.LoadoutMonitor then
+    addon.Services.LoadoutMonitor:Suspend()
+  end
+
 
   for slot = 1, 3 do
     local petGUID = pets[slot]
 
     if petGUID then
       local pet =
-          addon.Services.PetJournal:GetPet(petGUID)
+          addon.Services.PetJournal:GetPet(
+            petGUID
+          )
 
       if not pet then
         return false, string.format(
@@ -114,13 +250,83 @@ function BattleSlotService:LoadPets(pets)
   end
 
   if changedSlots == 0 then
-    return false, "The team contains no pets"
+    if addon.Services.LoadoutMonitor then
+      addon.Services.LoadoutMonitor:Resume()
+    end
+
+    return false,
+        "The team contains no pets"
   end
 
-  -- Laat Blizzard de originele Battle Pet Slots opnieuw tekenen.
-  RefreshBlizzardLoadout()
+  if type(PetJournal_UpdatePetLoadOut)
+      == "function" then
+    PetJournal_UpdatePetLoadOut()
+  end
+
+  C_Timer.After(
+    0.08,
+    function()
+      ApplyAbilitiesWithRetry(
+        pets,
+        abilities,
+        1
+      )
+    end
+  )
 
   return true
+end
+
+function BattleSlotService:GetSlotLoadout(slot)
+  if type(slot) ~= "number"
+      or slot < 1
+      or slot > 3 then
+    return nil
+  end
+
+  local petGUID,
+  ability1,
+  ability2,
+  ability3,
+  locked =
+      C_PetJournal.GetPetLoadOutInfo(slot)
+
+  return {
+    petGUID = petGUID,
+
+    abilities = {
+      [1] = ability1,
+      [2] = ability2,
+      [3] = ability3,
+    },
+
+    locked = locked == true,
+  }
+end
+
+function BattleSlotService:GetCurrentLoadout()
+  local loadout = {
+    pets = {},
+    abilities = {},
+  }
+
+  for slot = 1, 3 do
+    local slotInfo =
+        self:GetSlotLoadout(slot)
+
+    if slotInfo then
+      loadout.pets[slot] =
+          slotInfo.petGUID
+
+      loadout.abilities[slot] = {
+        [1] = slotInfo.abilities[1],
+        [2] = slotInfo.abilities[2],
+        [3] = slotInfo.abilities[3],
+      }
+    end
+  end
+
+  return loadout
 end
 
 addon.Services = addon.Services or {}

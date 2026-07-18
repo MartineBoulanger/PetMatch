@@ -4,6 +4,7 @@ local LoadoutMonitorService = {
   Initialized = false,
   DirtyTeamID = nil,
   ChangedSlots = {},
+  SuspendCount = 0,
 }
 
 function LoadoutMonitorService:Initialize()
@@ -13,13 +14,36 @@ function LoadoutMonitorService:Initialize()
 
   self.Initialized = true
 
-  -- Blizzard en PetMatch gebruiken deze functie om
-  -- een pet in een loadoutslot te plaatsen.
   hooksecurefunc(
     C_PetJournal,
     "SetPetLoadOutInfo",
     function()
       self:ScheduleCheck()
+    end
+  )
+
+  hooksecurefunc(
+    C_PetJournal,
+    "SetAbility",
+    function()
+      self:ScheduleCheck()
+    end
+  )
+
+  self.EventFrame =
+      self.EventFrame
+      or CreateFrame("Frame")
+
+  self.EventFrame:RegisterEvent(
+    "PET_JOURNAL_LIST_UPDATE"
+  )
+
+  self.EventFrame:SetScript(
+    "OnEvent",
+    function(_, event)
+      if event == "PET_JOURNAL_LIST_UPDATE" then
+        self:ScheduleCheck()
+      end
     end
   )
 
@@ -55,19 +79,27 @@ function LoadoutMonitorService:Initialize()
 end
 
 function LoadoutMonitorService:ScheduleCheck()
+  if self:IsSuspended() then
+    return
+  end
+
   if self.CheckScheduled then
     return
   end
 
   self.CheckScheduled = true
 
-  C_Timer.After(0, function()
+  C_Timer.After(0.05, function()
     self.CheckScheduled = false
     self:Check()
   end)
 end
 
 function LoadoutMonitorService:Check()
+  if self:IsSuspended() then
+    return
+  end
+
   local selectedTeam =
       addon.Services.Team:GetSelected()
 
@@ -120,6 +152,27 @@ end
 
 function LoadoutMonitorService:IsSlotChanged(slot)
   return self.ChangedSlots[slot] == true
+end
+
+function LoadoutMonitorService:Suspend()
+  self.SuspendCount =
+      (self.SuspendCount or 0) + 1
+end
+
+function LoadoutMonitorService:Resume()
+  self.SuspendCount =
+      math.max(
+        0,
+        (self.SuspendCount or 0) - 1
+      )
+
+  if self.SuspendCount == 0 then
+    self:ScheduleCheck()
+  end
+end
+
+function LoadoutMonitorService:IsSuspended()
+  return (self.SuspendCount or 0) > 0
 end
 
 addon.Services.LoadoutMonitor =

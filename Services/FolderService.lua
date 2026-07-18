@@ -223,4 +223,20 @@ function FolderService:GetSelectedStorageFolderID()
   return nil
 end
 
+function FolderService:FindByName(name)
+  local normalizedName = string.lower(addon.Utils:Trim(name or ""))
+
+  if normalizedName == "" then
+    return nil
+  end
+
+  for _, folder in pairs(self:GetFolders()) do
+    if string.lower(folder.name or "") == normalizedName then
+      return folder
+    end
+  end
+
+  return nil
+end
+
 addon.Services.Folder = FolderService

@@ -108,4 +108,40 @@ function PetJournalService:GetPetName(petGUID)
   return pet and pet.name or nil
 end
 
+function PetJournalService:FindOwnedPetBySpeciesID(speciesID)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return nil
+  end
+
+  local petCount = C_PetJournal.GetNumPets()
+  local bestPetGUID = nil
+  local bestLevel = -1
+  local bestQuality = -1
+
+  for index = 1, petCount do
+    local petGUID,
+    currentSpeciesID,
+    owned,
+    customName,
+    level = C_PetJournal.GetPetInfoByIndex(index)
+
+    if owned and petGUID and currentSpeciesID == speciesID then
+      local _, _, _, _, quality = C_PetJournal.GetPetStats(petGUID)
+
+      level = level or 0
+      quality = quality or 0
+
+      if level > bestLevel or (level == bestLevel and quality > bestQuality) then
+        bestPetGUID = petGUID
+        bestLevel = level
+        bestQuality = quality
+      end
+    end
+  end
+
+  return bestPetGUID
+end
+
 addon.Services.PetJournal = PetJournalService

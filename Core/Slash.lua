@@ -216,6 +216,27 @@ function Slash:Initialize()
   end
 end
 
+commands.export = function(teamID)
+  local team =
+      addon.Services.Team:Get(teamID)
+
+  if not team then
+    Print("Team not found")
+    return
+  end
+
+  local value, errorMessage =
+      addon.Services.ImportExport:
+      ExportTeam(team)
+
+  if not value then
+    Print(errorMessage or "Export failed")
+    return
+  end
+
+  print(value)
+end
+
 addon.Slash = Slash
 
 addon.ModuleManager:Register(

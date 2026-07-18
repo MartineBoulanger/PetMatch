@@ -230,8 +230,11 @@ function TeamService:CreateFromBattleSlots(name, folderID)
     return nil, "Folder not found"
   end
 
+  local loadout =
+      addon.Services.BattleSlot:GetCurrentLoadout()
+
   local slots =
-      addon.Services.BattleSlot:GetCurrentSlots()
+      loadout.pets
 
   local hasPet = false
 
@@ -252,8 +255,25 @@ function TeamService:CreateFromBattleSlots(name, folderID)
     return nil, "Unable to create team"
   end
 
+  team.pets = team.pets or {}
+  team.abilities = team.abilities or {}
+
   for slot = 1, 3 do
-    team.pets[slot] = slots[slot]
+    team.pets[slot] =
+        loadout.pets[slot]
+
+    local abilities =
+        loadout.abilities[slot]
+
+    if abilities then
+      team.abilities[slot] = {
+        [1] = abilities[1],
+        [2] = abilities[2],
+        [3] = abilities[3],
+      }
+    else
+      team.abilities[slot] = nil
+    end
   end
 
   team.folderID = folderID
@@ -276,7 +296,8 @@ function TeamService:Load(teamID)
 
   local success, errorMessage =
       addon.Services.BattleSlot:LoadPets(
-        team.pets
+        team.pets,
+        team.abilities
       )
 
   if not success then
@@ -317,33 +338,52 @@ function TeamService:Rename(teamID, name)
   return team
 end
 
-function TeamService:ReplacePetsFromBattleSlots(teamID)
+function TeamService:ReplacePetsFromBattleSlots(
+    teamID
+)
   local team = self:Get(teamID)
 
   if not team then
     return nil, "Team not found"
   end
 
-  local slots =
-      addon.Services.BattleSlot:GetCurrentSlots()
+  local loadout =
+      addon.Services.BattleSlot:
+      GetCurrentLoadout()
 
   local hasPet = false
 
   for slot = 1, 3 do
-    if slots[slot] then
+    if loadout.pets[slot] then
       hasPet = true
       break
     end
   end
 
   if not hasPet then
-    return nil, "The current Battle Pet Slots are empty"
+    return nil,
+        "The current Battle Pet Slots are empty"
   end
 
   team.pets = team.pets or {}
+  team.abilities = team.abilities or {}
 
   for slot = 1, 3 do
-    team.pets[slot] = slots[slot]
+    team.pets[slot] =
+        loadout.pets[slot]
+
+    local abilities =
+        loadout.abilities[slot]
+
+    if abilities then
+      team.abilities[slot] = {
+        [1] = abilities[1],
+        [2] = abilities[2],
+        [3] = abilities[3],
+      }
+    else
+      team.abilities[slot] = nil
+    end
   end
 
   team.modified = time()
@@ -670,6 +710,112 @@ function TeamService:HasTag(team, tagID)
   return team ~= nil
       and team.tags ~= nil
       and team.tags[tagID] == true
+end
+
+function TeamService:CreateFromImport(importData)
+  if type(importData) ~= "table" then
+    return nil, "Invalid import data", {}
+  end
+
+  local name = addon.Utils:Trim(importData.name or "")
+
+  if name == "" then
+    name = "Imported Team"
+  end
+
+  name = self:GetUniqueName(name)
+
+  local folderID = importData.folderID
+
+  if not folderID then
+    folderID = addon.Services.Folder:GetSelectedStorageFolderID()
+  end
+
+  local team = self:Create(name)
+
+  team.pets = {}
+  team.abilities = {}
+  team.breeds = {}
+  team.specialSlots = {}
+  team.targetNPCIDs = importData.npcIDs or {}
+  team.folderID = folderID
+  team.favorite = importData.favorite == true
+  team.notes = importData.notes or ""
+  team.script = importData.script or ""
+  team.importSource = importData.format or "unknown"
+
+  local missingSpecies = {}
+
+  for slot = 1, 3 do
+    local slotData = importData.slots and importData.slots[slot]
+
+    if slotData then
+      if slotData.special then
+        team.specialSlots[slot] = {
+          type = slotData.type,
+          petType = slotData.petType,
+          level = slotData.level,
+          rarity = slotData.rarity,
+          rawPetTag = slotData.rawPetTag,
+        }
+      elseif slotData.speciesID then
+        local petGUID = addon.Services.PetJournal:FindOwnedPetBySpeciesID(slotData.speciesID)
+
+        if petGUID then
+          team.pets[slot] = petGUID
+        else
+          missingSpecies[#missingSpecies + 1] = slotData.speciesID
+        end
+
+        team.abilities[slot] = slotData.abilities or {}
+        team.breeds[slot] = slotData.breedID or 0
+      end
+    end
+  end
+
+  team.modified = time()
+  team.importSource = importData.format or "unknown"
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_IMPORTED,
+    team,
+    missingSpecies
+  )
+
+  return team, nil, missingSpecies
+end
+
+function TeamService:FindByName(name)
+  local normalizedName = string.lower(addon.Utils:Trim(name or ""))
+
+  for _, team in pairs(self:GetTeams()) do
+    if string.lower(team.name or "") == normalizedName then
+      return team
+    end
+  end
+
+  return nil
+end
+
+function TeamService:GetUniqueName(name)
+  if not self:FindByName(name) then
+    return name
+  end
+
+  local index = 2
+  local candidate
+
+  repeat
+    candidate = string.format("%s (%d)", name, index)
+    index = index + 1
+  until not self:FindByName(candidate)
+
+  return candidate
 end
 
 addon.Services.Team = TeamService

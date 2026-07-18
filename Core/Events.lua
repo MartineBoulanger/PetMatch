@@ -1,11 +1,8 @@
 local addonName, addon = ...
 
 local EventBus = {}
-
 EventBus.Registered = {}
 
----@param event string
----@param callback function
 function EventBus:Register(event, callback)
   if not event then
     addon.Logger:Error(
@@ -29,8 +26,6 @@ function EventBus:Register(event, callback)
   )
 end
 
----@param event string
----@param ... any
 function EventBus:Fire(event, ...)
   if not event then
     return
@@ -55,8 +50,6 @@ function EventBus:Fire(event, ...)
   end
 end
 
----@param event string
----@param callback function
 function EventBus:Unregister(event, callback)
   local callbacks = self.Registered[event]
   if not callbacks then
