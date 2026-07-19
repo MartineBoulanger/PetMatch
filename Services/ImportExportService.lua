@@ -1080,4 +1080,148 @@ function ImportExportService:ExportRematchTeam(
   return result
 end
 
+function ImportExportService:ExportAll()
+  local lines = {}
+
+  local folders =
+      addon.Services.Folder:GetSortedFolders()
+
+  local allTeams =
+      addon.Services.Team:GetAllTeams()
+
+  for _, folder in ipairs(folders) do
+    local teams = {}
+
+    for _, team in pairs(allTeams) do
+      if team.folderID == folder.id then
+        teams[#teams + 1] = team
+      end
+    end
+
+    if #teams > 0 then
+      lines[#lines + 1] =
+          "__ " .. folder.name .. " __"
+
+      for _, team in ipairs(teams) do
+        local exportString,
+        errorMessage =
+            self:ExportRematchTeam(team)
+
+        if not exportString then
+          return nil,
+              errorMessage
+              or (
+                "Unable to export team: "
+                .. tostring(team.name)
+              )
+        end
+
+        lines[#lines + 1] = exportString
+      end
+
+      lines[#lines + 1] = ""
+    end
+  end
+
+  local unsortedTeams = {}
+
+  for _, team in pairs(allTeams) do
+    local folderID = team.folderID
+
+    local isUnsorted =
+        folderID == nil
+        or folderID == ""
+        or folderID
+        == addon.Services.Folder.UNSORTED
+
+    if isUnsorted then
+      unsortedTeams[#unsortedTeams + 1] =
+          team
+    end
+  end
+
+  if #unsortedTeams > 0 then
+    lines[#lines + 1] =
+    "__ Unsorted __"
+
+    for _, team in ipairs(unsortedTeams) do
+      local exportString,
+      errorMessage =
+          self:ExportRematchTeam(team)
+
+      if not exportString then
+        return nil,
+            errorMessage
+            or (
+              "Unable to export team: "
+              .. tostring(team.name)
+            )
+      end
+
+      lines[#lines + 1] = exportString
+    end
+
+    lines[#lines + 1] = ""
+  end
+
+  while lines[#lines] == "" do
+    table.remove(lines)
+  end
+
+  if #lines == 0 then
+    return nil,
+        "No teams were found to export"
+  end
+
+  return table.concat(lines, "\n")
+end
+
+function ImportExportService:ExportFolder(
+    folderKey
+)
+  local folder =
+      addon.Services.Folder:Get(folderKey)
+
+  if not folder then
+    return nil, "Folder was not found"
+  end
+
+  local teams = {}
+
+  for _, team in pairs(
+    addon.Services.Team:GetAllTeams()
+  ) do
+    if team.folderID == folder.id then
+      teams[#teams + 1] = team
+    end
+  end
+
+  if #teams == 0 then
+    return nil, "Folder contains no teams"
+  end
+
+  local lines = {
+    "__ " .. folder.name .. " __",
+  }
+
+  for _, team in ipairs(teams) do
+    local exportString,
+    errorMessage =
+        self:ExportRematchTeam(team)
+
+    if not exportString then
+      return nil,
+          errorMessage
+          or (
+            "Unable to export team: "
+            .. tostring(team.name)
+          )
+    end
+
+    lines[#lines + 1] = exportString
+  end
+
+  return table.concat(lines, "\n")
+end
+
 addon.Services.ImportExport = ImportExportService

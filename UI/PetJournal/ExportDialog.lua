@@ -5,6 +5,9 @@ addon.UI.Views = addon.UI.Views or {}
 
 local ExportDialog = {}
 
+local DIALOG_WIDTH = 320
+local DIALOG_HEIGHT = 340
+
 function ExportDialog:Create()
   if self.Frame then
     return self.Frame
@@ -14,8 +17,8 @@ function ExportDialog:Create()
       addon.UI.Components.Panel:Create(
         UIParent,
         {
-          width = 520,
-          height = 360,
+          width = DIALOG_WIDTH,
+          height = DIALOG_HEIGHT,
         }
       )
 
@@ -38,7 +41,10 @@ function ExportDialog:Create()
         frame,
         {
           text = "Export Team",
-          fontObject = "GameFontNormalLarge",
+          font = addon.UI.Theme.Fonts.Header,
+          width = DIALOG_WIDTH - 24,
+          justify = "CENTER",
+          color = addon.UI.Theme.Colors.Header,
         }
       )
 
@@ -46,8 +52,8 @@ function ExportDialog:Create()
     "TOPLEFT",
     frame,
     "TOPLEFT",
-    16,
-    -16
+    12,
+    -12
   )
 
   self.Description =
@@ -82,7 +88,7 @@ function ExportDialog:Create()
       addon.UI.Components.Panel:Create(
         frame,
         {
-          width = 488,
+          width = DIALOG_WIDTH - 23,
           height = 220,
         }
       )
@@ -247,6 +253,73 @@ function ExportDialog:Show(team)
 
   self.Input:SetFocus()
   self.Input:HighlightText()
+end
+
+function ExportDialog:ShowAll()
+  self:Create()
+
+  local exportString, errorMessage =
+      addon.Services.ImportExport:ExportAll()
+
+  if not exportString then
+    addon.Logger:Warn(
+      errorMessage
+      or "Unable to export folders and teams"
+    )
+
+    return
+  end
+
+  self.Title:SetText(
+    "Export All Folders and Teams"
+  )
+
+
+  self.Input:SetText(exportString)
+  self.Input:HighlightText()
+
+  self.Frame:Show()
+  self.Input:SetFocus()
+end
+
+function ExportDialog:ShowFolder(
+    folderKey
+)
+  if not folderKey then
+    return
+  end
+
+  self:Create()
+
+  local exportString, errorMessage =
+      addon.Services.ImportExport:ExportFolder(folderKey)
+
+  if not exportString then
+    addon.Logger:Warn(
+      errorMessage
+      or "Unable to export folder"
+    )
+
+    return
+  end
+
+  local folder =
+      addon.Services.Folder:Get(folderKey)
+
+  local folderName =
+      folder
+      and folder.name
+      or "Folder"
+
+  self.Title:SetText(
+    "Export Folder: " .. folderName
+  )
+
+  self.Input:SetText(exportString)
+  self.Input:HighlightText()
+
+  self.Frame:Show()
+  self.Input:SetFocus()
 end
 
 function ExportDialog:Hide()

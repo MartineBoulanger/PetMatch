@@ -675,10 +675,10 @@ function PetJournalToolbar:Create()
         PetJournal,
         "PetMatchExportButton",
         "Interface\\AddOns\\PetMatch\\Media\\Export",
-        "Export Team",
-        "Export the currently selected team.",
+        "Export Everything",
+        "Export all folders with all teams - good for backup.",
         function()
-          addon.UI.Views.ExportDialog:Show()
+          addon.UI.Views.ExportDialog:ShowAll()
         end
       )
 

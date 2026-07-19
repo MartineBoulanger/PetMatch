@@ -75,11 +75,17 @@ function FolderContextMenu:Show(
         end
       )
 
-      rootDescription:CreateButton(
-        "Export Teams",
-        function()
-          self:ExportTeams(folderKey)
-        end
+      local exportButton =
+          rootDescription:CreateButton(
+            "Export Teams",
+            function()
+              self:ExportTeams(folderKey)
+            end
+          )
+
+      exportButton:SetEnabled(
+        not isVirtual
+        and folder ~= nil
       )
     end
   )
@@ -134,11 +140,13 @@ end
 function FolderContextMenu:ExportTeams(
     folderKey
 )
-  -- addon.UI.Views.ExportTeamsDialog:Show(
-  --   folderKey
-  -- )
-  print(
-    "will be implemented later because this option needs ot export all teams in the foiolder including folder details")
+  local folder = addon.Services.Folder:Get(folderKey)
+
+  if not folder then
+    return
+  end
+
+  addon.UI.Views.ExportDialog:ShowFolder(folderKey)
 end
 
 addon.UI.Views.FolderContextMenu =
