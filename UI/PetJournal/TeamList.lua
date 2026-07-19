@@ -210,11 +210,15 @@ function TeamList:Refresh()
   for _, card in ipairs(
     self.Frame.cards
   ) do
-    card:SetSelected(
-      selectedTeamID ~= nil
-      and card.Team ~= nil
-      and card.Team.id == selectedTeamID
-    )
+    local cardTeamID =
+        card.Team
+        and card.Team.id
+    local selected =
+        selectedTeamID ~= nil
+        and cardTeamID ~= nil
+        and tostring(cardTeamID)
+        == tostring(selectedTeamID)
+    card:SetSelected(selected)
   end
 
   self.Refreshing = false

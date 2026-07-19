@@ -35,8 +35,8 @@ function SaveTeamButton:Create()
         "UIPanelButtonTemplate"
       )
 
-  button:SetSize(100, 22)
-  button:SetText("Save Team")
+  button:SetSize(90, 22)
+  button:SetText("Save As")
 
   button:SetScript(
     "OnClick",

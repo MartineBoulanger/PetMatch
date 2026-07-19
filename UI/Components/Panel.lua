@@ -19,7 +19,7 @@ function Panel:Create(parent, options)
   )
 
   frame:SetBackdrop({
-    bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+    bgFile = "Interface/Petbattles/mountjournal-bg",
     edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
     edgeSize = 8
   })

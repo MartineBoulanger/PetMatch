@@ -3,46 +3,42 @@ local addonName, addon = ...
 local ImportDialog = {}
 
 local DIALOG_WIDTH = 320
-local DIALOG_HEIGHT = 230
+local DIALOG_HEIGHT = 340
 
-local function GetResultText(result)
-  local lines = {}
+local function GetSortedFolders()
+  local folderService =
+      addon.Services.Folder
 
-  lines[#lines + 1] =
-      string.format(
-        "%d team%s imported.",
-        #result.teams,
-        #result.teams == 1 and "" or "s"
+  local sourceFolders =
+      folderService:GetSortedFolders()
+
+  local folders = {}
+
+  for folderID, folder in pairs(
+    sourceFolders or {}
+  ) do
+    if type(folder) == "table" then
+      folders[#folders + 1] = {
+        id = folder.id or folderID,
+        name =
+            folder.name
+            or "Unnamed Folder",
+      }
+    end
+  end
+
+  table.sort(
+    folders,
+    function(left, right)
+      return string.lower(
+        left.name or ""
+      ) < string.lower(
+        right.name or ""
       )
+    end
+  )
 
-  if #result.folders > 0 then
-    lines[#lines + 1] =
-        string.format(
-          "%d folder%s created or used.",
-          #result.folders,
-          #result.folders == 1 and "" or "s"
-        )
-  end
-
-  if #result.missingSpecies > 0 then
-    lines[#lines + 1] =
-        string.format(
-          "%d missing pet%s.",
-          #result.missingSpecies,
-          #result.missingSpecies == 1 and "" or "s"
-        )
-  end
-
-  if #result.warnings > 0 then
-    lines[#lines + 1] =
-        string.format(
-          "%d warning%s.",
-          #result.warnings,
-          #result.warnings == 1 and "" or "s"
-        )
-  end
-
-  return table.concat(lines, "\n")
+  return folders
 end
 
 function ImportDialog:Create()
@@ -98,7 +94,7 @@ function ImportDialog:Create()
       addon.UI.Components.Label:Create(
         frame,
         {
-          text = "Paste a PetMatch or Rematch export below.",
+          text = "Paste a PetMatch or Rematch import string below.",
           width = DIALOG_WIDTH - 24,
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
@@ -118,7 +114,7 @@ function ImportDialog:Create()
         frame,
         {
           width = DIALOG_WIDTH - 23,
-          height = 110,
+          height = 130,
         }
       )
 
@@ -179,17 +175,114 @@ function ImportDialog:Create()
   )
 
   self.Input:SetScript(
-    "OnTextChanged",
-    function()
-      self.ScrollFrame:UpdateScrollChildRect()
-      self:ClearStatus()
-    end
-  )
-
-  self.Input:SetScript(
     "OnEscapePressed",
     function()
       self:Hide()
+    end
+  )
+
+  self.FolderDropdown =
+      CreateFrame(
+        "DropdownButton",
+        nil,
+        frame,
+        "WowStyle1DropdownTemplate"
+      )
+
+  self.FolderDropdown:SetPoint(
+    "TOPLEFT",
+    self.InputBackground,
+    "BOTTOMLEFT",
+    0,
+    -10
+  )
+
+  self.FolderDropdown:SetSize(
+    DIALOG_WIDTH - 23,
+    26
+  )
+
+  self.NewTeamRadio =
+      CreateFrame(
+        "CheckButton",
+        nil,
+        frame,
+        "UIRadioButtonTemplate"
+      )
+
+  self.NewTeamRadio:SetPoint(
+    "TOPLEFT",
+    self.FolderDropdown,
+    "BOTTOMLEFT",
+    0,
+    -10
+  )
+
+  self.NewTeamRadio.Label =
+      self.NewTeamRadio:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontNormal"
+      )
+
+  self.NewTeamRadio.Label:SetPoint(
+    "LEFT",
+    self.NewTeamRadio,
+    "RIGHT",
+    4,
+    0
+  )
+
+  self.NewTeamRadio.Label:SetText(
+    "Save as new team"
+  )
+
+  self.NewTeamRadio:SetScript(
+    "OnClick",
+    function()
+      self:SetSaveMode("new")
+    end
+  )
+
+  self.OverrideRadio =
+      CreateFrame(
+        "CheckButton",
+        nil,
+        frame,
+        "UIRadioButtonTemplate"
+      )
+
+  self.OverrideRadio:SetPoint(
+    "TOPLEFT",
+    self.NewTeamRadio,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.OverrideRadio.Label =
+      self.OverrideRadio:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontNormal"
+      )
+
+  self.OverrideRadio.Label:SetPoint(
+    "LEFT",
+    self.OverrideRadio,
+    "RIGHT",
+    4,
+    0
+  )
+
+  self.OverrideRadio.Label:SetText(
+    "Override selected team"
+  )
+
+  self.OverrideRadio:SetScript(
+    "OnClick",
+    function()
+      self:SetSaveMode("override")
     end
   )
 
@@ -206,28 +299,28 @@ function ImportDialog:Create()
 
   self.Status:SetPoint(
     "BOTTOMLEFT",
-    self.InputBackground,
+    self.OverrideRadio,
     "BOTTOMLEFT",
     0,
-    -30
+    -10
   )
 
   self.Status:SetHeight(42)
 
-  self.ImportButton =
+  self.SaveButton =
       addon.UI.Components.Button:Create(
         frame,
         {
-          text = "Import",
-          width = 100,
+          text = "Save Team",
+          width = 95,
 
           onClick = function()
-            self:Import()
+            self:SaveTeam()
           end,
         }
       )
 
-  self.ImportButton:SetPoint(
+  self.SaveButton:SetPoint(
     "BOTTOMRIGHT",
     frame,
     "BOTTOMRIGHT",
@@ -235,12 +328,33 @@ function ImportDialog:Create()
     12
   )
 
+  self.LoadButton =
+      addon.UI.Components.Button:Create(
+        frame,
+        {
+          text = "Load",
+          width = 95,
+
+          onClick = function()
+            self:LoadTeam()
+          end,
+        }
+      )
+
+  self.LoadButton:SetPoint(
+    "RIGHT",
+    self.SaveButton,
+    "LEFT",
+    -6,
+    0
+  )
+
   self.CancelButton =
       addon.UI.Components.Button:Create(
         frame,
         {
           text = "Cancel",
-          width = 100,
+          width = 95,
 
           onClick = function()
             self:Hide()
@@ -250,10 +364,17 @@ function ImportDialog:Create()
 
   self.CancelButton:SetPoint(
     "RIGHT",
-    self.ImportButton,
+    self.LoadButton,
     "LEFT",
-    -8,
+    -6,
     0
+  )
+
+  self.Input:SetScript(
+    "OnTextChanged",
+    function()
+      self:UpdateButtons()
+    end
   )
 
   frame:Hide()
@@ -346,9 +467,20 @@ function ImportDialog:Show()
   self.Input:SetText("")
   self:ClearStatus()
 
-  self.Frame:Show()
-  self.Frame:Raise()
+  self.SelectedFolderID =
+      addon.Services.Folder:GetSelectedStorageFolderID()
 
+  if self.RefreshFolderDropdown then
+    self:RefreshFolderDropdown()
+  end
+
+  self.SaveMode = "new"
+
+  self:UpdateSaveMode()
+  self:UpdateButtons()
+  -- self:RefreshFolderDropdown()
+  self.Frame:Show()
+  -- self.Frame:Raise()
   self.Input:SetFocus()
 end
 
@@ -362,6 +494,356 @@ function ImportDialog:Hide()
   end
 
   self.Frame:Hide()
+end
+
+function ImportDialog:GetFolderOptions()
+  local options = {
+    {
+      id = nil,
+      name = "Unsorted",
+    },
+  }
+
+  for _, folder in ipairs(
+    addon.Services.Folder:GetFolders()
+  ) do
+    options[#options + 1] = {
+      id = folder.id,
+      name = folder.name,
+    }
+  end
+
+  return options
+end
+
+function ImportDialog:SetSelectedFolder(
+    folderID
+)
+  self.SelectedFolderID = folderID
+  self:RefreshFolderDropdown()
+end
+
+function ImportDialog:GetImportData()
+  local value =
+      addon.Utils:Trim(
+        self.Input:GetText() or ""
+      )
+
+  local importData, errorMessage =
+      addon.Services.ImportExport:
+      Parse(value)
+
+  if not importData then
+    self:SetStatus(
+      errorMessage or "Invalid import string"
+    )
+
+    return nil
+  end
+
+  importData.folderID =
+      self.SelectedFolderID
+
+  return importData
+end
+
+function ImportDialog:SaveTeam()
+  if self.SaveMode == "override" then
+    self:OverrideExisting()
+    return
+  end
+
+  local importData, folderID = self:GetImportData()
+
+  if not importData then
+    return
+  end
+
+  local team, err =
+      addon.Services.Team:CreateFromImport(
+        importData,
+        folderID
+      )
+
+  if not team then
+    self:SetStatus(
+      err or "Unable to save team."
+    )
+    return
+  end
+
+  local folderKey =
+      team.folderID
+      or addon.Services.Folder.UNSORTED
+
+  addon.Services.Folder:Select(folderKey)
+
+  C_Timer.After(0, function()
+    local success, loadError =
+        addon.Services.Team:Load(team.id)
+
+    if not success then
+      self:SetStatus(
+        loadError or "Unable to load team."
+      )
+      return
+    end
+
+    self:Hide()
+  end)
+end
+
+function ImportDialog:OverrideExisting()
+  local selectedTeam =
+      addon.Services.Team:GetSelected()
+
+  if not selectedTeam then
+    self:SetStatus(
+      "Select a team to override"
+    )
+
+    return
+  end
+
+  local importData =
+      self:GetImportData()
+
+  if not importData then
+    return
+  end
+
+  local team, errorMessage =
+      addon.Services.Team:
+      OverrideFromImport(
+        selectedTeam.id,
+        importData
+      )
+
+  if not team then
+    self:SetStatus(
+      errorMessage
+      or "Unable to override team"
+    )
+
+    return
+  end
+
+  addon.Services.Folder:Select(
+    selectedTeam.folderID
+    or addon.Services.Folder.UNSORTED
+  )
+
+  C_Timer.After(0, function()
+    local success, loadError =
+        addon.Services.Team:Load(
+          selectedTeam.id
+        )
+
+    if not success then
+      self:SetStatus(
+        loadError or "Unable to load team."
+      )
+      return
+    end
+
+    self:Hide()
+  end)
+
+  self:Hide()
+end
+
+function ImportDialog:LoadTeam()
+  local importData =
+      self:GetImportData()
+
+  if not importData then
+    return
+  end
+
+  local success, errorMessage =
+      addon.Services.Team:
+      LoadFromImport(importData)
+
+  if not success then
+    self:SetStatus(
+      errorMessage
+      or "Unable to load team"
+    )
+
+    return
+  end
+
+  self:Hide()
+end
+
+function ImportDialog:UpdateButtons()
+  local hasText =
+      addon.Utils:Trim(
+        self.Input and self.Input:GetText() or ""
+      ) ~= ""
+
+  local selectedTeam =
+      addon.Services.Team:GetSelected()
+
+  local hasSelectedTeam =
+      selectedTeam ~= nil
+
+  if self.SaveButton then
+    self.SaveButton:SetEnabled(hasText)
+  end
+
+  if self.LoadButton then
+    self.LoadButton:SetEnabled(hasText)
+  end
+
+  if self.OverrideRadio then
+    if hasSelectedTeam then
+      self.OverrideRadio:Enable()
+
+      if self.OverrideRadio.Label then
+        self.OverrideRadio.Label:SetTextColor(
+          1,
+          0.82,
+          0
+        )
+      end
+    else
+      self.OverrideRadio:Disable()
+
+      if self.OverrideRadio.Label then
+        self.OverrideRadio.Label:SetTextColor(
+          0.5,
+          0.5,
+          0.5
+        )
+      end
+
+      if self.SaveMode == "override"
+          and self.NewTeamRadio then
+        self:SetSaveMode("new")
+      end
+    end
+  end
+end
+
+function ImportDialog:RefreshFolderDropdown()
+  if not self.FolderDropdown then
+    return
+  end
+
+  local selectedFolderID =
+      self.SelectedFolderID
+
+  local selectedText =
+  "Unsorted"
+
+  if selectedFolderID then
+    local selectedFolder =
+        addon.Services.Folder:Get(
+          selectedFolderID
+        )
+
+    if selectedFolder then
+      selectedText =
+          selectedFolder.name
+          or "Unsorted"
+    end
+  end
+
+  self.FolderDropdown:SetDefaultText(
+    selectedText
+  )
+
+  self.FolderDropdown:SetupMenu(
+    function(
+        dropdown,
+        rootDescription
+    )
+      rootDescription:CreateRadio(
+        "Unsorted",
+        function()
+          return self.SelectedFolderID == nil
+        end,
+        function()
+          self.SelectedFolderID = nil
+          self:RefreshFolderDropdown()
+        end
+      )
+
+      local folders = GetSortedFolders()
+
+      for _, folder in ipairs(folders) do
+        local folderID =
+            folder.id
+
+        local folderName =
+            folder.name
+
+        rootDescription:CreateRadio(
+          folderName,
+          function()
+            return self.SelectedFolderID
+                == folderID
+          end,
+          function()
+            self.SelectedFolderID =
+                folderID
+
+            self:RefreshFolderDropdown()
+          end
+        )
+      end
+    end
+  )
+end
+
+function ImportDialog:SetSaveMode(mode)
+  local selectedTeam =
+      addon.Services.Team:GetSelected()
+
+  if mode == "override"
+      and not selectedTeam then
+    mode = "new"
+  end
+
+  self.SaveMode = mode
+
+  self.NewTeamRadio:SetChecked(
+    mode == "new"
+  )
+
+  self.OverrideRadio:SetChecked(
+    mode == "override"
+  )
+end
+
+function ImportDialog:UpdateSaveMode()
+  local selectedTeam =
+      addon.Services.Team:GetSelected()
+
+  if selectedTeam then
+    self.OverrideRadio:Enable()
+    self.OverrideRadio.Label:SetTextColor(
+      1,
+      0.82,
+      0
+    )
+  else
+    self.OverrideRadio:Disable()
+    self.OverrideRadio.Label:SetTextColor(
+      0.5,
+      0.5,
+      0.5
+    )
+
+    if self.SaveMode == "override" then
+      self.SaveMode = "new"
+    end
+  end
+
+  self:SetSaveMode(
+    self.SaveMode or "new"
+  )
 end
 
 addon.UI.Views.ImportDialog =

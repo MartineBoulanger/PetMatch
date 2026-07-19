@@ -111,7 +111,6 @@ local function CopyBorderStyle(
         sourceBorder:GetTexture()
 
     if not texture then
-      print("[PetMatch] Border has no atlas or texture")
       return
     end
 

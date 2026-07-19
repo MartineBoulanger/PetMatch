@@ -198,49 +198,6 @@ local function Split(value, separator)
   return result
 end
 
-local function GetAbilityIDs(
-    speciesID,
-    choices
-)
-  local abilityIDs =
-      C_PetJournal.GetPetAbilityList(
-        speciesID
-      )
-
-  if type(abilityIDs) ~= "table" then
-    return {}
-  end
-
-  local selectedAbilities = {}
-
-  for abilitySlot = 1, 3 do
-    local choice =
-        tonumber(
-          choices:sub(
-            abilitySlot,
-            abilitySlot
-          )
-        ) or 1
-
-    if choice ~= 2 then
-      choice = 1
-    end
-
-    local abilityIndex =
-        abilitySlot
-        + (
-          choice == 2
-          and 3
-          or 0
-        )
-
-    selectedAbilities[abilitySlot] =
-        abilityIDs[abilityIndex]
-  end
-
-  return selectedAbilities
-end
-
 local function GetAbilityChoices(
     speciesID,
     selectedAbilities
@@ -287,27 +244,6 @@ local function GetAbilityChoices(
   end
 
   return choices
-end
-
-local function IsLegacyGroupHeader(line)
-  return line:match("^__%s*.-%s*__$") ~= nil
-      and not line:find(":", 1, true)
-end
-
-local function GetLines(value)
-  local lines = {}
-
-  value = NormalizeNewlines(value)
-
-  if value:sub(-1) ~= "\n" then
-    value = value .. "\n"
-  end
-
-  for line in value:gmatch("(.-)\n") do
-    lines[#lines + 1] = line
-  end
-
-  return lines
 end
 
 local function GetSpeciesID(petGUID)
@@ -576,7 +512,7 @@ function ImportExportService:Parse(value)
   end
 
   if value:find("::", 1, true) then
-    return self:ParseRematch(value)
+    return self:ParseRematchTeam(value)
   end
 
   return nil, "Unknown team format"

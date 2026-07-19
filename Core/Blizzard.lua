@@ -18,7 +18,6 @@ function Blizzard:Initialize()
   PetJournal:HookScript(
     "OnShow",
     function()
-      print("[PetMatch DEBUG] PetJournal OnShow")
       addon.UI.Host:Update()
     end
   )
@@ -26,7 +25,6 @@ function Blizzard:Initialize()
   PetJournal:HookScript(
     "OnHide",
     function()
-      print("[PetMatch DEBUG] PetJournal OnHide")
       addon.UI.Host:Update()
     end
   )
@@ -34,8 +32,6 @@ function Blizzard:Initialize()
   if addon.Services.LoadoutMonitor then
     addon.Services.LoadoutMonitor:Initialize()
   end
-
-  print("[PetMatch] PetJournal visibility hooks active")
 end
 
 local frame = CreateFrame("Frame")
@@ -46,7 +42,6 @@ frame:SetScript(
   function(_, event, name)
     if event == "ADDON_LOADED"
         and name == "Blizzard_Collections" then
-      print("[PetMatch DEBUG] Blizzard_Collections loaded")
       Blizzard:Initialize()
     end
   end

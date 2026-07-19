@@ -5,12 +5,6 @@ addon.UI = addon.UI or {}
 local Host = {}
 
 function Host:Update()
-  print(
-    "[PetMatch DEBUG] Host Update",
-    PetJournal and PetJournal:IsVisible()
-  )
-
-
   if not PetJournal then
     return
   end

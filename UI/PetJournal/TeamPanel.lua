@@ -32,7 +32,7 @@ function TeamPanel:Create()
     "TOPLEFT",
     PetJournal,
     "TOPRIGHT",
-    0,
+    -2,
     -1
   )
 

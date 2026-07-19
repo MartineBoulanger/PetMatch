@@ -66,14 +66,6 @@ function TeamService:Create(name)
     addon.Events.TEAM_CREATED,
     team
   )
-  print(
-    "[PetMatch DEBUG] Team saved:",
-    name
-  )
-  print(
-    "[PetMatch DEBUG] Total teams:",
-    #self:GetAllTeams()
-  )
   return team
 end
 
@@ -82,17 +74,13 @@ function TeamService:Get(id)
 end
 
 function TeamService:SetActive(id)
-  local team =
-      self:Get(id)
+  local team = self:Get(id)
   if not team then
     return false
   end
   local profile = GetProfile()
   profile.activeTeam = id
-  addon.EventBus:Fire(
-    addon.Events.TEAM_SELECTED,
-    team
-  )
+  self:SetSelected(id)
   return true
 end
 
@@ -551,8 +539,10 @@ end
 
 function TeamService:GetSelected()
   local teamID = self:GetSelectedID()
-
-  return teamID and self:Get(teamID) or nil
+  if not teamID then
+    return nil
+  end
+  return self:Get(teamID)
 end
 
 function TeamService:SetSortMode(sortMode)
@@ -712,42 +702,43 @@ function TeamService:HasTag(team, tagID)
       and team.tags[tagID] == true
 end
 
-function TeamService:CreateFromImport(importData)
+function TeamService:BuildFromImport(
+    importData
+)
   if type(importData) ~= "table" then
     return nil, "Invalid import data", {}
   end
 
-  local name = addon.Utils:Trim(importData.name or "")
+  local team = {
+    name =
+        addon.Utils:Trim(
+          importData.name or ""
+        ),
 
-  if name == "" then
-    name = "Imported Team"
+    pets = {},
+    abilities = {},
+    breeds = {},
+    specialSlots = {},
+
+    folderID = importData.folderID,
+    favorite = importData.favorite == true,
+    notes = importData.notes or "",
+    script = importData.script or "",
+    targetNPCIDs = importData.npcIDs or {},
+    importSource =
+        importData.format or "unknown",
+  }
+
+  if team.name == "" then
+    team.name = "Imported Team"
   end
-
-  name = self:GetUniqueName(name)
-
-  local folderID = importData.folderID
-
-  if not folderID then
-    folderID = addon.Services.Folder:GetSelectedStorageFolderID()
-  end
-
-  local team = self:Create(name)
-
-  team.pets = {}
-  team.abilities = {}
-  team.breeds = {}
-  team.specialSlots = {}
-  team.targetNPCIDs = importData.npcIDs or {}
-  team.folderID = folderID
-  team.favorite = importData.favorite == true
-  team.notes = importData.notes or ""
-  team.script = importData.script or ""
-  team.importSource = importData.format or "unknown"
 
   local missingSpecies = {}
 
   for slot = 1, 3 do
-    local slotData = importData.slots and importData.slots[slot]
+    local slotData =
+        importData.slots
+        and importData.slots[slot]
 
     if slotData then
       if slotData.special then
@@ -759,22 +750,83 @@ function TeamService:CreateFromImport(importData)
           rawPetTag = slotData.rawPetTag,
         }
       elseif slotData.speciesID then
-        local petGUID = addon.Services.PetJournal:FindOwnedPetBySpeciesID(slotData.speciesID)
+        local petGUID =
+            addon.Services.PetJournal:
+            FindOwnedPetBySpeciesID(
+              slotData.speciesID
+            )
 
         if petGUID then
           team.pets[slot] = petGUID
         else
-          missingSpecies[#missingSpecies + 1] = slotData.speciesID
+          missingSpecies[
+          #missingSpecies + 1
+          ] = slotData.speciesID
         end
 
-        team.abilities[slot] = slotData.abilities or {}
-        team.breeds[slot] = slotData.breedID or 0
+        team.abilities[slot] =
+            slotData.abilities or {}
+
+        team.breeds[slot] =
+            slotData.breedID or 0
       end
     end
   end
 
+  return team, nil, missingSpecies
+end
+
+function TeamService:CreateFromImport(
+    importData
+)
+  local importedTeam,
+  errorMessage,
+  missingSpecies =
+      self:BuildFromImport(importData)
+
+  if not importedTeam then
+    return nil, errorMessage, missingSpecies
+  end
+
+  local name =
+      self:GetUniqueName(
+        importedTeam.name
+      )
+
+  local team =
+      self:Create(name)
+
+  if not team then
+    return nil,
+        "Unable to create team",
+        missingSpecies
+  end
+
+  team.pets = importedTeam.pets
+  team.abilities = importedTeam.abilities
+  team.breeds = importedTeam.breeds
+  team.specialSlots =
+      importedTeam.specialSlots
+
+  team.targetNPCIDs =
+      importedTeam.targetNPCIDs
+
+  team.folderID =
+      importedTeam.folderID
+
+  team.favorite =
+      importedTeam.favorite
+
+  team.notes =
+      importedTeam.notes
+
+  team.script =
+      importedTeam.script
+
+  team.importSource =
+      importedTeam.importSource
+
   team.modified = time()
-  team.importSource = importData.format or "unknown"
 
   addon.EventBus:Fire(
     addon.Events.TEAM_UPDATED,
@@ -788,6 +840,116 @@ function TeamService:CreateFromImport(importData)
   )
 
   return team, nil, missingSpecies
+end
+
+function TeamService:OverrideFromImport(
+    teamID,
+    importData
+)
+  local existingTeam =
+      self:Get(teamID)
+
+  if not existingTeam then
+    return nil, "No team selected", {}
+  end
+
+  local importedTeam,
+  errorMessage,
+  missingSpecies =
+      self:BuildFromImport(importData)
+
+  if not importedTeam then
+    return nil,
+        errorMessage,
+        missingSpecies
+  end
+
+  existingTeam.name =
+      importedTeam.name
+
+  existingTeam.pets =
+      importedTeam.pets
+
+  existingTeam.abilities =
+      importedTeam.abilities
+
+  existingTeam.breeds =
+      importedTeam.breeds
+
+  existingTeam.specialSlots =
+      importedTeam.specialSlots
+
+  existingTeam.targetNPCIDs =
+      importedTeam.targetNPCIDs
+
+  existingTeam.folderID =
+      importedTeam.folderID
+
+  existingTeam.favorite =
+      importedTeam.favorite
+
+  existingTeam.notes =
+      importedTeam.notes
+
+  existingTeam.script =
+      importedTeam.script
+
+  existingTeam.importSource =
+      importedTeam.importSource
+
+  existingTeam.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    existingTeam
+  )
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_IMPORTED,
+    existingTeam,
+    missingSpecies
+  )
+
+  return existingTeam,
+      nil,
+      missingSpecies
+end
+
+function TeamService:LoadFromImport(
+    importData
+)
+  local importedTeam,
+  errorMessage,
+  missingSpecies =
+      self:BuildFromImport(importData)
+
+  if not importedTeam then
+    return false,
+        errorMessage,
+        missingSpecies
+  end
+
+  local success, loadError =
+      addon.Services.BattleSlot:
+      LoadPets(
+        importedTeam.pets,
+        importedTeam.abilities
+      )
+
+  if not success then
+    return false,
+        loadError,
+        missingSpecies
+  end
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_LOADED,
+    importedTeam
+  )
+
+  return true,
+      nil,
+      missingSpecies
 end
 
 function TeamService:FindByName(name)
@@ -816,6 +978,20 @@ function TeamService:GetUniqueName(name)
   until not self:FindByName(candidate)
 
   return candidate
+end
+
+function TeamService:SetSelected(id)
+  addon.Settings:SetUI(
+    "selectedTeamID",
+    id
+  )
+
+  local team = self:Get(id)
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_SELECTED,
+    team
+  )
 end
 
 addon.Services.Team = TeamService
