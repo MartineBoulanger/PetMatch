@@ -484,6 +484,32 @@ function ImportDialog:Show()
   self.Input:SetFocus()
 end
 
+function ImportDialog:ShowForFolder(
+    folderKey
+)
+  self:Create()
+
+  self.Input:SetText("")
+  self:ClearStatus()
+
+  if folderKey
+      == addon.Services.Folder.UNSORTED then
+    self.SelectedFolderID = nil
+  elseif addon.Services.Folder:Get(
+        folderKey
+      ) then
+    self.SelectedFolderID = folderKey
+  end
+
+  self.SaveMode = "new"
+
+  self:UpdateSaveMode()
+  self:RefreshFolderDropdown()
+  self:UpdateButtons()
+  self.Frame:Show()
+  self.Input:SetFocus()
+end
+
 function ImportDialog:Hide()
   if not self.Frame then
     return

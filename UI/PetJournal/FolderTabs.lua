@@ -132,7 +132,11 @@ function FolderTabs:ClearButtons()
   self.Buttons = {}
 end
 
-function FolderTabs:CreateTab(label, folderKey, index)
+function FolderTabs:CreateTab(
+    label,
+    folderKey,
+    index
+)
   local button =
       addon.UI.Components.Button:Create(
         self.Frame,
@@ -140,12 +144,6 @@ function FolderTabs:CreateTab(label, folderKey, index)
           text = label,
           width = TAB_WIDTH,
           height = TAB_HEIGHT,
-
-          onClick = function()
-            addon.Services.Folder:Select(
-              folderKey
-            )
-          end,
         }
       )
 
@@ -160,11 +158,39 @@ function FolderTabs:CreateTab(label, folderKey, index)
 
   button.FolderKey = folderKey
 
+  button:RegisterForClicks(
+    "LeftButtonUp",
+    "RightButtonUp"
+  )
+
+  button:SetScript(
+    "OnClick",
+    function(clickedButton, mouseButton)
+      if mouseButton == "RightButton" then
+        addon.UI.Views.FolderContextMenu:Show(
+          clickedButton,
+          clickedButton.FolderKey
+        )
+
+        return
+      end
+
+      if mouseButton == "LeftButton" then
+        addon.Services.Folder:Select(
+          clickedButton.FolderKey
+        )
+      end
+    end
+  )
+
   local acceptsTeams =
-      folderKey == addon.Services.Folder.UNSORTED
+      folderKey
+      == addon.Services.Folder.UNSORTED
       or (
-        folderKey ~= addon.Services.Folder.ALL
-        and folderKey ~= addon.Services.Folder.FAVORITES
+        folderKey
+        ~= addon.Services.Folder.ALL
+        and folderKey
+        ~= addon.Services.Folder.FAVORITES
       )
 
   if acceptsTeams then
@@ -236,10 +262,12 @@ function FolderTabs:Refresh()
     local selected =
         button.FolderKey == selectedKey
 
+    button:Enable()
+
     if selected then
-      button:Disable()
+      button:LockHighlight()
     else
-      button:Enable()
+      button:UnlockHighlight()
     end
   end
 

@@ -357,51 +357,6 @@ function TeamCard:Create(parent, team)
     0
   )
 
-  frame.UpdateButton =
-      addon.UI.Components.Button:Create(
-        frame,
-        {
-          text = "Update",
-          width = 60,
-          height = 20,
-          onClick = function()
-            local team = frame.Team
-            if not team then
-              return
-            end
-            local updatedTeam, errorMessage =
-                addon.Services.Team:
-                ReplacePetsFromBattleSlots(
-                  team.id
-                )
-            if not updatedTeam then
-              addon.Logger:Warn(
-                errorMessage
-                or "Unable to update team"
-              )
-              return
-            end
-            frame:SetTeam(updatedTeam)
-            addon.Services.LoadoutMonitor:
-                ScheduleCheck()
-            addon.Logger:Info(
-              "Updated team:",
-              updatedTeam.name
-            )
-          end,
-        }
-      )
-
-  frame.UpdateButton:SetPoint(
-    "TOP",
-    frame,
-    "TOP",
-    0,
-    -10
-  )
-
-  frame.UpdateButton:Hide()
-
   for slotIndex = 1, 3 do
     local petSlot = addon.UI.Components.PetSlot:Create(frame)
     local petSlotFrame = petSlot:GetFrame()
@@ -419,26 +374,12 @@ function TeamCard:Create(parent, team)
     frame.PetSlots[slotIndex] = petSlot
   end
 
-  function frame:SetDirty(dirty)
-    if dirty then
-      self.UpdateButton:Show()
-    else
-      self.UpdateButton:Hide()
-    end
-  end
-
   function frame:RefreshState()
     local team = self.Team
 
     if not team then
       return
     end
-
-    self:SetDirty(
-      addon.Services.LoadoutMonitor
-      and addon.Services.LoadoutMonitor:
-      IsTeamDirty(team.id)
-    )
 
     if team.favorite then
       self.FavoriteButton.Icon:SetDesaturated(false)
@@ -522,12 +463,6 @@ function TeamCard:Create(parent, team)
         or nil
       )
     end
-
-    self:SetDirty(
-      addon.Services.LoadoutMonitor
-      and addon.Services.LoadoutMonitor:
-      IsTeamDirty(newTeam.id)
-    )
 
     self:RefreshState()
   end

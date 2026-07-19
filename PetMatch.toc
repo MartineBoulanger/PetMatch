@@ -82,6 +82,8 @@ UI/PetJournal/MoveTeamDialog.lua
 UI/PetJournal/SaveTeamDialog.lua
 UI/PetJournal/PetJournalToolbar.lua
 UI/PetJournal/SaveTeamButton.lua
+UI/PetJournal/UpdateTeamButton.lua
+UI/PetJournal/FolderContextMenu.lua
 UI/PetJournal/TeamPanel.lua
 
 Core/Slash.lua
