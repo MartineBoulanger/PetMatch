@@ -22,11 +22,19 @@ function Host:Update()
     if addon.UI.Views.SaveTeamButton then
       addon.UI.Views.SaveTeamButton:Show()
     end
+
+    if addon.UI.Views.PetJournalToolbar then
+      addon.UI.Views.PetJournalToolbar:Show()
+    end
   else
     addon.UI.Manager:Hide()
 
     if addon.UI.Views.SaveTeamButton then
       addon.UI.Views.SaveTeamButton:Hide()
+    end
+
+    if addon.UI.Views.PetJournalToolbar then
+      addon.UI.Views.PetJournalToolbar:Hide()
     end
   end
 end

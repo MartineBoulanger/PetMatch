@@ -88,52 +88,6 @@ function FolderTabs:Create(parent)
     4
   )
 
-  self.ImportButton =
-      addon.UI.Components.Button:Create(
-        frame,
-        {
-          text = "Import",
-          width = 54,
-          height = 24,
-
-          onClick = function()
-            addon.UI.Views.ImportDialog:Show()
-          end,
-        }
-      )
-
-  self.ImportButton:SetPoint(
-    "BOTTOMLEFT",
-    self.DeleteButton,
-    "TOPLEFT",
-    0,
-    4
-  )
-
-  self.ExportButton =
-      addon.UI.Components.Button:Create(
-        frame,
-        {
-          text = "Export",
-          width = 54,
-          height = 24,
-
-          onClick = function()
-            -- Wordt in de volgende stap toegevoegd.
-          end,
-        }
-      )
-
-  self.ExportButton:SetPoint(
-    "LEFT",
-    self.ImportButton,
-    "RIGHT",
-    4,
-    0
-  )
-
-  self.ExportButton:Disable()
-
   if not self.EventsRegistered then
     self.EventsRegistered = true
 

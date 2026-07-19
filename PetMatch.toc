@@ -72,6 +72,7 @@ UI/Manager.lua
 UI/Host.lua
 
 UI/PetJournal/TeamList.lua
+UI/PetJournal/ExportDialog.lua
 UI/PetJournal/FolderDialog.lua
 UI/PetJournal/FolderTabs.lua
 UI/PetJournal/TeamListControls.lua
@@ -79,6 +80,7 @@ UI/PetJournal/EditTeamDialog.lua
 UI/PetJournal/ImportDialog.lua
 UI/PetJournal/MoveTeamDialog.lua
 UI/PetJournal/SaveTeamDialog.lua
+UI/PetJournal/PetJournalToolbar.lua
 UI/PetJournal/SaveTeamButton.lua
 UI/PetJournal/TeamPanel.lua
 

@@ -1,0 +1,787 @@
+local addonName, addon = ...
+
+addon.UI = addon.UI or {}
+addon.UI.Views = addon.UI.Views or {}
+
+local PetJournalToolbar = {}
+
+local BUTTON_SIZE = 40
+local BUTTON_SPACING = 5
+
+local function FindHealButton()
+  return PetJournal
+      and (
+        PetJournal.HealPetSpellFrame
+        or PetJournal.HealPetButton
+        or PetJournal.HealButton
+      )
+      or _G.PetJournalHealPetSpellFrame
+      or _G.PetJournalHealPetButton
+      or _G.PetJournalHealButton
+end
+
+local function FindRandomFavoriteButton()
+  return PetJournal
+      and (
+        PetJournal.SummonRandomPetSpellFrame
+        or PetJournal.SummonRandomFavoritePetButton
+        or PetJournal.SummonRandomFavoriteButton
+        or PetJournal.SummonRandomPetButton
+      )
+      or _G.PetJournalSummonRandomPetSpellFrame
+      or _G.PetJournalSummonRandomFavoritePetButton
+      or _G.PetJournalSummonRandomFavoriteButton
+      or _G.PetJournalSummonRandomPetButton
+end
+
+local function HideFontStrings(frame)
+  if not frame then
+    return
+  end
+
+  for _, region in ipairs({
+    frame:GetRegions()
+  }) do
+    if region
+        and region:GetObjectType()
+        == "FontString" then
+      region:Hide()
+    end
+  end
+
+  for _, child in ipairs({
+    frame:GetChildren()
+  }) do
+    HideFontStrings(child)
+  end
+end
+
+local function ShowTooltip(
+    button,
+    title,
+    description
+)
+  GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+  GameTooltip:SetText(title, 1, 1, 1)
+
+  if description then
+    GameTooltip:AddLine(
+      description,
+      nil,
+      nil,
+      nil,
+      true
+    )
+  end
+
+  GameTooltip:Show()
+end
+
+local function CopyBorderStyle(
+    targetButton,
+    sourceButton
+)
+  if not targetButton
+      or not sourceButton
+      or not sourceButton.Border then
+    return
+  end
+
+  local sourceBorder = sourceButton.Border
+
+  local border =
+      targetButton:CreateTexture(
+        nil,
+        "OVERLAY",
+        nil,
+        7
+      )
+
+  local atlas =
+      sourceBorder.GetAtlas
+      and sourceBorder:GetAtlas()
+
+  if atlas then
+    border:SetAtlas(
+      atlas,
+      false
+    )
+  else
+    local texture =
+        sourceBorder:GetTexture()
+
+    if not texture then
+      print("[PetMatch] Border has no atlas or texture")
+      return
+    end
+
+    border:SetTexture(texture)
+
+    border:SetTexCoord(
+      sourceBorder:GetTexCoord()
+    )
+  end
+
+  border:ClearAllPoints()
+
+  local buttonWidth = sourceButton:GetWidth()
+  local buttonHeight = sourceButton:GetHeight()
+  local borderWidth = sourceBorder:GetWidth()
+  local borderHeight = sourceBorder:GetHeight()
+
+  if buttonWidth > 0
+      and buttonHeight > 0
+      and borderWidth > 0
+      and borderHeight > 0 then
+    border:SetSize(
+      targetButton:GetWidth() * borderWidth / buttonWidth,
+      targetButton:GetHeight() * borderHeight / buttonHeight
+    )
+
+    border:SetPoint(
+      "CENTER",
+      targetButton,
+      "CENTER"
+    )
+  else
+    border:SetAllPoints(targetButton)
+  end
+
+  border:SetVertexColor(
+    sourceBorder:GetVertexColor()
+  )
+
+  border:SetAlpha(
+    sourceBorder:GetAlpha()
+  )
+
+  border:Show()
+
+  targetButton.Border = border
+end
+
+local function CopyHighlightStyle(
+    targetButton,
+    sourceButton
+)
+  if not targetButton
+      or not sourceButton then
+    return
+  end
+
+  local sourceHighlight =
+      sourceButton:GetHighlightTexture()
+
+  if not sourceHighlight then
+    return
+  end
+
+  local highlight =
+      targetButton:GetHighlightTexture()
+
+  if not highlight then
+    highlight =
+        targetButton:CreateTexture(
+          nil,
+          "HIGHLIGHT"
+        )
+
+    targetButton:SetHighlightTexture(
+      highlight
+    )
+  end
+
+  local atlas =
+      sourceHighlight.GetAtlas
+      and sourceHighlight:GetAtlas()
+
+  if atlas then
+    highlight:SetAtlas(
+      atlas,
+      false
+    )
+  else
+    local texture =
+        sourceHighlight:GetTexture()
+
+    if texture then
+      highlight:SetTexture(texture)
+    end
+
+    highlight:SetTexCoord(
+      sourceHighlight:GetTexCoord()
+    )
+  end
+
+  highlight:ClearAllPoints()
+
+  local sourceButtonWidth =
+      sourceButton:GetWidth()
+
+  local sourceButtonHeight =
+      sourceButton:GetHeight()
+
+  local sourceWidth =
+      sourceHighlight:GetWidth()
+
+  local sourceHeight =
+      sourceHighlight:GetHeight()
+
+  if sourceButtonWidth > 0
+      and sourceButtonHeight > 0
+      and sourceWidth > 0
+      and sourceHeight > 0 then
+    highlight:SetSize(
+      targetButton:GetWidth()
+      * sourceWidth
+      / sourceButtonWidth,
+      targetButton:GetHeight()
+      * sourceHeight
+      / sourceButtonHeight
+    )
+
+    highlight:SetPoint(
+      "CENTER",
+      targetButton,
+      "CENTER"
+    )
+  else
+    highlight:SetAllPoints(
+      targetButton
+    )
+  end
+
+  highlight:SetBlendMode(
+    sourceHighlight:GetBlendMode()
+  )
+
+  highlight:SetVertexColor(
+    sourceHighlight:GetVertexColor()
+  )
+
+  highlight:SetAlpha(
+    sourceHighlight:GetAlpha()
+  )
+
+  highlight:Show()
+end
+
+local function FindHealIconButton()
+  local healFrame = FindHealButton()
+  return healFrame
+      and healFrame.Button
+end
+
+local function GetToolbarButtonSize()
+  local sourceButton = FindHealIconButton()
+
+  if sourceButton then
+    local width = sourceButton:GetWidth()
+    local height = sourceButton:GetHeight()
+
+    if width
+        and width > 0
+        and height
+        and height > 0 then
+      return width, height
+    end
+  end
+
+  return 32, 32
+end
+
+local function AddBlizzardBorder(button)
+  if not button then
+    return
+  end
+
+  local healFrame = FindHealButton()
+  local sourceBorder = healFrame and healFrame.Border
+
+  if not sourceBorder then
+    addon.Logger:Warn("Heal Pet border was not found")
+    return
+  end
+
+  local border =
+      button:CreateTexture(
+        nil,
+        "OVERLAY",
+        nil,
+        7
+      )
+
+  local atlas =
+      sourceBorder.GetAtlas
+      and sourceBorder:GetAtlas()
+
+  if atlas then
+    border:SetAtlas(
+      atlas,
+      false
+    )
+  else
+    local texture = sourceBorder:GetTexture()
+
+    if texture then
+      border:SetTexture(texture)
+    end
+
+    border:SetTexCoord(
+      sourceBorder:GetTexCoord()
+    )
+  end
+
+  local borderWidth = sourceBorder:GetWidth()
+  local borderHeight = sourceBorder:GetHeight()
+
+  if borderWidth
+      and borderWidth > 0
+      and borderHeight
+      and borderHeight > 0 then
+    border:SetSize(
+      borderWidth,
+      borderHeight
+    )
+  else
+    border:SetSize(
+      button:GetWidth() + 8,
+      button:GetHeight() + 8
+    )
+  end
+
+  border:ClearAllPoints()
+  border:SetPoint(
+    "CENTER",
+    button,
+    "CENTER",
+    0,
+    0
+  )
+
+  border:SetVertexColor(
+    sourceBorder:GetVertexColor()
+  )
+
+  border:SetAlpha(
+    sourceBorder:GetAlpha()
+  )
+
+  border:Show()
+
+  button.Border = border
+end
+
+local function CreateIconButton(
+    parent,
+    name,
+    texture,
+    tooltipTitle,
+    tooltipDescription,
+    onClick
+)
+  local button =
+      CreateFrame(
+        "Button",
+        name,
+        parent,
+        "IconButtonTemplate"
+      )
+
+  local width, height = GetToolbarButtonSize()
+
+  button:SetSize(width, height)
+  button:RegisterForClicks("LeftButtonUp")
+
+  if button.Icon then
+    button.Icon:ClearAllPoints()
+    button.Icon:SetAllPoints(button)
+    button.Icon:SetTexture(texture)
+
+    button.Icon:SetTexCoord(
+      0,
+      1,
+      0,
+      1
+    )
+  end
+
+  CopyBorderStyle(
+    button,
+    FindHealIconButton()
+  )
+
+  CopyHighlightStyle(
+    button,
+    FindHealIconButton()
+  )
+
+  AddBlizzardBorder(button)
+
+  button:SetScript(
+    "OnEnter",
+    function(self)
+      ShowTooltip(
+        self,
+        tooltipTitle,
+        tooltipDescription
+      )
+    end
+  )
+
+  button:SetScript(
+    "OnLeave",
+    function()
+      GameTooltip:Hide()
+    end
+  )
+
+  button:SetScript(
+    "OnClick",
+    onClick
+  )
+
+  return button
+end
+
+function PetJournalToolbar:SetButtonEnabled(
+    button,
+    enabled
+)
+  if not button then
+    return
+  end
+
+  if enabled then
+    button:Enable()
+
+    if button.Icon then
+      button.Icon:SetDesaturated(false)
+      button.Icon:SetVertexColor(
+        1,
+        1,
+        1
+      )
+      button.Icon:SetAlpha(1)
+    end
+
+    if button.Border then
+      button.Border:SetDesaturated(false)
+      button.Border:SetVertexColor(
+        1,
+        1,
+        1
+      )
+      button.Border:SetAlpha(1)
+    end
+  else
+    button:Disable()
+
+    if button.Icon then
+      button.Icon:SetDesaturated(true)
+      button.Icon:SetVertexColor(
+        0.6,
+        0.6,
+        0.6
+      )
+      button.Icon:SetAlpha(0.65)
+    end
+
+    if button.Border then
+      button.Border:SetDesaturated(true)
+      button.Border:SetVertexColor(
+        0.65,
+        0.65,
+        0.65
+      )
+      button.Border:SetAlpha(0.75)
+    end
+  end
+end
+
+function PetJournalToolbar:UpdateDismissButton()
+  if not self.DismissButton then
+    return
+  end
+
+  local summonedPetGUID = C_PetJournal.GetSummonedPetGUID()
+
+  self:SetButtonEnabled(
+    self.DismissButton,
+    type(summonedPetGUID) == "string"
+    and summonedPetGUID ~= ""
+  )
+end
+
+function PetJournalToolbar:DismissPet()
+  local summonedPetGUID = C_PetJournal.GetSummonedPetGUID()
+
+  if not summonedPetGUID then
+    self:UpdateDismissButton()
+    return
+  end
+
+  C_PetJournal.SummonPetByGUID(summonedPetGUID)
+
+  C_Timer.After(
+    0.1,
+    function()
+      self:UpdateDismissButton()
+    end
+  )
+end
+
+function PetJournalToolbar:PositionButtons()
+  if not self.ImportButton
+      or not self.ExportButton
+      or not self.DismissButton then
+    return
+  end
+
+  local healButton = FindHealButton()
+  local randomFavoriteButton = FindRandomFavoriteButton()
+
+  self.ImportButton:ClearAllPoints()
+  self.ExportButton:ClearAllPoints()
+  self.DismissButton:ClearAllPoints()
+
+  if randomFavoriteButton then
+    self.DismissButton:SetPoint(
+      "LEFT",
+      randomFavoriteButton,
+      "RIGHT",
+      BUTTON_SPACING,
+      0
+    )
+
+    self.ExportButton:SetPoint(
+      "LEFT",
+      self.DismissButton,
+      "RIGHT",
+      BUTTON_SPACING,
+      0
+    )
+
+    self.ImportButton:SetPoint(
+      "LEFT",
+      self.ExportButton,
+      "RIGHT",
+      BUTTON_SPACING,
+      0
+    )
+
+    return
+  end
+
+  if healButton then
+    self.ImportButton:SetPoint(
+      "LEFT",
+      healButton,
+      "RIGHT",
+      BUTTON_SPACING,
+      0
+    )
+
+    self.ExportButton:SetPoint(
+      "LEFT",
+      self.ImportButton,
+      "RIGHT",
+      BUTTON_SPACING,
+      0
+    )
+
+    self.DismissButton:SetPoint(
+      "LEFT",
+      self.ExportButton,
+      "RIGHT",
+      BUTTON_SPACING,
+      0
+    )
+
+    addon.Logger:Warn(
+      "Random favorite pet button was not found; "
+      .. "using the heal button as toolbar anchor"
+    )
+
+    return
+  end
+
+  self.ImportButton:SetPoint(
+    "TOPRIGHT",
+    PetJournal,
+    "TOPRIGHT",
+    -100,
+    -34
+  )
+
+  self.ExportButton:SetPoint(
+    "LEFT",
+    self.ImportButton,
+    "RIGHT",
+    BUTTON_SPACING,
+    0
+  )
+
+  self.DismissButton:SetPoint(
+    "LEFT",
+    self.ExportButton,
+    "RIGHT",
+    BUTTON_SPACING,
+    0
+  )
+
+  addon.Logger:Warn(
+    "Pet Journal toolbar anchors were not found; "
+    .. "using fallback position"
+  )
+end
+
+function PetJournalToolbar:Create()
+  if self.Frame then
+    return self.Frame
+  end
+
+  if not PetJournal then
+    return nil
+  end
+
+  local frame =
+      CreateFrame(
+        "Frame",
+        "PetMatchPetJournalToolbar",
+        PetJournal
+      )
+
+  frame:SetSize(
+    1,
+    BUTTON_SIZE
+  )
+
+  self.Frame = frame
+
+  self.ImportButton =
+      CreateIconButton(
+        PetJournal,
+        "PetMatchImportButton",
+        "Interface\\AddOns\\PetMatch\\Media\\Import",
+        "Import Team",
+        "Import a PetMatch or Rematch team.",
+        function()
+          addon.UI.Views.ImportDialog:Show()
+        end
+      )
+
+  self.ExportButton =
+      CreateIconButton(
+        PetJournal,
+        "PetMatchExportButton",
+        "Interface\\AddOns\\PetMatch\\Media\\Export",
+        "Export Team",
+        "Export the currently selected team.",
+        function()
+          addon.UI.Views.ExportDialog:Show()
+        end
+      )
+
+  self.DismissButton =
+      CreateIconButton(
+        PetJournal,
+        "PetMatchDismissPetButton",
+        "Interface\\AddOns\\PetMatch\\Media\\Dismiss",
+        "Dismiss Pet",
+        "Dismiss the pet that is currently summoned.",
+        function()
+          self:DismissPet()
+        end
+      )
+
+  self:HideBlizzardButtonText()
+  self:PositionButtons()
+  self:UpdateDismissButton()
+
+  self.ImportButton:Hide()
+  self.ExportButton:Hide()
+  self.DismissButton:Hide()
+  frame:Hide()
+
+  self.EventFrame =
+      CreateFrame(
+        "Frame",
+        "PetMatchPetJournalToolbarEvents"
+      )
+
+  self.EventFrame:RegisterEvent(
+    "COMPANION_UPDATE"
+  )
+
+  self.EventFrame:SetScript(
+    "OnEvent",
+    function(
+        eventFrame,
+        eventName,
+        companionType
+    )
+      if companionType
+          and companionType ~= "CRITTER" then
+        return
+      end
+
+      C_Timer.After(
+        0,
+        function()
+          self:UpdateDismissButton()
+        end
+      )
+    end
+  )
+
+  return frame
+end
+
+function PetJournalToolbar:Show()
+  local frame = self:Create()
+
+  if not frame then
+    return
+  end
+
+  self:HideBlizzardButtonText()
+  self:PositionButtons()
+  self:UpdateDismissButton()
+
+  frame:Show()
+  self.ImportButton:Show()
+  self.ExportButton:Show()
+  self.DismissButton:Show()
+end
+
+function PetJournalToolbar:Hide()
+  if self.ImportButton then
+    self.ImportButton:Hide()
+  end
+
+  if self.ExportButton then
+    self.ExportButton:Hide()
+  end
+
+  if self.DismissButton then
+    self.DismissButton:Hide()
+  end
+
+  if self.Frame then
+    self.Frame:Hide()
+  end
+end
+
+function PetJournalToolbar:HideBlizzardButtonText()
+  HideFontStrings(
+    FindHealButton()
+  )
+
+  HideFontStrings(
+    FindRandomFavoriteButton()
+  )
+end
+
+addon.UI.Views.PetJournalToolbar =
+    PetJournalToolbar

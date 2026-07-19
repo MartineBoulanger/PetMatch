@@ -144,4 +144,52 @@ function PetJournalService:FindOwnedPetBySpeciesID(speciesID)
   return bestPetGUID
 end
 
+function PetJournalService:GetSpeciesID(petGUID)
+  local pet = self:GetPet(petGUID)
+  return pet and pet.speciesID or nil
+end
+
+function PetJournalService:GetAbilityChoices(
+    speciesID,
+    selectedAbilities
+)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return nil, "Invalid species ID"
+  end
+
+  local abilityIDs = {}
+  local abilityLevels = {}
+
+  C_PetJournal.GetPetAbilityList(
+    speciesID,
+    abilityIDs,
+    abilityLevels
+  )
+
+  local choices = {}
+
+  for slot = 1, 3 do
+    local selectedAbilityID =
+        selectedAbilities
+        and selectedAbilities[slot]
+
+    local firstChoiceID =
+        abilityIDs[slot]
+
+    local secondChoiceID =
+        abilityIDs[slot + 3]
+
+    if selectedAbilityID
+        and selectedAbilityID == secondChoiceID then
+      choices[slot] = 2
+    else
+      choices[slot] = 1
+    end
+  end
+
+  return choices
+end
+
 addon.Services.PetJournal = PetJournalService

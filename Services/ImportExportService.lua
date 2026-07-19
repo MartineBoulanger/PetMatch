@@ -70,6 +70,37 @@ local function DecodeBase32(value)
   return result
 end
 
+local function EncodeBase32(value)
+  value = tonumber(value)
+
+  if not value or value < 0 then
+    return nil
+  end
+
+  value = math.floor(value)
+
+  if value == 0 then
+    return "0"
+  end
+
+  local result = ""
+
+  while value > 0 do
+    local remainder = value % 32
+
+    result =
+        BASE32_ALPHABET:sub(
+          remainder + 1,
+          remainder + 1
+        )
+        .. result
+
+    value = math.floor(value / 32)
+  end
+
+  return result
+end
+
 local function ParseNPCIDs(value)
   local npcIDs = {}
 
@@ -87,6 +118,44 @@ local function ParseNPCIDs(value)
   end
 
   return npcIDs
+end
+
+local function EncodeNPCIDs(npcIDs)
+  if type(npcIDs) ~= "table" then
+    return ""
+  end
+
+  local encodedIDs = {}
+
+  for _, npcID in ipairs(npcIDs) do
+    local encodedID =
+        EncodeBase32(npcID)
+
+    if encodedID then
+      encodedIDs[#encodedIDs + 1] =
+          encodedID
+    end
+  end
+
+  return table.concat(
+    encodedIDs,
+    ","
+  )
+end
+
+local function EncodeRematchNotes(notes)
+  notes = tostring(notes or "")
+
+  return notes:gsub(
+    "\r\n",
+    "\n"
+  ):gsub(
+    "\r",
+    "\n"
+  ):gsub(
+    "\n",
+    "\\n"
+  )
 end
 
 local function Escape(value)
@@ -172,6 +241,54 @@ local function GetAbilityIDs(
   return selectedAbilities
 end
 
+local function GetAbilityChoices(
+    speciesID,
+    selectedAbilities
+)
+  local abilityIDs =
+      C_PetJournal.GetPetAbilityList(
+        speciesID
+      )
+
+  if type(abilityIDs) ~= "table" then
+    return {
+      0,
+      0,
+      0,
+    }
+  end
+
+  selectedAbilities =
+      selectedAbilities or {}
+
+  local choices = {}
+
+  for abilitySlot = 1, 3 do
+    local selectedAbilityID =
+        selectedAbilities[abilitySlot]
+
+    local firstChoiceID =
+        abilityIDs[abilitySlot]
+
+    local secondChoiceID =
+        abilityIDs[abilitySlot + 3]
+
+    if not selectedAbilityID then
+      choices[abilitySlot] = 0
+    elseif selectedAbilityID
+        == firstChoiceID then
+      choices[abilitySlot] = 1
+    elseif selectedAbilityID
+        == secondChoiceID then
+      choices[abilitySlot] = 2
+    else
+      choices[abilitySlot] = 0
+    end
+  end
+
+  return choices
+end
+
 local function IsLegacyGroupHeader(line)
   return line:match("^__%s*.-%s*__$") ~= nil
       and not line:find(":", 1, true)
@@ -216,6 +333,117 @@ end
 
 local function StartsWith(value, prefix)
   return value:sub(1, #prefix) == prefix
+end
+
+local function EncodeRematchPetTag(
+    team,
+    slot
+)
+  local specialSlot =
+      team.specialSlots
+      and team.specialSlots[slot]
+
+  if specialSlot then
+    local rawPetTag =
+        Trim(
+          specialSlot.rawPetTag
+        )
+
+    if rawPetTag ~= "" then
+      return rawPetTag
+    end
+
+    if specialSlot.type == "leveling" then
+      return "ZL"
+    end
+
+    if specialSlot.type == "ignored" then
+      return "ZI"
+    end
+
+    if specialSlot.type == "random" then
+      local petType =
+          EncodeBase32(
+            specialSlot.petType or 0
+          )
+
+      return "ZR" .. (petType or "0")
+    end
+
+    if specialSlot.type
+        == "levelingQueue" then
+      local level =
+          EncodeBase32(
+            specialSlot.level or 0
+          )
+
+      local rarity =
+          EncodeBase32(
+            specialSlot.rarity or 0
+          )
+
+      return "Q"
+          .. (level or "0")
+          .. (rarity or "0")
+    end
+
+    return "ZU"
+  end
+
+  local petGUID =
+      team.pets
+      and team.pets[slot]
+
+  if not petGUID then
+    return "ZU"
+  end
+
+  local speciesID =
+      GetSpeciesID(petGUID)
+
+  if not speciesID then
+    return nil,
+        string.format(
+          "Pet in slot %d could not be found",
+          slot
+        )
+  end
+
+  local choices =
+      GetAbilityChoices(
+        speciesID,
+        team.abilities
+        and team.abilities[slot]
+      )
+
+  local abilityChoices =
+      tostring(choices[1] or 0)
+      .. tostring(choices[2] or 0)
+      .. tostring(choices[3] or 0)
+
+  local breedID =
+      team.breeds
+      and team.breeds[slot]
+      or 0
+
+  local encodedBreed =
+      EncodeBase32(breedID)
+
+  local encodedSpecies =
+      EncodeBase32(speciesID)
+
+  if not encodedBreed
+      or not encodedSpecies then
+    return nil,
+        string.format(
+          "Pet in slot %d could not be encoded",
+          slot
+        )
+  end
+
+  return abilityChoices
+      .. encodedBreed
+      .. encodedSpecies
 end
 
 function ImportExportService:ExportTeam(team)
@@ -847,6 +1075,73 @@ function ImportExportService:DetectFormat(value)
   end
 
   return nil
+end
+
+function ImportExportService:ExportRematchTeam(
+    team
+)
+  if not team then
+    return nil, "Team not found"
+  end
+
+  local name =
+      Trim(
+        team.name or ""
+      )
+
+  if name == "" then
+    return nil, "Team has no name"
+  end
+
+  name = name:gsub(":", " -")
+
+  local petTags = {}
+
+  for slot = 1, 3 do
+    local petTag, errorMessage =
+        EncodeRematchPetTag(
+          team,
+          slot
+        )
+
+    if not petTag then
+      return nil, errorMessage
+    end
+
+    petTags[slot] = petTag
+  end
+
+  local npcIDs =
+      EncodeNPCIDs(
+        team.targetNPCIDs
+      )
+
+  local result =
+      table.concat(
+        {
+          name,
+          npcIDs,
+          petTags[1],
+          petTags[2],
+          petTags[3],
+          "",
+        },
+        ":"
+      )
+
+  local notes =
+      EncodeRematchNotes(
+        team.notes
+      )
+
+  if notes ~= "" then
+    result =
+        result
+        .. ":N:"
+        .. notes
+  end
+
+  return result
 end
 
 addon.Services.ImportExport = ImportExportService
