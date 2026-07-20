@@ -7,6 +7,8 @@ local PetJournalToolbar = {}
 
 local BUTTON_SIZE = 40
 local BUTTON_SPACING = 5
+local SAFARI_HAT_TOY_ID = 92738
+local SAFARI_HAT_BUFF_ID = 158486
 
 local function FindHealButton()
   return PetJournal
@@ -298,7 +300,7 @@ local function AddBlizzardBorder(button)
   local sourceBorder = healFrame and healFrame.Border
 
   if not sourceBorder then
-    addon.Logger:Warn("Heal Pet border was not found")
+    -- addon.Logger:Warn("Heal Pet border was not found")
     return
   end
 
@@ -443,6 +445,134 @@ local function CreateIconButton(
   return button
 end
 
+local function IsSafariHatActive()
+  return C_UnitAuras.GetPlayerAuraBySpellID(
+    SAFARI_HAT_BUFF_ID
+  ) ~= nil
+end
+
+local function GetSafariHatIcon()
+  local spellInfo =
+      C_Spell.GetSpellInfo(
+        SAFARI_HAT_BUFF_ID
+      )
+
+  if spellInfo then
+    return spellInfo.iconID
+  end
+
+  local _, _, toyIcon =
+      C_ToyBox.GetToyInfo(
+        SAFARI_HAT_TOY_ID
+      )
+
+  return toyIcon
+end
+
+local function GetSafariHatName()
+  local spellInfo =
+      C_Spell.GetSpellInfo(
+        SAFARI_HAT_BUFF_ID
+      )
+
+  if spellInfo then
+    return spellInfo.name
+  end
+
+  return "Safari Hat"
+end
+
+local function CreateSafariHatButton(
+    parent,
+    name,
+    texture
+)
+  local button =
+      CreateFrame(
+        "Button",
+        name,
+        parent,
+        "SecureActionButtonTemplate"
+      )
+
+  local width, height =
+      GetToolbarButtonSize()
+
+  button:SetSize(width, height)
+
+  button:RegisterForClicks(
+    "AnyUp",
+    "AnyDown"
+  )
+
+  button:SetAttribute(
+    "useOnKeyDown",
+    false
+  )
+
+  button.Icon =
+      button:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  button.Icon:SetAllPoints(button)
+  button.Icon:SetTexture(texture)
+  button.Icon:SetTexCoord(0, 1, 0, 1)
+
+  CopyBorderStyle(
+    button,
+    FindHealIconButton()
+  )
+
+  CopyHighlightStyle(
+    button,
+    FindHealIconButton()
+  )
+
+  AddBlizzardBorder(button)
+
+  button.RemoveOverlay =
+      button:CreateTexture(
+        nil,
+        "OVERLAY"
+      )
+
+  button.RemoveOverlay:SetAtlas(
+    "common-icon-redx"
+  )
+
+  button.RemoveOverlay:SetSize(25, 25)
+
+  button.RemoveOverlay:SetPoint(
+    "TOPRIGHT",
+    -4,
+    -4
+  )
+
+  button.RemoveOverlay:Hide()
+
+  button:SetScript(
+    "OnEnter",
+    function(self)
+      ShowTooltip(
+        self,
+        self.TooltipTitle,
+        self.TooltipDescription
+      )
+    end
+  )
+
+  button:SetScript(
+    "OnLeave",
+    function()
+      GameTooltip:Hide()
+    end
+  )
+
+  return button
+end
+
 function PetJournalToolbar:SetButtonEnabled(
     button,
     enabled
@@ -498,6 +628,102 @@ function PetJournalToolbar:SetButtonEnabled(
   end
 end
 
+function PetJournalToolbar:UpdateSafariHatButton()
+  local button = self.SafariHatButton
+
+  if not button then
+    return
+  end
+
+  local hasToy =
+      PlayerHasToy(
+        SAFARI_HAT_TOY_ID
+      )
+
+  local isActive =
+      IsSafariHatActive()
+
+  local safariHatName =
+      GetSafariHatName()
+
+  self:SetButtonEnabled(
+    button,
+    hasToy
+  )
+
+  if isActive then
+    button.RemoveOverlay:Show()
+
+    button.TooltipTitle =
+        "Remove " .. safariHatName
+
+    button.TooltipDescription =
+    "Remove the active Safari Hat buff."
+  else
+    button.RemoveOverlay:Hide()
+
+    button.TooltipTitle =
+        "Use " .. safariHatName
+
+    if hasToy then
+      button.TooltipDescription =
+      "Use the Safari Hat toy."
+    else
+      button.TooltipDescription =
+      "You have not collected the Safari Hat toy."
+    end
+  end
+
+  if InCombatLockdown() then
+    self.SafariHatUpdatePending = true
+    return
+  end
+
+  self.SafariHatUpdatePending = false
+
+  if isActive then
+    button:SetAttribute(
+      "type",
+      "cancelaura"
+    )
+
+    button:SetAttribute(
+      "unit",
+      "player"
+    )
+
+    button:SetAttribute(
+      "spell",
+      safariHatName
+    )
+
+    button:SetAttribute(
+      "toy",
+      nil
+    )
+  else
+    button:SetAttribute(
+      "type",
+      "toy"
+    )
+
+    button:SetAttribute(
+      "toy",
+      SAFARI_HAT_TOY_ID
+    )
+
+    button:SetAttribute(
+      "spell",
+      nil
+    )
+
+    button:SetAttribute(
+      "unit",
+      nil
+    )
+  end
+end
+
 function PetJournalToolbar:UpdateDismissButton()
   if not self.DismissButton then
     return
@@ -531,7 +757,8 @@ function PetJournalToolbar:DismissPet()
 end
 
 function PetJournalToolbar:PositionButtons()
-  if not self.ImportButton
+  if not self.SafariHatButton
+      or not self.ImportButton
       or not self.ExportButton
       or not self.DismissButton then
     return
@@ -539,12 +766,22 @@ function PetJournalToolbar:PositionButtons()
 
   local healButton = FindHealButton()
   local randomFavoriteButton = FindRandomFavoriteButton()
+  randomFavoriteButton:SetSize(32, 32)
 
+  self.SafariHatButton:ClearAllPoints()
   self.ImportButton:ClearAllPoints()
   self.ExportButton:ClearAllPoints()
   self.DismissButton:ClearAllPoints()
 
   if randomFavoriteButton then
+    self.SafariHatButton:SetPoint(
+      "RIGHT",
+      randomFavoriteButton,
+      "LEFT",
+      -BUTTON_SPACING,
+      0
+    )
+
     self.DismissButton:SetPoint(
       "LEFT",
       randomFavoriteButton,
@@ -573,6 +810,14 @@ function PetJournalToolbar:PositionButtons()
   end
 
   if healButton then
+    self.SafariHatButton:SetPoint(
+      "LEFT",
+      healButton,
+      "RIGHT",
+      -20,
+      0
+    )
+
     self.ImportButton:SetPoint(
       "LEFT",
       healButton,
@@ -597,25 +842,17 @@ function PetJournalToolbar:PositionButtons()
       0
     )
 
-    addon.Logger:Warn(
-      "Random favorite pet button was not found; "
-      .. "using the heal button as toolbar anchor"
-    )
+    -- addon.Logger:Warn(
+    --   "Random favorite pet button was not found; "
+    --   .. "using the heal button as toolbar anchor"
+    -- )
 
     return
   end
 
-  self.ImportButton:SetPoint(
-    "TOPRIGHT",
-    PetJournal,
-    "TOPRIGHT",
-    -100,
-    -34
-  )
-
-  self.ExportButton:SetPoint(
+  self.SafariHatButton:SetPoint(
     "LEFT",
-    self.ImportButton,
+    randomFavoriteButton,
     "RIGHT",
     BUTTON_SPACING,
     0
@@ -623,16 +860,32 @@ function PetJournalToolbar:PositionButtons()
 
   self.DismissButton:SetPoint(
     "LEFT",
+    self.SafariHatButton,
+    "RIGHT",
+    BUTTON_SPACING,
+    0
+  )
+
+  self.ExportButton:SetPoint(
+    "LEFT",
+    self.DismissButton,
+    "RIGHT",
+    BUTTON_SPACING,
+    0
+  )
+
+  self.ImportButton:SetPoint(
+    "LEFT",
     self.ExportButton,
     "RIGHT",
     BUTTON_SPACING,
     0
   )
 
-  addon.Logger:Warn(
-    "Pet Journal toolbar anchors were not found; "
-    .. "using fallback position"
-  )
+  -- addon.Logger:Warn(
+  --   "Pet Journal toolbar anchors were not found; "
+  --   .. "using fallback position"
+  -- )
 end
 
 function PetJournalToolbar:Create()
@@ -657,6 +910,13 @@ function PetJournalToolbar:Create()
   )
 
   self.Frame = frame
+
+  self.SafariHatButton =
+      CreateSafariHatButton(
+        PetJournal,
+        "PetMatchSafariHatButton",
+        GetSafariHatIcon()
+      )
 
   self.ImportButton =
       CreateIconButton(
@@ -696,8 +956,10 @@ function PetJournalToolbar:Create()
 
   self:HideBlizzardButtonText()
   self:PositionButtons()
+  self:UpdateSafariHatButton()
   self:UpdateDismissButton()
 
+  self.SafariHatButton:Hide()
   self.ImportButton:Hide()
   self.ExportButton:Hide()
   self.DismissButton:Hide()
@@ -713,6 +975,23 @@ function PetJournalToolbar:Create()
     "COMPANION_UPDATE"
   )
 
+  self.EventFrame:RegisterUnitEvent(
+    "UNIT_AURA",
+    "player"
+  )
+
+  self.EventFrame:RegisterEvent(
+    "PLAYER_REGEN_ENABLED"
+  )
+
+  self.EventFrame:RegisterEvent(
+    "NEW_TOY_ADDED"
+  )
+
+  self.EventFrame:RegisterEvent(
+    "TOYS_UPDATED"
+  )
+
   self.EventFrame:SetScript(
     "OnEvent",
     function(
@@ -720,17 +999,42 @@ function PetJournalToolbar:Create()
         eventName,
         companionType
     )
-      if companionType
-          and companionType ~= "CRITTER" then
+      if eventName == "UNIT_AURA" then
+        C_Timer.After(
+          0,
+          function()
+            self:UpdateSafariHatButton()
+          end
+        )
+
         return
       end
 
-      C_Timer.After(
-        0,
-        function()
-          self:UpdateDismissButton()
+      if eventName == "PLAYER_REGEN_ENABLED" then
+        if self.SafariHatUpdatePending then
+          self:UpdateSafariHatButton()
         end
-      )
+
+        return
+      end
+
+      if eventName == "COMPANION_UPDATE" then
+        if companionType
+            and companionType ~= "CRITTER" then
+          return
+        end
+
+        C_Timer.After(
+          0,
+          function()
+            self:UpdateDismissButton()
+          end
+        )
+
+        return
+      end
+
+      self:UpdateSafariHatButton()
     end
   )
 
@@ -746,15 +1050,21 @@ function PetJournalToolbar:Show()
 
   self:HideBlizzardButtonText()
   self:PositionButtons()
+  self:UpdateSafariHatButton()
   self:UpdateDismissButton()
 
   frame:Show()
+  self.SafariHatButton:Show()
   self.ImportButton:Show()
   self.ExportButton:Show()
   self.DismissButton:Show()
 end
 
 function PetJournalToolbar:Hide()
+  if self.SafariHatButton then
+    self.SafariHatButton:Hide()
+  end
+
   if self.ImportButton then
     self.ImportButton:Hide()
   end
@@ -782,5 +1092,4 @@ function PetJournalToolbar:HideBlizzardButtonText()
   )
 end
 
-addon.UI.Views.PetJournalToolbar =
-    PetJournalToolbar
+addon.UI.Views.PetJournalToolbar = PetJournalToolbar
