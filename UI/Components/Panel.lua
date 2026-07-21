@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local Panel = {}
 
@@ -9,24 +9,43 @@ function Panel:Create(parent, options)
       CreateFrame(
         "Frame",
         nil,
-        parent,
-        "BackdropTemplate"
+        parent
       )
 
   frame:SetSize(
-    options.width or addon.UI.Theme.Sizes.DefaultWidth,
-    options.height or addon.UI.Theme.Sizes.DefaultHeight
+    options.width
+    or addon.UI.Theme.Sizes.DefaultWidth,
+    options.height
+    or addon.UI.Theme.Sizes.DefaultHeight
   )
 
-  frame:SetBackdrop({
-    bgFile = "Interface/Petbattles/mountjournal-bg",
-    edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
-    edgeSize = 8
-  })
+  frame.Background =
+      frame:CreateTexture(
+        nil,
+        "BACKGROUND"
+      )
 
-  local color = addon.UI.Theme.Colors.Background
+  frame.Background:SetAllPoints(frame)
 
-  frame:SetBackdropColor(unpack(color))
+  frame.Background:SetTexture(
+    options.background
+    or nil
+  )
+
+  frame.Background:SetTexCoord(
+    0,
+    1,
+    0,
+    1
+  )
+
+  
+
+  if options.backgroundAlpha then
+    frame.Background:SetAlpha(
+      options.backgroundAlpha
+    )
+  end
 
   return frame
 end

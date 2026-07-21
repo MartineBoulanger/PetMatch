@@ -56,35 +56,33 @@ UI/Theme/Icons.lua
 UI/Base/Component.lua
 UI/Base/Frame.lua
 
-
 UI/Components/Panel.lua
 UI/Components/Label.lua
 UI/Components/Button.lua
 UI/Components/DragDrop.lua
 UI/Components/ScrollBox.lua
+UI/Components/AccordionHeader.lua
 UI/Components/PetSlot.lua
-
-UI/PetJournal/TeamTagsDialog.lua
-
 UI/Components/TeamCard.lua
 
 UI/Manager.lua
 UI/Host.lua
 
 UI/PetJournal/TeamList.lua
-UI/PetJournal/ExportDialog.lua
-UI/PetJournal/FolderDialog.lua
-UI/PetJournal/FolderTabs.lua
 UI/PetJournal/TeamListControls.lua
-UI/PetJournal/EditTeamDialog.lua
-UI/PetJournal/ImportDialog.lua
-UI/PetJournal/MoveTeamDialog.lua
-UI/PetJournal/SaveTeamDialog.lua
 UI/PetJournal/PetJournalToolbar.lua
 UI/PetJournal/SaveTeamButton.lua
 UI/PetJournal/UpdateTeamButton.lua
 UI/PetJournal/FolderContextMenu.lua
 UI/PetJournal/TeamPanel.lua
+
+UI/Dialogs/ExportDialog.lua
+UI/Dialogs/FolderDialog.lua
+UI/Dialogs/EditTeamDialog.lua
+UI/Dialogs/ImportDialog.lua
+UI/Dialogs/MoveTeamDialog.lua
+UI/Dialogs/SaveTeamDialog.lua
+UI/Dialogs/TeamTagsDialog.lua
 
 Core/Slash.lua
 Core/Addon.lua

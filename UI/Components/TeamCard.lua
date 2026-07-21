@@ -6,9 +6,9 @@ addon.UI.Components = addon.UI.Components or {}
 local TeamCard = {}
 
 local CARD_WIDTH = 270
-local CARD_HEIGHT = 128
-local SLOT_SPACING = 8
-local SLOT_START_X = 10
+local CARD_HEIGHT = 26
+local SLOT_SPACING = 0
+local SLOT_START_X = 1
 
 local function ApplyVisualState(frame)
   if frame.Selected then
@@ -108,6 +108,23 @@ function TeamCard:Create(parent, team)
   frame.Hovered = false
   frame.PetSlots = {}
 
+  for slotIndex = 1, 3 do
+    local petSlot = addon.UI.Components.PetSlot:Create(frame)
+    local petSlotFrame = petSlot:GetFrame()
+
+    petSlotFrame:SetPoint(
+      "LEFT",
+      frame,
+      "LEFT",
+      SLOT_START_X
+      + ((slotIndex - 1)
+        * (petSlotFrame:GetWidth() + SLOT_SPACING)),
+      0
+    )
+
+    frame.PetSlots[slotIndex] = petSlot
+  end
+
   frame.Title = frame:CreateFontString(
     nil,
     "OVERLAY",
@@ -116,41 +133,41 @@ function TeamCard:Create(parent, team)
 
   frame.Title:ClearAllPoints()
   frame.Title:SetPoint(
-    "TOPLEFT",
+    "LEFT",
     frame,
-    "TOPLEFT",
-    10,
-    -9
+    "LEFT",
+    82,
+    0
   )
 
-  frame.Title:SetWidth(
-    CARD_WIDTH - 110
-  )
+  -- frame.Title:SetWidth(
+  --   CARD_WIDTH - 110
+  -- )
 
   frame.Title:SetJustifyH("LEFT")
   frame.Title:SetWordWrap(false)
 
-  frame.FolderLabel =
-      frame:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontDisableSmall"
-      )
+  -- frame.FolderLabel =
+  --     frame:CreateFontString(
+  --       nil,
+  --       "OVERLAY",
+  --       "GameFontDisableSmall"
+  --     )
 
-  frame.FolderLabel:SetPoint(
-    "TOPLEFT",
-    frame.Title,
-    "BOTTOMLEFT",
-    0,
-    -2
-  )
+  -- frame.FolderLabel:SetPoint(
+  --   "TOPLEFT",
+  --   frame.Title,
+  --   "BOTTOMLEFT",
+  --   0,
+  --   -2
+  -- )
 
-  frame.FolderLabel:SetWidth(
-    CARD_WIDTH - 80
-  )
+  -- frame.FolderLabel:SetWidth(
+  --   CARD_WIDTH - 80
+  -- )
 
-  frame.FolderLabel:SetJustifyH("LEFT")
-  frame.FolderLabel:SetWordWrap(false)
+  -- frame.FolderLabel:SetJustifyH("LEFT")
+  -- frame.FolderLabel:SetWordWrap(false)
 
   frame.FavoriteButton =
       CreateFrame(
@@ -357,23 +374,6 @@ function TeamCard:Create(parent, team)
     0
   )
 
-  for slotIndex = 1, 3 do
-    local petSlot = addon.UI.Components.PetSlot:Create(frame)
-    local petSlotFrame = petSlot:GetFrame()
-
-    petSlotFrame:SetPoint(
-      "TOPLEFT",
-      frame,
-      "TOPLEFT",
-      SLOT_START_X
-      + ((slotIndex - 1)
-        * (petSlotFrame:GetWidth() + SLOT_SPACING)),
-      -42
-    )
-
-    frame.PetSlots[slotIndex] = petSlot
-  end
-
   function frame:RefreshState()
     local team = self.Team
 
@@ -415,21 +415,21 @@ function TeamCard:Create(parent, team)
       self.FavoriteButton.Icon:SetAlpha(0.45)
     end
 
-    local folderName = "Unsorted"
-    if newTeam.folderID then
-      local folder =
-          addon.Services.Folder:Get(
-            newTeam.folderID
-          )
+    -- local folderName = "Unsorted"
+    -- if newTeam.folderID then
+    --   local folder =
+    --       addon.Services.Folder:Get(
+    --         newTeam.folderID
+    --       )
 
-      if folder then
-        folderName = folder.name
-      end
-    end
+    --   if folder then
+    --     folderName = folder.name
+    --   end
+    -- end
 
-    self.FolderLabel:SetText(
-      folderName
-    )
+    -- self.FolderLabel:SetText(
+    --   folderName
+    -- )
 
     -- local tags =
     --     addon.Services.Tag:GetTagsForTeam(

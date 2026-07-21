@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 addon.UI = addon.UI or {}
 addon.UI.Views = addon.UI.Views or {}
@@ -16,13 +16,12 @@ function TeamListControls:Create(parent)
       addon.UI.Components.Panel:Create(
         parent,
         {
-          width = 295,
-          height = 70,
+          width = 285,
+          height = 46,
         }
       )
 
   self.Frame = frame
-  self.SortButtons = {}
 
   self.SearchInput =
       CreateFrame(
@@ -33,7 +32,7 @@ function TeamListControls:Create(parent)
       )
 
   self.SearchInput:SetSize(
-    270,
+    235,
     26
   )
 
@@ -108,90 +107,123 @@ function TeamListControls:Create(parent)
     end
   )
 
-  local previousButton = nil
-
   local sortModes = {
     "name",
     "modified",
     "favorites",
   }
 
-  for _, sortMode in ipairs(sortModes) do
-    local button =
-        addon.UI.Components.Button:Create(
-          frame,
-          {
-            text = SORT_LABELS[sortMode],
-            width = 90,
-            height = 24,
-
-            onClick = function()
-              addon.Services.Team:SetSortMode(
-                sortMode
-              )
-            end,
-          }
-        )
-
-    if previousButton then
-      button:SetPoint(
-        "LEFT",
-        previousButton,
-        "RIGHT",
-        4,
-        0
+  self.SortButton =
+      CreateFrame(
+        "Button",
+        nil,
+        frame
       )
-    else
-      button:SetPoint(
-        "BOTTOMLEFT",
-        frame,
-        "BOTTOMLEFT",
-        10,
-        10
+
+  self.SortButton:SetSize(
+    28,
+    28
+  )
+
+  self.SortButton:SetPoint(
+    "LEFT",
+    self.SearchInput,
+    "RIGHT",
+    0,
+    0
+  )
+
+  self.SortButton.Icon =
+      self.SortButton:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  self.SortButton.Icon:SetSize(
+    26,
+    26
+  )
+
+  self.SortButton.Icon:SetPoint(
+    "CENTER"
+  )
+
+  self.SortButton.Icon:SetAtlas(
+    "charactercreate-icon-customize-body-selected"
+  )
+
+  self.SortButton:SetScript(
+    "OnClick",
+    function(button)
+      MenuUtil.CreateContextMenu(
+        button,
+        function(ownerRegion, rootDescription)
+          rootDescription:CreateTitle(
+            "Sort Teams"
+          )
+
+          local currentSortMode =
+              addon.Services.Team:GetSortMode()
+
+          for _, sortMode in ipairs(sortModes) do
+            rootDescription:CreateRadio(
+              SORT_LABELS[sortMode],
+              function()
+                return currentSortMode
+                    == sortMode
+              end,
+              function()
+                addon.Services.Team:SetSortMode(
+                  sortMode
+                )
+              end
+            )
+          end
+        end
       )
     end
+  )
 
-    button.SortMode = sortMode
+  self.SortButton:SetScript(
+    "OnEnter",
+    function(button)
+      button.Icon:SetAlpha(1)
 
-    self.SortButtons[sortMode] =
-        button
+      GameTooltip:SetOwner(
+        button,
+        "ANCHOR_RIGHT"
+      )
 
-    previousButton = button
-  end
+      local sortMode =
+          addon.Services.Team:GetSortMode()
 
-  if not self.EventsRegistered then
-    self.EventsRegistered = true
+      GameTooltip:SetText(
+        "Sort Teams"
+      )
 
-    addon.EventBus:Register(
-      addon.Events.TEAM_SORT_CHANGED,
-      function()
-        self:RefreshSortButtons()
-      end
-    )
-  end
+      GameTooltip:AddLine(
+        SORT_LABELS[sortMode]
+        or "Unknown",
+        1,
+        1,
+        1
+      )
 
-  self:RefreshSortButtons()
+      GameTooltip:Show()
+    end
+  )
+
+  self.SortButton:SetScript(
+    "OnLeave",
+    function(button)
+      button.Icon:SetAlpha(0.75)
+      GameTooltip:Hide()
+    end
+  )
+
+  self.SortButton.Icon:SetAlpha(0.75)
 
   return frame
-end
-
-function TeamListControls:RefreshSortButtons()
-  if not self.Frame then
-    return
-  end
-
-  local activeMode =
-      addon.Services.Team:GetSortMode()
-
-  for sortMode, button in pairs(
-    self.SortButtons
-  ) do
-    if sortMode == activeMode then
-      button:Disable()
-    else
-      button:Enable()
-    end
-  end
 end
 
 addon.UI.Views.TeamListControls =

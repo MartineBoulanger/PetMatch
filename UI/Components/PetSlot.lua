@@ -6,12 +6,10 @@ addon.UI.Components = addon.UI.Components or {}
 local PetSlot = {}
 PetSlot.__index = PetSlot
 
-local SLOT_WIDTH = 78
-local SLOT_HEIGHT = 76
-local ICON_SIZE = 40
+-- local SLOT_WIDTH = 78
+-- local SLOT_HEIGHT = 76
+local ICON_SIZE = 24
 
----@param parent Frame
----@return PetMatchPetSlot
 function PetSlot:Create(parent)
   assert(parent, "PetSlot requires a parent frame")
 
@@ -22,7 +20,7 @@ function PetSlot:Create(parent)
     "BackdropTemplate"
   )
 
-  frame:SetSize(SLOT_WIDTH, SLOT_HEIGHT)
+  frame:SetSize(ICON_SIZE, ICON_SIZE)
 
   frame:SetBackdrop({
     bgFile = "Interface/Buttons/WHITE8X8",
@@ -40,7 +38,7 @@ function PetSlot:Create(parent)
 
   instance.Icon = frame:CreateTexture(nil, "ARTWORK")
   instance.Icon:SetSize(ICON_SIZE, ICON_SIZE)
-  instance.Icon:SetPoint("TOP", frame, "TOP", 0, -10)
+  instance.Icon:SetPoint("TOP", frame, "TOP", 0, 0)
   instance.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
   instance.EmptyIcon = frame:CreateTexture(nil, "ARTWORK")
@@ -58,33 +56,32 @@ function PetSlot:Create(parent)
     "BOTTOMRIGHT",
     instance.Icon,
     "BOTTOMRIGHT",
-    -2,
-    2
+    -1,
+    1
   )
   instance.Level:SetTextColor(1, 0.82, 0)
 
-  instance.Name = frame:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontHighlightSmall"
-  )
-  instance.Name:SetPoint(
-    "TOP",
-    instance.Icon,
-    "BOTTOM",
-    0,
-    -4
-  )
-  instance.Name:SetWidth(SLOT_WIDTH - 6)
-  instance.Name:SetJustifyH("CENTER")
-  instance.Name:SetWordWrap(false)
+  -- instance.Name = frame:CreateFontString(
+  --   nil,
+  --   "OVERLAY",
+  --   "GameFontHighlightSmall"
+  -- )
+  -- instance.Name:SetPoint(
+  --   "TOP",
+  --   instance.Icon,
+  --   "BOTTOM",
+  --   0,
+  --   -4
+  -- )
+  -- instance.Name:SetWidth(SLOT_WIDTH - 6)
+  -- instance.Name:SetJustifyH("CENTER")
+  -- instance.Name:SetWordWrap(false)
 
   instance:Clear()
 
   return instance
 end
 
----@param petGUID string?
 function PetSlot:SetPet(petGUID)
   if not petGUID then
     self:Clear()
@@ -111,7 +108,7 @@ function PetSlot:SetPet(petGUID)
     self.EmptyIcon:Show()
   end
 
-  self.Name:SetText(pet.name)
+  -- self.Name:SetText(pet.name)
 
   if pet.level and pet.level > 0 then
     self.Level:SetFormattedText("%d", pet.level)
@@ -130,13 +127,12 @@ function PetSlot:Clear()
 
   self.EmptyIcon:Show()
 
-  self.Name:SetText("Empty")
+  -- self.Name:SetText("Empty")
 
   self.Level:SetText("")
   self.Level:Hide()
 end
 
----@return Frame
 function PetSlot:GetFrame()
   return self.Frame
 end

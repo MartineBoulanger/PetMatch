@@ -5,10 +5,9 @@ addon.UI.Views = addon.UI.Views or {}
 
 local TeamPanel = {}
 
-local PANEL_WIDTH = 450
+local PANEL_WIDTH = 300
 local PANEL_HEIGHT = 604
 local PANEL_PADDING = 8
-local HEADER_HEIGHT = 28
 local CONTENT_GAP = 5
 
 function TeamPanel:Create()
@@ -16,7 +15,10 @@ function TeamPanel:Create()
     return self.Frame
   end
 
-  assert(PetJournal, "PetMatch: PetJournal is unavailable")
+  assert(
+    PetJournal,
+    "PetMatch: PetJournal is unavailable"
+  )
 
   local frame =
       addon.UI.Components.Panel:Create(
@@ -38,46 +40,6 @@ function TeamPanel:Create()
 
   self.Frame = frame
 
-  self.Title =
-      addon.UI.Components.Label:Create(
-        frame,
-        {
-          text = addon.Name or "PetMatch",
-          font = addon.UI.Theme.Fonts.Header,
-          width = PANEL_WIDTH - (PANEL_PADDING * 2),
-          justify = "LEFT",
-        }
-      )
-
-  self.Title:ClearAllPoints()
-
-  self.Title:SetPoint(
-    "TOP",
-    frame,
-    "TOP",
-    0,
-    -PANEL_PADDING
-  )
-
-  self.FolderTabs =
-      addon.UI.Views.FolderTabs:Create(frame)
-
-  self.FolderTabs:ClearAllPoints()
-  self.FolderTabs:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    PANEL_PADDING,
-    -(HEADER_HEIGHT + CONTENT_GAP)
-  )
-
-  self.FolderTabs:SetHeight(
-    PANEL_HEIGHT
-    - HEADER_HEIGHT
-    - CONTENT_GAP
-    - PANEL_PADDING
-  )
-
   self.TeamListControls =
       addon.UI.Views.TeamListControls:Create(
         frame
@@ -86,39 +48,62 @@ function TeamPanel:Create()
   self.TeamListControls:ClearAllPoints()
   self.TeamListControls:SetPoint(
     "TOPLEFT",
-    self.FolderTabs,
-    "TOPRIGHT",
-    CONTENT_GAP,
-    0
+    frame,
+    "TOPLEFT",
+    PANEL_PADDING,
+    -PANEL_PADDING
   )
 
-  self.TeamList =
-      addon.UI.Views.TeamList:Create(frame)
+  self.TeamListControls:SetPoint(
+    "TOPRIGHT",
+    frame,
+    "TOPRIGHT",
+    -PANEL_PADDING,
+    -PANEL_PADDING
+  )
 
-  self.TeamList:ClearAllPoints()
-  self.TeamList:SetPoint(
+  self.NewFolderButton =
+      self:CreateNewFolderButton(
+        frame
+      )
+
+  self.TeamListFrame =
+      addon.UI.Views.TeamList:Create(
+        frame
+      )
+
+  self.TeamListFrame:ClearAllPoints()
+
+  self.TeamListFrame:SetPoint(
     "TOPLEFT",
     self.TeamListControls,
     "BOTTOMLEFT",
-    -CONTENT_GAP,
+    0,
     -CONTENT_GAP
   )
 
-  self.TeamList:SetSize(
-    280,
-    455
+  self.TeamListFrame:SetPoint(
+    "TOPRIGHT",
+    self.TeamListControls,
+    "BOTTOMRIGHT",
+    0,
+    -CONTENT_GAP
   )
 
-  local availableListHeight =
-      PANEL_HEIGHT
-      - HEADER_HEIGHT
-      - CONTENT_GAP
-      - self.TeamListControls:GetHeight()
-      - CONTENT_GAP
-      - PANEL_PADDING
+  self.TeamListFrame:SetPoint(
+    "BOTTOMLEFT",
+    self.NewFolderButton,
+    "TOPLEFT",
+    0,
+    CONTENT_GAP
+  )
 
-  self.TeamList:SetHeight(
-    availableListHeight
+  self.TeamListFrame:SetPoint(
+    "BOTTOMRIGHT",
+    self.NewFolderButton,
+    "TOPRIGHT",
+    0,
+    CONTENT_GAP
   )
 
   frame:Hide()
@@ -143,7 +128,53 @@ function TeamPanel:Hide()
   end
 end
 
+function TeamPanel:CreateNewFolderButton(parent)
+  local button =
+      addon.UI.Components.Button:Create(
+        parent,
+        {
+          text = "New Folder",
+          width = 100,
+          height = 24,
+
+          onClick = function()
+            addon.UI.Views.FolderDialog:
+                ShowCreate()
+          end,
+        }
+      )
+
+  button:ClearAllPoints()
+
+  button:SetPoint(
+    "BOTTOMLEFT",
+    parent,
+    "BOTTOMLEFT",
+    CONTENT_GAP,
+    CONTENT_GAP
+  )
+
+  -- button:SetPoint(
+  --   "BOTTOMRIGHT",
+  --   parent,
+  --   "BOTTOMRIGHT",
+  --   -CONTENT_GAP,
+  --   CONTENT_GAP
+  -- )
+
+  self.NewFolderButton = button
+
+  return button
+end
+
 function TeamPanel:Refresh()
+  local frameWidth = self.Frame:GetWidth()
+
+  if frameWidth and frameWidth > 0 then
+    self.Frame.Content:SetWidth(
+      math.max(1, frameWidth - 24)
+    )
+  end
   if self.TeamList
       and addon.UI.Views.TeamList.Refresh then
     addon.UI.Views.TeamList:Refresh()
