@@ -19,6 +19,7 @@ function ExportDialog:Create()
         {
           width = DIALOG_WIDTH,
           height = DIALOG_HEIGHT,
+          background = "Interface/Tooltips/chatbubble-background"
         }
       )
 
@@ -90,6 +91,7 @@ function ExportDialog:Create()
         {
           width = DIALOG_WIDTH - 23,
           height = 220,
+          background = "Interface/Tooltips/chatbubble-background"
         }
       )
 

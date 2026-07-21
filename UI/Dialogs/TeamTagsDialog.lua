@@ -21,6 +21,7 @@ function TeamTagsDialog:Create()
         {
           width = WIDTH,
           height = HEIGHT,
+          background = "Interface/Tooltips/chatbubble-background"
         }
       )
 

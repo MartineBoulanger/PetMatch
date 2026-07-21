@@ -29,17 +29,10 @@ function Panel:Create(parent, options)
 
   frame.Background:SetTexture(
     options.background
-    or nil
+    or "Interface/BlackMarket/blackmarketbackground-tile"
   )
 
-  frame.Background:SetTexCoord(
-    0,
-    1,
-    0,
-    1
-  )
-
-  
+  frame.Background:SetTexCoord(0, 1, 0, 1)
 
   if options.backgroundAlpha then
     frame.Background:SetAlpha(

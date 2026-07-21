@@ -7,7 +7,6 @@ local MoveTeamDialog = {}
 
 local DIALOG_WIDTH = 300
 local DIALOG_HEIGHT = 360
-
 local BUTTON_WIDTH = 250
 local BUTTON_HEIGHT = 28
 local BUTTON_SPACING = 4
@@ -23,6 +22,7 @@ function MoveTeamDialog:Create()
         {
           width = DIALOG_WIDTH,
           height = DIALOG_HEIGHT,
+          background = "Interface/Tooltips/chatbubble-background"
         }
       )
 

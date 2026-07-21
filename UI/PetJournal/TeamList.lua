@@ -6,25 +6,10 @@ addon.UI.Views = addon.UI.Views or {}
 local TeamList = {}
 
 local HEADER_HEIGHT = 28
-local HEADER_SPACING = 3
+local HEADER_SPACING = 0
 local CARD_SPACING = 0
-local CONTENT_PADDING = 5
-local CONTENT_WIDTH = 214
-
-local function IsVirtualFolder(folderKey)
-  return folderKey
-      == addon.Services.Folder.ALL
-      or folderKey
-      == addon.Services.Folder.FAVORITES
-      or folderKey
-      == addon.Services.Folder.UNSORTED
-end
-
-local function CanAcceptTeams(folderKey)
-  return folderKey
-      == addon.Services.Folder.UNSORTED
-      or not IsVirtualFolder(folderKey)
-end
+local CONTENT_PADDING = 0
+local CONTENT_WIDTH = 238
 
 function TeamList:Create(parent)
   local frame =
@@ -259,6 +244,11 @@ function TeamList:CreateFolderHeader(section, currentOffset)
 
   button.FolderKey = folderKey
 
+  addon.UI.DragDrop:RegisterFolderTarget(
+    button,
+    folderKey
+  )
+
   button:ClearAllPoints()
 
   button:SetPoint(
@@ -418,6 +408,8 @@ function TeamList:UpdateCardSelection()
 end
 
 function TeamList:Refresh()
+  addon.UI.DragDrop:ClearFolderTargets()
+
   if self.Refreshing then
     return
   end
@@ -428,12 +420,6 @@ function TeamList:Refresh()
 
   self.Refreshing = true
   self:ClearItems()
-
-  -- for _, item in ipairs(self.Frame.items or {}) do
-  --   item:Hide()
-  --   item:ClearAllPoints()
-  --   item:SetParent(nil)
-  -- end
 
   self.Frame.items = {}
   self.Frame.cards = {}

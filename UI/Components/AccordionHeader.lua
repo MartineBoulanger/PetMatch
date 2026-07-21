@@ -56,7 +56,8 @@ function AccordionHeader:Create(
       CreateFrame(
         "Button",
         nil,
-        parent
+        parent,
+        "BackdropTemplate"
       )
 
   button:SetSize(
@@ -69,19 +70,24 @@ function AccordionHeader:Create(
     "RightButtonUp"
   )
 
-  button.Background =
-      button:CreateTexture(
-        nil,
-        "BACKGROUND"
-      )
+  button:SetBackdrop({
+    bgFile = "Interface/Buttons/WHITE8X8",
+    edgeFile = "Interface/Buttons/WHITE8X8",
+    edgeSize = 1,
+  })
 
-  button.Background:SetAllPoints()
-
-  button.Background:SetColorTexture(
+  button:SetBackdropColor(
     0.08,
     0.08,
     0.08,
     0.88
+  )
+
+  button:SetBackdropBorderColor(
+    0.35,
+    0.30,
+    0.20,
+    0.85
   )
 
   button.Highlight =
@@ -92,12 +98,7 @@ function AccordionHeader:Create(
 
   button.Highlight:SetAllPoints()
 
-  button.Highlight:SetColorTexture(
-    1,
-    1,
-    1,
-    0.07
-  )
+  button.Highlight:SetColorTexture(0.1, 0.7, 1, 0.08)
 
   button.Accent =
       button:CreateTexture(
@@ -190,37 +191,6 @@ function AccordionHeader:Create(
     0
   )
 
-  -- button.Divider =
-  --     button:CreateTexture(
-  --       nil,
-  --       "BORDER"
-  --     )
-
-  -- button.Divider:SetPoint(
-  --   "BOTTOMLEFT",
-  --   button,
-  --   "BOTTOMLEFT",
-  --   3,
-  --   0
-  -- )
-
-  -- button.Divider:SetPoint(
-  --   "BOTTOMRIGHT",
-  --   button,
-  --   "BOTTOMRIGHT",
-  --   0,
-  --   0
-  -- )
-
-  -- button.Divider:SetHeight(1)
-
-  -- button.Divider:SetColorTexture(
-  --   1,
-  --   1,
-  --   1,
-  --   0.08
-  -- )
-
   function button:SetLabel(label)
     self.Label:SetText(
       label or ""
@@ -259,8 +229,7 @@ function AccordionHeader:Create(
   end
 
   function button:SetExpanded(expanded)
-    self.Expanded =
-        expanded == true
+    self.Expanded = expanded == true
 
     SetArrowAtlas(
       self.Arrow,
@@ -268,30 +237,14 @@ function AccordionHeader:Create(
     )
 
     if self.Expanded then
-      self.Background:SetColorTexture(
-        0.12,
-        0.15,
-        0.20,
-        0.96
-      )
-
       self.Accent:Show()
-
       self.Label:SetTextColor(
         1,
         0.82,
         0
       )
     else
-      self.Background:SetColorTexture(
-        0.08,
-        0.08,
-        0.08,
-        0.88
-      )
-
       self.Accent:Hide()
-
       self.Label:SetTextColor(
         0.9,
         0.9,

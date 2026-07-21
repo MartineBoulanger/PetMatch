@@ -1,11 +1,11 @@
-local addonName, addon = ...
+local _, addon = ...
 
 addon.UI = addon.UI or {}
 addon.UI.Components = addon.UI.Components or {}
 
 local TeamCard = {}
 
-local CARD_WIDTH = 270
+local CARD_WIDTH = 238
 local CARD_HEIGHT = 26
 local SLOT_SPACING = 0
 local SLOT_START_X = 1
@@ -23,51 +23,6 @@ local function ApplyVisualState(frame)
   end
 end
 
-local function CreateActionButton(
-    parent,
-    texture,
-    tooltip,
-    onClick
-)
-  local button =
-      CreateFrame(
-        "Button",
-        nil,
-        parent
-      )
-
-  button:SetSize(18, 18)
-
-  button.Icon =
-      button:CreateTexture(
-        nil,
-        "ARTWORK"
-      )
-
-  button.Icon:SetAllPoints()
-  button.Icon:SetTexture(texture)
-
-  button:SetScript("OnClick", function(self)
-    onClick(parent.Team)
-  end)
-
-  button:SetScript("OnEnter", function(self)
-    GameTooltip:SetOwner(
-      self,
-      "ANCHOR_RIGHT"
-    )
-
-    GameTooltip:SetText(tooltip)
-    GameTooltip:Show()
-  end)
-
-  button:SetScript("OnLeave", function()
-    GameTooltip:Hide()
-  end)
-
-  return button
-end
-
 function TeamCard:Create(parent, team)
   assert(parent, "TeamCard requires a parent frame")
   assert(team, "TeamCard requires a team")
@@ -77,6 +32,11 @@ function TeamCard:Create(parent, team)
     nil,
     parent,
     "BackdropTemplate"
+  )
+
+  frame:RegisterForClicks(
+    "LeftButtonUp",
+    "RightButtonUp"
   )
 
   frame:RegisterForDrag("LeftButton")
@@ -102,6 +62,15 @@ function TeamCard:Create(parent, team)
     edgeFile = "Interface/Buttons/WHITE8X8",
     edgeSize = 1,
   })
+
+  frame.Highlight =
+      frame:CreateTexture(
+        nil,
+        "HIGHLIGHT"
+      )
+
+  frame.Highlight:SetAllPoints()
+  frame.Highlight:SetColorTexture(0.1, 0.7, 1, 0.08)
 
   frame.Team = team
   frame.Selected = false
@@ -136,38 +105,78 @@ function TeamCard:Create(parent, team)
     "LEFT",
     frame,
     "LEFT",
-    82,
+    80,
     0
   )
-
-  -- frame.Title:SetWidth(
-  --   CARD_WIDTH - 110
-  -- )
 
   frame.Title:SetJustifyH("LEFT")
   frame.Title:SetWordWrap(false)
 
-  -- frame.FolderLabel =
-  --     frame:CreateFontString(
-  --       nil,
-  --       "OVERLAY",
-  --       "GameFontDisableSmall"
-  --     )
+  frame.MenuButton =
+      CreateFrame(
+        "Button",
+        nil,
+        frame
+      )
 
-  -- frame.FolderLabel:SetPoint(
-  --   "TOPLEFT",
-  --   frame.Title,
-  --   "BOTTOMLEFT",
-  --   0,
-  --   -2
-  -- )
+  frame.MenuButton:SetSize(18, 18)
 
-  -- frame.FolderLabel:SetWidth(
-  --   CARD_WIDTH - 80
-  -- )
+  frame.MenuButton:SetPoint(
+    "RIGHT",
+    frame,
+    "RIGHT",
+    -3,
+    3
+  )
 
-  -- frame.FolderLabel:SetJustifyH("LEFT")
-  -- frame.FolderLabel:SetWordWrap(false)
+  frame.MenuButton.Text =
+      frame.MenuButton:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontNormalLarge"
+      )
+
+  frame.MenuButton.Text:SetPoint(
+    "CENTER",
+    0,
+    2
+  )
+
+  frame.MenuButton.Text:SetText("...")
+
+  frame.MenuButton:SetScript(
+    "OnClick",
+    function(button)
+      if not frame.Team then
+        return
+      end
+
+      addon.UI.Views.TeamContextMenu:Show(
+        button,
+        frame.Team
+      )
+    end
+  )
+
+  frame.MenuButton:SetScript(
+    "OnEnter",
+    function(button)
+      GameTooltip:SetOwner(
+        button,
+        "ANCHOR_RIGHT"
+      )
+
+      GameTooltip:SetText("Team Menu")
+      GameTooltip:Show()
+    end
+  )
+
+  frame.MenuButton:SetScript(
+    "OnLeave",
+    function()
+      GameTooltip:Hide()
+    end
+  )
 
   frame.FavoriteButton =
       CreateFrame(
@@ -182,11 +191,11 @@ function TeamCard:Create(parent, team)
   )
 
   frame.FavoriteButton:SetPoint(
-    "TOPRIGHT",
-    frame,
-    "TOPRIGHT",
-    -2,
-    -5
+    "LEFT",
+    frame.MenuButton,
+    "LEFT",
+    -20,
+    -6
   )
 
   frame.FavoriteButton.Icon =
@@ -276,104 +285,6 @@ function TeamCard:Create(parent, team)
     end
   )
 
-  frame.EditButton =
-      CreateActionButton(
-        frame,
-        addon.UI.Theme.Icons.Edit,
-        "Edit Team",
-        function(team)
-          addon.UI.Views.EditTeamDialog:Show(team)
-        end
-      )
-
-  frame.EditButton:SetPoint(
-    "TOPRIGHT",
-    frame.FavoriteButton,
-    "TOPLEFT",
-    -3,
-    0
-  )
-
-  frame.MoveButton =
-      CreateActionButton(
-        frame,
-        addon.UI.Theme.Icons.Move,
-        "Move Team",
-        function(team)
-          addon.UI.Views.MoveTeamDialog:Show(team)
-        end
-      )
-
-  frame.MoveButton:SetPoint(
-    "RIGHT",
-    frame.EditButton,
-    "LEFT",
-    -3,
-    0
-  )
-
-  -- frame.TagsButton =
-  --     CreateActionButton(
-  --       frame,
-  --       "Interface\\Buttons\\UI-GuildButton-PublicNote-Up",
-  --       "Edit Tags",
-  --       function(team)
-  --         addon.UI.Views.TeamTagsDialog:Show(
-  --           team
-  --         )
-  --       end
-  --     )
-
-  -- frame.TagsButton:SetPoint(
-  --   "RIGHT",
-  --   frame.MoveButton,
-  --   "LEFT",
-  --   -3,
-  --   0
-  -- )
-
-  -- frame.TagsLabel =
-  --     frame:CreateFontString(
-  --       nil,
-  --       "OVERLAY",
-  --       "GameFontDisableSmall"
-  --     )
-
-  -- frame.TagsLabel:SetPoint(
-  --   "LEFT",
-  --   frame.FolderLabel,
-  --   "RIGHT",
-  --   8,
-  --   0
-  -- )
-
-  -- frame.TagsLabel:SetWidth(150)
-  -- frame.TagsLabel:SetJustifyH("LEFT")
-  -- frame.TagsLabel:SetWordWrap(false)
-
-  frame.DeleteButton =
-      CreateActionButton(
-        frame,
-        addon.UI.Theme.Icons.Delete,
-        "Delete Team",
-        function(team)
-          StaticPopup_Show(
-            "PETMATCH_DELETE_TEAM",
-            team.name,
-            nil,
-            team
-          )
-        end
-      )
-
-  frame.DeleteButton:SetPoint(
-    "RIGHT",
-    frame.MoveButton,
-    "LEFT",
-    -3,
-    0
-  )
-
   function frame:RefreshState()
     local team = self.Team
 
@@ -393,9 +304,17 @@ function TeamCard:Create(parent, team)
   function frame:SetTeam(newTeam)
     self.Team = newTeam
 
-    self.Title:SetText(
-      newTeam.name or "Unnamed Team"
-    )
+    local title = newTeam.name or "Unnamed Team"
+
+    if #title > 15 then
+      title = title:sub(1, 15) .. "..."
+    end
+
+    self.Title:SetText(title)
+    self.Title:SetWidth(120)
+    self.Title:SetWordWrap(false)
+    self.Title:SetMaxLines(1)
+    self.Title:SetNonSpaceWrap(false)
 
     if newTeam.favorite then
       self.FavoriteButton.Icon:SetDesaturated(false)
@@ -414,47 +333,6 @@ function TeamCard:Create(parent, team)
       )
       self.FavoriteButton.Icon:SetAlpha(0.45)
     end
-
-    -- local folderName = "Unsorted"
-    -- if newTeam.folderID then
-    --   local folder =
-    --       addon.Services.Folder:Get(
-    --         newTeam.folderID
-    --       )
-
-    --   if folder then
-    --     folderName = folder.name
-    --   end
-    -- end
-
-    -- self.FolderLabel:SetText(
-    --   folderName
-    -- )
-
-    -- local tags =
-    --     addon.Services.Tag:GetTagsForTeam(
-    --       newTeam
-    --     )
-
-    -- local visibleTagNames = {}
-
-    -- for index = 1, math.min(2, #tags) do
-    --   table.insert(
-    --     visibleTagNames,
-    --     tags[index].name
-    --   )
-    -- end
-
-    -- if #tags > 2 then
-    --   table.insert(
-    --     visibleTagNames,
-    --     "+" .. (#tags - 2)
-    --   )
-    -- end
-
-    -- self.TagsLabel:SetText(
-    --   table.concat(visibleTagNames, ", ")
-    -- )
 
     for slotIndex = 1, 3 do
       self.PetSlots[slotIndex]:SetPet(
@@ -487,13 +365,22 @@ function TeamCard:Create(parent, team)
       return
     end
 
-    if button ~= "LeftButton" then
-      return
-    end
-
     local team = self.Team
 
     if not team then
+      return
+    end
+
+    if button == "RightButton" then
+      addon.UI.Views.TeamContextMenu:Show(
+        self,
+        team
+      )
+
+      return
+    end
+
+    if button ~= "LeftButton" then
       return
     end
 

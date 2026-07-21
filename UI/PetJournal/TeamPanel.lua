@@ -5,7 +5,7 @@ addon.UI.Views = addon.UI.Views or {}
 
 local TeamPanel = {}
 
-local PANEL_WIDTH = 300
+local PANEL_WIDTH = 275
 local PANEL_HEIGHT = 604
 local PANEL_PADDING = 8
 local CONTENT_GAP = 5
@@ -51,14 +51,6 @@ function TeamPanel:Create()
     frame,
     "TOPLEFT",
     PANEL_PADDING,
-    -PANEL_PADDING
-  )
-
-  self.TeamListControls:SetPoint(
-    "TOPRIGHT",
-    frame,
-    "TOPRIGHT",
-    -PANEL_PADDING,
     -PANEL_PADDING
   )
 
@@ -151,16 +143,8 @@ function TeamPanel:CreateNewFolderButton(parent)
     parent,
     "BOTTOMLEFT",
     CONTENT_GAP,
-    CONTENT_GAP
+    2
   )
-
-  -- button:SetPoint(
-  --   "BOTTOMRIGHT",
-  --   parent,
-  --   "BOTTOMRIGHT",
-  --   -CONTENT_GAP,
-  --   CONTENT_GAP
-  -- )
 
   self.NewFolderButton = button
 

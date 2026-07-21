@@ -74,6 +74,7 @@ UI/PetJournal/PetJournalToolbar.lua
 UI/PetJournal/SaveTeamButton.lua
 UI/PetJournal/UpdateTeamButton.lua
 UI/PetJournal/FolderContextMenu.lua
+UI/PetJournal/TeamContextMenu.lua
 UI/PetJournal/TeamPanel.lua
 
 UI/Dialogs/ExportDialog.lua

@@ -16,8 +16,9 @@ function TeamListControls:Create(parent)
       addon.UI.Components.Panel:Create(
         parent,
         {
-          width = 285,
+          width = 238,
           height = 46,
+          background = "Interface/Tooltips/chatbubble-background"
         }
       )
 
@@ -32,7 +33,7 @@ function TeamListControls:Create(parent)
       )
 
   self.SearchInput:SetSize(
-    235,
+    185,
     26
   )
 
@@ -63,7 +64,7 @@ function TeamListControls:Create(parent)
   )
 
   self.SearchInput.Instructions:SetText(
-    "Search teams or pets..."
+    "Search through the teams..."
   )
 
   self.SearchInput:SetScript(
@@ -129,7 +130,7 @@ function TeamListControls:Create(parent)
     "LEFT",
     self.SearchInput,
     "RIGHT",
-    0,
+    5,
     0
   )
 
