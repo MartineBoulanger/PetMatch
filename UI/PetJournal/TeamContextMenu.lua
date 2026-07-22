@@ -10,11 +10,27 @@ function TeamContextMenu:Show(owner, team)
     return
   end
 
+  local hasNotes =
+      addon.Utils:Trim(
+        team.notes or ""
+      ) ~= ""
+
   MenuUtil.CreateContextMenu(
     owner,
     function(_, rootDescription)
       rootDescription:CreateTitle(
         team.name or "Team"
+      )
+
+      rootDescription:CreateButton(
+        hasNotes
+        and "Edit Notes"
+        or "Add Notes",
+        function()
+          addon.UI.Views.TeamNotesDialog:Show(
+            team
+          )
+        end
       )
 
       rootDescription:CreateButton(

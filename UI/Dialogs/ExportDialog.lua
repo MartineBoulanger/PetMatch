@@ -6,7 +6,7 @@ addon.UI.Views = addon.UI.Views or {}
 local ExportDialog = {}
 
 local DIALOG_WIDTH = 320
-local DIALOG_HEIGHT = 340
+local DIALOG_HEIGHT = 360
 
 function ExportDialog:Create()
   if self.Frame then
@@ -140,7 +140,7 @@ function ExportDialog:Create()
     "ChatFontNormal"
   )
 
-  self.Input:SetWidth(440)
+  self.Input:SetWidth(250)
   self.Input:SetTextInsets(
     4,
     4,

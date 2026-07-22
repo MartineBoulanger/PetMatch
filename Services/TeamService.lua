@@ -327,6 +327,29 @@ function TeamService:Rename(teamID, name)
   return team
 end
 
+function TeamService:SetNotes(
+    teamID,
+    notes
+)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  notes = tostring(notes or "")
+
+  team.notes = notes
+  team.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  return team
+end
+
 function TeamService:ReplacePetsFromBattleSlots(
     teamID
 )

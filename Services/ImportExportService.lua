@@ -446,6 +446,31 @@ local function SplitNotesAndScript(text)
   return notes, script
 end
 
+local function BuildRematchNotes(notes, script)
+  notes = Trim(notes or "")
+  script = Trim(script or "")
+
+  if script == "" then
+    return notes
+  end
+
+  if notes ~= "" then
+    return table.concat({
+      notes,
+      "",
+      "-----BEGIN PET BATTLE SCRIPT-----",
+      script,
+      "-----END PET BATTLE SCRIPT-----",
+    }, "\n")
+  end
+
+  return table.concat({
+    "-----BEGIN PET BATTLE SCRIPT-----",
+    script,
+    "-----END PET BATTLE SCRIPT-----",
+  }, "\n")
+end
+
 function ImportExportService:IsRematchTeam(text)
   if type(text) ~= "string" then
     return false
@@ -1193,7 +1218,10 @@ function ImportExportService:ExportRematchTeam(
 
   local notes =
       EncodeRematchNotes(
-        team.notes
+        BuildRematchNotes(
+          team.notes,
+          team.script
+        )
       )
 
   if notes ~= "" then
