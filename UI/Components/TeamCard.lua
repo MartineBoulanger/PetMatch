@@ -335,11 +335,24 @@ function TeamCard:Create(parent, team)
     end
 
     for slotIndex = 1, 3 do
-      self.PetSlots[slotIndex]:SetPet(
-        newTeam.pets
-        and newTeam.pets[slotIndex]
-        or nil
-      )
+      local petSlot =
+          self.PetSlots[slotIndex]
+
+      local specialSlot =
+          newTeam.specialSlots
+          and newTeam.specialSlots[slotIndex]
+
+      if specialSlot then
+        petSlot:SetSpecialSlot(
+          specialSlot
+        )
+      else
+        petSlot:SetPet(
+          newTeam.pets
+          and newTeam.pets[slotIndex]
+          or nil
+        )
+      end
     end
 
     self:RefreshState()

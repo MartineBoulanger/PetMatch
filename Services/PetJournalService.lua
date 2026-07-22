@@ -34,6 +34,7 @@ function PetJournalService:Scan()
         favorite = favorite,
         icon = icon,
         petType = petType,
+        canBattle = canBattle == true,
       }
       self.Cache[petGUID] = pet
     end

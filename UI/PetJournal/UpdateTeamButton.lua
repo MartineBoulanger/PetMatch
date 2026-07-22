@@ -91,11 +91,6 @@ function UpdateTeamButton:UpdateSelectedTeam()
   addon.Services.LoadoutMonitor:
       ScheduleCheck()
 
-  addon.Logger:Info(
-    "Updated team:",
-    updatedTeam.name
-  )
-
   self:Refresh()
 end
 

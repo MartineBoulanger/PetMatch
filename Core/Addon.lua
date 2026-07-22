@@ -9,10 +9,7 @@ local function Initialize()
   if addon.Initialized then
     return
   end
-  addon.Logger:Info(
-    "Initializing PetMatch",
-    addon.Version
-  )
+
   addon.Database:Initialize()
   addon.ModuleManager:Initialize()
   addon.Settings:Initialize()
@@ -28,9 +25,7 @@ local function Enable()
   end
   addon.ModuleManager:Enable()
   addon.Enabled = true
-  addon.Logger:Info(
-    "PetMatch loaded successfully"
-  )
+
   C_Timer.After(
     2,
     function()

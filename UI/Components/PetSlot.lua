@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 addon.UI = addon.UI or {}
 addon.UI.Components = addon.UI.Components or {}
@@ -6,9 +6,45 @@ addon.UI.Components = addon.UI.Components or {}
 local PetSlot = {}
 PetSlot.__index = PetSlot
 
--- local SLOT_WIDTH = 78
--- local SLOT_HEIGHT = 76
 local ICON_SIZE = 24
+local RANDOM_PET_ICON = "Interface\\Icons\\INV_Misc_Dice_02"
+local LEVELING_PET_ICON = "Interface\\AddOns\\PetMatch\\Media\\levelingicon"
+local PET_FAMILY_ICONS = {
+  [1]  = "Interface\\Icons\\Pet_Type_Humanoid",
+  [2]  = "Interface\\Icons\\Pet_Type_Dragon",
+  [3]  = "Interface\\Icons\\Pet_Type_Flying",
+  [4]  = "Interface\\Icons\\Pet_Type_Undead",
+  [5]  = "Interface\\Icons\\Pet_Type_Critter",
+  [6]  = "Interface\\Icons\\Pet_Type_Magical",
+  [7]  = "Interface\\Icons\\Pet_Type_Elemental",
+  [8]  = "Interface\\Icons\\Pet_Type_Beast",
+  [9]  = "Interface\\Icons\\Pet_Type_Water",
+  [10] = "Interface\\Icons\\Pet_Type_Mechanical",
+}
+
+local function GetSpecialSlotIcon(specialSlot)
+  if type(specialSlot) ~= "table" then
+    return nil, nil
+  end
+
+  if specialSlot.type == "leveling"
+      or specialSlot.type == "levelingQueue" then
+    return LEVELING_PET_ICON, nil
+  end
+
+  if specialSlot.type == "random" then
+    local petType =
+        tonumber(specialSlot.petType) or 0
+
+    if petType > 0 then
+      return PET_FAMILY_ICONS[petType], nil
+    end
+
+    return RANDOM_PET_ICON, nil
+  end
+
+  return nil, nil
+end
 
 function PetSlot:Create(parent)
   assert(parent, "PetSlot requires a parent frame")
@@ -47,36 +83,6 @@ function PetSlot:Create(parent)
   instance.EmptyIcon:SetTexture("Interface/PaperDoll/UI-Backpack-EmptySlot")
   instance.EmptyIcon:SetVertexColor(0.45, 0.45, 0.45, 0.55)
 
-  instance.Level = frame:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontHighlightSmall"
-  )
-  instance.Level:SetPoint(
-    "BOTTOMRIGHT",
-    instance.Icon,
-    "BOTTOMRIGHT",
-    -1,
-    1
-  )
-  instance.Level:SetTextColor(1, 0.82, 0)
-
-  -- instance.Name = frame:CreateFontString(
-  --   nil,
-  --   "OVERLAY",
-  --   "GameFontHighlightSmall"
-  -- )
-  -- instance.Name:SetPoint(
-  --   "TOP",
-  --   instance.Icon,
-  --   "BOTTOM",
-  --   0,
-  --   -4
-  -- )
-  -- instance.Name:SetWidth(SLOT_WIDTH - 6)
-  -- instance.Name:SetJustifyH("CENTER")
-  -- instance.Name:SetWordWrap(false)
-
   instance:Clear()
 
   return instance
@@ -100,6 +106,7 @@ function PetSlot:SetPet(petGUID)
   self.EmptyIcon:Hide()
 
   if pet.icon then
+    self.Icon:SetAtlas(nil)
     self.Icon:SetTexture(pet.icon)
     self.Icon:Show()
   else
@@ -107,30 +114,43 @@ function PetSlot:SetPet(petGUID)
     self.Icon:Hide()
     self.EmptyIcon:Show()
   end
+end
 
-  -- self.Name:SetText(pet.name)
+function PetSlot:SetSpecialSlot(specialSlot)
+  if type(specialSlot) ~= "table" then
+    self:Clear()
+    return
+  end
 
-  if pet.level and pet.level > 0 then
-    self.Level:SetFormattedText("%d", pet.level)
-    self.Level:Show()
+  self.PetGUID = nil
+  self.EmptyIcon:Hide()
+
+  local texture, atlas =
+      GetSpecialSlotIcon(specialSlot)
+
+  self.Icon:SetAtlas(nil)
+  self.Icon:SetTexture(nil)
+
+  if atlas then
+    self.Icon:SetAtlas(atlas)
+    self.Icon:Show()
+  elseif texture then
+    self.Icon:SetTexture(texture)
+    self.Icon:Show()
   else
-    self.Level:SetText("")
-    self.Level:Hide()
+    self.Icon:Hide()
+    self.EmptyIcon:Show()
   end
 end
 
 function PetSlot:Clear()
   self.PetGUID = nil
 
+  self.Icon:SetAtlas(nil)
   self.Icon:SetTexture(nil)
   self.Icon:Hide()
 
   self.EmptyIcon:Show()
-
-  -- self.Name:SetText("Empty")
-
-  self.Level:SetText("")
-  self.Level:Hide()
 end
 
 function PetSlot:GetFrame()

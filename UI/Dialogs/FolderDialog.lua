@@ -232,13 +232,6 @@ function FolderDialog:Save()
 
   addon.Services.Folder:Select(folder.id)
 
-  addon.Logger:Info(
-    self.Mode == "rename"
-    and "Renamed folder:"
-    or "Created folder:",
-    folder.name
-  )
-
   self:Hide()
 end
 

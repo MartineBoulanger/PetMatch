@@ -382,6 +382,38 @@ local function EncodeRematchPetTag(
       .. encodedSpecies
 end
 
+function ImportExportService:IsRematchTeam(text)
+  if type(text) ~= "string" then
+    return false
+  end
+
+  local teamName,
+  targetTag,
+  petTag1,
+  petTag2,
+  petTag3,
+  optionsTag = text:match(
+    "^([^:\r\n]+):" ..
+    "([^:\r\n]*):" ..
+    "([^:\r\n]+):" ..
+    "([^:\r\n]+):" ..
+    "([^:\r\n]+):" ..
+    "([^:\r\n]*):"
+  )
+
+  if not teamName then
+    return false
+  end
+
+  local slot1 = self:DecodeRematchPetTag(petTag1)
+  local slot2 = self:DecodeRematchPetTag(petTag2)
+  local slot3 = self:DecodeRematchPetTag(petTag3)
+
+  return slot1 ~= nil
+      and slot2 ~= nil
+      and slot3 ~= nil
+end
+
 function ImportExportService:ExportTeam(team)
   if not team then
     return nil, "Team not found"
@@ -507,11 +539,11 @@ function ImportExportService:Parse(value)
     return nil, "Paste a team string"
   end
 
-  if value:sub(1, 4) == "PM1|" then
-    return self:ParsePetMatch(value)
-  end
+  local format = self:DetectFormat(value)
 
-  if value:find("::", 1, true) then
+  if format == "petmatch" then
+    return self:ParsePetMatch(value)
+  elseif format == "rematch" then
     return self:ParseRematchTeam(value)
   end
 
@@ -987,7 +1019,10 @@ function ImportExportService:DetectFormat(value)
     return nil
   end
 
-  if StartsWith(value, "PM1") then
+  value = value:gsub("\\r\\n", "\n")
+  value = value:gsub("\\n", "\n")
+
+  if StartsWith(value, "PM1|") then
     return "petmatch"
   end
 
@@ -996,18 +1031,33 @@ function ImportExportService:DetectFormat(value)
   end
 
   local firstLine =
-      value:match("([^\r\n]+)")
+      value:match("^([^\r\n]+)")
 
-  if firstLine then
-    local fields =
-        SplitPreservingEmpty(
-          firstLine,
-          ":"
-        )
+  if not firstLine then
+    return nil
+  end
 
-    if #fields >= 6 then
-      return "rematch"
-    end
+  local teamName,
+  targetTag,
+  petTag1,
+  petTag2,
+  petTag3,
+  optionsTag =
+      firstLine:match(
+        "^([^:]+):" ..
+        "([^:]*):" ..
+        "([^:]+):" ..
+        "([^:]+):" ..
+        "([^:]+):" ..
+        "([^:]*)"
+      )
+
+  if teamName
+      and petTag1
+      and petTag2
+      and petTag3
+      and optionsTag then
+    return "rematch"
   end
 
   return nil

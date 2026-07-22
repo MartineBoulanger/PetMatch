@@ -175,11 +175,6 @@ StaticPopupDialogs.PETMATCH_DELETE_FOLDER = {
     addon.Services.Folder:Select(
       addon.Services.Folder.UNSORTED
     )
-
-    addon.Logger:Info(
-      "Deleted folder:",
-      folder.name
-    )
   end,
 
   timeout = 0,

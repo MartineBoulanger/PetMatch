@@ -52,7 +52,3 @@ function Database:GetProfile()
 end
 
 addon.Database = Database
-
-addon.Logger:Info(
-  "Database initialized"
-)

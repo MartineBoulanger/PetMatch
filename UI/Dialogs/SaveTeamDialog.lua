@@ -221,13 +221,6 @@ function SaveTeamDialog:Save()
     end
   end
 
-  addon.Logger:Info(
-    "Saved team:",
-    team.name,
-    "in",
-    destinationName
-  )
-
   self:Hide()
 end
 

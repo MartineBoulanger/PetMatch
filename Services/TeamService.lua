@@ -285,7 +285,8 @@ function TeamService:Load(teamID)
   local success, errorMessage =
       addon.Services.BattleSlot:LoadPets(
         team.pets,
-        team.abilities
+        team.abilities,
+        team.specialSlots
       )
 
   if not success then
@@ -702,31 +703,23 @@ function TeamService:HasTag(team, tagID)
       and team.tags[tagID] == true
 end
 
-function TeamService:BuildFromImport(
-    importData
-)
+function TeamService:BuildFromImport(importData)
   if type(importData) ~= "table" then
     return nil, "Invalid import data", {}
   end
 
   local team = {
-    name =
-        addon.Utils:Trim(
-          importData.name or ""
-        ),
-
+    name = addon.Utils:Trim(importData.name or ""),
     pets = {},
     abilities = {},
     breeds = {},
     specialSlots = {},
-
     folderID = importData.folderID,
     favorite = importData.favorite == true,
     notes = importData.notes or "",
     script = importData.script or "",
     targetNPCIDs = importData.npcIDs or {},
-    importSource =
-        importData.format or "unknown",
+    importSource = importData.format or "unknown",
   }
 
   if team.name == "" then
@@ -736,9 +729,7 @@ function TeamService:BuildFromImport(
   local missingSpecies = {}
 
   for slot = 1, 3 do
-    local slotData =
-        importData.slots
-        and importData.slots[slot]
+    local slotData = importData.slots and importData.slots[slot]
 
     if slotData then
       if slotData.special then
@@ -747,6 +738,8 @@ function TeamService:BuildFromImport(
           petType = slotData.petType,
           level = slotData.level,
           rarity = slotData.rarity,
+          minimumLevel = slotData.minimumLevel,
+          minimumHealth = slotData.minimumHealth,
           rawPetTag = slotData.rawPetTag,
         }
       elseif slotData.speciesID then
@@ -764,11 +757,8 @@ function TeamService:BuildFromImport(
           ] = slotData.speciesID
         end
 
-        team.abilities[slot] =
-            slotData.abilities or {}
-
-        team.breeds[slot] =
-            slotData.breedID or 0
+        team.abilities[slot] = slotData.abilities or {}
+        team.breeds[slot] = slotData.breedID or 0
       end
     end
   end
@@ -776,25 +766,15 @@ function TeamService:BuildFromImport(
   return team, nil, missingSpecies
 end
 
-function TeamService:CreateFromImport(
-    importData
-)
-  local importedTeam,
-  errorMessage,
-  missingSpecies =
-      self:BuildFromImport(importData)
+function TeamService:CreateFromImport(importData)
+  local importedTeam, errorMessage, missingSpecies = self:BuildFromImport(importData)
 
   if not importedTeam then
     return nil, errorMessage, missingSpecies
   end
 
-  local name =
-      self:GetUniqueName(
-        importedTeam.name
-      )
-
-  local team =
-      self:Create(name)
+  local name = self:GetUniqueName(importedTeam.name)
+  local team = self:Create(name)
 
   if not team then
     return nil,
@@ -805,39 +785,16 @@ function TeamService:CreateFromImport(
   team.pets = importedTeam.pets
   team.abilities = importedTeam.abilities
   team.breeds = importedTeam.breeds
-  team.specialSlots =
-      importedTeam.specialSlots
-
-  team.targetNPCIDs =
-      importedTeam.targetNPCIDs
-
-  team.folderID =
-      importedTeam.folderID
-
-  team.favorite =
-      importedTeam.favorite
-
-  team.notes =
-      importedTeam.notes
-
-  team.script =
-      importedTeam.script
-
-  team.importSource =
-      importedTeam.importSource
-
+  team.specialSlots = importedTeam.specialSlots
+  team.targetNPCIDs = importedTeam.targetNPCIDs
+  team.folderID = importedTeam.folderID
+  team.favorite = importedTeam.favorite
+  team.notes = importedTeam.notes
+  team.script = importedTeam.script
+  team.importSource = importedTeam.importSource
   team.modified = time()
-
-  addon.EventBus:Fire(
-    addon.Events.TEAM_UPDATED,
-    team
-  )
-
-  addon.EventBus:Fire(
-    addon.Events.TEAM_IMPORTED,
-    team,
-    missingSpecies
-  )
+  addon.EventBus:Fire(addon.Events.TEAM_UPDATED, team)
+  addon.EventBus:Fire(addon.Events.TEAM_IMPORTED, team, missingSpecies)
 
   return team, nil, missingSpecies
 end

@@ -293,11 +293,6 @@ function EditTeamDialog:Save()
     return
   end
 
-  addon.Logger:Info(
-    "Updated team:",
-    updatedTeam.name
-  )
-
   addon.EventBus:Fire(
     addon.Events.TEAM_SELECTED,
     updatedTeam

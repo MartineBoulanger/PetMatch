@@ -18,7 +18,8 @@ function TeamListControls:Create(parent)
         {
           width = 238,
           height = 46,
-          background = "Interface/Tooltips/chatbubble-background"
+          -- background = "Interface/Tooltips/chatbubble-background"
+          background = nil
         }
       )
 

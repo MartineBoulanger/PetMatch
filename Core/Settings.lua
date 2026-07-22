@@ -42,10 +42,6 @@ function Settings:Initialize()
     DEFAULT_SETTINGS,
     profile.settings
   )
-
-  addon.Logger:Info(
-    "Settings initialized"
-  )
 end
 
 function Settings:Get(key)
@@ -96,8 +92,4 @@ addon.Settings = Settings
 addon.ModuleManager:Register(
   "Settings",
   Settings
-)
-
-addon.Logger:Info(
-  "Settings initialized"
 )

@@ -30,6 +30,7 @@ function Panel:Create(parent, options)
   frame.Background:SetTexture(
     options.background
     or "Interface/BlackMarket/blackmarketbackground-tile"
+    or nil
   )
 
   frame.Background:SetTexCoord(0, 1, 0, 1)
