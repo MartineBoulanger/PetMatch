@@ -382,6 +382,70 @@ local function EncodeRematchPetTag(
       .. encodedSpecies
 end
 
+local function SplitNotesAndScript(text)
+  if type(text) == "table" then
+    text = table.concat(text, ":")
+  end
+
+  text = text or ""
+
+  -- Ondersteun imports waarin \n letterlijk
+  -- als twee tekens voorkomt.
+  text = text:gsub("\\r\\n", "\n")
+  text = text:gsub("\\n", "\n")
+
+  local beginMarker =
+  "-----BEGIN PET BATTLE SCRIPT-----"
+
+  local endMarker =
+  "-----END PET BATTLE SCRIPT-----"
+
+  local beginPos =
+      text:find(
+        beginMarker,
+        1,
+        true
+      )
+
+  if not beginPos then
+    return Trim(text), ""
+  end
+
+  local scriptStart =
+      beginPos + #beginMarker
+
+  local endPos =
+      text:find(
+        endMarker,
+        scriptStart,
+        true
+      )
+
+  -- Geen geldige afsluitende marker:
+  -- laat de volledige tekst als notes staan.
+  if not endPos then
+    return Trim(text), ""
+  end
+
+  local notes =
+      Trim(
+        text:sub(
+          1,
+          beginPos - 1
+        )
+      )
+
+  local script =
+      Trim(
+        text:sub(
+          scriptStart,
+          endPos - 1
+        )
+      )
+
+  return notes, script
+end
+
 function ImportExportService:IsRematchTeam(text)
   if type(text) ~= "string" then
     return false
@@ -797,6 +861,7 @@ function ImportExportService:ParseRematchTeam(line)
     slots = {},
     preferences = nil,
     notes = "",
+    script = "",
     warnings = {},
   }
 
@@ -836,10 +901,21 @@ function ImportExportService:ParseRematchTeam(line)
       local noteParts = {}
 
       for noteIndex = index + 1, #fields do
-        noteParts[#noteParts + 1] = fields[noteIndex]
+        noteParts[#noteParts + 1] =
+            fields[noteIndex]
       end
 
-      result.notes = table.concat(noteParts, ":"):gsub("\\n", "\n")
+      local noteText =
+          table.concat(
+            noteParts,
+            ":"
+          )
+
+      local notes, script =
+          SplitNotesAndScript(noteText)
+
+      result.notes = notes
+      result.script = script
 
       break
     else
