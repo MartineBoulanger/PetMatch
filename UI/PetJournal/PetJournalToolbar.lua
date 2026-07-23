@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 addon.UI = addon.UI or {}
 addon.UI.Views = addon.UI.Views or {}
@@ -9,6 +9,7 @@ local BUTTON_SIZE = 40
 local BUTTON_SPACING = 5
 local SAFARI_HAT_TOY_ID = 92738
 local SAFARI_HAT_BUFF_ID = 158486
+local BATTLE_PET_BANDAGE_ITEM_ID = 86143
 
 local function FindHealButton()
   return PetJournal
@@ -573,6 +574,120 @@ local function CreateSafariHatButton(
   return button
 end
 
+local function CreateBandageButton(
+    parent,
+    name,
+    texture
+)
+  local button =
+      CreateFrame(
+        "Button",
+        name,
+        parent,
+        "SecureActionButtonTemplate"
+      )
+
+  local width, height =
+      GetToolbarButtonSize()
+
+  button:SetSize(width, height)
+
+  button:RegisterForClicks(
+    "AnyUp",
+    "AnyDown"
+  )
+
+  button:SetAttribute(
+    "useOnKeyDown",
+    false
+  )
+
+  button:SetAttribute(
+    "type",
+    "item"
+  )
+
+  button:SetAttribute(
+    "item",
+    "item:" .. BATTLE_PET_BANDAGE_ITEM_ID
+  )
+
+  button.Icon =
+      button:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  button.Icon:SetAllPoints(button)
+  button.Icon:SetTexture(texture)
+  button.Icon:SetTexCoord(0, 1, 0, 1)
+
+  CopyBorderStyle(
+    button,
+    FindHealIconButton()
+  )
+
+  CopyHighlightStyle(
+    button,
+    FindHealIconButton()
+  )
+
+  AddBlizzardBorder(button)
+
+  -- self.BandageButton.Count:SetJustifyH(
+  --   "RIGHT"
+  -- )
+
+  -- self.BandageButton.Count:SetTextColor(
+  --   1,
+  --   1,
+  --   1
+  -- )
+
+  -- self.BandageButton.Count:SetShadowOffset(
+  --   1,
+  --   -1
+  -- )
+
+  button.Count =
+      button:CreateFontString(
+        nil,
+        "OVERLAY",
+        "NumberFontNormal"
+      )
+
+  button.Count:SetPoint(
+    "BOTTOMRIGHT",
+    button,
+    "BOTTOMRIGHT",
+    -2,
+    2
+  )
+
+  button.TooltipTitle = "Battle Pet Bandage"
+  button.TooltipDescription = "Heals and resurrects all of your battle pets to 100% health."
+
+  button:SetScript(
+    "OnEnter",
+    function(self)
+      ShowTooltip(
+        self,
+        self.TooltipTitle,
+        self.TooltipDescription
+      )
+    end
+  )
+
+  button:SetScript(
+    "OnLeave",
+    function()
+      GameTooltip:Hide()
+    end
+  )
+
+  return button
+end
+
 function PetJournalToolbar:SetButtonEnabled(
     button,
     enabled
@@ -756,25 +871,57 @@ function PetJournalToolbar:DismissPet()
   )
 end
 
+function PetJournalToolbar:UpdateBandageButton()
+  if not self.BandageButton then
+    return
+  end
+
+  local count =
+      C_Item.GetItemCount(
+        BATTLE_PET_BANDAGE_ITEM_ID,
+        false,
+        false,
+        false
+      )
+
+  if self.BandageButton.Count then
+    if count > 0 then
+      self.BandageButton.Count:SetText(count)
+      self.BandageButton.Count:Show()
+    else
+      self.BandageButton.Count:SetText("")
+      self.BandageButton.Count:Hide()
+    end
+  end
+
+  self:SetButtonEnabled(
+    self.BandageButton,
+    count > 0
+  )
+end
+
 function PetJournalToolbar:PositionButtons()
   if not self.SafariHatButton
       or not self.ImportButton
       or not self.ExportButton
-      or not self.DismissButton then
+      or not self.DismissButton
+      or not self.BandageButton then
     return
   end
 
   local healButton = FindHealButton()
   local randomFavoriteButton = FindRandomFavoriteButton()
   randomFavoriteButton:SetSize(32, 32)
+  healButton:SetSize(32, 32)
 
   self.SafariHatButton:ClearAllPoints()
   self.ImportButton:ClearAllPoints()
   self.ExportButton:ClearAllPoints()
   self.DismissButton:ClearAllPoints()
+  self.BandageButton:ClearAllPoints()
 
-  if randomFavoriteButton then
-    self.SafariHatButton:SetPoint(
+  if randomFavoriteButton and healButton then
+    self.DismissButton:SetPoint(
       "RIGHT",
       randomFavoriteButton,
       "LEFT",
@@ -782,110 +929,125 @@ function PetJournalToolbar:PositionButtons()
       0
     )
 
-    self.DismissButton:SetPoint(
-      "LEFT",
-      randomFavoriteButton,
-      "RIGHT",
-      BUTTON_SPACING,
-      0
-    )
-
-    self.ExportButton:SetPoint(
-      "LEFT",
-      self.DismissButton,
-      "RIGHT",
-      BUTTON_SPACING,
-      0
-    )
-
-    self.ImportButton:SetPoint(
-      "LEFT",
-      self.ExportButton,
-      "RIGHT",
-      BUTTON_SPACING,
-      0
-    )
-
-    return
-  end
-
-  if healButton then
     self.SafariHatButton:SetPoint(
-      "LEFT",
-      healButton,
       "RIGHT",
-      -20,
+      self.DismissButton,
+      "LEFT",
+      -BUTTON_SPACING,
+      0
+    )
+
+    self.BandageButton:SetPoint(
+      "RIGHT",
+      healButton,
+      "LEFT",
+      -BUTTON_SPACING,
       0
     )
 
     self.ImportButton:SetPoint(
-      "LEFT",
-      healButton,
       "RIGHT",
-      BUTTON_SPACING,
+      self.BandageButton,
+      "LEFT",
+      -BUTTON_SPACING,
       0
     )
 
     self.ExportButton:SetPoint(
-      "LEFT",
+      "RIGHT",
       self.ImportButton,
-      "RIGHT",
-      BUTTON_SPACING,
-      0
-    )
-
-    self.DismissButton:SetPoint(
       "LEFT",
-      self.ExportButton,
-      "RIGHT",
-      BUTTON_SPACING,
+      -BUTTON_SPACING,
       0
     )
-
-    -- addon.Logger:Warn(
-    --   "Random favorite pet button was not found; "
-    --   .. "using the heal button as toolbar anchor"
-    -- )
 
     return
   end
 
-  self.SafariHatButton:SetPoint(
-    "LEFT",
-    randomFavoriteButton,
-    "RIGHT",
-    BUTTON_SPACING,
-    0
-  )
+  if randomFavoriteButton then
+    self.DismissButton:SetPoint(
+      "RIGHT",
+      randomFavoriteButton,
+      "LEFT",
+      -BUTTON_SPACING,
+      0
+    )
+
+    self.SafariHatButton:SetPoint(
+      "RIGHT",
+      self.DismissButton,
+      "LEFT",
+      -BUTTON_SPACING,
+      0
+    )
+
+    self.BandageButton:SetPoint(
+      "RIGHT",
+      healButton,
+      "LEFT",
+      -BUTTON_SPACING,
+      0
+    )
+
+    self.ImportButton:SetPoint(
+      "RIGHT",
+      self.BandageButton,
+      "LEFT",
+      -BUTTON_SPACING,
+      0
+    )
+
+    self.ExportButton:SetPoint(
+      "RIGHT",
+      self.ImportButton,
+      "LEFT",
+      -BUTTON_SPACING,
+      0
+    )
+
+    return
+  end
 
   self.DismissButton:SetPoint(
-    "LEFT",
-    self.SafariHatButton,
     "RIGHT",
-    BUTTON_SPACING,
+    randomFavoriteButton,
+    "LEFT",
+    -BUTTON_SPACING,
     0
   )
 
-  self.ExportButton:SetPoint(
-    "LEFT",
-    self.DismissButton,
+
+  self.SafariHatButton:SetPoint(
     "RIGHT",
-    BUTTON_SPACING,
+    self.DismissButton,
+    "LEFT",
+    -BUTTON_SPACING,
+    0
+  )
+
+  self.BandageButton:SetPoint(
+    "RIGHT",
+    healButton,
+    "LEFT",
+    -BUTTON_SPACING,
     0
   )
 
   self.ImportButton:SetPoint(
-    "LEFT",
-    self.ExportButton,
     "RIGHT",
-    BUTTON_SPACING,
+    self.BandageButton,
+    "LEFT",
+    -BUTTON_SPACING,
     0
   )
 
-  -- addon.Logger:Warn(
-  --   "Pet Journal toolbar anchors were not found; "
-  --   .. "using fallback position"
-  -- )
+  self.ExportButton:SetPoint(
+    "RIGHT",
+    self.ImportButton,
+    "LEFT",
+    -BUTTON_SPACING,
+    0
+  )
 end
 
 function PetJournalToolbar:Create()
@@ -911,6 +1073,15 @@ function PetJournalToolbar:Create()
 
   self.Frame = frame
 
+  self.BandageButton =
+      CreateBandageButton(
+        PetJournal,
+        "PetMatchBattlePetBandageButton",
+        C_Item.GetItemIconByID(
+          BATTLE_PET_BANDAGE_ITEM_ID
+        )
+      )
+
   self.SafariHatButton =
       CreateSafariHatButton(
         PetJournal,
@@ -923,8 +1094,8 @@ function PetJournalToolbar:Create()
         PetJournal,
         "PetMatchImportButton",
         "Interface\\AddOns\\PetMatch\\Media\\Import",
-        "Import Team",
-        "Import a PetMatch or Rematch team.",
+        "Import Team(s)",
+        "Import Rematch team or a backup you made with Export.",
         function()
           addon.UI.Views.ImportDialog:Show()
         end
@@ -958,11 +1129,13 @@ function PetJournalToolbar:Create()
   self:PositionButtons()
   self:UpdateSafariHatButton()
   self:UpdateDismissButton()
+  self:UpdateBandageButton()
 
   self.SafariHatButton:Hide()
   self.ImportButton:Hide()
   self.ExportButton:Hide()
   self.DismissButton:Hide()
+  self.BandageButton:Hide()
   frame:Hide()
 
   self.EventFrame =
@@ -990,6 +1163,10 @@ function PetJournalToolbar:Create()
 
   self.EventFrame:RegisterEvent(
     "TOYS_UPDATED"
+  )
+
+  self.EventFrame:RegisterEvent(
+    "BAG_UPDATE_DELAYED"
   )
 
   self.EventFrame:SetScript(
@@ -1034,6 +1211,11 @@ function PetJournalToolbar:Create()
         return
       end
 
+      if eventName == "BAG_UPDATE_DELAYED" then
+        self:UpdateBandageButton()
+        return
+      end
+
       self:UpdateSafariHatButton()
     end
   )
@@ -1052,12 +1234,14 @@ function PetJournalToolbar:Show()
   self:PositionButtons()
   self:UpdateSafariHatButton()
   self:UpdateDismissButton()
+  self:UpdateBandageButton()
 
   frame:Show()
   self.SafariHatButton:Show()
   self.ImportButton:Show()
   self.ExportButton:Show()
   self.DismissButton:Show()
+  self.BandageButton:Show()
 end
 
 function PetJournalToolbar:Hide()
@@ -1075,6 +1259,10 @@ function PetJournalToolbar:Hide()
 
   if self.DismissButton then
     self.DismissButton:Hide()
+  end
+
+  if self.BandageButton then
+    self.BandageButton:Hide()
   end
 
   if self.Frame then
