@@ -5,8 +5,8 @@ addon.UI.Views = addon.UI.Views or {}
 
 local ExportDialog = {}
 
-local DIALOG_WIDTH = 320
-local DIALOG_HEIGHT = 360
+local DIALOG_WIDTH = 360
+local DIALOG_HEIGHT = 380
 
 function ExportDialog:Create()
   if self.Frame then

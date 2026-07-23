@@ -32,6 +32,8 @@ local function Enable()
       addon.Services.PetJournal:Scan()
     end
   )
+
+  addon.Logger:Info("v1.0.0 Loaded - open the PetJournal to use the addon")
 end
 
 frame:RegisterEvent("ADDON_LOADED")

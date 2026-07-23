@@ -34,7 +34,7 @@ function Team:Create(name)
   team.difficulty = nil
   team.favorite = false
   team.notes = ""
-  team.scripts = ""
+  team.script = ""
   team.importSource = nil
   return team
 end

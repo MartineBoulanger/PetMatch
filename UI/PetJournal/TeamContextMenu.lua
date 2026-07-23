@@ -15,6 +15,11 @@ function TeamContextMenu:Show(owner, team)
         team.notes or ""
       ) ~= ""
 
+  local hasScript =
+      addon.Utils:Trim(
+        team.script or ""
+      ) ~= ""
+
   MenuUtil.CreateContextMenu(
     owner,
     function(_, rootDescription)
@@ -32,6 +37,19 @@ function TeamContextMenu:Show(owner, team)
           )
         end
       )
+
+      rootDescription:CreateButton(
+        hasScript
+        and "Edit Script"
+        or "Add Script",
+        function()
+          addon.UI.Views.TeamScriptDialog:Show(
+            team
+          )
+        end
+      )
+
+      rootDescription:CreateDivider()
 
       rootDescription:CreateButton(
         "Edit Team",

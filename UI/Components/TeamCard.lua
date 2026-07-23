@@ -421,11 +421,6 @@ function TeamCard:Create(parent, team)
 
     addon.Services.LoadoutMonitor:
         ScheduleCheck()
-
-    addon.Logger:Info(
-      "Loaded team:",
-      team.name
-    )
   end)
 
   frame:SetTeam(team)

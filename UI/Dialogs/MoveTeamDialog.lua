@@ -1,11 +1,11 @@
-local addonName, addon = ...
+local _, addon = ...
 
 addon.UI = addon.UI or {}
 addon.UI.Views = addon.UI.Views or {}
 
 local MoveTeamDialog = {}
 
-local DIALOG_WIDTH = 300
+local DIALOG_WIDTH = 320
 local DIALOG_HEIGHT = 360
 local BUTTON_WIDTH = 250
 local BUTTON_HEIGHT = 28
@@ -265,15 +265,6 @@ function MoveTeamDialog:MoveToFolder(folderID)
         or "Unknown Folder"
   end
 
-  addon.Logger:Info(
-    "Moved team:",
-    movedTeam.name,
-    "to",
-    destinationName
-  )
-
-  -- Het detailpaneel leegmaken, omdat de TeamList
-  -- na de folderwissel opnieuw wordt opgebouwd.
   addon.EventBus:Fire(
     addon.Events.TEAM_SELECTED,
     nil,

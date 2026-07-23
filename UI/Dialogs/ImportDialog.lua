@@ -2,8 +2,8 @@ local addonName, addon = ...
 
 local ImportDialog = {}
 
-local DIALOG_WIDTH = 320
-local DIALOG_HEIGHT = 340
+local DIALOG_WIDTH = 360
+local DIALOG_HEIGHT = 380
 
 local function GetSortedFolders()
   local folderService =

@@ -39,10 +39,7 @@ function PetJournalService:Scan()
       self.Cache[petGUID] = pet
     end
   end
-  addon.Logger:Info(
-    "Pet Journal scanned:",
-    numPets
-  )
+
   addon.EventBus:Fire(
     addon.Events.PET_JOURNAL_UPDATED,
     self.Cache

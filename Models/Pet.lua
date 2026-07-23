@@ -10,8 +10,7 @@ setmetatable(
 )
 
 function Pet:Create(data)
-  local pet =
-      addon.Models.Base:New(data)
+  local pet = addon.Models.Base:New(data)
   pet.speciesID = data.speciesID
   pet.petGUID = data.petGUID
   pet.level = data.level or 1

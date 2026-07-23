@@ -350,6 +350,27 @@ function TeamService:SetNotes(
   return team
 end
 
+function TeamService:SetScript(
+    teamID,
+    script
+)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil, "Team not found"
+  end
+
+  team.script = addon.Utils:Trim(script or "")
+  team.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    team
+  )
+
+  return team
+end
+
 function TeamService:ReplacePetsFromBattleSlots(
     teamID
 )

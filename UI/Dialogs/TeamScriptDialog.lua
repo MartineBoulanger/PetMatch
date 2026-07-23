@@ -1,11 +1,11 @@
 local addonName, addon = ...
 
-local TeamNotesDialog = {}
+local TeamScriptDialog = {}
 
 local DIALOG_WIDTH = 360
 local DIALOG_HEIGHT = 380
 
-function TeamNotesDialog:Create()
+function TeamScriptDialog:Create()
   if self.Frame then
     return self.Frame
   end
@@ -41,7 +41,7 @@ function TeamNotesDialog:Create()
       addon.UI.Components.Label:Create(
         frame,
         {
-          text = "Team Notes",
+          text = "Team Script",
           font = addon.UI.Theme.Fonts.Header,
           width = DIALOG_WIDTH - 24,
           justify = "CENTER",
@@ -55,47 +55,6 @@ function TeamNotesDialog:Create()
     "TOPLEFT",
     12,
     -12
-  )
-
-  self.DragHandle =
-      CreateFrame(
-        "Frame",
-        nil,
-        frame
-      )
-
-  self.DragHandle:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    0,
-    0
-  )
-
-  self.DragHandle:SetPoint(
-    "TOPRIGHT",
-    frame,
-    "TOPRIGHT",
-    0,
-    0
-  )
-
-  self.DragHandle:SetHeight(42)
-  self.DragHandle:EnableMouse(true)
-  self.DragHandle:RegisterForDrag("LeftButton")
-
-  self.DragHandle:SetScript(
-    "OnDragStart",
-    function()
-      frame:StartMoving()
-    end
-  )
-
-  self.DragHandle:SetScript(
-    "OnDragStop",
-    function()
-      frame:StopMovingOrSizing()
-    end
   )
 
   self.TeamName =
@@ -117,12 +76,32 @@ function TeamNotesDialog:Create()
     -8
   )
 
+  self.Description =
+      addon.UI.Components.Label:Create(
+        frame,
+        {
+          text =
+          "Enter a Pet Battle Script for this team.",
+          width = DIALOG_WIDTH - 24,
+          justify = "LEFT",
+          color = addon.UI.Theme.Colors.Text,
+        }
+      )
+
+  self.Description:SetPoint(
+    "TOPLEFT",
+    self.TeamName,
+    "BOTTOMLEFT",
+    0,
+    -6
+  )
+
   self.InputBackground =
       addon.UI.Components.Panel:Create(
         frame,
         {
           width = DIALOG_WIDTH - 24,
-          height = DIALOG_HEIGHT - 105,
+          height = DIALOG_HEIGHT - 135,
           background =
           "Interface/Tooltips/chatbubble-background",
         }
@@ -130,7 +109,7 @@ function TeamNotesDialog:Create()
 
   self.InputBackground:SetPoint(
     "TOPLEFT",
-    self.TeamName,
+    self.Description,
     "BOTTOMLEFT",
     0,
     -10
@@ -179,7 +158,7 @@ function TeamNotesDialog:Create()
   )
 
   self.Input:SetHeight(
-    DIALOG_HEIGHT - 125
+    DIALOG_HEIGHT - 155
   )
 
   self.ScrollFrame:SetScrollChild(
@@ -235,12 +214,55 @@ function TeamNotesDialog:Create()
     0
   )
 
+  self.DragHandle =
+      CreateFrame(
+        "Frame",
+        nil,
+        frame
+      )
+
+  self.DragHandle:SetPoint(
+    "TOPLEFT",
+    frame,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  self.DragHandle:SetPoint(
+    "TOPRIGHT",
+    frame,
+    "TOPRIGHT",
+    0,
+    0
+  )
+
+  self.DragHandle:SetHeight(42)
+  self.DragHandle:EnableMouse(true)
+  self.DragHandle:RegisterForDrag(
+    "LeftButton"
+  )
+
+  self.DragHandle:SetScript(
+    "OnDragStart",
+    function()
+      frame:StartMoving()
+    end
+  )
+
+  self.DragHandle:SetScript(
+    "OnDragStop",
+    function()
+      frame:StopMovingOrSizing()
+    end
+  )
+
   frame:Hide()
 
   return frame
 end
 
-function TeamNotesDialog:Show(team)
+function TeamScriptDialog:Show(team)
   if not team then
     return
   end
@@ -254,7 +276,7 @@ function TeamNotesDialog:Show(team)
   )
 
   self.Input:SetText(
-    team.notes or ""
+    team.script or ""
   )
 
   self.ScrollFrame:SetVerticalScroll(0)
@@ -266,24 +288,24 @@ function TeamNotesDialog:Show(team)
   self.Input:SetCursorPosition(0)
 end
 
-function TeamNotesDialog:Save()
+function TeamScriptDialog:Save()
   if not self.TeamID then
     return
   end
 
-  local notes =
+  local script =
       self.Input:GetText() or ""
 
   local team, errorMessage =
-      addon.Services.Team:SetNotes(
+      addon.Services.Team:SetScript(
         self.TeamID,
-        notes
+        script
       )
 
   if not team then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to save team notes"
+      or "Unable to save team script"
     )
 
     return
@@ -292,7 +314,7 @@ function TeamNotesDialog:Save()
   self:Hide()
 end
 
-function TeamNotesDialog:Hide()
+function TeamScriptDialog:Hide()
   if not self.Frame then
     return
   end
@@ -305,5 +327,5 @@ function TeamNotesDialog:Hide()
   self.Frame:Hide()
 end
 
-addon.UI.Views.TeamNotesDialog =
-    TeamNotesDialog
+addon.UI.Views.TeamScriptDialog =
+    TeamScriptDialog
