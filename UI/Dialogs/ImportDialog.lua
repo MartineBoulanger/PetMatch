@@ -313,7 +313,7 @@ function ImportDialog:Create()
       addon.UI.Components.Button:Create(
         frame,
         {
-          text = "Save Team",
+          text = "Save",
           width = 95,
 
           onClick = function()
@@ -581,44 +581,83 @@ function ImportDialog:SaveTeam()
     return
   end
 
-  local importData, folderID = self:GetImportData()
-
-  if not importData then
-    return
-  end
-
-  local team, err =
-      addon.Services.Team:CreateFromImport(
-        importData,
-        folderID
+  local value =
+      addon.Utils:Trim(
+        self.Input:GetText() or ""
       )
 
-  if not team then
+  if value == "" then
     self:SetStatus(
-      err or "Unable to save team."
+      "Paste an export string first.",
+      true
     )
+
     return
   end
 
-  local folderKey =
-      team.folderID
-      or addon.Services.Folder.UNSORTED
+  self.SaveButton:SetEnabled(false)
 
-  addon.Services.Folder:Select(folderKey)
+  local prepared, errorMessage =
+      addon.Services.ImportExport:
+      PrepareImport(value)
 
-  C_Timer.After(0, function()
-    local success, loadError =
-        addon.Services.Team:Load(team.id)
+  if not prepared then
+    self:SetStatus(
+      errorMessage
+      or "Unable to prepare import.",
+      true
+    )
 
-    if not success then
-      self:SetStatus(
-        loadError or "Unable to load team."
-      )
-      return
-    end
+    return
+  end
+
+  if prepared.requiresPreview then
+    addon.ImportPreviewDialog:Show(
+      prepared.document,
+      {
+        defaultFolderID =
+            self.SelectedFolderID,
+      }
+    )
 
     self:Hide()
-  end)
+    return
+  end
+
+  local result, importError =
+      addon.Services.ImportExport:Import(
+        value,
+        {
+          defaultFolderID =
+              self.SelectedFolderID,
+        }
+      )
+
+  self.SaveButton:SetEnabled(true)
+
+  if not result then
+    self:SetStatus(
+      importError
+      or "Unable to import.",
+      true
+    )
+
+    return
+  end
+
+  local importedTeam =
+      result.teams
+      and result.teams[#result.teams]
+
+  if importedTeam then
+    addon.Services.Team:
+        SelectForUI(importedTeam.id)
+
+    addon.Services.Team:
+        Load(importedTeam.id)
+  end
+
+  self:Hide()
 end
 
 function ImportDialog:OverrideExisting()

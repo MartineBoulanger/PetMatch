@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local ImportExportService = {}
 
@@ -471,6 +471,42 @@ local function BuildRematchNotes(notes, script)
   }, "\n")
 end
 
+function ImportExportService:NeedsPreview(
+    document
+)
+  if not document
+      or not document.groups then
+    return false
+  end
+
+  local groupCount = 0
+  local teamCount = 0
+  local hasFolderHeader = false
+
+  for _, group in ipairs(
+    document.groups
+  ) do
+    groupCount = groupCount + 1
+
+    if group.name
+        and addon.Utils:Trim(
+          group.name
+        ) ~= "" then
+      hasFolderHeader = true
+    end
+
+    for _ in ipairs(
+      group.teams or {}
+    ) do
+      teamCount = teamCount + 1
+    end
+  end
+
+  return hasFolderHeader
+      or groupCount > 1
+      or teamCount > 1
+end
+
 function ImportExportService:IsRematchTeam(text)
   if type(text) ~= "string" then
     return false
@@ -639,13 +675,21 @@ function ImportExportService:Parse(value)
   return nil, "Unknown team format"
 end
 
-function ImportExportService:Import(value)
+function ImportExportService:Import(
+    value,
+    options
+)
+  options = options or {}
+
   value = Trim(value)
 
   local format = self:DetectFormat(value)
 
   if format == "rematch" then
-    return self:ImportRematch(value)
+    return self:ImportRematch(
+      value,
+      options
+    )
   end
 
   if format == "petmatch" then
@@ -654,7 +698,10 @@ function ImportExportService:Import(value)
           "PetMatch-import wordt nog niet ondersteund."
     end
 
-    return self:ImportPetMatch(value)
+    return self:ImportPetMatch(
+      value,
+      options
+    )
   end
 
   return nil,
@@ -691,9 +738,18 @@ end
 
 function ImportExportService:ImportRematchDocument(
     document,
-    conflictMode
+    options
 )
-  conflictMode = conflictMode or "copy"
+  options = options or {}
+
+  local defaultFolderID =
+      options.defaultFolderID
+      or addon.Services.Folder:
+      GetSelectedStorageFolderID()
+
+  local conflictMode =
+      options.conflictMode
+      or "copy"
 
   local result = {
     teams = {},
@@ -703,39 +759,50 @@ function ImportExportService:ImportRematchDocument(
   }
 
   for _, groupData in ipairs(document.groups or {}) do
-    local folderID =
-        addon.Services.Folder:GetSelectedStorageFolderID()
+    local folderID = defaultFolderID
 
     if groupData.name then
-      local folder =
-          addon.Services.Folder:FindByName(
-            groupData.name
-          )
-
-      if not folder then
-        folder =
-            addon.Services.Folder:Create(
+      if string.lower(
+            addon.Utils:Trim(groupData.name)
+          ) == "unsorted" then
+        folderID = nil
+      else
+        local folder =
+            addon.Services.Folder:FindByName(
               groupData.name
             )
-      end
 
-      if folder then
-        folderID = folder.id
-        result.folders[#result.folders + 1] = folder
-      else
-        result.warnings[#result.warnings + 1] =
-            "Unable to create folder: "
-            .. groupData.name
+        if not folder then
+          folder =
+              addon.Services.Folder:Create(
+                groupData.name
+              )
+        end
+
+        if folder then
+          folderID = folder.id
+
+          result.folders[
+          #result.folders + 1
+          ] = folder
+        else
+          result.warnings[
+          #result.warnings + 1
+          ] =
+              "Unable to create folder: "
+              .. groupData.name
+        end
       end
     end
 
     for _, teamData in ipairs(groupData.teams or {}) do
       teamData.folderID = folderID
 
-      local team, errorMessage, warnings =
-          self:ImportRematchTeamData(
-            teamData,
-            conflictMode
+      local team,
+      errorMessage,
+      missingSpecies =
+          addon.Services.Team:CreateFromImport(
+            teamData
           )
 
       if team then
@@ -745,11 +812,18 @@ function ImportExportService:ImportRematchDocument(
           name = teamData.name,
           error = errorMessage,
         }
+
+        if errorMessage then
+          result.warnings[#result.warnings + 1] =
+              errorMessage
+        end
       end
 
-      for _, warning in ipairs(warnings or {}) do
-        result.warnings[#result.warnings + 1] =
-            warning
+      for _, speciesID in ipairs(
+        missingSpecies or {}
+      ) do
+        result.missingSpecies[#result.missingSpecies + 1] =
+            speciesID
       end
     end
   end
@@ -1046,7 +1120,10 @@ function ImportExportService:ParseRematchDocument(value)
   return document
 end
 
-function ImportExportService:ImportRematch(value)
+function ImportExportService:ImportRematch(
+    value,
+    options
+)
   local document, errorMessage =
       self:ParseRematchDocument(value)
 
@@ -1054,63 +1131,12 @@ function ImportExportService:ImportRematch(value)
     return nil, errorMessage
   end
 
-  local result = {
-    teams = {},
-    folders = {},
-    missingSpecies = {},
-    warnings = document.warnings or {},
-  }
+  options = options or {}
 
-  for _, groupData in ipairs(document.groups) do
-    local folderID =
-        addon.Services.Folder:
-        GetSelectedStorageFolderID()
-
-    if groupData.name then
-      local folder =
-          addon.Services.Folder:
-          FindByName(
-            groupData.name
-          )
-
-      if not folder then
-        folder =
-            addon.Services.Folder:
-            Create(
-              groupData.name
-            )
-      end
-
-      if folder then
-        folderID = folder.id
-        result.folders[#result.folders + 1] = folder
-      end
-    end
-
-    for _, teamData in ipairs(
-      groupData.teams
-    ) do
-      teamData.folderID = folderID
-
-      local team,
-      importError,
-      missingSpecies = addon.Services.Team:CreateFromImport(teamData)
-
-      if team then
-        result.teams[#result.teams + 1] = team
-      elseif importError then
-        result.warnings[#result.warnings + 1] = importError
-      end
-
-      for _, speciesID in ipairs(
-        missingSpecies or {}
-      ) do
-        result.missingSpecies[#result.missingSpecies + 1] = speciesID
-      end
-    end
-  end
-
-  return result
+  return self:ImportRematchDocument(
+    document,
+    options
+  )
 end
 
 function ImportExportService:DetectFormat(value)
@@ -1120,48 +1146,66 @@ function ImportExportService:DetectFormat(value)
     return nil
   end
 
-  value = value:gsub("\\r\\n", "\n")
-  value = value:gsub("\\n", "\n")
-
-  if StartsWith(value, "PM1|") then
+  if StartsWith(value, "PM1") then
     return "petmatch"
   end
 
-  if value:match("^__%s*.-%s*__$") then
-    return "rematch"
-  end
-
   local firstLine =
-      value:match("^([^\r\n]+)")
+      value:match("([^\r\n]+)")
 
-  if not firstLine then
-    return nil
-  end
+  if firstLine then
+    firstLine = Trim(firstLine)
 
-  local teamName,
-  targetTag,
-  petTag1,
-  petTag2,
-  petTag3,
-  optionsTag =
-      firstLine:match(
-        "^([^:]+):" ..
-        "([^:]*):" ..
-        "([^:]+):" ..
-        "([^:]+):" ..
-        "([^:]+):" ..
-        "([^:]*)"
-      )
+    if firstLine:match("^__%s*.-%s*__$") then
+      return "rematch"
+    end
 
-  if teamName
-      and petTag1
-      and petTag2
-      and petTag3
-      and optionsTag then
-    return "rematch"
+    local fields =
+        SplitPreservingEmpty(
+          firstLine,
+          ":"
+        )
+
+    if #fields >= 6 then
+      return "rematch"
+    end
   end
 
   return nil
+end
+
+function ImportExportService:PrepareImport(
+    value
+)
+  local format =
+      self:DetectFormat(value)
+
+  if not format then
+    return nil,
+        "Het importformaat kon niet worden herkend."
+  end
+
+  if format == "rematch" then
+    local document, errorMessage =
+        self:ParseRematchDocument(value)
+
+    if not document then
+      return nil, errorMessage
+    end
+
+    return {
+      format = format,
+      document = document,
+      requiresPreview =
+          self:NeedsPreview(document),
+    }
+  end
+
+  return {
+    format = format,
+    value = value,
+    requiresPreview = false,
+  }
 end
 
 function ImportExportService:ExportRematchTeam(

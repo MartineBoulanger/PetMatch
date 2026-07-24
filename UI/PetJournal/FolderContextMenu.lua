@@ -112,10 +112,7 @@ function FolderContextMenu:DeleteFolder(folderKey)
     return
   end
 
-  StaticPopup_Show(
-    "PETMATCH_DELETE_FOLDER",
-    folder.name,
-    nil,
+  addon.DeleteFolderDialog:Show(
     folder
   )
 end
@@ -148,40 +145,6 @@ function FolderContextMenu:ExportTeams(
 
   addon.UI.Views.ExportDialog:ShowFolder(folderKey)
 end
-
-StaticPopupDialogs.PETMATCH_DELETE_FOLDER = {
-  text = "Delete folder \"%s\"?\n\nTeams inside it will be moved to Unsorted.",
-  button1 = "Delete",
-  button2 = "Cancel",
-
-  OnAccept = function(_, folder)
-    if not folder then
-      return
-    end
-
-    local success, errorMessage =
-        addon.Services.Folder:Delete(
-          folder.id
-        )
-
-    if not success then
-      addon.Logger:Warn(
-        errorMessage or "Unable to delete folder"
-      )
-
-      return
-    end
-
-    addon.Services.Folder:Select(
-      addon.Services.Folder.UNSORTED
-    )
-  end,
-
-  timeout = 0,
-  whileDead = true,
-  hideOnEscape = true,
-  preferredIndex = 3,
-}
 
 addon.UI.Views.FolderContextMenu =
     FolderContextMenu

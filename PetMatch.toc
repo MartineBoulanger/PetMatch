@@ -78,6 +78,8 @@ UI/Dialogs/SaveTeamDialog.lua
 UI/Dialogs/TeamNotesDialog.lua
 UI/Dialogs/TeamScriptDialog.lua
 UI/Dialogs/TeamTagsDialog.lua
+UI/Dialogs/DeleteFolderDialog.lua
+UI/Dialogs/ImportPreviewDialog.lua
 
 UI/PetJournal/TeamList.lua
 UI/PetJournal/TeamListControls.lua

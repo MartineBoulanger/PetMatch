@@ -94,7 +94,10 @@ function FolderService:Rename(folderID, name)
   return folder
 end
 
-function FolderService:Delete(folderID)
+function FolderService:Delete(
+    folderID,
+    deleteTeams
+)
   local folders = self:GetFolders()
   local folder = folders[folderID]
 
@@ -102,28 +105,26 @@ function FolderService:Delete(folderID)
     return false, "Folder not found"
   end
 
-  -- Teams blijven bestaan en worden Unsorted.
-  for _, team in pairs(
+  for id, team in pairs(
     addon.Services.Team:GetTeams()
   ) do
     if team.folderID == folderID then
-      team.folderID = nil
-      team.modified = time()
+      if deleteTeams then
+        addon.Services.Team:Delete(id)
+      else
+        team.folderID = nil
+        team.modified = time()
 
-      addon.EventBus:Fire(
-        addon.Events.TEAM_UPDATED,
-        team
-      )
+        addon.EventBus:Fire(
+          addon.Events.TEAM_UPDATED,
+          team
+        )
+      end
     end
   end
 
   folders[folderID] = nil
 
-  local profile = GetProfile()
-
-  -- if profile.selectedFolderKey == folderID then
-  --   profile.selectedFolderKey = self.ALL
-  -- end
   if self:GetSelectedKey() == folderID then
     addon.Settings:SetUI(
       "selectedFolderKey",
