@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 addon.UI = addon.UI or {}
 addon.UI.Views = addon.UI.Views or {}
@@ -6,9 +6,9 @@ addon.UI.Views = addon.UI.Views or {}
 local TeamPanel = {}
 
 local PANEL_WIDTH = 275
-local PANEL_HEIGHT = 604
-local PANEL_PADDING = 8
+local PANEL_HEIGHT = 608
 local CONTENT_GAP = 5
+local TAB_HEIGHT = 28
 
 function TeamPanel:Create()
   if self.Frame then
@@ -21,47 +21,136 @@ function TeamPanel:Create()
   )
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      CreateFrame(
+        "Frame",
+        "PetMatchTeamPanel",
         PetJournal,
-        {
-          width = PANEL_WIDTH,
-          height = PANEL_HEIGHT,
-        }
+        "SimplePanelTemplate"
       )
+
+  frame:SetSize(
+    PANEL_WIDTH,
+    PANEL_HEIGHT
+  )
+
+  local text = frame:CreateFontString(
+    nil,
+    "OVERLAY",
+    "GameFontNormalLarge"
+  )
+
+  text:SetPoint(
+    "TOP",
+    frame,
+    "TOP",
+    0,
+    -9
+  )
+
+  text:SetText("PetMatch")
+
+  frame.Background =
+      frame:CreateTexture(
+        nil,
+        "BACKGROUND"
+      )
+
+  frame.Background:SetPoint(
+    "TOPLEFT",
+    frame,
+    "TOPLEFT",
+    4,
+    -4
+  )
+
+  frame.Background:SetPoint(
+    "BOTTOMRIGHT",
+    frame,
+    "BOTTOMRIGHT",
+    -4,
+    4
+  )
 
   frame:ClearAllPoints()
   frame:SetPoint(
     "TOPLEFT",
     PetJournal,
     "TOPRIGHT",
-    -2,
-    -1
+    0,
+    2
   )
 
   self.Frame = frame
 
+  self.ContentFrame =
+      CreateFrame(
+        "Frame",
+        nil,
+        frame
+      )
+
+  self.ContentFrame:SetPoint(
+    "TOPLEFT",
+    frame,
+    "TOPLEFT",
+    4,
+    -4
+  )
+
+  self.ContentFrame:SetPoint(
+    "BOTTOMRIGHT",
+    frame,
+    "BOTTOMRIGHT",
+    -4,
+    4
+  )
+
+  self.TeamsFrame =
+      CreateFrame(
+        "Frame",
+        nil,
+        self.ContentFrame
+      )
+
+  self.TeamsFrame:SetAllPoints(
+    self.ContentFrame
+  )
+
+  self.OptionsFrame =
+      CreateFrame(
+        "Frame",
+        nil,
+        self.ContentFrame
+      )
+
+  self.OptionsFrame:SetAllPoints(
+    self.ContentFrame
+  )
+
+  self.OptionsFrame:Hide()
+
   self.TeamListControls =
       addon.UI.Views.TeamListControls:Create(
-        frame
+        self.TeamsFrame
       )
 
   self.TeamListControls:ClearAllPoints()
   self.TeamListControls:SetPoint(
     "TOPLEFT",
-    frame,
+    self.TeamsFrame,
     "TOPLEFT",
-    PANEL_PADDING,
-    -PANEL_PADDING
+    3,
+    -18
   )
 
   self.NewFolderButton =
       self:CreateNewFolderButton(
-        frame
+        self.TeamsFrame
       )
 
   self.TeamListFrame =
       addon.UI.Views.TeamList:Create(
-        frame
+        self.TeamsFrame
       )
 
   self.TeamListFrame:ClearAllPoints()
@@ -87,7 +176,7 @@ function TeamPanel:Create()
     self.NewFolderButton,
     "TOPLEFT",
     0,
-    CONTENT_GAP
+    2
   )
 
   self.TeamListFrame:SetPoint(
@@ -95,12 +184,114 @@ function TeamPanel:Create()
     self.NewFolderButton,
     "TOPRIGHT",
     0,
-    CONTENT_GAP
+    2
   )
+
+  self:CreateTabs(frame)
+  self:SelectTab("teams")
 
   frame:Hide()
 
   return frame
+end
+
+function TeamPanel:CreateTabs(parent)
+  self.Tabs = {}
+
+  local teamsTab =
+      CreateFrame(
+        "Button",
+        nil,
+        parent,
+        "PanelTabButtonTemplate"
+      )
+
+  teamsTab:SetText("Teams")
+  teamsTab:SetHeight(TAB_HEIGHT)
+
+  teamsTab:SetScript(
+    "OnClick",
+    function()
+      self:SelectTab("teams")
+    end
+  )
+
+  self.Tabs.teams = {
+    button = teamsTab,
+    frame = self.TeamsFrame,
+  }
+
+  local optionsTab =
+      CreateFrame(
+        "Button",
+        nil,
+        parent,
+        "PanelTabButtonTemplate"
+      )
+
+  optionsTab:SetText("Options")
+  optionsTab:SetHeight(TAB_HEIGHT)
+
+  optionsTab:SetPoint(
+    "BOTTOMRIGHT",
+    parent,
+    "BOTTOMRIGHT",
+    -12,
+    -25
+  )
+
+  teamsTab:SetPoint(
+    "RIGHT",
+    optionsTab,
+    "LEFT",
+    -3,
+    0
+  )
+
+  optionsTab:SetScript(
+    "OnClick",
+    function()
+      self:SelectTab("options")
+    end
+  )
+
+  teamsTab:SetFrameLevel(
+    parent:GetFrameLevel() + 20
+  )
+
+  optionsTab:SetFrameLevel(
+    parent:GetFrameLevel() + 20
+  )
+
+  self.Tabs.options = {
+    button = optionsTab,
+    frame = self.OptionsFrame,
+  }
+end
+
+function TeamPanel:SelectTab(tabKey)
+  if not self.Tabs then
+    return
+  end
+
+  for key, tab in pairs(self.Tabs) do
+    local selected =
+        key == tabKey
+
+    tab.frame:SetShown(selected)
+
+    if selected then
+      PanelTemplates_SelectTab(
+        tab.button
+      )
+    else
+      PanelTemplates_DeselectTab(
+        tab.button
+      )
+    end
+  end
+
+  self.SelectedTab = tabKey
 end
 
 function TeamPanel:Show()
@@ -126,8 +317,8 @@ function TeamPanel:CreateNewFolderButton(parent)
         parent,
         {
           text = "New Folder",
-          width = 100,
-          height = 24,
+          width = 120,
+          height = 22,
 
           onClick = function()
             addon.UI.Views.FolderDialog:
@@ -142,8 +333,8 @@ function TeamPanel:CreateNewFolderButton(parent)
     "BOTTOMLEFT",
     parent,
     "BOTTOMLEFT",
-    CONTENT_GAP,
-    2
+    1,
+    0
   )
 
   self.NewFolderButton = button
