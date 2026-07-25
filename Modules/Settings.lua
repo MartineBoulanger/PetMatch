@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local Settings = {}
 
@@ -10,6 +10,9 @@ local DEFAULT_SETTINGS = {
   animations = true,
 
   duplicateTeamMode = "replace",
+
+  showPetListBreed = true,
+  petListBreedPosition = "right",
 
   ui = {
     selectedFolderKey = "__ALL__",
@@ -26,7 +29,10 @@ local function ApplyDefaults(defaults, target)
         target[key] = {}
       end
 
-      ApplyDefaults(defaultValue, target[key])
+      ApplyDefaults(
+        defaultValue,
+        target[key]
+      )
     elseif target[key] == nil then
       target[key] = defaultValue
     end
@@ -64,7 +70,12 @@ end
 function Settings:Set(key, value)
   local profile =
       addon.Profiles:GetCurrentProfile()
+
+  profile.settings =
+      profile.settings or {}
+
   profile.settings[key] = value
+
   addon.EventBus:Fire(
     addon.Events.SETTINGS_CHANGED,
     key,
@@ -76,8 +87,16 @@ function Settings:GetUI(key)
   local profile =
       addon.Profiles:GetCurrentProfile()
 
+  profile.settings =
+      profile.settings or {}
+
   profile.settings.ui =
       profile.settings.ui or {}
+
+  ApplyDefaults(
+    DEFAULT_SETTINGS.ui,
+    profile.settings.ui
+  )
 
   return profile.settings.ui[key]
 end
@@ -85,6 +104,9 @@ end
 function Settings:SetUI(key, value)
   local profile =
       addon.Profiles:GetCurrentProfile()
+
+  profile.settings =
+      profile.settings or {}
 
   profile.settings.ui =
       profile.settings.ui or {}

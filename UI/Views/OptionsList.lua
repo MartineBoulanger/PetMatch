@@ -8,10 +8,11 @@ local OptionsList = {}
 local CONTENT_WIDTH = 238
 local CONTENT_HEIGHT = 545
 
-local SECTION_SPACING = 4
+local SECTION_SPACING = 0
 local CONTENT_PADDING = 0
 
 local DUPLICATE_SECTION_HEIGHT = 104
+local BREED_SECTION_HEIGHT = 126
 
 function OptionsList:Create(parent)
   local frame =
@@ -29,6 +30,7 @@ function OptionsList:Create(parent)
 
   self.ExpandedSections = {
     duplicateTeams = true,
+    petBreeds = true,
   }
 
   self:RegisterEvents()
@@ -55,6 +57,8 @@ function OptionsList:RegisterEvents()
 
       if key == "duplicateTeamMode" then
         self:RefreshDuplicateMode()
+      elseif key == "petListBreedPosition" then
+        self:RefreshBreedMode()
       end
     end
   )
@@ -79,6 +83,11 @@ function OptionsList:ClearItems()
   self.SkipButton = nil
   self.ReplaceButton = nil
   self.KeepButton = nil
+
+  self.BreedAccordion = nil
+  self.RightBreedButton = nil
+  self.AfterNameBreedButton = nil
+  self.HiddenBreedButton = nil
 end
 
 function OptionsList:GetSections()
@@ -93,6 +102,15 @@ function OptionsList:GetSections()
         self:BuildDuplicateTeamOptions(
           content
         )
+      end,
+    },
+    {
+      key = "petBreeds",
+      title = "Pet Breeds",
+      contentHeight = BREED_SECTION_HEIGHT,
+
+      build = function(content)
+        self:BuildBreedOptions(content)
       end,
     },
   }
@@ -168,6 +186,10 @@ function OptionsList:CreateSection(
         accordion
   end
 
+  if section.key == "petBreeds" then
+    self.BreedAccordion = accordion
+  end
+
   return currentOffset
       + accordion:GetHeight()
       + SECTION_SPACING
@@ -176,7 +198,9 @@ end
 function OptionsList:CreateRadioButton(
     parent,
     label,
-    mode
+    settingKey,
+    mode,
+    refreshCallback
 )
   local button = CreateFrame(
     "CheckButton",
@@ -191,11 +215,13 @@ function OptionsList:CreateRadioButton(
     "OnClick",
     function()
       addon.Settings:Set(
-        "duplicateTeamMode",
+        settingKey,
         mode
       )
-      print("Changed to:", mode)
-      self:RefreshDuplicateMode()
+
+      if refreshCallback then
+        refreshCallback(self)
+      end
     end
   )
 
@@ -240,7 +266,9 @@ function OptionsList:BuildDuplicateTeamOptions(
       self:CreateRadioButton(
         parent,
         "Skip existing teams",
-        "skip"
+        "duplicateTeamMode",
+        "skip",
+        self.RefreshDuplicateMode
       )
 
   self.SkipButton:SetPoint(
@@ -255,7 +283,9 @@ function OptionsList:BuildDuplicateTeamOptions(
       self:CreateRadioButton(
         parent,
         "Replace existing teams",
-        "replace"
+        "duplicateTeamMode",
+        "replace",
+        self.RefreshDuplicateMode
       )
 
   self.ReplaceButton:SetPoint(
@@ -270,7 +300,9 @@ function OptionsList:BuildDuplicateTeamOptions(
       self:CreateRadioButton(
         parent,
         "Keep both",
-        "keep"
+        "duplicateTeamMode",
+        "keep",
+        self.RefreshDuplicateMode
       )
 
   self.KeepButton:SetPoint(
@@ -282,6 +314,92 @@ function OptionsList:BuildDuplicateTeamOptions(
   )
 
   self:RefreshDuplicateMode()
+end
+
+function OptionsList:BuildBreedOptions(parent)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose how pet breeds are displayed in the Pet Journal."
+  )
+
+  self.RightBreedButton =
+      self:CreateRadioButton(
+        parent,
+        "Right side (PetMatch)",
+        "petListBreedPosition",
+        "right",
+        self.RefreshBreedMode
+      )
+
+  self.RightBreedButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.AfterNameBreedButton =
+      self:CreateRadioButton(
+        parent,
+        "After pet name (BattlePetBreedID)",
+        "petListBreedPosition",
+        "afterName",
+        self.RefreshBreedMode
+      )
+
+  self.AfterNameBreedButton:SetPoint(
+    "TOPLEFT",
+    self.RightBreedButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.HiddenBreedButton =
+      self:CreateRadioButton(
+        parent,
+        "Hidden",
+        "petListBreedPosition",
+        "hidden",
+        self.RefreshBreedMode
+      )
+
+  self.HiddenBreedButton:SetPoint(
+    "TOPLEFT",
+    self.AfterNameBreedButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshBreedMode()
 end
 
 function OptionsList:RefreshDuplicateMode()
@@ -307,8 +425,6 @@ function OptionsList:RefreshDuplicateMode()
   self.KeepButton:SetChecked(
     mode == "keep"
   )
-
-  print("Duplicate mode:", addon.Settings:Get("duplicateTeamMode"))
 end
 
 function OptionsList:UpdateContentHeight()
@@ -391,6 +507,29 @@ function OptionsList:Refresh()
   )
 
   self.Refreshing = false
+end
+
+function OptionsList:RefreshBreedMode()
+  if not self.RightBreedButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get(
+        "petListBreedPosition"
+      )
+
+  self.RightBreedButton:SetChecked(
+    mode == "right"
+  )
+
+  self.AfterNameBreedButton:SetChecked(
+    mode == "afterName"
+  )
+
+  self.HiddenBreedButton:SetChecked(
+    mode == "hidden"
+  )
 end
 
 addon.UI.Views.OptionsList =
