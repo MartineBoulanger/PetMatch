@@ -42,14 +42,14 @@ function TeamCard:Create(parent, team)
   frame:RegisterForDrag("LeftButton")
   frame:SetScript("OnDragStart", function(self)
     self.WasDragged = true
-    addon.UI.DragDrop:StartTeam(
+    addon.UI.Components.DragDrop:StartTeam(
       self.Team,
       self
     )
   end)
 
   frame:SetScript("OnDragStop", function(self)
-    addon.UI.DragDrop:StopTeam()
+    addon.UI.Components.DragDrop:StopTeam()
     C_Timer.After(0, function()
       self.WasDragged = false
     end)
@@ -151,7 +151,7 @@ function TeamCard:Create(parent, team)
         return
       end
 
-      addon.UI.Views.TeamContextMenu:Show(
+      addon.UI.Actions.TeamContextMenu:Show(
         button,
         frame.Team
       )
@@ -385,7 +385,7 @@ function TeamCard:Create(parent, team)
     end
 
     if button == "RightButton" then
-      addon.UI.Views.TeamContextMenu:Show(
+      addon.UI.Actions.TeamContextMenu:Show(
         self,
         team
       )

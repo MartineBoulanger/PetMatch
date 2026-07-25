@@ -15,8 +15,8 @@ function UpdateTeamButton:Create()
   end
 
   local saveButton =
-      addon.UI.Views.SaveTeamButton
-      and addon.UI.Views.SaveTeamButton:Create()
+      addon.UI.Actions.SaveTeamButton
+      and addon.UI.Actions.SaveTeamButton:Create()
 
   if not saveButton then
     return nil
@@ -162,5 +162,5 @@ function UpdateTeamButton:Hide()
   end
 end
 
-addon.UI.Views.UpdateTeamButton =
+addon.UI.Actions.UpdateTeamButton =
     UpdateTeamButton

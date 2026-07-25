@@ -11,7 +11,7 @@ function TeamNotesDialog:Create()
   end
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         UIParent,
         {
           width = DIALOG_WIDTH,
@@ -38,7 +38,7 @@ function TeamNotesDialog:Create()
   self.Frame = frame
 
   self.Title =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Team Notes",
@@ -99,7 +99,7 @@ function TeamNotesDialog:Create()
   )
 
   self.TeamName =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "",
@@ -118,7 +118,7 @@ function TeamNotesDialog:Create()
   )
 
   self.InputBackground =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         frame,
         {
           width = DIALOG_WIDTH - 24,
@@ -194,7 +194,7 @@ function TeamNotesDialog:Create()
   )
 
   self.SaveButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Save",
@@ -215,7 +215,7 @@ function TeamNotesDialog:Create()
   )
 
   self.CancelButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Cancel",
@@ -305,5 +305,5 @@ function TeamNotesDialog:Hide()
   self.Frame:Hide()
 end
 
-addon.UI.Views.TeamNotesDialog =
+addon.UI.Dialogs.TeamNotesDialog =
     TeamNotesDialog

@@ -14,7 +14,7 @@ function ExportDialog:Create()
   end
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         UIParent,
         {
           width = DIALOG_WIDTH,
@@ -38,7 +38,7 @@ function ExportDialog:Create()
   self.Frame = frame
 
   self.Title =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Export Team",
@@ -58,7 +58,7 @@ function ExportDialog:Create()
   )
 
   self.Description =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text =
@@ -86,7 +86,7 @@ function ExportDialog:Create()
   self.Description:SetJustifyH("LEFT")
 
   self.InputBackground =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         frame,
         {
           width = DIALOG_WIDTH - 23,
@@ -170,7 +170,7 @@ function ExportDialog:Create()
   )
 
   self.CopyButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Select All",
@@ -193,7 +193,7 @@ function ExportDialog:Create()
   )
 
   self.CloseButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Close",
@@ -334,4 +334,4 @@ function ExportDialog:Hide()
   self.Frame:Hide()
 end
 
-addon.UI.Views.ExportDialog = ExportDialog
+addon.UI.Dialogs.ExportDialog = ExportDialog

@@ -1097,7 +1097,7 @@ function PetJournalToolbar:Create()
         "Import Team(s)",
         "Import Rematch team or a backup you made with Export.",
         function()
-          addon.UI.Views.ImportDialog:Show()
+          addon.UI.Dialogs.ImportDialog:Show()
         end
       )
 
@@ -1109,7 +1109,7 @@ function PetJournalToolbar:Create()
         "Export Everything",
         "Export all folders with all teams - good for backup.",
         function()
-          addon.UI.Views.ExportDialog:ShowAll()
+          addon.UI.Dialogs.ExportDialog:ShowAll()
         end
       )
 
@@ -1280,4 +1280,4 @@ function PetJournalToolbar:HideBlizzardButtonText()
   )
 end
 
-addon.UI.Views.PetJournalToolbar = PetJournalToolbar
+addon.UI.Actions.PetJournalToolbar = PetJournalToolbar

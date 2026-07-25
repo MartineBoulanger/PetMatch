@@ -749,7 +749,10 @@ function ImportExportService:ImportRematchDocument(
 
   local conflictMode =
       options.conflictMode
-      or "copy"
+      or addon.Settings:Get(
+        "duplicateTeamMode"
+      )
+      or "replace"
 
   local result = {
     teams = {},
@@ -802,7 +805,10 @@ function ImportExportService:ImportRematchDocument(
       errorMessage,
       missingSpecies =
           addon.Services.Team:CreateFromImport(
-            teamData
+            teamData,
+            {
+              conflictMode = conflictMode,
+            }
           )
 
       if team then

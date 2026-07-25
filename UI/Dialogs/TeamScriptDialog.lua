@@ -11,7 +11,7 @@ function TeamScriptDialog:Create()
   end
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         UIParent,
         {
           width = DIALOG_WIDTH,
@@ -38,7 +38,7 @@ function TeamScriptDialog:Create()
   self.Frame = frame
 
   self.Title =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Team Script",
@@ -58,7 +58,7 @@ function TeamScriptDialog:Create()
   )
 
   self.TeamName =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "",
@@ -77,7 +77,7 @@ function TeamScriptDialog:Create()
   )
 
   self.Description =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text =
@@ -97,7 +97,7 @@ function TeamScriptDialog:Create()
   )
 
   self.InputBackground =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         frame,
         {
           width = DIALOG_WIDTH - 24,
@@ -173,7 +173,7 @@ function TeamScriptDialog:Create()
   )
 
   self.SaveButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Save",
@@ -194,7 +194,7 @@ function TeamScriptDialog:Create()
   )
 
   self.CancelButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Cancel",
@@ -327,5 +327,5 @@ function TeamScriptDialog:Hide()
   self.Frame:Hide()
 end
 
-addon.UI.Views.TeamScriptDialog =
+addon.UI.Dialogs.TeamScriptDialog =
     TeamScriptDialog

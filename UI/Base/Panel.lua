@@ -44,4 +44,4 @@ function Panel:Create(parent, options)
   return frame
 end
 
-addon.UI.Components.Panel = Panel
+addon.UI.Base.Panel = Panel

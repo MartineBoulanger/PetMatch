@@ -17,7 +17,7 @@ function MoveTeamDialog:Create()
   end
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         UIParent,
         {
           width = DIALOG_WIDTH,
@@ -44,7 +44,7 @@ function MoveTeamDialog:Create()
   self.FolderButtons = {}
 
   self.Title =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Move Team",
@@ -85,7 +85,7 @@ function MoveTeamDialog:Create()
   )
 
   self.CancelButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Cancel",
@@ -127,7 +127,7 @@ function MoveTeamDialog:CreateFolderButton(
     index
 )
   local button =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         self.ScrollFrame.Content,
         {
           text = text,
@@ -274,4 +274,4 @@ function MoveTeamDialog:MoveToFolder(folderID)
   self:Hide()
 end
 
-addon.UI.Views.MoveTeamDialog = MoveTeamDialog
+addon.UI.Dialogs.MoveTeamDialog = MoveTeamDialog

@@ -9,6 +9,8 @@ local DEFAULT_SETTINGS = {
   showTooltips = true,
   animations = true,
 
+  duplicateTeamMode = "replace",
+
   ui = {
     selectedFolderKey = "__ALL__",
     selectedTeamID = nil,
@@ -47,6 +49,15 @@ end
 function Settings:Get(key)
   local profile =
       addon.Profiles:GetCurrentProfile()
+
+  profile.settings =
+      profile.settings or {}
+
+  ApplyDefaults(
+    DEFAULT_SETTINGS,
+    profile.settings
+  )
+
   return profile.settings[key]
 end
 

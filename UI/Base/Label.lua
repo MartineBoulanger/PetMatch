@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local Label = {}
 
@@ -40,4 +40,4 @@ function Label:Create(parent, options)
   return text
 end
 
-addon.UI.Components.Label = Label
+addon.UI.Base.Label = Label

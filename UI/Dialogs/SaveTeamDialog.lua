@@ -14,7 +14,7 @@ function SaveTeamDialog:Create()
   end
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         UIParent,
         {
           width = DIALOG_WIDTH,
@@ -39,7 +39,7 @@ function SaveTeamDialog:Create()
   self.Frame = frame
 
   self.Title =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Save Current Team",
@@ -59,7 +59,7 @@ function SaveTeamDialog:Create()
   )
 
   self.NameLabel =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Team name",
@@ -101,7 +101,7 @@ function SaveTeamDialog:Create()
   self.NameInput:SetMaxLetters(80)
 
   self.SaveButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Save",
@@ -122,7 +122,7 @@ function SaveTeamDialog:Create()
   )
 
   self.CancelButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Cancel",
@@ -224,4 +224,4 @@ function SaveTeamDialog:Save()
   self:Hide()
 end
 
-addon.UI.Views.SaveTeamDialog = SaveTeamDialog
+addon.UI.Dialogs.SaveTeamDialog = SaveTeamDialog

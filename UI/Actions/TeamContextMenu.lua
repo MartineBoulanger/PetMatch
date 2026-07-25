@@ -32,7 +32,7 @@ function TeamContextMenu:Show(owner, team)
         and "Edit Notes"
         or "Add Notes",
         function()
-          addon.UI.Views.TeamNotesDialog:Show(
+          addon.UI.Dialogs.TeamNotesDialog:Show(
             team
           )
         end
@@ -43,7 +43,7 @@ function TeamContextMenu:Show(owner, team)
         and "Edit Script"
         or "Add Script",
         function()
-          addon.UI.Views.TeamScriptDialog:Show(
+          addon.UI.Dialogs.TeamScriptDialog:Show(
             team
           )
         end
@@ -54,21 +54,21 @@ function TeamContextMenu:Show(owner, team)
       rootDescription:CreateButton(
         "Edit Team",
         function()
-          addon.UI.Views.EditTeamDialog:Show(team)
+          addon.UI.Dialogs.EditTeamDialog:Show(team)
         end
       )
 
       rootDescription:CreateButton(
         "Move Team",
         function()
-          addon.UI.Views.MoveTeamDialog:Show(team)
+          addon.UI.Dialog.MoveTeamDialog:Show(team)
         end
       )
 
       rootDescription:CreateButton(
         "Export Team",
         function()
-          addon.UI.Views.ExportDialog:Show(team)
+          addon.UI.Dialogs.ExportDialog:Show(team)
         end
       )
 
@@ -117,5 +117,5 @@ StaticPopupDialogs.PETMATCH_DELETE_TEAM = {
   preferredIndex = 3,
 }
 
-addon.UI.Views.TeamContextMenu =
+addon.UI.Actions.TeamContextMenu =
     TeamContextMenu

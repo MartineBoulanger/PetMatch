@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local ImportPreviewDialog = {}
 addon.ImportPreviewDialog = ImportPreviewDialog
@@ -590,3 +590,5 @@ function ImportPreviewDialog:Hide()
     frame:Hide()
   end
 end
+
+addon.UI.Dialogs.ImportPreviewDialog = ImportPreviewDialog

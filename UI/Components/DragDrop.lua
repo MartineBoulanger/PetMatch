@@ -204,4 +204,4 @@ function DragDrop:StopTeam()
   return true
 end
 
-addon.UI.DragDrop = DragDrop
+addon.UI.Components.DragDrop = DragDrop

@@ -1,5 +1,5 @@
 ## Interface: 120007
-## Version: 1.0.0
+## Version: 1.4.2
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
@@ -56,39 +56,43 @@ UI/Theme/Icons.lua
 
 UI/Base/Component.lua
 UI/Base/Frame.lua
+UI/Base/Panel.lua
+UI/Base/Label.lua
+UI/Base/Button.lua
 
-UI/Components/Panel.lua
-UI/Components/Label.lua
-UI/Components/Button.lua
+UI/Components/Accordion.lua
+UI/Components/AccordionHeader.lua
 UI/Components/DragDrop.lua
 UI/Components/ScrollBox.lua
-UI/Components/AccordionHeader.lua
 UI/Components/PetSlot.lua
 UI/Components/TeamCard.lua
 
 UI/Manager.lua
 UI/Host.lua
 
+UI/Dialogs/DeleteFolderDialog.lua
+UI/Dialogs/EditTeamDialog.lua
 UI/Dialogs/ExportDialog.lua
 UI/Dialogs/FolderDialog.lua
-UI/Dialogs/EditTeamDialog.lua
 UI/Dialogs/ImportDialog.lua
+UI/Dialogs/ImportPreviewDialog.lua
 UI/Dialogs/MoveTeamDialog.lua
 UI/Dialogs/SaveTeamDialog.lua
 UI/Dialogs/TeamNotesDialog.lua
 UI/Dialogs/TeamScriptDialog.lua
 UI/Dialogs/TeamTagsDialog.lua
-UI/Dialogs/DeleteFolderDialog.lua
-UI/Dialogs/ImportPreviewDialog.lua
 
-UI/PetJournal/TeamList.lua
-UI/PetJournal/TeamListControls.lua
-UI/PetJournal/PetJournalToolbar.lua
-UI/PetJournal/SaveTeamButton.lua
-UI/PetJournal/UpdateTeamButton.lua
-UI/PetJournal/FolderContextMenu.lua
-UI/PetJournal/TeamContextMenu.lua
-UI/PetJournal/TeamPanel.lua
+UI/Actions/FolderContextMenu.lua
+UI/Actions/PetJournalToolbar.lua
+UI/Actions/SaveTeamButton.lua
+UI/Actions/TeamContextMenu.lua
+UI/Actions/TeamListControls.lua
+UI/Actions/UpdateTeamButton.lua
+
+UI/Views/OptionsList.lua
+UI/Views/OptionsPanel.lua
+UI/Views/TeamList.lua
+UI/Views/Panels.lua
 
 Core/Slash.lua
 Core/Addon.lua

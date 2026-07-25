@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local Button = {}
 
@@ -35,4 +35,4 @@ function Button:Create(parent, options)
   return button
 end
 
-addon.UI.Components.Button = Button
+addon.UI.Base.Button = Button

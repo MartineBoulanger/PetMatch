@@ -13,7 +13,7 @@ local SORT_LABELS = {
 
 function TeamListControls:Create(parent)
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         parent,
         {
           width = 238,
@@ -228,5 +228,5 @@ function TeamListControls:Create(parent)
   return frame
 end
 
-addon.UI.Views.TeamListControls =
+addon.UI.Actions.TeamListControls =
     TeamListControls

@@ -5,14 +5,14 @@ addon.UI = addon.UI or {}
 local Manager = {}
 
 function Manager:Show()
-  if addon.UI.Views.TeamPanel then
-    addon.UI.Views.TeamPanel:Show()
+  if addon.UI.Views.Panels then
+    addon.UI.Views.Panels:Show()
   end
 end
 
 function Manager:Hide()
-  if addon.UI.Views.TeamPanel then
-    addon.UI.Views.TeamPanel:Hide()
+  if addon.UI.Views.Panels then
+    addon.UI.Views.Panels:Hide()
   end
 end
 

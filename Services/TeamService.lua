@@ -810,20 +810,56 @@ function TeamService:BuildFromImport(importData)
   return team, nil, missingSpecies
 end
 
-function TeamService:CreateFromImport(importData)
-  local importedTeam, errorMessage, missingSpecies = self:BuildFromImport(importData)
+function TeamService:CreateFromImport(importData, options)
+  options = options or {}
+
+  local importedTeam, errorMessage, missingSpecies =
+      self:BuildFromImport(importData)
 
   if not importedTeam then
     return nil, errorMessage, missingSpecies
   end
 
-  local name = self:GetUniqueName(importedTeam.name)
-  local team = self:Create(name)
+  local conflictMode =
+      options.conflictMode
+      or "replace"
 
-  if not team then
-    return nil,
-        "Unable to create team",
-        missingSpecies
+  local team =
+      self:FindByName(
+        importedTeam.name,
+        importedTeam.folderID
+      )
+
+  if team then
+    if conflictMode == "skip" then
+      return nil,
+          "Team already exists",
+          missingSpecies
+    elseif conflictMode == "keep" then
+      local uniqueName =
+          self:GetUniqueName(
+            importedTeam.name,
+            importedTeam.folderID
+          )
+
+      team = self:Create(uniqueName)
+
+      if not team then
+        return nil,
+            "Unable to create team",
+            missingSpecies
+      end
+    elseif conflictMode == "replace" then
+      -- Gebruik het bestaande team.
+    end
+  else
+    team = self:Create(importedTeam.name)
+
+    if not team then
+      return nil,
+          "Unable to create team",
+          missingSpecies
+    end
   end
 
   team.pets = importedTeam.pets
@@ -837,6 +873,7 @@ function TeamService:CreateFromImport(importData)
   team.script = importedTeam.script
   team.importSource = importedTeam.importSource
   team.modified = time()
+
   addon.EventBus:Fire(addon.Events.TEAM_UPDATED, team)
   addon.EventBus:Fire(addon.Events.TEAM_IMPORTED, team, missingSpecies)
 
@@ -953,11 +990,30 @@ function TeamService:LoadFromImport(
       missingSpecies
 end
 
-function TeamService:FindByName(name)
-  local normalizedName = string.lower(addon.Utils:Trim(name or ""))
+function TeamService:FindByName(
+    name,
+    folderID
+)
+  local normalizedName =
+      string.lower(
+        addon.Utils:Trim(name or "")
+      )
 
-  for _, team in pairs(self:GetTeams()) do
-    if string.lower(team.name or "") == normalizedName then
+  for _, team in pairs(
+    self:GetTeams()
+  ) do
+    local teamName =
+        string.lower(
+          addon.Utils:Trim(
+            team.name or ""
+          )
+        )
+
+    local sameFolder =
+        team.folderID == folderID
+
+    if teamName == normalizedName
+        and sameFolder then
       return team
     end
   end
@@ -965,8 +1021,14 @@ function TeamService:FindByName(name)
   return nil
 end
 
-function TeamService:GetUniqueName(name)
-  if not self:FindByName(name) then
+function TeamService:GetUniqueName(
+    name,
+    folderID
+)
+  if not self:FindByName(
+        name,
+        folderID
+      ) then
     return name
   end
 
@@ -974,9 +1036,17 @@ function TeamService:GetUniqueName(name)
   local candidate
 
   repeat
-    candidate = string.format("%s (%d)", name, index)
+    candidate = string.format(
+      "%s (%d)",
+      name,
+      index
+    )
+
     index = index + 1
-  until not self:FindByName(candidate)
+  until not self:FindByName(
+      candidate,
+      folderID
+    )
 
   return candidate
 end

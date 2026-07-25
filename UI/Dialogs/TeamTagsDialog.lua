@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 addon.UI = addon.UI or {}
 addon.UI.Views = addon.UI.Views or {}
@@ -16,7 +16,7 @@ function TeamTagsDialog:Create()
   end
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         UIParent,
         {
           width = WIDTH,
@@ -35,7 +35,7 @@ function TeamTagsDialog:Create()
   self.Rows = {}
 
   self.Title =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Team Tags",
@@ -75,7 +75,7 @@ function TeamTagsDialog:Create()
   self.NewTagInput:SetMaxLetters(50)
 
   self.CreateTagButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Create",
@@ -118,7 +118,7 @@ function TeamTagsDialog:Create()
   )
 
   self.CloseButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Close",
@@ -367,5 +367,5 @@ function TeamTagsDialog:Hide()
   self.Team = nil
 end
 
-addon.UI.Views.TeamTagsDialog =
+addon.UI.Dialogs.TeamTagsDialog =
     TeamTagsDialog

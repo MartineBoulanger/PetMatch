@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 addon.UI = addon.UI or {}
 
@@ -13,30 +13,30 @@ function Host:Update()
   if PetJournal:IsVisible() then
     addon.UI.Manager:Show()
 
-    if addon.UI.Views.SaveTeamButton then
-      addon.UI.Views.SaveTeamButton:Show()
+    if addon.UI.Actions.SaveTeamButton then
+      addon.UI.Actions.SaveTeamButton:Show()
     end
 
-    if addon.UI.Views.UpdateTeamButton then
-      addon.UI.Views.UpdateTeamButton:Show()
+    if addon.UI.Actions.UpdateTeamButton then
+      addon.UI.Actions.UpdateTeamButton:Show()
     end
 
-    if addon.UI.Views.PetJournalToolbar then
-      addon.UI.Views.PetJournalToolbar:Show()
+    if addon.UI.Actions.PetJournalToolbar then
+      addon.UI.Actions.PetJournalToolbar:Show()
     end
   else
     addon.UI.Manager:Hide()
 
-    if addon.UI.Views.SaveTeamButton then
-      addon.UI.Views.SaveTeamButton:Hide()
+    if addon.UI.Actions.SaveTeamButton then
+      addon.UI.Actions.SaveTeamButton:Hide()
     end
 
-    if addon.UI.Views.UpdateTeamButton then
-      addon.UI.Views.UpdateTeamButton:Hide()
+    if addon.UI.Actions.UpdateTeamButton then
+      addon.UI.Actions.UpdateTeamButton:Hide()
     end
 
-    if addon.UI.Views.PetJournalToolbar then
-      addon.UI.Views.PetJournalToolbar:Hide()
+    if addon.UI.Actions.PetJournalToolbar then
+      addon.UI.Actions.PetJournalToolbar:Hide()
     end
   end
 end

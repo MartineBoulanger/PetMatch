@@ -176,7 +176,7 @@ function TeamList:ClearItems()
     return
   end
 
-  addon.UI.DragDrop:ClearFolderTargets()
+  addon.UI.Components.DragDrop:ClearFolderTargets()
 
   for _, item in ipairs(
     self.Frame.items or {}
@@ -244,7 +244,7 @@ function TeamList:CreateFolderHeader(section, currentOffset)
 
   button.FolderKey = folderKey
 
-  addon.UI.DragDrop:RegisterFolderTarget(
+  addon.UI.Components.DragDrop:RegisterFolderTarget(
     button,
     folderKey
   )
@@ -268,7 +268,7 @@ function TeamList:CreateFolderHeader(section, currentOffset)
     "OnClick",
     function(_, mouseButton)
       if mouseButton == "RightButton" then
-        addon.UI.Views.FolderContextMenu:Show(
+        addon.UI.Actions.FolderContextMenu:Show(
           button,
           folderKey
         )
@@ -408,7 +408,7 @@ function TeamList:UpdateCardSelection()
 end
 
 function TeamList:Refresh()
-  addon.UI.DragDrop:ClearFolderTargets()
+  addon.UI.Components.DragDrop:ClearFolderTargets()
 
   if self.Refreshing then
     return

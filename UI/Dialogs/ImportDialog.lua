@@ -47,7 +47,7 @@ function ImportDialog:Create()
   end
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         UIParent,
         {
           width = DIALOG_WIDTH,
@@ -72,7 +72,7 @@ function ImportDialog:Create()
   self.Frame = frame
 
   self.Title =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Import Teams",
@@ -92,7 +92,7 @@ function ImportDialog:Create()
   )
 
   self.Description =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Paste a PetMatch or Rematch import string below.",
@@ -111,7 +111,7 @@ function ImportDialog:Create()
   )
 
   self.InputBackground =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         frame,
         {
           width = DIALOG_WIDTH - 23,
@@ -289,7 +289,7 @@ function ImportDialog:Create()
   )
 
   self.Status =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "",
@@ -310,7 +310,7 @@ function ImportDialog:Create()
   self.Status:SetHeight(42)
 
   self.SaveButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Save",
@@ -331,7 +331,7 @@ function ImportDialog:Create()
   )
 
   self.LoadButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Load",
@@ -352,7 +352,7 @@ function ImportDialog:Create()
   )
 
   self.CancelButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Cancel",
@@ -612,11 +612,15 @@ function ImportDialog:SaveTeam()
   end
 
   if prepared.requiresPreview then
-    addon.ImportPreviewDialog:Show(
+    addon.UI.Dialogs.ImportPreviewDialog:Show(
       prepared.document,
       {
         defaultFolderID =
             self.SelectedFolderID,
+        conflictMode =
+            addon.Settings:Get(
+              "duplicateTeamMode"
+            ) or "replace",
       }
     )
 
@@ -630,6 +634,10 @@ function ImportDialog:SaveTeam()
         {
           defaultFolderID =
               self.SelectedFolderID,
+          conflictMode =
+              addon.Settings:Get(
+                "duplicateTeamMode"
+              ) or "replace",
         }
       )
 
@@ -913,5 +921,5 @@ function ImportDialog:UpdateSaveMode()
   )
 end
 
-addon.UI.Views.ImportDialog =
+addon.UI.Dialogs.ImportDialog =
     ImportDialog

@@ -14,7 +14,7 @@ function FolderDialog:Create()
   end
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         UIParent,
         {
           width = WIDTH,
@@ -33,7 +33,7 @@ function FolderDialog:Create()
   self.Folder = nil
 
   self.Title =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Create Folder",
@@ -53,7 +53,7 @@ function FolderDialog:Create()
   )
 
   self.NameLabel =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Folder name",
@@ -91,7 +91,7 @@ function FolderDialog:Create()
   self.NameInput:SetMaxLetters(60)
 
   self.SaveButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Save",
@@ -112,7 +112,7 @@ function FolderDialog:Create()
   )
 
   self.CancelButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Cancel",
@@ -235,4 +235,4 @@ function FolderDialog:Save()
   self:Hide()
 end
 
-addon.UI.Views.FolderDialog = FolderDialog
+addon.UI.Dialogs.FolderDialog = FolderDialog

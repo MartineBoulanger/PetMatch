@@ -286,3 +286,5 @@ function DeleteFolderDialog:Hide()
     frame:Hide()
   end
 end
+
+addon.UI.Dialogs.DeleteFolderDialog = DeleteFolderDialog

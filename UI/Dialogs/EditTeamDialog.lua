@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 addon.UI = addon.UI or {}
 addon.UI.Views = addon.UI.Views or {}
@@ -14,7 +14,7 @@ function EditTeamDialog:Create()
   end
 
   local frame =
-      addon.UI.Components.Panel:Create(
+      addon.UI.Base.Panel:Create(
         UIParent,
         {
           width = DIALOG_WIDTH,
@@ -41,7 +41,7 @@ function EditTeamDialog:Create()
   self.PetSource = "saved"
 
   self.Title =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Edit Team",
@@ -61,7 +61,7 @@ function EditTeamDialog:Create()
   )
 
   self.NameLabel =
-      addon.UI.Components.Label:Create(
+      addon.UI.Base.Label:Create(
         frame,
         {
           text = "Team name",
@@ -103,7 +103,7 @@ function EditTeamDialog:Create()
   self.NameInput:SetMaxLetters(80)
 
   self.KeepSavedButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Keep Saved Pets",
@@ -125,7 +125,7 @@ function EditTeamDialog:Create()
 
 
   self.UseCurrentButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Use Current Slots",
@@ -146,7 +146,7 @@ function EditTeamDialog:Create()
   )
 
   self.SaveButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Save Changes",
@@ -167,7 +167,7 @@ function EditTeamDialog:Create()
   )
 
   self.CancelButton =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         frame,
         {
           text = "Cancel",
@@ -315,4 +315,4 @@ function EditTeamDialog:SetPetSource(source)
   end
 end
 
-addon.UI.Views.EditTeamDialog = EditTeamDialog
+addon.UI.Dialogs.EditTeamDialog = EditTeamDialog

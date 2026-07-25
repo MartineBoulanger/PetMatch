@@ -100,7 +100,7 @@ function FolderContextMenu:RenameFolder(
     return
   end
 
-  addon.UI.Views.FolderDialog:ShowRename(
+  addon.UI.Dialogs.FolderDialog:ShowRename(
     folder
   )
 end
@@ -129,7 +129,7 @@ function FolderContextMenu:ImportTeams(
     storageFolderID = nil
   end
 
-  addon.UI.Views.ImportDialog:ShowForFolder(
+  addon.UI.Dialogs.ImportDialog:ShowForFolder(
     storageFolderID
   )
 end
@@ -143,8 +143,8 @@ function FolderContextMenu:ExportTeams(
     return
   end
 
-  addon.UI.Views.ExportDialog:ShowFolder(folderKey)
+  addon.UI.Dialogs.ExportDialog:ShowFolder(folderKey)
 end
 
-addon.UI.Views.FolderContextMenu =
+addon.UI.Actions.FolderContextMenu =
     FolderContextMenu

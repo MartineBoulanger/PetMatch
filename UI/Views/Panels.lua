@@ -3,14 +3,14 @@ local _, addon = ...
 addon.UI = addon.UI or {}
 addon.UI.Views = addon.UI.Views or {}
 
-local TeamPanel = {}
+local Panels = {}
 
 local PANEL_WIDTH = 275
 local PANEL_HEIGHT = 608
 local CONTENT_GAP = 5
 local TAB_HEIGHT = 28
 
-function TeamPanel:Create()
+function Panels:Create()
   if self.Frame then
     return self.Frame
   end
@@ -23,7 +23,7 @@ function TeamPanel:Create()
   local frame =
       CreateFrame(
         "Frame",
-        "PetMatchTeamPanel",
+        "PetMatchPanels",
         PetJournal,
         "SimplePanelTemplate"
       )
@@ -129,8 +129,31 @@ function TeamPanel:Create()
 
   self.OptionsFrame:Hide()
 
+  self.OptionsList =
+      addon.UI.Views.OptionsList:Create(
+        self.OptionsFrame
+      )
+
+  self.OptionsList:ClearAllPoints()
+
+  self.OptionsList:SetPoint(
+    "TOPLEFT",
+    self.OptionsFrame,
+    "TOPLEFT",
+    4,
+    -26
+  )
+
+  self.OptionsList:SetPoint(
+    "BOTTOMRIGHT",
+    self.OptionsFrame,
+    "BOTTOMRIGHT",
+    -25,
+    24
+  )
+
   self.TeamListControls =
-      addon.UI.Views.TeamListControls:Create(
+      addon.UI.Actions.TeamListControls:Create(
         self.TeamsFrame
       )
 
@@ -195,7 +218,7 @@ function TeamPanel:Create()
   return frame
 end
 
-function TeamPanel:CreateTabs(parent)
+function Panels:CreateTabs(parent)
   self.Tabs = {}
 
   local teamsTab =
@@ -269,7 +292,7 @@ function TeamPanel:CreateTabs(parent)
   }
 end
 
-function TeamPanel:SelectTab(tabKey)
+function Panels:SelectTab(tabKey)
   if not self.Tabs then
     return
   end
@@ -294,7 +317,7 @@ function TeamPanel:SelectTab(tabKey)
   self.SelectedTab = tabKey
 end
 
-function TeamPanel:Show()
+function Panels:Show()
   local frame = self:Create()
 
   if self.TeamList
@@ -305,15 +328,15 @@ function TeamPanel:Show()
   frame:Show()
 end
 
-function TeamPanel:Hide()
+function Panels:Hide()
   if self.Frame then
     self.Frame:Hide()
   end
 end
 
-function TeamPanel:CreateNewFolderButton(parent)
+function Panels:CreateNewFolderButton(parent)
   local button =
-      addon.UI.Components.Button:Create(
+      addon.UI.Base.Button:Create(
         parent,
         {
           text = "New Folder",
@@ -321,7 +344,7 @@ function TeamPanel:CreateNewFolderButton(parent)
           height = 22,
 
           onClick = function()
-            addon.UI.Views.FolderDialog:
+            addon.UI.Dialogs.FolderDialog:
                 ShowCreate()
           end,
         }
@@ -342,18 +365,10 @@ function TeamPanel:CreateNewFolderButton(parent)
   return button
 end
 
-function TeamPanel:Refresh()
-  local frameWidth = self.Frame:GetWidth()
-
-  if frameWidth and frameWidth > 0 then
-    self.Frame.Content:SetWidth(
-      math.max(1, frameWidth - 24)
-    )
-  end
-  if self.TeamList
-      and addon.UI.Views.TeamList.Refresh then
+function Panels:Refresh()
+  if addon.UI.Views.TeamList.Refresh then
     addon.UI.Views.TeamList:Refresh()
   end
 end
 
-addon.UI.Views.TeamPanel = TeamPanel
+addon.UI.Views.Panels = Panels
