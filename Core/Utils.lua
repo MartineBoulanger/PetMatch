@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.Utils = addon.Utils or {}
 local Utils = {}
 
 function Utils:DeepCopy(source)

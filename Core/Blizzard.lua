@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.Blizzard = addon.Blizzard or {}
 local Blizzard = {}
 
 Blizzard.Hooked = false

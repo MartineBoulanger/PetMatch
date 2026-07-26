@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.Slash = addon.Slash or {}
 local Slash = {}
 
 local function Print(...)
@@ -133,7 +134,7 @@ end
 
 addon.Slash = Slash
 
-addon.Modules:Register(
+addon.ModuleManager:Register(
   "Slash",
   Slash
 )

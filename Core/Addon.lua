@@ -11,7 +11,7 @@ local function Initialize()
   end
 
   addon.Database:Initialize()
-  addon.Modules:Initialize()
+  addon.ModuleManager:Initialize()
   addon.Settings:Initialize()
   addon.EventBus:Fire(
     addon.Events.DATABASE_READY
@@ -23,7 +23,7 @@ local function Enable()
   if addon.Enabled then
     return
   end
-  addon.Modules:Enable()
+  addon.ModuleManager:Enable()
   addon.Enabled = true
 
   C_Timer.After(
@@ -33,7 +33,7 @@ local function Enable()
     end
   )
 
-  addon.Logger:Info("v1.5.0 Loaded - open the PetJournal to use the addon")
+  addon.Logger:Info("v1.6.6 Loaded - open the PetJournal to use the addon")
 end
 
 frame:RegisterEvent("ADDON_LOADED")

@@ -1,5 +1,13 @@
 local _, addon = ...
 
+addon.UI = addon.UI or {}
+addon.UI.Theme = addon.UI.Theme or {}
+addon.UI.Actions = addon.UI.Actions or {}
+addon.UI.Base = addon.UI.Base or {}
+addon.UI.Components = addon.UI.Components or {}
+addon.UI.Dialogs = addon.UI.Dialogs or {}
+addon.UI.Views = addon.UI.Views or {}
+
 addon.UI.Theme.Colors = {
   Background   = { 0.05, 0.05, 0.05, 0.85 }, -- black with opacity
   Border       = { 0.25, 0.25, 0.25, 1 },    -- greyish

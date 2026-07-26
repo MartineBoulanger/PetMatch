@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.EventBus = addon.EventBus or {}
 local EventBus = {}
 EventBus.Registered = {}
 

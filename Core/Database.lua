@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.Database = addon.Database or {}
 local Database = {}
 
 local DEFAULT_DATABASE = {

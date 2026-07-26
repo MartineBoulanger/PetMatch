@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.Settings = addon.Settings or {}
 local Settings = {}
 
 local DEFAULT_SETTINGS = {
@@ -122,7 +123,7 @@ end
 
 addon.Settings = Settings
 
-addon.Modules:Register(
+addon.ModuleManager:Register(
   "Settings",
   Settings
 )

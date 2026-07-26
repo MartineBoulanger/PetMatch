@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.Logger = addon.Logger or {}
 local Logger = {}
 
 Logger.Levels = {

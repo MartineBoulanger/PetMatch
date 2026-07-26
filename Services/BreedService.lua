@@ -1,5 +1,7 @@
 local _, addon = ...
 
+addon.Services = addon.Services or {}
+
 local BreedService = {}
 
 BreedService.Cache = {}

@@ -1,12 +1,5 @@
 local _, addon = ...
 
-addon.UI.Actions = addon.UI.Actions or {}
-addon.UI.Base = addon.UI.Base or {}
-addon.UI.Components = addon.UI.Components or {}
-addon.UI.Dialogs = addon.UI.Dialogs or {}
-addon.UI.Theme = addon.UI.Theme or {}
-addon.UI.Views = addon.UI.Views or {}
-
 local Component = {}
 
 function Component:Create()

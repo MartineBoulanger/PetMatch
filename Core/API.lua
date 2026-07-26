@@ -1,5 +1,7 @@
 local _, addon = ...
 
+addon.API = addon.API or {}
+
 local API = addon.API
 
 local function GetTeamService()

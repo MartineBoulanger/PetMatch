@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.Profiles = addon.Profiles or {}
 local Profiles = {}
 
 local DEFAULT_PROFILE = {
@@ -60,7 +61,7 @@ end
 
 addon.Profiles = Profiles
 
-addon.Modules:Register(
+addon.ModuleManager:Register(
   "Profiles",
   Profiles
 )

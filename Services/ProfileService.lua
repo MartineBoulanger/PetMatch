@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.Services = addon.Services or {}
 local ProfileService = {}
 
 function ProfileService:GetCurrent()

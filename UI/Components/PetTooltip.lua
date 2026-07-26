@@ -2,6 +2,30 @@ local _, addon = ...
 
 local PetTooltip = {}
 
+-- Setting the correct names for the pet families
+local PET_TYPE_SUFFIX = {
+  [1]  = "Humanoid",
+  [2]  = "Dragonkin",
+  [3]  = "Flying",
+  [4]  = "Undead",
+  [5]  = "Critter",
+  [6]  = "Magic",
+  [7]  = "Elemental",
+  [8]  = "Beast",
+  [9]  = "Aquatic",
+  [10] = "Mechanical"
+}
+
+-- setting the correct rarity color per pet
+local PET_RARITY_COLORS = {
+  [1] = ITEM_QUALITY_COLORS[0],
+  [2] = ITEM_QUALITY_COLORS[1],
+  [3] = ITEM_QUALITY_COLORS[2],
+  [4] = ITEM_QUALITY_COLORS[3],
+  [5] = ITEM_QUALITY_COLORS[4],
+  [6] = ITEM_QUALITY_COLORS[5]
+}
+
 local TEXT_COLOR = {
   r = 1,
   g = 1,
@@ -32,8 +56,8 @@ local function GetQualityColor(
   quality = tonumber(quality) or 0
 
   local color =
-      ITEM_QUALITY_COLORS
-      and ITEM_QUALITY_COLORS[quality]
+      PET_RARITY_COLORS
+      and PET_RARITY_COLORS[quality]
 
   if not color then
     return TEXT_COLOR
@@ -93,10 +117,7 @@ local function AddIdentitySection(
     VALUE_COLOR
   )
 
-  local petTypeName =
-      GetPetTypeName(
-        pet.petType
-      )
+  local petTypeName = GetPetTypeName(pet.petType)
 
   if petTypeName then
     tooltip:AddDoubleLine(

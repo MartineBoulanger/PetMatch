@@ -1,5 +1,6 @@
 local _, addon = ...
 
+addon.ModuleManager = addon.ModuleManager or {}
 local Modules = {}
 
 function Modules:Register(name, module)
@@ -42,4 +43,4 @@ function Modules:Enable()
   end
 end
 
-addon.Modules = Modules
+addon.ModuleManager = Modules

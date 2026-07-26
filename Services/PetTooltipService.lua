@@ -174,15 +174,55 @@ function PetTooltipService:ApplyBreedData(
   end
 end
 
-function PetTooltipService:ApplyExpansionData(
-    pet
-)
-  if not pet then
+function PetTooltipService:ApplyExpansionData(pet)
+  print(
+    "ApplyExpansionData:",
+    pet,
+    pet and pet.speciesID
+  )
+
+  if not pet or not pet.speciesID then
+    print("Geen pet of speciesID")
     return
   end
 
-  -- Expansion-resolutie voegen we toe
-  -- zodra de basis-tooltip werkt.
+  local speciesInfo =
+      addon.Data
+      and addon.Data.PetExpansion
+
+  print(
+    "SpeciesInfo:",
+    speciesInfo
+  )
+
+  if not speciesInfo then
+    print("addon.Data.SpeciesInfo ontbreekt")
+    return
+  end
+
+  local expansionID =
+      speciesInfo:GetExpansionID(
+        pet.speciesID
+      )
+
+  print(
+    "Expansion ID:",
+    expansionID
+  )
+
+  if expansionID == nil then
+    return
+  end
+
+  pet.expansionID = expansionID
+  pet.expansionName =
+      _G["EXPANSION_NAME" .. expansionID]
+
+  print(
+    "Expansion resultaat:",
+    pet.expansionID,
+    pet.expansionName
+  )
 end
 
 function PetTooltipService:ApplyPassiveData(
