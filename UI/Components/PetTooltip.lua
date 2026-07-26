@@ -366,4 +366,93 @@ function PetTooltip:Hide(owner)
   tooltip:Hide(owner)
 end
 
+function PetTooltip:Attach(
+    frame,
+    provider,
+    anchor
+)
+  if not frame then
+    return
+  end
+
+  if type(provider) ~= "function" then
+    error("PetTooltip: Attach requires a provider function.")
+  end
+
+  frame.__PetMatchTooltipProvider = provider
+  frame.__PetMatchTooltipAnchor = anchor or "ANCHOR_RIGHT"
+  if frame.__PetMatchTooltipAttached then
+    return
+  end
+  frame.__PetMatchTooltipAttached = true
+
+  frame:HookScript(
+    "OnEnter",
+    function(control)
+      local currentProvider =
+          control.__PetMatchTooltipProvider
+
+      if type(currentProvider) ~= "function" then
+        return
+      end
+
+      local first, second = currentProvider(control)
+
+      local valueType
+      local value
+
+      if first == "petGUID"
+          or first == "speciesID"
+          or first == "pet" then
+        valueType = first
+        value = second
+      else
+        value = first
+
+        if type(value) == "string" then
+          valueType = "petGUID"
+        elseif type(value) == "number" then
+          valueType = "speciesID"
+        elseif type(value) == "table" then
+          valueType = "pet"
+        end
+      end
+
+      if value == nil then
+        return
+      end
+
+      local pet
+
+      if valueType == "petGUID" then
+        if type(value) ~= "string" or value == "" then
+          return
+        end
+        pet = addon.Services.PetTooltip:CreatePet(value)
+      elseif valueType == "speciesID" then
+        pet = addon.Services.PetTooltip:GetBySpeciesID(value)
+      elseif valueType == "pet" then
+        pet = value
+      end
+
+      if not pet then
+        return
+      end
+
+      PetTooltip:Show(
+        control,
+        pet,
+        control.__PetMatchTooltipAnchor
+      )
+    end
+  )
+
+  frame:HookScript(
+    "OnLeave",
+    function(control)
+      PetTooltip:Hide(control)
+    end
+  )
+end
+
 addon.UI.Components.PetTooltip = PetTooltip

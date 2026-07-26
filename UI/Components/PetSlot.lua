@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Components = addon.UI.Components or {}
-
 local PetSlot = {}
 PetSlot.__index = PetSlot
 
@@ -56,6 +53,17 @@ function PetSlot:Create(parent)
     "BackdropTemplate"
   )
 
+  frame.petGUID = nil
+  addon.UI.Components.PetTooltip:Attach(
+    frame,
+    function(control)
+      if not control.petGUID then
+        return nil
+      end
+      return "petGUID", control.petGUID
+    end
+  )
+
   frame:SetSize(ICON_SIZE, ICON_SIZE)
 
   frame:SetBackdrop({
@@ -69,7 +77,7 @@ function PetSlot:Create(parent)
 
   local instance = setmetatable({
     Frame = frame,
-    PetGUID = nil,
+    PetGUID = nil
   }, PetSlot)
 
   instance.Icon = frame:CreateTexture(nil, "ARTWORK")
@@ -102,6 +110,7 @@ function PetSlot:SetPet(petGUID)
   end
 
   self.PetGUID = petGUID
+  self.Frame.petGUID = petGUID
 
   self.EmptyIcon:Hide()
 
@@ -123,10 +132,11 @@ function PetSlot:SetSpecialSlot(specialSlot)
   end
 
   self.PetGUID = nil
+  self.Frame.petGUID = nil
+
   self.EmptyIcon:Hide()
 
-  local texture, atlas =
-      GetSpecialSlotIcon(specialSlot)
+  local texture, atlas = GetSpecialSlotIcon(specialSlot)
 
   self.Icon:SetAtlas(nil)
   self.Icon:SetTexture(nil)
@@ -145,11 +155,10 @@ end
 
 function PetSlot:Clear()
   self.PetGUID = nil
-
+  self.Frame.petGUID = nil
   self.Icon:SetAtlas(nil)
   self.Icon:SetTexture(nil)
   self.Icon:Hide()
-
   self.EmptyIcon:Show()
 end
 

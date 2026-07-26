@@ -1,8 +1,33 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local Blizzard = {}
 
 Blizzard.Hooked = false
+
+function Blizzard:AttachPetLoadoutTooltips()
+  if not PetJournalLoadout then
+    return
+  end
+
+  local slots = {
+    PetJournalLoadout.Pet1,
+    PetJournalLoadout.Pet2,
+    PetJournalLoadout.Pet3,
+  }
+
+  for _, slot in ipairs(slots) do
+    if slot then
+      addon.UI.Components.PetTooltip:Attach(
+        slot,
+        function(control)
+          return "petGUID",
+              control.petID
+              or control.petGUID
+        end
+      )
+    end
+  end
+end
 
 function Blizzard:Initialize()
   if self.Hooked then
@@ -28,6 +53,23 @@ function Blizzard:Initialize()
       addon.UI.Host:Update()
     end
   )
+
+  hooksecurefunc(
+    "PetJournal_InitPetButton",
+    function(button)
+      addon.UI.Components.PetTooltip:Attach(
+        button,
+        function(control)
+          if not control.petID then
+            return nil
+          end
+          return "petGUID", control.petID
+        end
+      )
+    end
+  )
+
+  self:AttachPetLoadoutTooltips()
 
   if addon.Services.LoadoutMonitor then
     addon.Services.LoadoutMonitor:Initialize()
