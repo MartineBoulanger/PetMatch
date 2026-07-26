@@ -1,5 +1,5 @@
 ## Interface: 120007
-## Version: 1.6.2
+## Version: 1.6.3
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
@@ -47,6 +47,7 @@ Services/FolderService.lua
 Services/TagService.lua
 Services/ImportExportService.lua
 Services/BreedService.lua
+Services/PetTooltipService.lua
 
 Core/API.lua
 Core/Blizzard.lua
@@ -69,6 +70,7 @@ UI/Components/DragDrop.lua
 UI/Components/ScrollBox.lua
 UI/Components/PetSlot.lua
 UI/Components/TeamCard.lua
+UI/Components/PetTooltip.lua
 
 UI/Manager.lua
 UI/Host.lua

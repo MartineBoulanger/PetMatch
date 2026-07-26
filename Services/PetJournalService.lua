@@ -76,8 +76,10 @@ function PetJournalService:GetPet(petGUID)
 
   return {
     guid = petGUID,
+    petGUID = petGUID,
     speciesID = speciesID,
     customName = customName,
+    speciesName = speciesName,
     name = customName or speciesName or "Unknown",
     level = level or 0,
     xp = xp or 0,
