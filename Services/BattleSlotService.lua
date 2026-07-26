@@ -559,6 +559,4 @@ function BattleSlotService:GetCurrentLoadout()
   return loadout
 end
 
-addon.Services = addon.Services or {}
-
 addon.Services.BattleSlot = BattleSlotService

@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local LoadoutMonitorService = {
   Initialized = false,
@@ -175,5 +175,4 @@ function LoadoutMonitorService:IsSuspended()
   return (self.SuspendCount or 0) > 0
 end
 
-addon.Services.LoadoutMonitor =
-    LoadoutMonitorService
+addon.Services.LoadoutMonitor = LoadoutMonitorService
