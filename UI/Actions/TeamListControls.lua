@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
-
 local TeamListControls = {}
 
 local SORT_LABELS = {
@@ -228,5 +225,4 @@ function TeamListControls:Create(parent)
   return frame
 end
 
-addon.UI.Actions.TeamListControls =
-    TeamListControls
+addon.UI.Actions.TeamListControls = TeamListControls

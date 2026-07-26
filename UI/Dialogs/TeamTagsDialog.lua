@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
-
 local TeamTagsDialog = {}
 
 local WIDTH = 340
@@ -367,5 +364,4 @@ function TeamTagsDialog:Hide()
   self.Team = nil
 end
 
-addon.UI.Dialogs.TeamTagsDialog =
-    TeamTagsDialog
+addon.UI.Dialogs.TeamTagsDialog = TeamTagsDialog

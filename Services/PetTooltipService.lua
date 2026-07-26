@@ -125,10 +125,7 @@ function PetTooltipService:CreatePet(
     return nil, "Pet not found"
   end
 
-  local stats =
-      self:GetPetStats(
-        petGUID
-      )
+  local stats = self:GetPetStats(petGUID)
 
   local pet =
       addon.Models.Pet:Create({

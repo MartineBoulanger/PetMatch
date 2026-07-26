@@ -122,7 +122,7 @@ end
 
 addon.Settings = Settings
 
-addon.ModuleManager:Register(
+addon.Modules:Register(
   "Settings",
   Settings
 )

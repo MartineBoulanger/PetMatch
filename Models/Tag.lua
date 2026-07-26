@@ -1,7 +1,5 @@
 local _, addon = ...
 
-addon.Models = addon.Models or {}
-
 local Tag = {}
 
 function Tag:Create(name)

@@ -353,7 +353,7 @@ function PetList:Enable()
   self:ApplyBreedDisplay()
 end
 
-addon.ModuleManager:Register(
+addon.Modules:Register(
   "PetList",
   PetList
 )

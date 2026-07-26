@@ -11,7 +11,7 @@ local function Initialize()
   end
 
   addon.Database:Initialize()
-  addon.ModuleManager:Initialize()
+  addon.Modules:Initialize()
   addon.Settings:Initialize()
   addon.EventBus:Fire(
     addon.Events.DATABASE_READY
@@ -23,7 +23,7 @@ local function Enable()
   if addon.Enabled then
     return
   end
-  addon.ModuleManager:Enable()
+  addon.Modules:Enable()
   addon.Enabled = true
 
   C_Timer.After(

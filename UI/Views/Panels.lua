@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
-
 local Panels = {}
 
 local PANEL_WIDTH = 275

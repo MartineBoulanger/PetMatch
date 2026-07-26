@@ -1,7 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-
 addon.UI.Actions = addon.UI.Actions or {}
 addon.UI.Base = addon.UI.Base or {}
 addon.UI.Components = addon.UI.Components or {}
@@ -34,5 +32,4 @@ function Component:Destroy()
   end
 end
 
-addon.UI.Base = addon.UI.Base or {}
 addon.UI.Base.Component = Component

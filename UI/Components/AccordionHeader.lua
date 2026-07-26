@@ -1,18 +1,12 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Components = addon.UI.Components or {}
-
 local AccordionHeader = {}
 
 local DEFAULT_WIDTH = 238
 local DEFAULT_HEIGHT = 26
 
-local COLLAPSED_ATLAS =
-"Options_ListExpand_Right"
-
-local EXPANDED_ATLAS =
-"Options_ListExpand_Down"
+local COLLAPSED_ATLAS = "Options_ListExpand_Right"
+local EXPANDED_ATLAS = "Options_ListExpand_Down"
 
 local function SetArrowAtlas(
     texture,
@@ -316,5 +310,4 @@ function AccordionHeader:Create(
   return button
 end
 
-addon.UI.Components.AccordionHeader =
-    AccordionHeader
+addon.UI.Components.AccordionHeader = AccordionHeader

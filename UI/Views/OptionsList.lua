@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
-
 local OptionsList = {}
 
 local CONTENT_WIDTH = 238
@@ -532,5 +529,4 @@ function OptionsList:RefreshBreedMode()
   )
 end
 
-addon.UI.Views.OptionsList =
-    OptionsList
+addon.UI.Views.OptionsList = OptionsList

@@ -42,4 +42,4 @@ function Modules:Enable()
   end
 end
 
-addon.ModuleManager = Modules
+addon.Modules = Modules

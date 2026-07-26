@@ -133,7 +133,7 @@ end
 
 addon.Slash = Slash
 
-addon.ModuleManager:Register(
+addon.Modules:Register(
   "Slash",
   Slash
 )

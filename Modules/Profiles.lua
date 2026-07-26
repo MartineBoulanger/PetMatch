@@ -60,7 +60,7 @@ end
 
 addon.Profiles = Profiles
 
-addon.ModuleManager:Register(
+addon.Modules:Register(
   "Profiles",
   Profiles
 )

@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local ImportDialog = {}
 
@@ -921,5 +921,4 @@ function ImportDialog:UpdateSaveMode()
   )
 end
 
-addon.UI.Dialogs.ImportDialog =
-    ImportDialog
+addon.UI.Dialogs.ImportDialog = ImportDialog

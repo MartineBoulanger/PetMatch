@@ -1,7 +1,4 @@
-local addonName, addon = ...
-
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
+local _, addon = ...
 
 local SaveTeamButton = {}
 
@@ -91,5 +88,4 @@ function SaveTeamButton:Hide()
   end
 end
 
-addon.UI.Actions.SaveTeamButton =
-    SaveTeamButton
+addon.UI.Actions.SaveTeamButton = SaveTeamButton

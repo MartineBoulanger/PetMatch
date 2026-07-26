@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local TeamNotesDialog = {}
 
@@ -305,5 +305,4 @@ function TeamNotesDialog:Hide()
   self.Frame:Hide()
 end
 
-addon.UI.Dialogs.TeamNotesDialog =
-    TeamNotesDialog
+addon.UI.Dialogs.TeamNotesDialog = TeamNotesDialog

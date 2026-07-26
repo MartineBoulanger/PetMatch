@@ -1,4 +1,4 @@
-local addonName, addon = ...
+local _, addon = ...
 
 local TeamScriptDialog = {}
 
@@ -327,5 +327,4 @@ function TeamScriptDialog:Hide()
   self.Frame:Hide()
 end
 
-addon.UI.Dialogs.TeamScriptDialog =
-    TeamScriptDialog
+addon.UI.Dialogs.TeamScriptDialog = TeamScriptDialog

@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
-
 local TeamList = {}
 
 local HEADER_HEIGHT = 28

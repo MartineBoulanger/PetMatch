@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
-
 local MoveTeamDialog = {}
 
 local DIALOG_WIDTH = 320

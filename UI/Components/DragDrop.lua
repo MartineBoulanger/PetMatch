@@ -1,6 +1,4 @@
-local addonName, addon = ...
-
-addon.UI = addon.UI or {}
+local _, addon = ...
 
 local DragDrop = {
   ActiveTeam = nil,

@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
-
 local FolderContextMenu = {}
 
 local function IsVirtualFolder(folderKey)
@@ -146,5 +143,4 @@ function FolderContextMenu:ExportTeams(
   addon.UI.Dialogs.ExportDialog:ShowFolder(folderKey)
 end
 
-addon.UI.Actions.FolderContextMenu =
-    FolderContextMenu
+addon.UI.Actions.FolderContextMenu = FolderContextMenu

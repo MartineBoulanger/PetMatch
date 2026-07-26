@@ -1,8 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
-
 local TeamContextMenu = {}
 
 function TeamContextMenu:Show(owner, team)
@@ -117,5 +114,4 @@ StaticPopupDialogs.PETMATCH_DELETE_TEAM = {
   preferredIndex = 3,
 }
 
-addon.UI.Actions.TeamContextMenu =
-    TeamContextMenu
+addon.UI.Actions.TeamContextMenu = TeamContextMenu

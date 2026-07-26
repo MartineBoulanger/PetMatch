@@ -1,7 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-
 local Host = {}
 
 function Host:Update()

@@ -1,7 +1,4 @@
-local addonName, addon = ...
-
-addon.UI = addon.UI or {}
-addon.UI.Views = addon.UI.Views or {}
+local _, addon = ...
 
 local SaveTeamDialog = {}
 

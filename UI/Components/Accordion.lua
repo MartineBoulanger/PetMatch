@@ -1,9 +1,5 @@
 local _, addon = ...
 
-addon.UI = addon.UI or {}
-addon.UI.Components =
-    addon.UI.Components or {}
-
 local Accordion = {}
 
 local DEFAULT_WIDTH = 238

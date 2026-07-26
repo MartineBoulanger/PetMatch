@@ -13,7 +13,7 @@ function Test:Initialize()
   )
 end
 
-addon.ModuleManager:Register(
+addon.Modules:Register(
   "Test",
   Test
 )
