@@ -70,8 +70,6 @@ function Blizzard:Initialize()
     end
   )
 
-  self:AttachPetLoadoutTooltips()
-
   if addon.Services.LoadoutMonitor then
     addon.Services.LoadoutMonitor:Initialize()
   end

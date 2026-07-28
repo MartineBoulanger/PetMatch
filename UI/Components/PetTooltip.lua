@@ -176,25 +176,14 @@ local function AddBreedSection(
     tooltip,
     pet
 )
-  if not pet.breedName
-      and not pet.breedID then
-    return
+  if pet.breedName then
+    tooltip:AddDoubleLine(
+      "Breed",
+      pet.breedName,
+      MUTED_COLOR,
+      VALUE_COLOR
+    )
   end
-
-  local breed =
-      pet.breedName
-      or tostring(
-        pet.breedID
-      )
-
-  tooltip:AddSpacer(7)
-
-  tooltip:AddDoubleLine(
-    "Breed",
-    breed,
-    MUTED_COLOR,
-    VALUE_COLOR
-  )
 end
 
 local function AddExpansionSection(
@@ -341,6 +330,39 @@ function PetTooltip:Show(
     tooltip,
     pet
   )
+
+  local breedTooltipService =
+      addon.Services.BreedTooltip
+
+  local breedSections =
+      addon.UI.Components
+      and addon.UI.Components
+      .PetTooltipSections
+
+  if breedTooltipService
+      and breedSections then
+    local details =
+        breedTooltipService:GetDetails(
+          pet
+        )
+
+    if details then
+      breedSections.AddBreedDetails(
+        tooltip,
+        details
+      )
+
+      breedSections.AddBreedBaseStats(
+        tooltip,
+        details
+      )
+
+      breedSections.AddBreedLevel25Stats(
+        tooltip,
+        details
+      )
+    end
+  end
 
   AddAbilitiesSection(
     tooltip,

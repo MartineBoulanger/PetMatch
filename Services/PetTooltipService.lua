@@ -160,29 +160,35 @@ function PetTooltipService:CreatePet(
   return pet
 end
 
-function PetTooltipService:ApplyBreedData(
-    pet
-)
-  if not pet then
+function PetTooltipService:ApplyBreedData(pet)
+  if not pet
+      or type(pet.petGUID) ~= "string"
+      or pet.petGUID == "" then
     return
   end
 
-  local breedService = addon.Services.Breed
+  local breedService =
+      addon.Services.Breed
 
   if not breedService then
     return
   end
+
+  local breed =
+      breedService:GetJournalBreed(
+        pet.petGUID
+      )
+
+  if not breed then
+    return
+  end
+
+  pet.breedName = breed
 end
 
 function PetTooltipService:ApplyExpansionData(pet)
-  print(
-    "ApplyExpansionData:",
-    pet,
-    pet and pet.speciesID
-  )
-
   if not pet or not pet.speciesID then
-    print("Geen pet of speciesID")
+    print("No pet or speciesID")
     return
   end
 
@@ -190,13 +196,8 @@ function PetTooltipService:ApplyExpansionData(pet)
       addon.Data
       and addon.Data.PetExpansion
 
-  print(
-    "SpeciesInfo:",
-    speciesInfo
-  )
-
   if not speciesInfo then
-    print("addon.Data.SpeciesInfo ontbreekt")
+    print("addon.Data.SpeciesInfo missing")
     return
   end
 
@@ -205,11 +206,6 @@ function PetTooltipService:ApplyExpansionData(pet)
         pet.speciesID
       )
 
-  print(
-    "Expansion ID:",
-    expansionID
-  )
-
   if expansionID == nil then
     return
   end
@@ -217,12 +213,6 @@ function PetTooltipService:ApplyExpansionData(pet)
   pet.expansionID = expansionID
   pet.expansionName =
       _G["EXPANSION_NAME" .. expansionID]
-
-  print(
-    "Expansion resultaat:",
-    pet.expansionID,
-    pet.expansionName
-  )
 end
 
 function PetTooltipService:ApplyPassiveData(
