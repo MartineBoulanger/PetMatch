@@ -33,7 +33,7 @@ local function Enable()
     end
   )
 
-  addon.Logger:Info("v1.6.7 Loaded - open the PetJournal to use the addon")
+  addon.Logger:Info("v1.6.8 Loaded - open the PetJournal to use the addon")
 end
 
 frame:RegisterEvent("ADDON_LOADED")

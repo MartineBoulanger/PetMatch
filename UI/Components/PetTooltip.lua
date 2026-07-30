@@ -238,13 +238,8 @@ local function AddSourceSection(
   )
 end
 
-local function AddAbilitiesSection(
-    tooltip,
-    pet
-)
-  if type(pet.abilities)
-      ~= "table"
-      or #pet.abilities == 0 then
+local function AddAbilitiesSection(tooltip, pet)
+  if not pet.abilities or #pet.abilities == 0 then
     return
   end
 
@@ -255,27 +250,20 @@ local function AddAbilitiesSection(
     VALUE_COLOR
   )
 
-  for _, ability in ipairs(
-    pet.abilities
-  ) do
-    local label =
-        ability.name
-        or "Unknown"
+  local slots = {
+    [1] = {},
+    [2] = {},
+    [3] = {}
+  }
 
-    if ability.requiredLevel
-        and ability.requiredLevel > 1 then
-      label =
-          label
-          .. " (Level "
-          .. ability.requiredLevel
-          .. ")"
-    end
-
-    tooltip:AddLine(
-      label,
-      TEXT_COLOR
+  for _, ability in ipairs(pet.abilities) do
+    table.insert(
+      slots[ability.slot],
+      ability
     )
   end
+
+  tooltip:AddAbilityGrid(slots)
 end
 
 function PetTooltip:Show(
@@ -294,7 +282,7 @@ function PetTooltip:Show(
   end
 
   tooltip:Clear()
-  tooltip:SetWidth(320)
+  tooltip:SetWidth(390)
 
   tooltip:SetOwner(
     owner,

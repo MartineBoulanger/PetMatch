@@ -62,7 +62,8 @@ function PetTooltipService:GetAbilities(
     abilityIDs
   ) do
     if abilityID then
-      local name,
+      local _,
+      name,
       icon,
       petType,
       noStrongWeakHints =
@@ -70,31 +71,16 @@ function PetTooltipService:GetAbilities(
             abilityID
           )
 
-      table.insert(
-        abilities,
-        {
-          abilityID = abilityID,
-          name = name or "Unknown",
-          icon = icon,
-          petType = petType,
-
-          noStrongWeakHints =
-              noStrongWeakHints == true,
-
-          requiredLevel =
-              abilityLevels[index]
-              or 0,
-
-          slot =
-              ((index - 1) % 3)
-              + 1,
-
-          choice =
-              index <= 3
-              and 1
-              or 2,
-        }
-      )
+      table.insert(abilities, {
+        id = abilityID,
+        name = name or "Unknown",
+        icon = icon,
+        petType = petType,
+        noStrongWeakHints = noStrongWeakHints == true,
+        requiredLevel = abilityLevels[index] or 0,
+        slot = ((index - 1) % 3) + 1,
+        choice = index <= 3 and 1 or 2,
+      })
     end
   end
 

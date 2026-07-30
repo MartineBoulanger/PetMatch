@@ -114,6 +114,16 @@ local function CreateRow(frame)
 
   row:SetHeight(14)
 
+  local icon = row:CreateTexture(
+    nil,
+    "ARTWORK"
+  )
+
+  icon:SetSize(18, 18)
+  icon:Hide()
+
+  row.Icon = icon
+
   local leftText =
       row:CreateFontString(
         nil,
@@ -177,19 +187,20 @@ local function AcquireRow()
   row.LeftText:SetText("")
   row.RightText:SetText("")
 
-  row.LeftText:SetTextColor(
-    1,
-    1,
-    1,
-    1
-  )
+  row.Icon:Hide()
+  row.Icon:SetTexture(nil)
 
-  row.RightText:SetTextColor(
-    1,
-    1,
-    1,
-    1
-  )
+  row.LeftText:SetTextColor(1, 1, 1, 1)
+  row.RightText:SetTextColor(1, 1, 1, 1)
+
+  row.LeftText:Show()
+  row.RightText:Show()
+
+  row.CustomHeight = nil
+
+  if row.AbilityGrid then
+    row.AbilityGrid:Hide()
+  end
 
   return row
 end
@@ -201,8 +212,17 @@ local function ReleaseRows()
     row:Hide()
     row:ClearAllPoints()
 
+    row.Icon:Hide()
+    row.Icon:SetTexture(nil)
+
     row.LeftText:SetText("")
     row.RightText:SetText("")
+
+    if row.AbilityGrid then
+      row.AbilityGrid:Hide()
+    end
+
+    row.CustomHeight = nil
   end
 
   frame.ActiveRowCount = 0
@@ -359,6 +379,43 @@ function Tooltip:AddSpacer(height)
   return row
 end
 
+function Tooltip:AddAbilityGrid(slots)
+  local row = AcquireRow()
+
+  row.LeftText:Hide()
+  row.RightText:Hide()
+  row.Icon:Hide()
+
+  if not row.AbilityGrid then
+    row.AbilityGrid =
+        addon.UI.Base.AbilityGrid:Create(row)
+
+    row.AbilityGrid.Frame:SetPoint(
+      "TOPLEFT",
+      row,
+      "TOPLEFT",
+      0,
+      0
+    )
+
+    row.AbilityGrid.Frame:SetPoint(
+      "TOPRIGHT",
+      row,
+      "TOPRIGHT",
+      0,
+      0
+    )
+  end
+
+  row.AbilityGrid:SetAbilities(slots)
+  row.AbilityGrid:Show()
+
+  row.CustomHeight =
+      row.AbilityGrid.Frame:GetHeight()
+
+  return row
+end
+
 function Tooltip:Clear()
   local frame = GetTooltipFrame()
 
@@ -508,9 +565,10 @@ function Tooltip:Layout()
 
     local rowHeight
 
-    if row.SpacerHeight then
+    if row.CustomHeight then
+      rowHeight = row.CustomHeight
+    elseif row.SpacerHeight then
       rowHeight = row.SpacerHeight
-      row.SpacerHeight = nil
     else
       rowHeight = math.max(
         row.LeftText:GetStringHeight(),
