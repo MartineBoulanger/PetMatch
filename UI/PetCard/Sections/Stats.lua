@@ -170,6 +170,22 @@ function Stats:Create(parent)
 end
 
 function Stats:SetPet(pet)
+  local hasStats =
+      pet
+      and pet.petGUID
+      and (
+        pet.health ~= nil
+        or pet.power ~= nil
+        or pet.speed ~= nil
+      )
+
+  if not hasStats then
+    self.Frame:Hide()
+    return false
+  end
+
+  self.Frame:Show()
+
   self.Health.Value:SetFormattedText(
     "%s",
     tostring(
@@ -192,6 +208,8 @@ function Stats:SetPet(pet)
       pet.speed or "0"
     )
   )
+
+  return true
 end
 
 function Stats:GetFrame()

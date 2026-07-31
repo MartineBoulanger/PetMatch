@@ -264,10 +264,19 @@ function Header:SetPet(pet)
     pet.name or "Unknown"
   )
 
-  local r, g, b =
-      GetQualityColor(
-        pet.quality
-      )
+  local r, g, b
+
+  if pet.quality ~= nil then
+    r, g, b =
+        GetQualityColor(
+          pet.quality
+        )
+  else
+    r, g, b =
+        0.82,
+        0.82,
+        0.82
+  end
 
   self.Name:SetTextColor(
     r,
@@ -297,10 +306,16 @@ function Header:SetPet(pet)
     1
   )
 
-  self.Level:SetFormattedText(
-    "Level %d",
-    tonumber(pet.level) or 0
-  )
+  if pet.level and pet.level > 0 then
+    self.Level:SetFormattedText(
+      "Level %d",
+      pet.level
+    )
+  else
+    self.Level:SetText(
+      "Not Collected"
+    )
+  end
 
   local breed =
       pet.breedName

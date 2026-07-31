@@ -224,27 +224,109 @@ function PetTooltipService:GetBySpeciesID(
     return nil, "Invalid species ID"
   end
 
-  local journalService = addon.Services.PetJournal
+  local journalService =
+      addon.Services.PetJournal
 
-  if not journalService then
-    return nil,
-        "Pet Journal service is unavailable"
+  if journalService then
+    local petGUID =
+        journalService:
+        FindOwnedPetBySpeciesID(
+          speciesID
+        )
+
+    if petGUID then
+      return self:CreatePet(
+        petGUID
+      )
+    end
   end
 
-  local petGUID =
-      journalService:
-      FindOwnedPetBySpeciesID(
+  return self:CreateSpeciesPet(
+    speciesID
+  )
+end
+
+function PetTooltipService:CreateSpeciesPet(
+    speciesID
+)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return nil, "Invalid species ID"
+  end
+
+  local speciesName,
+  icon,
+  petType,
+  creatureID,
+  sourceText,
+  description,
+  isWild,
+  canBattle,
+  tradable,
+  unique,
+  obtainable,
+  displayID =
+      C_PetJournal.GetPetInfoBySpeciesID(
         speciesID
       )
 
-  if not petGUID then
-    return nil,
-        "No owned pet found for species"
+  if not speciesName then
+    return nil, "Pet species not found"
   end
 
-  return self:CreatePet(
-    petGUID
-  )
+  local numCollected =
+      C_PetJournal.GetNumCollectedInfo(
+        speciesID
+      )
+
+  local pet =
+      addon.Models.Pet:Create({
+        petGUID = nil,
+        speciesID = speciesID,
+
+        name = speciesName,
+        speciesName = speciesName,
+        customName = nil,
+
+        icon = icon,
+        petType = petType,
+        creatureID = creatureID,
+        displayID = displayID,
+
+        sourceText = sourceText,
+        description = description,
+
+        isWild = isWild == true,
+        canBattle = canBattle == true,
+        tradable = tradable == true,
+        unique = unique == true,
+        obtainable = obtainable ~= false,
+
+        isOwned =
+            tonumber(numCollected) ~= nil
+            and numCollected > 0,
+
+        level = nil,
+        quality = nil,
+
+        health = nil,
+        maxHealth = nil,
+        power = nil,
+        speed = nil,
+
+        abilities =
+            canBattle
+            and self:GetAbilities(
+              speciesID
+            )
+            or {},
+      })
+
+  self:ApplyExpansionData(pet)
+  self:ApplyPassiveData(pet)
+
+  return pet
 end
 
 addon.Services.PetTooltip = PetTooltipService

@@ -61,10 +61,23 @@ function Blizzard:Initialize()
       addon.UI.Components.PetTooltip:Attach(
         button,
         function(control)
-          if not control.petID then
-            return nil
+          if type(control.petID) == "string"
+              and control.petID ~= "" then
+            return "petGUID",
+                control.petID
           end
-          return "petGUID", control.petID
+
+          local speciesID =
+              tonumber(
+                control.speciesID
+              )
+
+          if speciesID then
+            return "speciesID",
+                speciesID
+          end
+
+          return nil
         end
       )
     end
