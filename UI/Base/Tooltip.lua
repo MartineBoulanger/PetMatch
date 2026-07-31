@@ -198,9 +198,9 @@ local function AcquireRow()
 
   row.CustomHeight = nil
 
-  if row.AbilityGrid then
-    row.AbilityGrid:Hide()
-  end
+  -- if row.AbilityGrid then
+  --   row.AbilityGrid:Hide()
+  -- end
 
   return row
 end
@@ -218,9 +218,9 @@ local function ReleaseRows()
     row.LeftText:SetText("")
     row.RightText:SetText("")
 
-    if row.AbilityGrid then
-      row.AbilityGrid:Hide()
-    end
+    -- if row.AbilityGrid then
+    --   row.AbilityGrid:Hide()
+    -- end
 
     row.CustomHeight = nil
   end
@@ -386,32 +386,32 @@ function Tooltip:AddAbilityGrid(slots)
   row.RightText:Hide()
   row.Icon:Hide()
 
-  if not row.AbilityGrid then
-    row.AbilityGrid =
-        addon.UI.Base.AbilityGrid:Create(row)
+  -- if not row.AbilityGrid then
+  --   row.AbilityGrid =
+  --       addon.UI.Base.AbilityGrid:Create(row)
 
-    row.AbilityGrid.Frame:SetPoint(
-      "TOPLEFT",
-      row,
-      "TOPLEFT",
-      0,
-      0
-    )
+  --   row.AbilityGrid.Frame:SetPoint(
+  --     "TOPLEFT",
+  --     row,
+  --     "TOPLEFT",
+  --     0,
+  --     0
+  --   )
 
-    row.AbilityGrid.Frame:SetPoint(
-      "TOPRIGHT",
-      row,
-      "TOPRIGHT",
-      0,
-      0
-    )
-  end
+  --   row.AbilityGrid.Frame:SetPoint(
+  --     "TOPRIGHT",
+  --     row,
+  --     "TOPRIGHT",
+  --     0,
+  --     0
+  --   )
+  -- end
 
-  row.AbilityGrid:SetAbilities(slots)
-  row.AbilityGrid:Show()
+  -- row.AbilityGrid:SetAbilities(slots)
+  -- row.AbilityGrid:Show()
 
-  row.CustomHeight =
-      row.AbilityGrid.Frame:GetHeight()
+  -- row.CustomHeight =
+  --     row.AbilityGrid.Frame:GetHeight()
 
   return row
 end

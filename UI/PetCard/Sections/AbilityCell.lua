@@ -1,5 +1,7 @@
 local _, addon = ...
 
+addon.UI.PetCard = addon.UI.PetCard or {}
+
 local AbilityCell = {}
 AbilityCell.__index = AbilityCell
 
@@ -9,7 +11,7 @@ function AbilityCell:Create(parent)
   local self = setmetatable({}, AbilityCell)
 
   self.Frame = CreateFrame("Frame", nil, parent)
-  self.Frame:SetSize(100, 82)
+  self.Frame:SetSize(94, 76)
 
   self.Icon = self.Frame:CreateTexture(nil, "ARTWORK")
   self.Icon:SetSize(ICON_SIZE, ICON_SIZE)
@@ -47,22 +49,6 @@ function AbilityCell:Create(parent)
   self.Name:SetJustifyH("CENTER")
   self.Name:SetWordWrap(true)
 
-  self.Level = self.Frame:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameTooltipTextSmall"
-  )
-
-  self.Level:SetPoint(
-    "TOP",
-    self.Name,
-    "BOTTOM",
-    0,
-    -2
-  )
-
-  self.Level:SetJustifyH("CENTER")
-
   return self
 end
 
@@ -78,20 +64,12 @@ function AbilityCell:SetAbility(ability)
     ability.name or ""
   )
 
-  self.Level:SetText(
-    string.format(
-      "Lvl %d",
-      ability.requiredLevel or 1
-    )
-  )
-
   self.Frame:Show()
 end
 
 function AbilityCell:Clear()
   self.Icon:SetTexture(nil)
   self.Name:SetText("")
-  self.Level:SetText("")
 end
 
 function AbilityCell:Show()
@@ -121,7 +99,10 @@ function AbilityCell:SetEnabled(enabled)
 
   self.Icon:SetAlpha(alpha)
   self.Name:SetAlpha(alpha)
-  self.Level:SetAlpha(alpha)
 end
 
-addon.UI.Base.AbilityCell = AbilityCell
+function AbilityCell:GetFrame()
+  return self.Frame
+end
+
+addon.UI.PetCard.AbilityCell = AbilityCell

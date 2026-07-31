@@ -1,6 +1,6 @@
 local _, addon = ...
 
-local AbilityCell = addon.UI.Base.AbilityCell
+local AbilityCell = addon.UI.PetCard.AbilityCell
 
 local AbilityGrid = {}
 AbilityGrid.__index = AbilityGrid
@@ -9,9 +9,9 @@ local COLUMN_COUNT = 3
 local ROW_COUNT = 2
 
 local HEADER_HEIGHT = 18
-local CELL_HEIGHT = 82
-local ROW_SPACING = 10
-local HEADER_SPACING = 8
+local CELL_HEIGHT = 72
+local ROW_SPACING = 0
+local HEADER_SPACING = 4
 
 function AbilityGrid:Create(parent)
   local self = setmetatable({}, AbilityGrid)
@@ -44,8 +44,7 @@ function AbilityGrid:Create(parent)
   self.Frame:SetHeight(
     HEADER_HEIGHT +
     HEADER_SPACING +
-    (CELL_HEIGHT * ROW_COUNT) +
-    ROW_SPACING
+    (CELL_HEIGHT * ROW_COUNT)
   )
 
   self.Frame:SetScript(
@@ -127,6 +126,53 @@ function AbilityGrid:SetAbilities(slots)
   end
 end
 
+function AbilityGrid:SetPet(pet)
+  if not pet
+      or pet.canBattle ~= true
+      or type(pet.abilities) ~= "table"
+      or #pet.abilities == 0 then
+    self:Clear()
+    self:Hide()
+
+    return false
+  end
+
+  local slots = {
+    [1] = {},
+    [2] = {},
+    [3] = {},
+  }
+
+  for _, ability in ipairs(pet.abilities) do
+    local slot = tonumber(ability.slot)
+
+    if slot and slots[slot] then
+      table.insert(
+        slots[slot],
+        ability
+      )
+    end
+  end
+
+  self:SetAbilities(slots)
+  self:Show()
+
+  return true
+end
+
+function AbilityGrid:Clear()
+  for slot = 1, COLUMN_COUNT do
+    for choice = 1, ROW_COUNT do
+      self.Cells[slot][choice]:Clear()
+      self.Cells[slot][choice]:Hide()
+    end
+  end
+end
+
+function AbilityGrid:GetFrame()
+  return self.Frame
+end
+
 function AbilityGrid:Show()
   self.Frame:Show()
 end
@@ -135,4 +181,4 @@ function AbilityGrid:Hide()
   self.Frame:Hide()
 end
 
-addon.UI.Base.AbilityGrid = AbilityGrid
+addon.UI.PetCard.AbilityGrid = AbilityGrid

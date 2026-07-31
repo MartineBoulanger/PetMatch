@@ -23,6 +23,7 @@ function Pet:Create(data)
   pet.speciesName = data.speciesName
   pet.icon = data.icon
   pet.favorite = data.favorite == true
+  pet.canBattle = data.canBattle == true
   pet.petType = data.petType
   pet.creatureID = data.creatureID
   pet.displayID = data.displayID

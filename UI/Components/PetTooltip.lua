@@ -1,269 +1,26 @@
 local _, addon = ...
 
 local PetTooltip = {}
+local Card
 
--- Setting the correct names for the pet families
-local PET_TYPE_SUFFIX = {
-  [1]  = "Humanoid",
-  [2]  = "Dragonkin",
-  [3]  = "Flying",
-  [4]  = "Undead",
-  [5]  = "Critter",
-  [6]  = "Magic",
-  [7]  = "Elemental",
-  [8]  = "Beast",
-  [9]  = "Aquatic",
-  [10] = "Mechanical"
-}
-
--- setting the correct rarity color per pet
-local PET_RARITY_COLORS = {
-  [1] = ITEM_QUALITY_COLORS[0],
-  [2] = ITEM_QUALITY_COLORS[1],
-  [3] = ITEM_QUALITY_COLORS[2],
-  [4] = ITEM_QUALITY_COLORS[3],
-  [5] = ITEM_QUALITY_COLORS[4],
-  [6] = ITEM_QUALITY_COLORS[5]
-}
-
-local TEXT_COLOR = {
-  r = 1,
-  g = 1,
-  b = 1,
-}
-
-local MUTED_COLOR = {
-  r = 0.72,
-  g = 0.72,
-  b = 0.72,
-}
-
-local VALUE_COLOR = {
-  r = 1,
-  g = 0.82,
-  b = 0,
-}
-
-local DESCRIPTION_COLOR = {
-  r = 0.9,
-  g = 0.9,
-  b = 0.9,
-}
-
-local function GetQualityColor(
-    quality
-)
-  quality = tonumber(quality) or 0
-
-  local color =
-      PET_RARITY_COLORS
-      and PET_RARITY_COLORS[quality]
-
-  if not color then
-    return TEXT_COLOR
+local function GetPetCard()
+  if Card then
+    return Card
   end
 
-  return {
-    r = color.r or 1,
-    g = color.g or 1,
-    b = color.b or 1,
-    a = 1,
-  }
-end
+  local component =
+      addon.UI.PetCard
+      and addon.UI.PetCard.Card
 
-local function GetPetTypeName(
-    petType
-)
-  petType = tonumber(petType)
-
-  if not petType then
-    return nil
-  end
-
-  if PET_TYPE_SUFFIX then
-    return PET_TYPE_SUFFIX[petType]
-  end
-
-  return nil
-end
-
-local function AddIdentitySection(
-    tooltip,
-    pet
-)
-  tooltip:SetTitle(
-    pet.name,
-    GetQualityColor(
-      pet.quality
-    )
-  )
-
-  if pet.customName
-      and pet.speciesName
-      and pet.customName
-      ~= pet.speciesName then
-    tooltip:AddLine(
-      pet.speciesName,
-      MUTED_COLOR
+  if not component then
+    error(
+      "PetMatch: PetCard component is not loaded."
     )
   end
 
-  tooltip:AddDoubleLine(
-    "Level",
-    tostring(
-      pet.level or 0
-    ),
-    MUTED_COLOR,
-    VALUE_COLOR
-  )
+  Card = component:Create(UIParent)
 
-  local petTypeName = GetPetTypeName(pet.petType)
-
-  if petTypeName then
-    tooltip:AddDoubleLine(
-      "Family",
-      petTypeName,
-      MUTED_COLOR,
-      VALUE_COLOR
-    )
-  end
-end
-
-local function AddStatsSection(
-    tooltip,
-    pet
-)
-  if not pet.canBattle
-      and pet.health == 0
-      and pet.power == 0
-      and pet.speed == 0 then
-    return
-  end
-
-  tooltip:AddSpacer(7)
-
-  tooltip:AddDoubleLine(
-    "Health",
-    tostring(
-      pet.maxHealth
-      or pet.health
-      or 0
-    ),
-    MUTED_COLOR,
-    TEXT_COLOR
-  )
-
-  tooltip:AddDoubleLine(
-    "Power",
-    tostring(
-      pet.power or 0
-    ),
-    MUTED_COLOR,
-    TEXT_COLOR
-  )
-
-  tooltip:AddDoubleLine(
-    "Speed",
-    tostring(
-      pet.speed or 0
-    ),
-    MUTED_COLOR,
-    TEXT_COLOR
-  )
-end
-
-local function AddBreedSection(
-    tooltip,
-    pet
-)
-  if pet.breedName then
-    tooltip:AddDoubleLine(
-      "Breed",
-      pet.breedName,
-      MUTED_COLOR,
-      VALUE_COLOR
-    )
-  end
-end
-
-local function AddExpansionSection(
-    tooltip,
-    pet
-)
-  if not pet.expansionName then
-    return
-  end
-
-  tooltip:AddDoubleLine(
-    "Expansion",
-    pet.expansionName,
-    MUTED_COLOR,
-    VALUE_COLOR
-  )
-end
-
-local function AddDescriptionSection(
-    tooltip,
-    pet
-)
-  if type(pet.description)
-      ~= "string"
-      or pet.description == "" then
-    return
-  end
-
-  tooltip:AddSpacer(8)
-
-  tooltip:AddLine(
-    pet.description,
-    DESCRIPTION_COLOR
-  )
-end
-
-local function AddSourceSection(
-    tooltip,
-    pet
-)
-  if type(pet.sourceText)
-      ~= "string"
-      or pet.sourceText == "" then
-    return
-  end
-
-  tooltip:AddSpacer(8)
-
-  tooltip:AddLine(
-    pet.sourceText,
-    MUTED_COLOR
-  )
-end
-
-local function AddAbilitiesSection(tooltip, pet)
-  if not pet.abilities or #pet.abilities == 0 then
-    return
-  end
-
-  tooltip:AddSpacer(8)
-
-  tooltip:AddLine(
-    "Abilities",
-    VALUE_COLOR
-  )
-
-  local slots = {
-    [1] = {},
-    [2] = {},
-    [3] = {}
-  }
-
-  for _, ability in ipairs(pet.abilities) do
-    table.insert(
-      slots[ability.slot],
-      ability
-    )
-  end
-
-  tooltip:AddAbilityGrid(slots)
+  return Card
 end
 
 function PetTooltip:Show(
@@ -275,89 +32,23 @@ function PetTooltip:Show(
     return
   end
 
-  local tooltip = addon.UI.Base.Tooltip
+  local card = GetPetCard()
 
-  if not tooltip then
-    return
-  end
-
-  tooltip:Clear()
-  tooltip:SetWidth(390)
-
-  tooltip:SetOwner(
+  card:SetOwner(
     owner,
     anchor or "ANCHOR_RIGHT"
   )
 
-  AddIdentitySection(
-    tooltip,
-    pet
-  )
+  card:SetPet(pet)
+  card:Show()
+end
 
-  AddStatsSection(
-    tooltip,
-    pet
-  )
-
-  AddBreedSection(
-    tooltip,
-    pet
-  )
-
-  AddExpansionSection(
-    tooltip,
-    pet
-  )
-
-  AddDescriptionSection(
-    tooltip,
-    pet
-  )
-
-  AddSourceSection(
-    tooltip,
-    pet
-  )
-
-  local breedTooltipService =
-      addon.Services.BreedTooltip
-
-  local breedSections =
-      addon.UI.Components
-      and addon.UI.Components
-      .PetTooltipSections
-
-  if breedTooltipService
-      and breedSections then
-    local details =
-        breedTooltipService:GetDetails(
-          pet
-        )
-
-    if details then
-      breedSections.AddBreedDetails(
-        tooltip,
-        details
-      )
-
-      breedSections.AddBreedBaseStats(
-        tooltip,
-        details
-      )
-
-      breedSections.AddBreedLevel25Stats(
-        tooltip,
-        details
-      )
-    end
+function PetTooltip:Hide(owner)
+  if not Card then
+    return
   end
 
-  AddAbilitiesSection(
-    tooltip,
-    pet
-  )
-
-  tooltip:Show()
+  Card:Hide(owner)
 end
 
 function PetTooltip:ShowByPetGUID(
@@ -385,16 +76,6 @@ function PetTooltip:ShowByPetGUID(
     pet,
     anchor
   )
-end
-
-function PetTooltip:Hide(owner)
-  local tooltip = addon.UI.Base.Tooltip
-
-  if not tooltip then
-    return
-  end
-
-  tooltip:Hide(owner)
 end
 
 function PetTooltip:Attach(
@@ -463,7 +144,16 @@ function PetTooltip:Attach(
       elseif valueType == "speciesID" then
         pet = addon.Services.PetTooltip:GetBySpeciesID(value)
       elseif valueType == "pet" then
-        pet = value
+        if value.petGUID
+            and addon.Services.PetTooltip then
+          pet =
+              addon.Services.PetTooltip:
+              CreatePet(
+                value.petGUID
+              )
+        else
+          pet = value
+        end
       end
 
       if not pet then

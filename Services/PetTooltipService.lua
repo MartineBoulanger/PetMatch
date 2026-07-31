@@ -129,6 +129,7 @@ function PetTooltipService:CreatePet(
         displayID = journalPet.displayID,
         description = journalPet.description,
         sourceText = journalPet.sourceText,
+        canBattle = journalPet.canBattle,
         health = stats.health,
         maxHealth = stats.maxHealth,
         power = stats.power,

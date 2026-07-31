@@ -12,6 +12,19 @@ local INVALID_BREEDS = {
   ["ERR-PID"] = true,
 }
 
+local BREED_NAMES = {
+  [3] = "B/B",
+  [4] = "P/P",
+  [5] = "S/S",
+  [6] = "H/H",
+  [7] = "H/P",
+  [8] = "P/S",
+  [9] = "H/S",
+  [10] = "P/B",
+  [11] = "S/B",
+  [12] = "H/B",
+}
+
 local function IsInvalidBreed(breed)
   if breed == nil then
     return true
@@ -24,6 +37,64 @@ local function IsInvalidBreed(breed)
   end
 
   return string.sub(breed, 1, 3) == "ERR"
+end
+
+function BreedService:GetBreedName(breedID)
+  return BREED_NAMES[
+  tonumber(breedID)
+  ]
+end
+
+function BreedService:GetPossibleBreeds(
+    speciesID
+)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return {}
+  end
+
+  local arrays = _G.BPBID_Arrays
+
+  if type(arrays) ~= "table" then
+    return {}
+  end
+
+  if not arrays.BreedsPerSpecies
+      and type(arrays.InitializeArrays)
+      == "function" then
+    pcall(
+      arrays.InitializeArrays
+    )
+  end
+
+  local breedIDs =
+      arrays.BreedsPerSpecies
+      and arrays.BreedsPerSpecies[
+      speciesID
+      ]
+
+  if type(breedIDs) ~= "table" then
+    return {}
+  end
+
+  local breeds = {}
+
+  for _, breedID in ipairs(breedIDs) do
+    local name =
+        self:GetBreedName(
+          breedID
+        )
+
+    if name then
+      breeds[#breeds + 1] = {
+        id = breedID,
+        name = name,
+      }
+    end
+  end
+
+  return breeds
 end
 
 function BreedService:IsAvailable()
