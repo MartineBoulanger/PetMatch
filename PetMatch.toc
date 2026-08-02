@@ -1,5 +1,5 @@
 ## Interface: 120007
-## Version: 1.6.10
+## Version: 1.7.0
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
@@ -115,4 +115,5 @@ UI/Views/Panels.lua
 
 Modules/PetList.lua
 Modules/Slash.lua
+Modules/PetJournalFilterExtension.lua
 Core/Addon.lua
