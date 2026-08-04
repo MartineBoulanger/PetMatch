@@ -11,6 +11,7 @@ local CONTENT_PADDING = 0
 local DUPLICATE_SECTION_HEIGHT = 104
 local BREED_SECTION_HEIGHT = 104
 local PET_LIST_SECTION_HEIGHT = 86
+local PET_CARD_SECTION_HEIGHT = 104
 
 function OptionsList:Create(parent)
   local frame =
@@ -29,7 +30,8 @@ function OptionsList:Create(parent)
   self.ExpandedSections = {
     duplicateTeams = true,
     petBreeds = true,
-    petList = true
+    petList = true,
+    petCard = true,
   }
 
   self:RegisterEvents()
@@ -60,6 +62,8 @@ function OptionsList:RegisterEvents()
         self:RefreshBreedMode()
       elseif key == "compactPetListRows" then
         self:RefreshPetListMode()
+      elseif key == "petCardInteractionMode" then
+        self:RefreshPetCardMode()
       end
     end
   )
@@ -80,19 +84,28 @@ function OptionsList:ClearItems()
 
   self.Frame.items = {}
 
+  -- Duplicate Teams Option
   self.DuplicateAccordion = nil
   self.SkipButton = nil
   self.ReplaceButton = nil
   self.KeepButton = nil
 
+  -- Pet Breeds Option
   self.BreedAccordion = nil
   self.RightBreedButton = nil
   self.AfterNameBreedButton = nil
   self.HiddenBreedButton = nil
 
+  -- Pet List Option
   self.PetListAccordion = nil
   self.NormalRowsButton = nil
   self.CompactRowsButton = nil
+
+  -- Pet Card Option
+  self.PetCardAccordion = nil
+  self.PetCardHoverButton = nil
+  self.PetCardClickButton = nil
+  self.PetCardBothButton = nil
 end
 
 function OptionsList:GetSections()
@@ -100,8 +113,7 @@ function OptionsList:GetSections()
     {
       key = "duplicateTeams",
       title = "Duplicate Teams",
-      contentHeight =
-          DUPLICATE_SECTION_HEIGHT,
+      contentHeight = DUPLICATE_SECTION_HEIGHT,
 
       build = function(content)
         self:BuildDuplicateTeamOptions(
@@ -121,11 +133,21 @@ function OptionsList:GetSections()
     {
       key = "petList",
       title = "Pet List",
-      contentHeight =
-          PET_LIST_SECTION_HEIGHT,
+      contentHeight = PET_LIST_SECTION_HEIGHT,
 
       build = function(content)
         self:BuildPetListOptions(
+          content
+        )
+      end,
+    },
+    {
+      key = "petCard",
+      title = "Pet Card",
+      contentHeight = PET_CARD_SECTION_HEIGHT,
+
+      build = function(content)
+        self:BuildPetCardOptions(
           content
         )
       end,
@@ -168,9 +190,7 @@ function OptionsList:CreateSection(
         }
       )
 
-  accordion.SectionKey =
-      section.key
-
+  accordion.SectionKey = section.key
   accordion:ClearAllPoints()
 
   accordion:SetPoint(
@@ -199,8 +219,7 @@ function OptionsList:CreateSection(
   )
 
   if section.key == "duplicateTeams" then
-    self.DuplicateAccordion =
-        accordion
+    self.DuplicateAccordion = accordion
   end
 
   if section.key == "petBreeds" then
@@ -209,6 +228,10 @@ function OptionsList:CreateSection(
 
   if section.key == "petList" then
     self.PetListAccordion = accordion
+  end
+
+  if section.key == "petCard" then
+    self.PetCardAccordion = accordion
   end
 
   return currentOffset
@@ -494,6 +517,94 @@ function OptionsList:BuildPetListOptions(
   self:RefreshPetListMode()
 end
 
+function OptionsList:BuildPetCardOptions(
+    parent
+)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose how the Pet Card opens in the Pet Journal."
+  )
+
+  self.PetCardHoverButton =
+      self:CreateRadioButton(
+        parent,
+        "Show on hover",
+        "petCardInteractionMode",
+        "hover",
+        self.RefreshPetCardMode
+      )
+
+  self.PetCardHoverButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.PetCardClickButton =
+      self:CreateRadioButton(
+        parent,
+        "Show on click",
+        "petCardInteractionMode",
+        "click",
+        self.RefreshPetCardMode
+      )
+
+  self.PetCardClickButton:SetPoint(
+    "TOPLEFT",
+    self.PetCardHoverButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.PetCardBothButton =
+      self:CreateRadioButton(
+        parent,
+        "Show on hover and click",
+        "petCardInteractionMode",
+        "both",
+        self.RefreshPetCardMode
+      )
+
+  self.PetCardBothButton:SetPoint(
+    "TOPLEFT",
+    self.PetCardClickButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshPetCardMode()
+end
+
 function OptionsList:RefreshDuplicateMode()
   if not self.SkipButton
       or not self.ReplaceButton
@@ -562,13 +673,38 @@ function OptionsList:RefreshPetListMode()
   )
 end
 
+function OptionsList:RefreshPetCardMode()
+  if not self.PetCardHoverButton
+      or not self.PetCardClickButton
+      or not self.PetCardBothButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get(
+        "petCardInteractionMode"
+      )
+      or "hover"
+
+  self.PetCardHoverButton:SetChecked(
+    mode == "hover"
+  )
+
+  self.PetCardClickButton:SetChecked(
+    mode == "click"
+  )
+
+  self.PetCardBothButton:SetChecked(
+    mode == "both"
+  )
+end
+
 function OptionsList:UpdateContentHeight()
   if not self.Frame then
     return
   end
 
-  local currentOffset =
-      CONTENT_PADDING
+  local currentOffset = CONTENT_PADDING
 
   for _, item in ipairs(
     self.Frame.items or {}

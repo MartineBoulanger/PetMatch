@@ -820,16 +820,12 @@ function ImportExportService:ImportRematchDocument(
         }
 
         if errorMessage then
-          result.warnings[#result.warnings + 1] =
-              errorMessage
+          result.warnings[#result.warnings + 1] = errorMessage
         end
       end
 
-      for _, speciesID in ipairs(
-        missingSpecies or {}
-      ) do
-        result.missingSpecies[#result.missingSpecies + 1] =
-            speciesID
+      for _, speciesID in ipairs(missingSpecies or {}) do
+        result.missingSpecies[#result.missingSpecies + 1] = speciesID
       end
     end
   end
