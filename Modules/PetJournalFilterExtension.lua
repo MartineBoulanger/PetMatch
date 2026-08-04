@@ -9,6 +9,7 @@ local Filters = {
   rarities = {},
   levels = {},
   breeds = {},
+  tags = {}
 }
 
 local PET_TYPES = {}
@@ -114,6 +115,19 @@ local OtherFilters = {
   team = nil,
 }
 
+local TAG_FILTER_OPTIONS = {
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  "none",
+}
+local RAID_MARKER_TEXTURE_FORMAT = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_%d"
+
 -- sorting
 local ActiveSort = {
   type = "blizzard",
@@ -209,6 +223,11 @@ local function InitializeFilters()
   InitializeFilter(
     Filters.breeds,
     BREEDS
+  )
+
+  InitializeFilter(
+    Filters.tags,
+    TAG_FILTER_OPTIONS
   )
 end
 
@@ -582,6 +601,68 @@ local function GetLevelRangeKey(level)
   return nil
 end
 
+local function GetRaidMarkerTexture(tagID)
+  tagID = tonumber(tagID)
+
+  if not tagID
+      or tagID < 1
+      or tagID > 8 then
+    return nil
+  end
+
+  return string.format(
+    RAID_MARKER_TEXTURE_FORMAT,
+    tagID
+  )
+end
+
+local function BuildTagFilterLabel(
+    definition
+)
+  if not definition then
+    return "Unknown"
+  end
+
+  local texture =
+      GetRaidMarkerTexture(
+        definition.id
+      )
+
+  if not texture then
+    return definition.name
+        or "Unknown"
+  end
+
+  return string.format(
+    "|T%s:14:14:0:0|t %s",
+    texture,
+    definition.name or "Unknown"
+  )
+end
+
+local function GetPetTagFilterValue(
+    petGUID
+)
+  if not petGUID then
+    return "none"
+  end
+
+  local tagService =
+      addon.Services
+      and addon.Services.PetTag
+
+  if not tagService then
+    return "none"
+  end
+
+  local tagID =
+      tagService:GetTag(
+        petGUID
+      )
+
+  return tagID or "none"
+end
+
 local function CreateExpansionMenu(
     owner,
     root
@@ -731,6 +812,76 @@ local function CreateBreedMenu(
       end
     )
   end
+end
+
+local function CreateTagMenu(
+    owner,
+    root
+)
+  local submenu =
+      root:CreateButton(
+        "Tag"
+      )
+
+  AddCheckAllButtons(
+    submenu,
+    Filters.tags,
+    TAG_FILTER_OPTIONS
+  )
+
+  local tagService =
+      addon.Services
+      and addon.Services.PetTag
+
+  if tagService then
+    for _, definition in ipairs(
+      tagService:GetDefinitions()
+    ) do
+      local tagID =
+          definition.id
+
+      submenu:CreateCheckbox(
+        BuildTagFilterLabel(
+          definition
+        ),
+
+        function()
+          return Filters.tags[
+          tagID
+          ] == true
+        end,
+
+        function()
+          Toggle(
+            Filters.tags,
+            tagID
+          )
+
+          return MenuResponse.Refresh
+        end
+      )
+    end
+  end
+
+  submenu:CreateDivider()
+
+  submenu:CreateCheckbox(
+    "No Tag",
+
+    function()
+      return Filters.tags.none
+          == true
+    end,
+
+    function()
+      Toggle(
+        Filters.tags,
+        "none"
+      )
+
+      return MenuResponse.Refresh
+    end
+  )
 end
 
 local function CreateOtherMenu(
@@ -1646,6 +1797,11 @@ function FilterExtension:SetupFilterDropdown()
         root
       )
 
+      CreateTagMenu(
+        _dropdown,
+        root
+      )
+
       CreateOtherMenu(
         _dropdown,
         root
@@ -1730,6 +1886,14 @@ function FilterExtension:GetActiveFilterNames()
         BREEDS
       ) then
     names[#names + 1] = "Breed"
+  end
+
+  if HasCustomFilter(
+        Filters.tags,
+        TAG_FILTER_OPTIONS
+      ) then
+    names[#names + 1] =
+    "Tag"
   end
 
   if HasOtherFilters() then
@@ -2013,6 +2177,12 @@ function FilterExtension:ResetAllFilters()
     false
   )
 
+  SetAll(
+    Filters.tags,
+    TAG_FILTER_OPTIONS,
+    false
+  )
+
   --------------------------------------------------
   -- Other
   --------------------------------------------------
@@ -2180,9 +2350,29 @@ function FilterExtension:MatchesPet(
   end
 
   --------------------------------------------------
+  -- Tag
+  --------------------------------------------------
+  if HasSelection(
+        Filters.tags,
+        TAG_FILTER_OPTIONS
+      ) then
+    local tagValue =
+        GetPetTagFilterValue(
+          petID
+        )
+
+    if not MatchesFilter(
+          Filters.tags,
+          TAG_FILTER_OPTIONS,
+          tagValue
+        ) then
+      return false
+    end
+  end
+
+  --------------------------------------------------
   -- Other: Leveling
   --------------------------------------------------
-
   if OtherFilters.leveling ~= nil then
     local isLeveling =
         isOwned == true

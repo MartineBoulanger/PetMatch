@@ -9,7 +9,8 @@ local SECTION_SPACING = 0
 local CONTENT_PADDING = 0
 
 local DUPLICATE_SECTION_HEIGHT = 104
-local BREED_SECTION_HEIGHT = 126
+local BREED_SECTION_HEIGHT = 104
+local PET_LIST_SECTION_HEIGHT = 86
 
 function OptionsList:Create(parent)
   local frame =
@@ -28,6 +29,7 @@ function OptionsList:Create(parent)
   self.ExpandedSections = {
     duplicateTeams = true,
     petBreeds = true,
+    petList = true
   }
 
   self:RegisterEvents()
@@ -56,6 +58,8 @@ function OptionsList:RegisterEvents()
         self:RefreshDuplicateMode()
       elseif key == "petListBreedPosition" then
         self:RefreshBreedMode()
+      elseif key == "compactPetListRows" then
+        self:RefreshPetListMode()
       end
     end
   )
@@ -85,6 +89,10 @@ function OptionsList:ClearItems()
   self.RightBreedButton = nil
   self.AfterNameBreedButton = nil
   self.HiddenBreedButton = nil
+
+  self.PetListAccordion = nil
+  self.NormalRowsButton = nil
+  self.CompactRowsButton = nil
 end
 
 function OptionsList:GetSections()
@@ -108,6 +116,18 @@ function OptionsList:GetSections()
 
       build = function(content)
         self:BuildBreedOptions(content)
+      end,
+    },
+    {
+      key = "petList",
+      title = "Pet List",
+      contentHeight =
+          PET_LIST_SECTION_HEIGHT,
+
+      build = function(content)
+        self:BuildPetListOptions(
+          content
+        )
       end,
     },
   }
@@ -185,6 +205,10 @@ function OptionsList:CreateSection(
 
   if section.key == "petBreeds" then
     self.BreedAccordion = accordion
+  end
+
+  if section.key == "petList" then
+    self.PetListAccordion = accordion
   end
 
   return currentOffset
@@ -399,6 +423,77 @@ function OptionsList:BuildBreedOptions(parent)
   self:RefreshBreedMode()
 end
 
+function OptionsList:BuildPetListOptions(
+    parent
+)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose the row size used in the Pet Journal pet list."
+  )
+
+  self.NormalRowsButton =
+      self:CreateRadioButton(
+        parent,
+        "Normal rows",
+        "compactPetListRows",
+        false,
+        self.RefreshPetListMode
+      )
+
+  self.NormalRowsButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.CompactRowsButton =
+      self:CreateRadioButton(
+        parent,
+        "Compact rows",
+        "compactPetListRows",
+        true,
+        self.RefreshPetListMode
+      )
+
+  self.CompactRowsButton:SetPoint(
+    "TOPLEFT",
+    self.NormalRowsButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshPetListMode()
+end
+
 function OptionsList:RefreshDuplicateMode()
   if not self.SkipButton
       or not self.ReplaceButton
@@ -421,6 +516,49 @@ function OptionsList:RefreshDuplicateMode()
 
   self.KeepButton:SetChecked(
     mode == "keep"
+  )
+end
+
+function OptionsList:RefreshBreedMode()
+  if not self.RightBreedButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get(
+        "petListBreedPosition"
+      )
+
+  self.RightBreedButton:SetChecked(
+    mode == "right"
+  )
+
+  self.AfterNameBreedButton:SetChecked(
+    mode == "afterName"
+  )
+
+  self.HiddenBreedButton:SetChecked(
+    mode == "hidden"
+  )
+end
+
+function OptionsList:RefreshPetListMode()
+  if not self.NormalRowsButton
+      or not self.CompactRowsButton then
+    return
+  end
+
+  local compact =
+      addon.Settings:Get(
+        "compactPetListRows"
+      ) == true
+
+  self.NormalRowsButton:SetChecked(
+    not compact
+  )
+
+  self.CompactRowsButton:SetChecked(
+    compact
   )
 end
 
@@ -504,29 +642,6 @@ function OptionsList:Refresh()
   )
 
   self.Refreshing = false
-end
-
-function OptionsList:RefreshBreedMode()
-  if not self.RightBreedButton then
-    return
-  end
-
-  local mode =
-      addon.Settings:Get(
-        "petListBreedPosition"
-      )
-
-  self.RightBreedButton:SetChecked(
-    mode == "right"
-  )
-
-  self.AfterNameBreedButton:SetChecked(
-    mode == "afterName"
-  )
-
-  self.HiddenBreedButton:SetChecked(
-    mode == "hidden"
-  )
 end
 
 addon.UI.Views.OptionsList = OptionsList

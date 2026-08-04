@@ -10,10 +10,11 @@ local DEFAULT_SETTINGS = {
   showTooltips = true,
   animations = true,
 
+  -- options panel list options
   duplicateTeamMode = "replace",
-
   showPetListBreed = true,
   petListBreedPosition = "right",
+  compactPetListRows = false,
 
   ui = {
     selectedFolderKey = "__ALL__",

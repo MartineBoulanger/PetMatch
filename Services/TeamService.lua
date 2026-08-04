@@ -1065,4 +1065,26 @@ function TeamService:SetSelected(id)
   )
 end
 
+function TeamService:IsPetInAnyTeam(petGUID)
+  if type(petGUID) ~= "string"
+      or petGUID == "" then
+    return false
+  end
+
+  for _, team in pairs(
+    self:GetTeams()
+  ) do
+    if type(team) == "table"
+        and type(team.pets) == "table" then
+      for slot = 1, 3 do
+        if team.pets[slot] == petGUID then
+          return true
+        end
+      end
+    end
+  end
+
+  return false
+end
+
 addon.Services.Team = TeamService
