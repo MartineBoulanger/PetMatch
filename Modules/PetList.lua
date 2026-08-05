@@ -318,7 +318,6 @@ local function RestoreNormalRow(button)
   RestoreNameAnchors(button)
 end
 
-
 local function ApplyCompactRow(button)
   SaveOriginalRowLayout(button)
 
@@ -1170,6 +1169,32 @@ local function UpdatePetButton(
   )
 
   PositionFavoriteIcon(button)
+
+  local tooltip =
+      addon.UI.Components.PetTooltip
+
+  if tooltip
+      and button.dragButton then
+    tooltip:Attach(
+      button.dragButton,
+
+      function()
+        if button.petID then
+          return "petGUID",
+              button.petID
+        end
+
+        if button.speciesID then
+          return "speciesID",
+              button.speciesID
+        end
+
+        return nil
+      end,
+
+      "ANCHOR_RIGHT"
+    )
+  end
 end
 
 local function BuildTagMenuText(

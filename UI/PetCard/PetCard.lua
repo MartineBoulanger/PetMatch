@@ -36,6 +36,10 @@ function PetCard:Create(parent)
     "TOOLTIP"
   )
 
+  instance.Frame:SetFrameLevel(
+    100
+  )
+
   instance.Frame:SetClampedToScreen(
     true
   )
@@ -46,6 +50,7 @@ function PetCard:Create(parent)
   instance:CreateOverlay()
   instance:CreateBorder()
   instance:CreateContent()
+  instance:CreateCloseButton()
 
   instance:CreateHeader()
   instance:CreateStats()
@@ -53,6 +58,8 @@ function PetCard:Create(parent)
   instance:CreateDescription()
   instance:CreateAbilityGrid()
   instance:CreateBreedSection()
+
+  instance:SetPinned(false)
 
   instance.Frame:Hide()
 
@@ -211,6 +218,73 @@ function PetCard:CreateContent()
   )
 
   self.Content:SetHeight(1)
+end
+
+function PetCard:CreateCloseButton()
+  self.CloseButton =
+      CreateFrame(
+        "Button",
+        nil,
+        self.Frame,
+        "UIPanelCloseButton"
+      )
+
+  self.CloseButton:SetPoint(
+    "TOPRIGHT",
+    self.Frame,
+    "TOPRIGHT",
+    3,
+    3
+  )
+
+  self.CloseButton:SetFrameLevel(
+    self.Border:GetFrameLevel() + 5
+  )
+
+  self.CloseButton:SetScript(
+    "OnClick",
+
+    function()
+      if self.CloseHandler then
+        self.CloseHandler()
+      else
+        self:SetPinned(false)
+        self:Hide()
+      end
+    end
+  )
+
+  self.CloseButton:Hide()
+end
+
+function PetCard:SetCloseHandler(handler)
+  if handler ~= nil
+      and type(handler) ~= "function" then
+    error(
+      "PetCard: SetCloseHandler requires a function or nil."
+    )
+  end
+
+  self.CloseHandler = handler
+end
+
+function PetCard:SetPinned(pinned)
+  self.Pinned =
+      pinned == true
+
+  if self.CloseButton then
+    self.CloseButton:SetShown(
+      self.Pinned
+    )
+  end
+
+  self.Frame:EnableMouse(
+    self.Pinned
+  )
+end
+
+function PetCard:IsPinned()
+  return self.Pinned == true
 end
 
 function PetCard:CreateHeader()
@@ -447,7 +521,15 @@ function PetCard:Show()
   self.Frame:Show()
 end
 
-function PetCard:Hide(owner)
+function PetCard:Hide(
+    owner,
+    force
+)
+  if self.Pinned
+      and force ~= true then
+    return
+  end
+
   if owner
       and self.Owner
       and owner ~= self.Owner then

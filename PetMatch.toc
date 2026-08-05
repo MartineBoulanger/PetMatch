@@ -1,5 +1,5 @@
 ## Interface: 120007
-## Version: 1.9.0
+## Version: 1.9.1
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
