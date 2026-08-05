@@ -58,48 +58,115 @@ function AbilityGrid:Create(parent)
 end
 
 function AbilityGrid:Layout()
-  local width = self.Frame:GetWidth()
+  local width =
+      self.Frame:GetWidth()
 
-  local columnWidth = width / COLUMN_COUNT
+  if not width
+      or width <= 0 then
+    return
+  end
+
+  local columnWidth =
+      width / COLUMN_COUNT
+
+  --------------------------------------------------
+  -- Headers
+  --------------------------------------------------
 
   for slot = 1, COLUMN_COUNT do
     local center =
-        ((slot - 1) * columnWidth) +
-        (columnWidth / 2)
+        ((slot - 1) * columnWidth)
+        + (columnWidth / 2)
 
-    local header = self.Headers[slot]
+    local header =
+        self.Headers[slot]
 
-    header:ClearAllPoints()
+    if header then
+      header:ClearAllPoints()
 
-    header:SetPoint(
-      "TOP",
-      self.Frame,
-      "TOPLEFT",
-      center,
-      0
-    )
-
-    for choice = 1, ROW_COUNT do
-      local cell = self.Cells[slot][choice]
-
-      cell:SetWidth(columnWidth)
-
-      cell:ClearAllPoints()
-
-      local y =
-          HEADER_HEIGHT +
-          HEADER_SPACING +
-          ((choice - 1) * (CELL_HEIGHT + ROW_SPACING))
-
-      cell:SetPoint(
+      header:SetPoint(
         "TOP",
         self.Frame,
         "TOPLEFT",
         center,
-        -y
+        0
+      )
+
+      header:SetWidth(
+        columnWidth
       )
     end
   end
+
+  --------------------------------------------------
+  -- Ability cells
+  --------------------------------------------------
+
+  for slot = 1, COLUMN_COUNT do
+    local center =
+        ((slot - 1) * columnWidth)
+        + (columnWidth / 2)
+
+    for choice = 1, ROW_COUNT do
+      local cell =
+          self.Cells[slot]
+          and self.Cells[slot][choice]
+
+      if cell then
+        local cellFrame =
+            cell:GetFrame()
+
+        local y =
+            HEADER_HEIGHT
+            + HEADER_SPACING
+            + (
+              (choice - 1)
+              * (
+                CELL_HEIGHT
+                + ROW_SPACING
+              )
+            )
+
+        cellFrame:ClearAllPoints()
+
+        cellFrame:SetPoint(
+          "TOP",
+          self.Frame,
+          "TOPLEFT",
+          center,
+          -y
+        )
+
+        cell:SetWidth(
+          columnWidth
+        )
+
+        cell:SetHeight(
+          CELL_HEIGHT
+        )
+      end
+    end
+  end
+
+  --------------------------------------------------
+  -- Totale gridhoogte
+  --------------------------------------------------
+
+  local totalHeight =
+      HEADER_HEIGHT
+      + HEADER_SPACING
+      + (ROW_COUNT * CELL_HEIGHT)
+      + (
+        math.max(
+          0,
+          ROW_COUNT - 1
+        )
+        * ROW_SPACING
+      )
+
+  self.Frame:SetHeight(
+    totalHeight
+  )
 end
 
 function AbilityCell:ClearAllPoints()
@@ -143,18 +210,68 @@ function AbilityGrid:SetPet(pet)
     [3] = {},
   }
 
-  for _, ability in ipairs(pet.abilities) do
-    local slot = tonumber(ability.slot)
+  for _, ability in ipairs(
+    pet.abilities
+  ) do
+    local slot =
+        tonumber(
+          ability.slot
+        )
 
-    if slot and slots[slot] then
+    if slot
+        and slots[slot] then
+      local abilityData = {
+        abilityID =
+            ability.abilityID
+            or ability.id,
+
+        id =
+            ability.id
+            or ability.abilityID,
+
+        name =
+            ability.name,
+
+        icon =
+            ability.icon,
+
+        slot =
+            slot,
+
+        requiredLevel =
+            ability.requiredLevel
+            or ability.level,
+
+        additionalText =
+            ability.additionalText,
+
+        speciesID =
+            pet.speciesID,
+
+        petGUID =
+            pet.petGUID
+            or pet.petID
+            or pet.guid,
+
+        petID =
+            pet.petGUID
+            or pet.petID
+            or pet.guid,
+
+        pet = pet,
+      }
+
       table.insert(
         slots[slot],
-        ability
+        abilityData
       )
     end
   end
 
-  self:SetAbilities(slots)
+  self:SetAbilities(
+    slots
+  )
+
   self:Show()
 
   return true
