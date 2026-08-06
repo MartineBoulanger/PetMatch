@@ -9,7 +9,8 @@ local HELP_TOP_SPACING = 8
 local BOTTOM_PADDING = 4
 
 local BREED_TOOLTIP_OFFSET_X = 8
-local BREED_TOOLTIP_OFFSET_Y = -8
+local BREED_TOOLTIP_OFFSET_Y = 0
+local BREED_TOOLTIP_WIDTH = 240
 
 local PET_RARITY_COLORS = {
   [1] = ITEM_QUALITY_COLORS[0],
@@ -18,6 +19,19 @@ local PET_RARITY_COLORS = {
   [4] = ITEM_QUALITY_COLORS[3],
   [5] = ITEM_QUALITY_COLORS[4],
   [6] = ITEM_QUALITY_COLORS[5]
+}
+
+local BREED_NAME_TO_ID = {
+  ["B/B"] = 3,
+  ["P/P"] = 4,
+  ["S/S"] = 5,
+  ["H/H"] = 6,
+  ["H/P"] = 7,
+  ["P/S"] = 8,
+  ["H/S"] = 9,
+  ["P/B"] = 10,
+  ["S/B"] = 11,
+  ["H/B"] = 12,
 }
 
 local function GetQualityHex(quality)
@@ -56,6 +70,50 @@ local function GetQualityHex(quality)
   )
 end
 
+local function GetCurrentBreedID(pet)
+  if type(pet) ~= "table" then
+    return nil
+  end
+
+  local breedID =
+      tonumber(
+        pet.breedID
+      )
+
+  if breedID then
+    return breedID
+  end
+
+  local breedName =
+      pet.breedName
+
+  if not breedName then
+    local petGUID =
+        pet.petGUID
+        or pet.petID
+        or pet.guid
+
+    local breedService =
+        addon.Services
+        and addon.Services.Breed
+
+    if petGUID
+        and breedService
+        and type(
+          breedService.GetJournalBreed
+        ) == "function" then
+      breedName =
+          breedService:GetJournalBreed(
+            petGUID
+          )
+    end
+  end
+
+  return breedName
+      and BREED_NAME_TO_ID[breedName]
+      or nil
+end
+
 local function IsBattlePetBreedIDLoaded()
   if C_AddOns
       and type(C_AddOns.IsAddOnLoaded)
@@ -91,7 +149,6 @@ function BreedSection:Create(parent)
 
   instance.Frame:SetHeight(1)
 
-  -- parent is PetCard.Content.
   instance.CardFrame =
       parent
       and parent:GetParent()
@@ -204,20 +261,24 @@ function BreedSection:Create(parent)
     "Hover the possible breeds to view detailed breed and base-stat information."
   )
 
-  instance.HoverFrame =
+  instance.HoverButton =
       CreateFrame(
-        "Frame",
+        "Button",
         nil,
         instance.Frame
       )
 
-  instance.HoverFrame:SetFrameLevel(
-    instance.Frame:GetFrameLevel() + 10
+  instance.HoverButton:SetFrameStrata(
+    "TOOLTIP"
   )
 
-  instance.HoverFrame:EnableMouse(true)
+  instance.HoverButton:SetFrameLevel(
+    500
+  )
 
-  instance.HoverFrame:SetScript(
+  instance.HoverButton:EnableMouse(true)
+
+  instance.HoverButton:SetScript(
     "OnEnter",
 
     function()
@@ -225,7 +286,7 @@ function BreedSection:Create(parent)
     end
   )
 
-  instance.HoverFrame:SetScript(
+  instance.HoverButton:SetScript(
     "OnLeave",
 
     function()
@@ -233,20 +294,179 @@ function BreedSection:Create(parent)
     end
   )
 
-  instance.HoverFrame:Hide()
+  instance.HoverButton:Hide()
 
   return instance
 end
 
+function BreedSection:PositionBreedTooltip()
+  local tooltip =
+      GameTooltip
+
+  local cardFrame =
+      self.CardFrame
+
+  if not tooltip
+      or not cardFrame then
+    return
+  end
+
+  tooltip:ClearAllPoints()
+
+  tooltip:SetPoint(
+    "TOPLEFT",
+    cardFrame,
+    "TOPRIGHT",
+    BREED_TOOLTIP_OFFSET_X,
+    BREED_TOOLTIP_OFFSET_Y
+  )
+
+  tooltip:SetClampedToScreen(
+    true
+  )
+
+  tooltip:SetFrameStrata(
+    "TOOLTIP"
+  )
+
+  tooltip:SetFrameLevel(
+    math.max(
+      300,
+      cardFrame:GetFrameLevel() + 100
+    )
+  )
+end
+
+function BreedSection:ShowBreedTooltip()
+  local pet =
+      self.Pet
+
+  if not pet
+      or not pet.speciesID then
+    return
+  end
+
+  local setBreedTooltip = _G.BPBID_SetBreedTooltip
+
+  if type(setBreedTooltip)
+      ~= "function" then
+    return
+  end
+
+  local speciesID =
+      tonumber(
+        pet.speciesID
+      )
+
+  if not speciesID then
+    return
+  end
+
+  local petGUID =
+      pet.petGUID
+      or pet.petID
+      or pet.guid
+
+  local quality =
+      tonumber(
+        pet.quality
+      )
+
+  if not quality
+      and petGUID then
+    local _, _, _, _, petQuality =
+        C_PetJournal.GetPetStats(
+          petGUID
+        )
+
+    quality = petQuality
+  end
+
+  quality = quality or 1
+
+  local tooltip = GameTooltip
+
+  tooltip:Hide()
+
+  tooltip:SetOwner(
+    self.HoverButton,
+    "ANCHOR_NONE"
+  )
+
+  tooltip:ClearLines()
+
+  tooltip:SetMinimumWidth(
+    BREED_TOOLTIP_WIDTH
+  )
+
+  tooltip:SetText(
+    "BattlePetBreedID"
+  )
+
+  local currentBreedID = GetCurrentBreedID(pet)
+  local currentBreedIDs
+
+  if currentBreedID then
+    currentBreedIDs = {
+      currentBreedID,
+    }
+  end
+
+  setBreedTooltip(
+    tooltip,
+    speciesID,
+    currentBreedIDs,
+    quality
+  )
+
+  tooltip:SetMinimumWidth(
+    BREED_TOOLTIP_WIDTH
+  )
+
+  local cardFrame = self.CardFrame
+
+  if cardFrame then
+    tooltip:ClearAllPoints()
+
+    tooltip:SetPoint(
+      "TOPLEFT",
+      cardFrame,
+      "TOPRIGHT",
+      0,
+      0
+    )
+
+    tooltip:SetFrameStrata(
+      "TOOLTIP"
+    )
+
+    tooltip:SetFrameLevel(
+      math.max(
+        1000,
+        cardFrame:GetFrameLevel()
+        + 100
+      )
+    )
+  end
+
+  tooltip:Show()
+end
+
+function BreedSection:HideBreedTooltip()
+  if GameTooltip:GetOwner()
+      == self.HoverButton then
+    GameTooltip:Hide()
+  end
+end
+
 function BreedSection:SetPet(pet)
-  local breedService =
-      addon.Services.Breed
+  local breedService = addon.Services.Breed
 
   if not breedService
       or not pet
       or not pet.speciesID then
     self.Pet = nil
-    self.HoverFrame:Hide()
+    self.HoverButton:Hide()
     self.Frame:Hide()
 
     return false
@@ -261,7 +481,7 @@ function BreedSection:SetPet(pet)
       or #possibleBreeds == 0 then
     self.Pet = nil
     self.Breeds:SetText("")
-    self.HoverFrame:Hide()
+    self.HoverButton:Hide()
     self.Frame:Hide()
 
     return false
@@ -330,138 +550,6 @@ function BreedSection:SetPet(pet)
   return true
 end
 
-function BreedSection:PositionTooltip()
-  local tooltip =
-      GameTooltip
-
-  local cardFrame =
-      self.CardFrame
-
-  if not tooltip
-      or not cardFrame then
-    return
-  end
-
-  tooltip:ClearAllPoints()
-
-  tooltip:SetPoint(
-    "TOPLEFT",
-    cardFrame,
-    "TOPRIGHT",
-    BREED_TOOLTIP_OFFSET_X,
-    BREED_TOOLTIP_OFFSET_Y
-  )
-
-  tooltip:SetClampedToScreen(true)
-end
-
-function BreedSection:ShowBreedTooltip()
-  local pet =
-      self.Pet
-
-  if not pet then
-    return
-  end
-
-  local petGUID =
-      pet.petGUID
-      or pet.petID
-      or pet.guid
-
-  if type(petGUID) ~= "string"
-      or petGUID == "" then
-    return
-  end
-
-  local battlePetBreedIDLoaded =
-      IsBattlePetBreedIDLoaded()
-
-  --------------------------------------------------
-  -- BattlePetBreedID hooks Blizzard's PetInfo frame.
-  -- Running that frame's OnEnter causes Blizzard's
-  -- normal pet tooltip and BPBID's extra breed lines
-  -- to be built together.
-  --------------------------------------------------
-
-  local blizzardPetInfo =
-      _G.PetJournalPetCardPetInfo
-      or (
-        _G.PetJournalPetCard
-        and _G.PetJournalPetCard.PetInfo
-      )
-
-  local blizzardPetCard =
-      _G.PetJournalPetCard
-
-  if battlePetBreedIDLoaded
-      and blizzardPetInfo
-      and blizzardPetCard
-      and type(blizzardPetInfo.RunScript)
-      == "function" then
-    local previousPetID =
-        blizzardPetCard.petID
-
-    local previousSpeciesID =
-        blizzardPetCard.speciesID
-
-    blizzardPetCard.petID =
-        petGUID
-
-    blizzardPetCard.speciesID =
-        pet.speciesID
-
-    blizzardPetInfo:RunScript(
-      "OnEnter"
-    )
-
-    blizzardPetCard.petID =
-        previousPetID
-
-    blizzardPetCard.speciesID =
-        previousSpeciesID
-
-    self:PositionTooltip()
-    GameTooltip:Show()
-
-    return
-  end
-
-  --------------------------------------------------
-  -- Fallback without BattlePetBreedID.
-  --------------------------------------------------
-
-  GameTooltip:SetOwner(
-    self.HoverFrame,
-    "ANCHOR_NONE"
-  )
-
-  GameTooltip:SetCompanionPet(
-    petGUID
-  )
-
-  self:PositionTooltip()
-  GameTooltip:Show()
-end
-
-function BreedSection:HideBreedTooltip()
-  local blizzardPetInfo =
-      _G.PetJournalPetCardPetInfo
-      or (
-        _G.PetJournalPetCard
-        and _G.PetJournalPetCard.PetInfo
-      )
-
-  if blizzardPetInfo
-      and type(blizzardPetInfo.RunScript)
-      == "function" then
-    blizzardPetInfo:RunScript(
-      "OnLeave"
-    )
-  end
-
-  GameTooltip:Hide()
-end
-
 function BreedSection:UpdateHeight()
   if not self.Frame:IsShown() then
     return
@@ -503,30 +591,27 @@ function BreedSection:UpdateHeight()
     )
   )
 
-  --------------------------------------------------
-  -- Alleen de breedtekst is hoverbaar.
-  --------------------------------------------------
+  self.HoverButton:ClearAllPoints()
 
-  self.HoverFrame:ClearAllPoints()
-
-  self.HoverFrame:SetPoint(
+  self.HoverButton:SetPoint(
     "TOPLEFT",
     self.Breeds,
     "TOPLEFT",
-    0,
-    2
+    -4,
+    4
   )
 
-  self.HoverFrame:SetPoint(
+  self.HoverButton:SetPoint(
     "BOTTOMRIGHT",
     self.Breeds,
     "BOTTOMRIGHT",
-    0,
-    -2
+    4,
+    -4
   )
 
-  self.HoverFrame:SetShown(
+  self.HoverButton:SetShown(
     self.Pet ~= nil
+    and self.Frame:IsShown()
   )
 end
 

@@ -218,6 +218,7 @@ function PetCard:CreateContent()
   )
 
   self.Content:SetHeight(1)
+  self.Content:EnableMouse(false)
 end
 
 function PetCard:CreateCloseButton()
@@ -279,6 +280,10 @@ function PetCard:SetPinned(pinned)
   end
 
   self.Frame:EnableMouse(
+    self.Pinned
+  )
+
+  self.Content:EnableMouse(
     self.Pinned
   )
 end
