@@ -109,7 +109,7 @@ function FolderContextMenu:DeleteFolder(folderKey)
     return
   end
 
-  addon.DeleteFolderDialog:Show(
+  addon.UI.Dialogs.DeleteFolderDialog:Show(
     folder
   )
 end

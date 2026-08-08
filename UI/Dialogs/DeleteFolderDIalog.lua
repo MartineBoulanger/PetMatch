@@ -1,9 +1,10 @@
 local _, addon = ...
 
 local DeleteFolderDialog = {}
-addon.DeleteFolderDialog = DeleteFolderDialog
 
-local frame
+addon.UI.Dialogs = addon.UI.Dialogs or {}
+
+local dialogInstance
 
 local function CountFolderTeams(folderID)
   local count = 0
@@ -48,192 +49,84 @@ local function DeleteFolder(
 end
 
 local function CreateDialog()
-  local dialog = CreateFrame(
-    "Frame",
-    "PetMatchDeleteFolderDialog",
-    UIParent,
-    "BackdropTemplate"
-  )
-
-  dialog:SetSize(460, 190)
-  dialog:SetPoint("CENTER")
-  dialog:SetFrameStrata("DIALOG")
-  dialog:SetClampedToScreen(true)
-  dialog:EnableMouse(true)
-  dialog:SetMovable(true)
-  dialog:RegisterForDrag("LeftButton")
-
-  dialog:SetScript(
-    "OnDragStart",
-    dialog.StartMoving
-  )
-
-  dialog:SetScript(
-    "OnDragStop",
-    dialog.StopMovingOrSizing
-  )
-
-  dialog:SetBackdrop({
-    bgFile =
-    "Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile =
-    "Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile = true,
-    tileSize = 32,
-    edgeSize = 32,
-    insets = {
-      left = 11,
-      right = 12,
-      top = 12,
-      bottom = 11,
+  local dialog = addon.UI.Base.Dialog:Create({
+    name = "PetMatchDeleteFolderDialog",
+    title = "Delete Folder",
+    width = 384,
+    contentMargin = {
+      left = -12
     },
+    bottomSpacing = 0,
+
+    onAccept = function(control)
+      DeleteFolder(
+        control.folder,
+        false
+      )
+    end,
+
+    onExtraAccept = function(control)
+      DeleteFolder(
+        control.folder,
+        true
+      )
+    end,
+
+    onCancel = function(control)
+      control.folder = nil
+    end
   })
 
-  dialog:SetBackdropColor(
-    0,
-    0,
-    0,
-    1
-  )
+  dialog.MoveButton = dialog:AddAcceptButton({
+    text = "Move to Unsorted",
+    width = 140
+  })
 
-  dialog.Title = dialog:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontNormalLarge"
-  )
+  dialog.DeleteButton = dialog:AddExtraButton({
+    text = "Delete Teams",
+    width = 110
+  })
 
-  dialog.Title:SetPoint(
-    "TOP",
-    0,
-    -22
-  )
+  dialog.CancelButton = dialog:AddCancelButton({
+    text = "Cancel"
+  })
 
-  dialog.Title:SetText(
-    "Delete Folder"
-  )
+  local content = dialog:GetContentFrame()
 
-  dialog.Message = dialog:CreateFontString(
+  local message = content:CreateFontString(
     nil,
     "OVERLAY",
     "GameFontHighlight"
   )
 
-  dialog.Message:SetPoint(
+  message:SetPoint(
     "TOPLEFT",
-    30,
-    -55
+    content,
+    "TOPLEFT",
+    0,
+    0
   )
 
-  dialog.Message:SetPoint(
+  message:SetPoint(
     "TOPRIGHT",
-    -30,
-    -55
-  )
-
-  dialog.Message:SetJustifyH("CENTER")
-  dialog.Message:SetJustifyV("TOP")
-
-  dialog.MoveButton = CreateFrame(
-    "Button",
-    nil,
-    dialog,
-    "UIPanelButtonTemplate"
-  )
-
-  dialog.MoveButton:SetSize(165, 26)
-  dialog.MoveButton:SetPoint(
-    "BOTTOMLEFT",
-    18,
-    22
-  )
-
-  dialog.MoveButton:SetText(
-    "Move to Unsorted"
-  )
-
-  dialog.DeleteButton = CreateFrame(
-    "Button",
-    nil,
-    dialog,
-    "UIPanelButtonTemplate"
-  )
-
-  dialog.DeleteButton:SetSize(165, 26)
-  dialog.DeleteButton:SetPoint(
-    "LEFT",
-    dialog.MoveButton,
-    "RIGHT",
-    5,
+    content,
+    "TOPRIGHT",
+    0,
     0
   )
 
-  dialog.DeleteButton:SetText(
-    "Delete Teams"
-  )
+  message:SetJustifyH("CENTER")
+  message:SetJustifyV("TOP")
+  message:SetWordWrap(true)
 
-  dialog.CancelButton = CreateFrame(
-    "Button",
-    nil,
-    dialog,
-    "UIPanelButtonTemplate"
-  )
+  dialog.Message = message
 
-  dialog.CancelButton:SetSize(80, 26)
-  dialog.CancelButton:SetPoint(
-    "LEFT",
-    dialog.DeleteButton,
-    "RIGHT",
-    5,
-    0
-  )
-
-  dialog.CancelButton:SetText(
-    "Cancel"
-  )
-
-  dialog.MoveButton:SetScript(
-    "OnClick",
-    function()
-      local folder = dialog.folder
-
-      dialog:Hide()
-
-      DeleteFolder(
-        folder,
-        false
-      )
-    end
-  )
-
-  dialog.DeleteButton:SetScript(
-    "OnClick",
-    function()
-      local folder = dialog.folder
-
-      dialog:Hide()
-
-      DeleteFolder(
-        folder,
-        true
-      )
-    end
-  )
-
-  dialog.CancelButton:SetScript(
-    "OnClick",
-    function()
-      dialog:Hide()
-    end
-  )
-
-  dialog:SetScript(
+  dialog:GetFrame():HookScript(
     "OnHide",
     function()
-      dialog.folder = nil
+      dialog.Folder = nil
     end
   )
-
-  dialog:Hide()
 
   return dialog
 end
@@ -243,13 +136,11 @@ function DeleteFolderDialog:Show(folder)
     return
   end
 
-  if not frame then
-    frame = CreateDialog()
+  if not dialogInstance then
+    dialogInstance = CreateDialog()
   end
 
-  local teamCount =
-      CountFolderTeams(folder.id)
-
+  local teamCount = CountFolderTeams(folder.id)
   local teamText
 
   if teamCount == 1 then
@@ -260,9 +151,9 @@ function DeleteFolderDialog:Show(folder)
         .. " teams"
   end
 
-  frame.folder = folder
+  dialogInstance.folder = folder
 
-  frame.Message:SetText(
+  dialogInstance.Message:SetText(
     "Delete folder \""
     .. folder.name
     .. "\"?\n\n"
@@ -273,17 +164,16 @@ function DeleteFolderDialog:Show(folder)
     .. "or delete them permanently."
   )
 
-  frame.DeleteButton:SetEnabled(
+  dialogInstance.DeleteButton:SetEnabled(
     teamCount > 0
   )
 
-  frame:Show()
-  frame:Raise()
+  dialogInstance:Show()
 end
 
 function DeleteFolderDialog:Hide()
-  if frame then
-    frame:Hide()
+  if dialogInstance then
+    dialogInstance:Hide()
   end
 end
 

@@ -29,7 +29,7 @@ function Panel:Create(parent, options)
 
   frame.Background:SetTexture(
     options.background
-    or "Interface/BlackMarket/blackmarketbackground-tile"
+    or "Interface\\BlackMarket\\blackmarketbackground-tile"
     or nil
   )
 
