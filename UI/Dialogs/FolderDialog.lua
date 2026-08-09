@@ -2,208 +2,50 @@ local _, addon = ...
 
 local FolderDialog = {}
 
-local WIDTH = 320
-local HEIGHT = 145
+local DIALOG_WIDTH = 320
+local CONTENT_PADDING = 14
+local CONTENT_MARGIN = {
+  left = -12,
+  right = 12,
+  top = 4,
+  bottom = 8,
+}
 
-function FolderDialog:Create()
-  if self.Frame then
-    return self.Frame
-  end
+local dialogInstance
 
-  local frame =
-      addon.UI.Base.Panel:Create(
-        UIParent,
-        {
-          width = WIDTH,
-          height = HEIGHT,
-          background = "Interface/Tooltips/chatbubble-background"
-        }
-      )
-
-  frame:SetFrameStrata("DIALOG")
-  frame:SetClampedToScreen(true)
-  frame:EnableMouse(true)
-  frame:SetPoint("CENTER", UIParent, "CENTER")
-
-  self.Frame = frame
+--------------------------------------------------
+-- State
+--------------------------------------------------
+function FolderDialog:ClearState()
   self.Mode = "create"
   self.Folder = nil
 
-  self.Title =
-      addon.UI.Base.Label:Create(
-        frame,
-        {
-          text = "Create Folder",
-          font = addon.UI.Theme.Fonts.Header,
-          width = WIDTH - 24,
-          justify = "CENTER",
-          color = addon.UI.Theme.Colors.Header
-        }
-      )
-
-  self.Title:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    12,
-    -12
-  )
-
-  self.NameLabel =
-      addon.UI.Base.Label:Create(
-        frame,
-        {
-          text = "Folder name",
-          width = WIDTH - 24,
-          justify = "LEFT",
-        }
-      )
-
-  self.NameLabel:SetPoint(
-    "TOPLEFT",
-    self.Title,
-    "BOTTOMLEFT",
-    0,
-    -12
-  )
-
-  self.NameInput =
-      CreateFrame(
-        "EditBox",
-        nil,
-        frame,
-        "InputBoxTemplate"
-      )
-
-  self.NameInput:SetSize(WIDTH - 32, 28)
-  self.NameInput:SetPoint(
-    "TOPLEFT",
-    self.NameLabel,
-    "BOTTOMLEFT",
-    4,
-    -4
-  )
-
-  self.NameInput:SetAutoFocus(false)
-  self.NameInput:SetMaxLetters(60)
-
-  self.SaveButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Save",
-          width = 100,
-
-          onClick = function()
-            self:Save()
-          end,
-        }
-      )
-
-  self.SaveButton:SetPoint(
-    "BOTTOMRIGHT",
-    frame,
-    "BOTTOMRIGHT",
-    -12,
-    12
-  )
-
-  self.CancelButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Cancel",
-          width = 100,
-
-          onClick = function()
-            self:Hide()
-          end,
-        }
-      )
-
-  self.CancelButton:SetPoint(
-    "RIGHT",
-    self.SaveButton,
-    "LEFT",
-    -8,
-    0
-  )
-
-  self.NameInput:SetScript(
-    "OnEnterPressed",
-    function()
-      self:Save()
-    end
-  )
-
-  self.NameInput:SetScript(
-    "OnEscapePressed",
-    function()
-      self:Hide()
-    end
-  )
-
-  frame:Hide()
-
-  return frame
-end
-
-function FolderDialog:ShowCreate()
-  local frame = self:Create()
-
-  self.Mode = "create"
-  self.Folder = nil
-
-  self.Title:SetText("Create Folder")
-  self.NameInput:SetText("New Folder")
-
-  frame:Show()
-
-  self.NameInput:SetFocus()
-end
-
-function FolderDialog:ShowRename(folder)
-  if not folder then
-    return
+  if self.NameInput then
+    self.NameInput:ClearFocus()
+    self.NameInput:SetText("")
   end
-
-  local frame = self:Create()
-
-  self.Mode = "rename"
-  self.Folder = folder
-
-  self.Title:SetText("Rename Folder")
-  self.NameInput:SetText(folder.name or "")
-
-  frame:Show()
-
-  self.NameInput:SetFocus()
-  self.NameInput:HighlightText()
 end
 
-function FolderDialog:Hide()
-  if not self.Frame then
-    return
-  end
-
-  self.NameInput:ClearFocus()
-  self.Frame:Hide()
-
-  self.Folder = nil
-end
-
+--------------------------------------------------
+-- Save
+--------------------------------------------------
 function FolderDialog:Save()
-  local name =
-      addon.Utils:Trim(
-        self.NameInput:GetText() or ""
-      )
+  local name = addon.Utils:Trim(self.NameInput:GetText() or "")
+
+  if name == "" then
+    addon.Logger:Warn("Enter a folder name")
+    self.NameInput:SetFocus()
+    self.NameInput:HighlightText()
+    return false
+  end
 
   local folder
   local errorMessage
 
   if self.Mode == "rename" then
     if not self.Folder then
-      return
+      addon.Logger:Warn("No folder selected")
+      return false
     end
 
     folder, errorMessage =
@@ -213,23 +55,213 @@ function FolderDialog:Save()
         )
   else
     folder, errorMessage =
-        addon.Services.Folder:Create(name)
+        addon.Services.Folder:Create(
+          name
+        )
   end
 
   if not folder then
-    addon.Logger:Warn(
-      errorMessage or "Unable to save folder"
-    )
-
+    addon.Logger:Warn(errorMessage or "Unable to save folder")
     self.NameInput:SetFocus()
     self.NameInput:HighlightText()
-
-    return
+    return false
   end
 
   addon.Services.Folder:Select(folder.id)
 
-  self:Hide()
+  return true
 end
 
+--------------------------------------------------
+-- Create content
+--------------------------------------------------
+function FolderDialog:CreateContent(dialog)
+  local content = dialog:GetContentFrame()
+
+  --------------------------------------------------
+  -- Name label
+  --------------------------------------------------
+  self.NameLabel =
+      addon.UI.Base.Label:Create(
+        content,
+        {
+          text = "Folder name",
+          justify = "LEFT",
+        }
+      )
+
+  self.NameLabel:SetPoint(
+    "TOPLEFT",
+    content,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  self.NameLabel:SetPoint(
+    "TOPRIGHT",
+    content,
+    "TOPRIGHT",
+    0,
+    0
+  )
+
+  --------------------------------------------------
+  -- Name input
+  --------------------------------------------------
+  self.NameInput =
+      CreateFrame(
+        "EditBox",
+        nil,
+        content,
+        "InputBoxTemplate"
+      )
+
+  self.NameInput:SetHeight(28)
+
+  self.NameInput:SetPoint(
+    "TOPLEFT",
+    self.NameLabel,
+    "BOTTOMLEFT",
+    4,
+    2
+  )
+
+  self.NameInput:SetPoint(
+    "TOPRIGHT",
+    self.NameLabel,
+    "BOTTOMRIGHT",
+    0,
+    -4
+  )
+
+  self.NameInput:SetAutoFocus(false)
+  self.NameInput:SetMaxLetters(60)
+
+  --------------------------------------------------
+  -- Keyboard
+  --------------------------------------------------
+  self.NameInput:SetScript(
+    "OnEnterPressed",
+    function()
+      dialog:Accept()
+    end
+  )
+
+  self.NameInput:SetScript(
+    "OnEscapePressed",
+    function()
+      dialog:Cancel()
+    end
+  )
+end
+
+--------------------------------------------------
+-- Create dialog
+--------------------------------------------------
+function FolderDialog:Create()
+  if dialogInstance then
+    return dialogInstance
+  end
+
+  local dialog =
+      addon.UI.Base.Dialog:Create({
+        name = "PetMatchFolderDialog",
+        title = "Create Folder",
+        width = DIALOG_WIDTH,
+        contentMargin = CONTENT_MARGIN,
+        padding = CONTENT_PADDING,
+        bottomSpacing = 0,
+        onAccept = function() return self:Save() end,
+        onCancel =
+            function()
+              self:ClearState()
+              return true
+            end,
+        onClose = function() self:ClearState() end,
+      })
+
+  self:CreateContent(dialog)
+
+  --------------------------------------------------
+  -- Footer buttons
+  --------------------------------------------------
+  self.CancelButton =
+      dialog:AddCancelButton({
+        text = "Cancel",
+        width = 100,
+      })
+
+  self.SaveButton =
+      dialog:AddAcceptButton({
+        text = "Save",
+        width = 100,
+      })
+
+  dialogInstance = dialog
+
+  self.Dialog = dialog
+  self.Frame = dialog:GetFrame()
+
+  dialog:RefreshLayout()
+
+  return dialog
+end
+
+--------------------------------------------------
+-- Show create
+--------------------------------------------------
+function FolderDialog:ShowCreate()
+  local dialog = self:Create()
+
+  self.Mode = "create"
+  self.Folder = nil
+
+  dialog:SetTitle("Create Folder")
+
+  self.NameInput:SetText("New Folder")
+
+  dialog:Show()
+  dialog:RefreshLayout()
+
+  self.NameInput:SetFocus()
+  self.NameInput:HighlightText()
+end
+
+--------------------------------------------------
+-- Show rename
+--------------------------------------------------
+function FolderDialog:ShowRename(folder)
+  if not folder then
+    return
+  end
+
+  local dialog = self:Create()
+
+  self.Mode = "rename"
+  self.Folder = folder
+
+  dialog:SetTitle("Rename Folder")
+
+  self.NameInput:SetText(folder.name or "")
+
+  dialog:Show()
+  dialog:RefreshLayout()
+
+  self.NameInput:SetFocus()
+  self.NameInput:HighlightText()
+end
+
+--------------------------------------------------
+-- Hide
+--------------------------------------------------
+function FolderDialog:Hide()
+  if dialogInstance then
+    dialogInstance:Hide()
+  end
+end
+
+--------------------------------------------------
+-- Register
+--------------------------------------------------
 addon.UI.Dialogs.FolderDialog = FolderDialog
