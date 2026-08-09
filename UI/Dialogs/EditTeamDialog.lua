@@ -10,7 +10,6 @@ local CONTENT_MARGIN = {
   bottom = 8
 }
 local CONTENT_PADDING = 16
-local FIELD_SPACING = 6
 local SOURCE_BUTTON_SPACING = 10
 
 local dialogInstance
