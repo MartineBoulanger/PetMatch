@@ -74,44 +74,11 @@ function TeamContextMenu:Show(owner, team)
       rootDescription:CreateButton(
         "Delete Team",
         function()
-          StaticPopup_Show(
-            "PETMATCH_DELETE_TEAM",
-            team.name,
-            nil,
-            team
-          )
+          addon.UI.Dialogs.DeleteTeamDialog:Show(team)
         end
       )
     end
   )
 end
-
-StaticPopupDialogs.PETMATCH_DELETE_TEAM = {
-  text = "Delete team \"%s\"?",
-  button1 = "Delete",
-  button2 = "Cancel",
-
-  OnAccept = function(_, team)
-    if not team then
-      return
-    end
-
-    local deleted =
-        addon.Services.Team:Delete(
-          team.id
-        )
-
-    if not deleted then
-      addon.Logger:Warn(
-        "Unable to delete team"
-      )
-    end
-  end,
-
-  timeout = 0,
-  whileDead = true,
-  hideOnEscape = true,
-  preferredIndex = 3,
-}
 
 addon.UI.Actions.TeamContextMenu = TeamContextMenu
