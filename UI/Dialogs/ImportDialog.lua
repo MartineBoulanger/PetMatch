@@ -215,8 +215,6 @@ function ImportDialog:CreateContent(dialog)
     INPUT_HEIGHT - 20
   )
 
-  self.ScrollFrame:SetScrollChild(self.Input)
-
   self.Input:SetScript(
     "OnEscapePressed",
     function()
@@ -226,32 +224,12 @@ function ImportDialog:CreateContent(dialog)
 
   self.Input:SetScript(
     "OnTextChanged",
-    function(editBox)
-      local visibleHeight = self.ScrollFrame:GetHeight() or 1
-      local textHeight = 0
-
-      if type(editBox.GetFontString) == "function" then
-        local fontString = editBox:GetFontString()
-
-        if fontString and type(fontString.GetStringHeight) == "function" then
-          textHeight = fontString:GetStringHeight() or 0
-        end
-      end
-
-      editBox:SetHeight(
-        math.max(
-          visibleHeight,
-          math.ceil(textHeight) + 16
-        )
-      )
-
-      if type(self.ScrollFrame.UpdateScrollChildRect) == "function" then
-        self.ScrollFrame:UpdateScrollChildRect()
-      end
-
+    function()
       self:UpdateButtons()
     end
   )
+
+  self.ScrollFrame:SetScrollChild(self.Input)
 
   --------------------------------------------------
   -- Folder dropdown

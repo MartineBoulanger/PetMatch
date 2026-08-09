@@ -3,10 +3,36 @@ local _, addon = ...
 local PetJournalService = {}
 
 PetJournalService.Cache = {}
+PetJournalService.BestOwnedPetBySpeciesID = {}
+PetJournalService.IndexReady = false
+
+local function IsBetterPet(
+    level,
+    quality,
+    bestLevel,
+    bestQuality
+)
+  level = tonumber(level) or 0
+  quality = tonumber(quality) or 0
+  bestLevel = tonumber(bestLevel) or -1
+  bestQuality = tonumber(bestQuality) or -1
+
+  return level > bestLevel
+      or (
+        level == bestLevel
+        and quality > bestQuality
+      )
+end
 
 function PetJournalService:Scan()
   wipe(self.Cache)
+  wipe(self.BestOwnedPetBySpeciesID)
+
+  local bestLevels = {}
+  local bestQualities = {}
+
   local numPets = C_PetJournal.GetNumPets()
+
   for index = 1, numPets do
     local petGUID,
     speciesID,
@@ -25,7 +51,12 @@ function PetJournalService:Scan()
     canBattle,
     tradable,
     unique = C_PetJournal.GetPetInfoByIndex(index)
-    if isOwned then
+
+    if isOwned and petGUID and speciesID then
+      local _, _, _, _, quality = C_PetJournal.GetPetStats(petGUID)
+      level = tonumber(level) or 0
+      quality = tonumber(quality) or 0
+
       local pet = {
         petGUID = petGUID,
         speciesID = speciesID,
@@ -36,14 +67,34 @@ function PetJournalService:Scan()
         petType = petType,
         canBattle = canBattle == true,
       }
+
       self.Cache[petGUID] = pet
+
+      local bestLevel = bestLevels[speciesID]
+      local bestQuality = bestQualities[speciesID]
+
+      if IsBetterPet(level, quality, bestLevel, bestQuality) then
+        self.BestOwnedPetBySpeciesID[speciesID] = petGUID
+        bestLevels[speciesID] = level
+        bestQualities[speciesID] = quality
+      end
     end
   end
+
+  self.IndexReady = true
 
   addon.EventBus:Fire(
     addon.Events.PET_JOURNAL_UPDATED,
     self.Cache
   )
+end
+
+function PetJournalService:EnsureIndex()
+  if self.IndexReady then
+    return
+  end
+
+  self:Scan()
 end
 
 function PetJournalService:GetPet(petGUID)
@@ -115,33 +166,14 @@ function PetJournalService:FindOwnedPetBySpeciesID(speciesID)
     return nil
   end
 
-  local petCount = C_PetJournal.GetNumPets()
-  local bestPetGUID = nil
-  local bestLevel = -1
-  local bestQuality = -1
+  self:EnsureIndex()
 
-  for index = 1, petCount do
-    local petGUID,
-    currentSpeciesID,
-    owned,
-    customName,
-    level = C_PetJournal.GetPetInfoByIndex(index)
+  return self.BestOwnedPetBySpeciesID[speciesID]
+end
 
-    if owned and petGUID and currentSpeciesID == speciesID then
-      local _, _, _, _, quality = C_PetJournal.GetPetStats(petGUID)
-
-      level = level or 0
-      quality = quality or 0
-
-      if level > bestLevel or (level == bestLevel and quality > bestQuality) then
-        bestPetGUID = petGUID
-        bestLevel = level
-        bestQuality = quality
-      end
-    end
-  end
-
-  return bestPetGUID
+function PetJournalService:InvalidateCache()
+  self.IndexReady = false
+  wipe(self.BestOwnedPetBySpeciesID)
 end
 
 function PetJournalService:GetSpeciesID(petGUID)

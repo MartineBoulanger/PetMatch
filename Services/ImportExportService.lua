@@ -4,6 +4,7 @@ local ImportExportService = {}
 
 local PM_VERSION = "PM1"
 local BASE32_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUV"
+local MAX_IMPORT_BYTES = 250000
 
 local function Trim(value)
   return addon.Utils:Trim(value or "")
@@ -664,6 +665,14 @@ function ImportExportService:Parse(value)
     return nil, "Paste a team string"
   end
 
+  if #value > MAX_IMPORT_BYTES then
+    return nil,
+        "The import string is too large. "
+        .. "Maximum size is "
+        .. MAX_IMPORT_BYTES
+        .. " bytes."
+  end
+
   local format = self:DetectFormat(value)
 
   if format == "petmatch" then
@@ -761,6 +770,8 @@ function ImportExportService:ImportRematchDocument(
     failed = {},
   }
 
+  local resolvedPetsBySpeciesID = {}
+
   for _, groupData in ipairs(document.groups or {}) do
     local folderID = defaultFolderID
 
@@ -801,13 +812,12 @@ function ImportExportService:ImportRematchDocument(
     for _, teamData in ipairs(groupData.teams or {}) do
       teamData.folderID = folderID
 
-      local team,
-      errorMessage,
-      missingSpecies =
+      local team, errorMessage, missingSpecies =
           addon.Services.Team:CreateFromImport(
             teamData,
             {
               conflictMode = conflictMode,
+              resolvedPetsBySpeciesID = resolvedPetsBySpeciesID
             }
           )
 
@@ -1152,8 +1162,7 @@ function ImportExportService:DetectFormat(value)
     return "petmatch"
   end
 
-  local firstLine =
-      value:match("([^\r\n]+)")
+  local firstLine = value:match("([^\r\n]+)")
 
   if firstLine then
     firstLine = Trim(firstLine)

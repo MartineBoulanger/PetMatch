@@ -2,6 +2,8 @@ local _, addon = ...
 
 local TeamService = {}
 
+local resolvedPetsBySpeciesID = {}
+
 local function GetProfile()
   return addon.Profiles:GetCurrentProfile()
 end
@@ -747,10 +749,12 @@ function TeamService:HasTag(team, tagID)
       and team.tags[tagID] == true
 end
 
-function TeamService:BuildFromImport(importData)
+function TeamService:BuildFromImport(importData, resolvedPetsBySpeciesID)
   if type(importData) ~= "table" then
     return nil, "Invalid import data", {}
   end
+
+  resolvedPetsBySpeciesID = resolvedPetsBySpeciesID or {}
 
   local team = {
     name = addon.Utils:Trim(importData.name or ""),
@@ -787,18 +791,26 @@ function TeamService:BuildFromImport(importData)
           rawPetTag = slotData.rawPetTag,
         }
       elseif slotData.speciesID then
-        local petGUID =
-            addon.Services.PetJournal:
-            FindOwnedPetBySpeciesID(
-              slotData.speciesID
-            )
+        local speciesID = tonumber(slotData.speciesID)
 
-        if petGUID then
-          team.pets[slot] = petGUID
-        else
-          missingSpecies[
-          #missingSpecies + 1
-          ] = slotData.speciesID
+        if speciesID then
+          local cachedPet = resolvedPetsBySpeciesID[speciesID]
+          local petGUID
+
+          if cachedPet ~= nil then
+            if cachedPet ~= false then
+              petGUID = cachedPet
+            end
+          else
+            petGUID = addon.Services.PetJournal:FindOwnedPetBySpeciesID(slotData.speciesID)
+            resolvedPetsBySpeciesID[speciesID] = petGUID or false
+          end
+
+          if petGUID then
+            team.pets[slot] = petGUID
+          else
+            missingSpecies[#missingSpecies + 1] = slotData.speciesID
+          end
         end
 
         team.abilities[slot] = slotData.abilities or {}
@@ -814,7 +826,7 @@ function TeamService:CreateFromImport(importData, options)
   options = options or {}
 
   local importedTeam, errorMessage, missingSpecies =
-      self:BuildFromImport(importData)
+      self:BuildFromImport(importData, options.resolvedPetsBySpeciesID)
 
   if not importedTeam then
     return nil, errorMessage, missingSpecies
@@ -832,9 +844,7 @@ function TeamService:CreateFromImport(importData, options)
 
   if team then
     if conflictMode == "skip" then
-      return nil,
-          "Team already exists",
-          missingSpecies
+      return nil, "Team already exists", missingSpecies
     elseif conflictMode == "keep" then
       local uniqueName =
           self:GetUniqueName(
@@ -845,20 +855,18 @@ function TeamService:CreateFromImport(importData, options)
       team = self:Create(uniqueName)
 
       if not team then
-        return nil,
-            "Unable to create team",
-            missingSpecies
+        return nil, "Unable to create team", missingSpecies
       end
     elseif conflictMode == "replace" then
       -- Gebruik het bestaande team.
+    else
+      return nil, "Unknown conflict mode", missingSpecies
     end
   else
     team = self:Create(importedTeam.name)
 
     if not team then
-      return nil,
-          "Unable to create team",
-          missingSpecies
+      return nil, "Unable to create team", missingSpecies
     end
   end
 
