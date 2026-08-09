@@ -1,8 +1,9 @@
 local _, addon = ...
 
+addon.UI.Dialogs = addon.UI.Dialogs or {}
 local DeleteFolderDialog = {}
 
-addon.UI.Dialogs = addon.UI.Dialogs or {}
+local DIALOG_WIDTH = 384
 
 local dialogInstance
 
@@ -52,7 +53,7 @@ local function CreateDialog()
   local dialog = addon.UI.Base.Dialog:Create({
     name = "PetMatchDeleteFolderDialog",
     title = "Delete Folder",
-    width = 384,
+    width = DIALOG_WIDTH,
     contentMargin = {
       left = -12
     },
@@ -77,6 +78,10 @@ local function CreateDialog()
     end
   })
 
+  dialog.CancelButton = dialog:AddCancelButton({
+    text = "Cancel"
+  })
+
   dialog.MoveButton = dialog:AddAcceptButton({
     text = "Move to Unsorted",
     width = 140
@@ -87,9 +92,6 @@ local function CreateDialog()
     width = 110
   })
 
-  dialog.CancelButton = dialog:AddCancelButton({
-    text = "Cancel"
-  })
 
   local content = dialog:GetContentFrame()
 

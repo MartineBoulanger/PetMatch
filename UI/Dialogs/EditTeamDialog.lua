@@ -3,313 +3,242 @@ local _, addon = ...
 local EditTeamDialog = {}
 
 local DIALOG_WIDTH = 340
-local DIALOG_HEIGHT = 190
+local CONTENT_MARGIN = {
+  left = -12,
+  right = 12,
+  top = 4,
+  bottom = 8
+}
+local CONTENT_PADDING = 16
+local FIELD_SPACING = 6
+local SOURCE_BUTTON_SPACING = 10
 
-function EditTeamDialog:Create()
-  if self.Frame then
-    return self.Frame
-  end
+local dialogInstance
 
-  local frame =
-      addon.UI.Base.Panel:Create(
-        UIParent,
-        {
-          width = DIALOG_WIDTH,
-          height = DIALOG_HEIGHT,
-          background = "Interface/Tooltips/chatbubble-background"
-        }
-      )
-
-  frame:SetFrameStrata("DIALOG")
-  frame:SetClampedToScreen(true)
-  frame:EnableMouse(true)
-
-  frame:ClearAllPoints()
-  frame:SetPoint(
-    "CENTER",
-    UIParent,
-    "CENTER",
-    0,
-    0
-  )
-
-  self.Frame = frame
+--------------------------------------------------
+-- Cleanup
+--------------------------------------------------
+function EditTeamDialog:ClearState()
   self.Team = nil
   self.PetSource = "saved"
 
-  self.Title =
-      addon.UI.Base.Label:Create(
-        frame,
-        {
-          text = "Edit Team",
-          font = addon.UI.Theme.Fonts.Header,
-          width = DIALOG_WIDTH - 24,
-          justify = "CENTER",
-          color = addon.UI.Theme.Colors.Header
-        }
-      )
+  if self.NameInput then
+    self.NameInput:ClearFocus()
+    self.NameInput:SetText("")
+  end
+end
 
-  self.Title:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    12,
-    -12
-  )
+--------------------------------------------------
+-- Save
+--------------------------------------------------
+function EditTeamDialog:Save()
+  local team = self.Team
 
-  self.NameLabel =
-      addon.UI.Base.Label:Create(
-        frame,
-        {
-          text = "Team name",
-          width = DIALOG_WIDTH - 24,
-          justify = "LEFT",
-        }
-      )
+  if not team then
+    addon.Logger:Warn("No team selected")
+    return false
+  end
 
-  self.NameLabel:SetPoint(
-    "TOPLEFT",
-    self.Title,
-    "BOTTOMLEFT",
-    0,
-    -12
-  )
+  local name = addon.Utils:Trim(self.NameInput:GetText() or "")
 
-  self.NameInput =
-      CreateFrame(
-        "EditBox",
-        nil,
-        frame,
-        "InputBoxTemplate"
-      )
+  if name == "" then
+    addon.Logger:Warn("Enter a team name")
+    self.NameInput:SetFocus()
+    self.NameInput:HighlightText()
+    return false
+  end
 
-  self.NameInput:SetSize(
-    DIALOG_WIDTH - 34,
-    28
-  )
+  local replacePets = self.PetSource == "current"
+  local updatedTeam, errorMessage = addon.Services.Team:Edit(team.id, name, replacePets)
 
-  self.NameInput:SetPoint(
-    "TOPLEFT",
-    self.NameLabel,
-    "BOTTOMLEFT",
-    4,
-    -4
-  )
+  if not updatedTeam then
+    addon.Logger:Warn(errorMessage or "Unable to edit team")
+    self.NameInput:SetFocus()
+    self.NameInput:HighlightText()
+    return false
+  end
 
+  addon.EventBus:Fire(addon.Events.TEAM_SELECTED, updatedTeam)
+
+  return true
+end
+
+--------------------------------------------------
+-- Pet Source
+--------------------------------------------------
+function EditTeamDialog:SetPetSource(source)
+  if source ~= "saved" and source ~= "current" then
+    source = "saved"
+  end
+
+  self.PetSource = source
+
+  local useSaved = source == "saved"
+
+  if self.KeepSavedButton then
+    self.KeepSavedButton:SetEnabled(not useSaved)
+  end
+
+  if self.UseCurrentButton then
+    self.UseCurrentButton:SetEnabled(useSaved)
+  end
+end
+
+--------------------------------------------------
+-- Create content
+--------------------------------------------------
+function EditTeamDialog:CreateContent(dialog)
+  local content = dialog:GetContentFrame()
+
+  --------------------------------------------------
+  -- Team name label
+  --------------------------------------------------
+  self.NameLabel = addon.UI.Base.Label:Create(content,
+    {
+      text = "Team name",
+      width = DIALOG_WIDTH - (CONTENT_MARGIN.left + CONTENT_MARGIN.right) - (CONTENT_PADDING * 2) + 10,
+      justify =
+      "LEFT"
+    })
+
+  self.NameLabel:SetPoint("TOPLEFT", content, "TOPLEFT", 0, 0)
+  self.NameLabel:SetPoint("TOPRIGHT", content, "TOPRIGHT", 0, 0)
+
+  --------------------------------------------------
+  -- Team name input
+  --------------------------------------------------
+  self.NameInput = CreateFrame("EditBox", nil, content, "InputBoxTemplate")
+  self.NameInput:SetHeight(28)
+  self.NameInput:SetPoint("TOPLEFT", self.NameLabel, "BOTTOMLEFT", 4, 2)
+  self.NameInput:SetPoint("TOPRIGHT", self.NameLabel, "BOTTOMRIGHT", 2, -4)
   self.NameInput:SetAutoFocus(false)
   self.NameInput:SetMaxLetters(80)
 
-  self.KeepSavedButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Keep Saved Pets",
-          width = 145,
+  --------------------------------------------------
+  -- Pet source description
+  --------------------------------------------------
+  self.PetSourceLabel = addon.UI.Base.Label:Create(content,
+    {
+      text = "Choose which pets should be saved " .. "in the edited team",
+      width = DIALOG_WIDTH -
+          (CONTENT_MARGIN.left + CONTENT_MARGIN.right) - (CONTENT_PADDING * 2),
+      justify = "LEFT"
+    })
 
-          onClick = function()
-            self:SetPetSource("saved")
-          end,
-        }
-      )
+  self.PetSourceLabel:SetPoint("TOPLEFT", self.NameInput, "BOTTOMLEFT", -4, -SOURCE_BUTTON_SPACING)
+  self.PetSourceLabel:SetPoint("TOPRIGHT", self.NameInput, "BOTTOMRIGHT", 4, -SOURCE_BUTTON_SPACING)
 
-  self.KeepSavedButton:SetPoint(
-    "TOPLEFT",
-    self.NameInput,
-    "BOTTOMLEFT",
-    -4,
-    -10
-  )
+  --------------------------------------------------
+  -- Keep saved pets
+  --------------------------------------------------
+  self.KeepSavedButton = addon.UI.Base.Button:Create(content,
+    {
+      text = "Keep Saved Pets",
+      width = 137,
+      onClick = function()
+        self:SetPetSource("saved")
+      end
+    })
+  self.KeepSavedButton:SetPoint("TOPLEFT", self.PetSourceLabel, "BOTTOMLEFT", -3, -12)
 
+  --------------------------------------------------
+  -- Use current slots
+  --------------------------------------------------
+  self.UseCurrentButton = addon.UI.Base.Button:Create(content,
+    {
+      text = "Use Current Slots",
+      width = 137,
+      onClick = function()
+        self:SetPetSource("current")
+      end
+    })
+  self.UseCurrentButton:SetPoint("LEFT", self.KeepSavedButton, "RIGHT", SOURCE_BUTTON_SPACING, 0)
 
-  self.UseCurrentButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Use Current Slots",
-          width = 145,
-
-          onClick = function()
-            self:SetPetSource("current")
-          end,
-        }
-      )
-
-  self.UseCurrentButton:SetPoint(
-    "LEFT",
-    self.KeepSavedButton,
-    "RIGHT",
-    8,
-    0
-  )
-
-  self.SaveButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Save Changes",
-          width = 120,
-
-          onClick = function()
-            self:Save()
-          end,
-        }
-      )
-
-  self.SaveButton:SetPoint(
-    "BOTTOMRIGHT",
-    frame,
-    "BOTTOMRIGHT",
-    -12,
-    12
-  )
-
-  self.CancelButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Cancel",
-          width = 100,
-
-          onClick = function()
-            self:Hide()
-          end,
-        }
-      )
-
-  self.CancelButton:SetPoint(
-    "RIGHT",
-    self.SaveButton,
-    "LEFT",
-    -8,
-    0
-  )
-
-  self.NameInput:SetScript(
-    "OnEnterPressed",
-    function()
-      self:Save()
-    end
-  )
-
-  self.NameInput:SetScript(
-    "OnEscapePressed",
-    function()
-      self:Hide()
-    end
-  )
-
-  frame:Hide()
-
-  return frame
+  --------------------------------------------------
+  -- Keyboard handling
+  --------------------------------------------------
+  self.NameInput:SetScript("OnEnterPressed", function() dialog:Cancel() end)
+  self.NameInput:SetScript("OnEscapePressed", function() dialog:Cancel() end)
 end
 
-function EditTeamDialog:SetReplacePets(replacePets)
-  self.ReplacePets = replacePets == true
-
-  if self.ReplacePets then
-    self.ReplaceButton:SetText(
-      "Use Current Slots"
-    )
-  else
-    self.ReplaceButton:SetText(
-      "Keep Saved Pets"
-    )
+--------------------------------------------------
+-- Create dialog
+--------------------------------------------------
+function EditTeamDialog:Create()
+  if dialogInstance then
+    return dialogInstance
   end
+
+  local dialog = addon.UI.Base.Dialog:Create({
+    name = "PetMatchEditTeamDialog",
+    title = "Edit Team",
+    width = DIALOG_WIDTH,
+    contentMargin = CONTENT_MARGIN,
+    padding = CONTENT_PADDING,
+    bottomSpacing = 0,
+    onAccept = function() return self:Save() end,
+    onCancel = function()
+      self:ClearState()
+      return true
+    end,
+    onClose = function() self:ClearState() end
+  })
+
+  self:CreateContent(dialog)
+
+  --------------------------------------------------
+  -- Footer buttons
+  --
+  -- The first button is placed on the right side
+  --------------------------------------------------
+  self.CancelButton = dialog:AddCancelButton({ text = "Cancel", width = 100 })
+  self.SaveButton = dialog:AddAcceptButton({ text = "Save Changes", width = 120 })
+
+  dialogInstance = dialog
+  self.Dialog = dialog
+  self.Frame = dialog:GetFrame()
+
+  dialog:RefreshLayout()
+
+  return dialog
 end
 
+--------------------------------------------------
+-- Show
+--------------------------------------------------
 function EditTeamDialog:Show(team)
   if not team then
-    addon.Logger:Warn(
-      "Select a team first"
-    )
-
+    addon.Logger:Warn("Select a team first")
     return
   end
 
-  local frame = self:Create()
-
+  local dialog = self:Create()
   self.Team = team
-
-  self.NameInput:SetText(
-    team.name or ""
-  )
-
+  self.NameInput:SetText(team.name or "")
   self:SetPetSource("saved")
+  dialog:Show()
 
-  frame:Show()
+  --------------------------------------------------
+  -- Refresh again after the text and controls
+  -- have received their final dimensions
+  --------------------------------------------------
+  dialog:RefreshLayout()
 
   self.NameInput:SetFocus()
   self.NameInput:HighlightText()
 end
 
+--------------------------------------------------
+-- Hide
+--------------------------------------------------
 function EditTeamDialog:Hide()
-  if not self.Frame then
+  if not dialogInstance then
     return
   end
-
-  self.NameInput:ClearFocus()
-  self.Frame:Hide()
-
-  self.Team = nil
-  self.PetSource = "saved"
+  dialogInstance:Hide()
 end
 
-function EditTeamDialog:Save()
-  local team = self.Team
-
-  if not team then
-    addon.Logger:Warn(
-      "No team selected"
-    )
-
-    return
-  end
-
-  local name =
-      addon.Utils:Trim(
-        self.NameInput:GetText() or ""
-      )
-
-  local replacePets = self.PetSource == "current"
-  local updatedTeam, errorMessage =
-      addon.Services.Team:Edit(
-        team.id,
-        name,
-        replacePets
-      )
-
-  if not updatedTeam then
-    addon.Logger:Warn(
-      errorMessage
-      or "Unable to edit team"
-    )
-
-    self.NameInput:SetFocus()
-    self.NameInput:HighlightText()
-
-    return
-  end
-
-  addon.EventBus:Fire(
-    addon.Events.TEAM_SELECTED,
-    updatedTeam
-  )
-
-  self:Hide()
-end
-
-function EditTeamDialog:SetPetSource(source)
-  self.PetSource = source
-
-  local useSaved = source == "saved"
-
-  if useSaved then
-    self.KeepSavedButton:Disable()
-    self.UseCurrentButton:Enable()
-  else
-    self.KeepSavedButton:Enable()
-    self.UseCurrentButton:Disable()
-  end
-end
-
+--------------------------------------------------
+-- Register
+--------------------------------------------------
 addon.UI.Dialogs.EditTeamDialog = EditTeamDialog
