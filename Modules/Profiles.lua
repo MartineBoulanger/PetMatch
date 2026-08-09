@@ -44,7 +44,7 @@ function Profiles:Create(name)
       )
   addon.DB.profiles[name].name =
       name
-  addon.Events:Fire(
+  addon.EventBus:Fire(
     addon.Events.PROFILE_CHANGED,
     name
   )
