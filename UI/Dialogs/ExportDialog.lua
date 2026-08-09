@@ -130,11 +130,9 @@ function ExportDialog:CreateContent(dialog)
   self.InputBackground:SetBackdrop({
     bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-
     tile = true,
     tileSize = 128,
     edgeSize = 12,
-
     insets = {
       left = 3,
       right = 3,

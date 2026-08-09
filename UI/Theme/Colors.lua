@@ -14,6 +14,8 @@ addon.UI.Theme.Colors = {
   Accent       = { 0.1, 0.7, 1, 1 },         -- blue color
   Header       = { 1.00, 0.82, 0.00, 1.00 }, -- yellow color
   Text         = { 1, 1, 1, 1 },             -- white
-  TextMuted    = { 0.70, 0.70, 0.70, 1.00 },
-  TextDisabled = { 0.50, 0.50, 0.50, 1.00 },
+  TextMuted    = { 0.70, 0.70, 0.70, 1.00 }, -- dark grey
+  TextDisabled = { 0.50, 0.50, 0.50, 1.00 }, -- light grey
+  Error        = { 1, 0.25, 0.25, 1 },       -- red color
+  Success      = { 0.25, 1, 0.35, 1 },       -- green color
 }
