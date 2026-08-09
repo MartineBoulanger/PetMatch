@@ -38,7 +38,7 @@ function SaveTeamButton:Create()
   button:SetScript(
     "OnClick",
     function()
-      addon.UI.Actions.SaveTeamDialog:Show()
+      addon.UI.Dialogs.SaveTeamDialog:Show()
     end
   )
 

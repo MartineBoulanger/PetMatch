@@ -3,222 +3,220 @@ local _, addon = ...
 local SaveTeamDialog = {}
 
 local DIALOG_WIDTH = 320
-local DIALOG_HEIGHT = 145
 
-function SaveTeamDialog:Create()
-  if self.Frame then
-    return self.Frame
+local CONTENT_MARGIN = {
+  left = -12,
+  right = 12,
+  top = 4,
+  bottom = 8,
+}
+
+local CONTENT_PADDING = 14
+
+local dialogInstance
+
+--------------------------------------------------
+-- Clear state
+--------------------------------------------------
+function SaveTeamDialog:ClearState()
+  if self.NameInput then
+    self.NameInput:ClearFocus()
+    self.NameInput:SetText("")
+  end
+end
+
+--------------------------------------------------
+-- Save
+--------------------------------------------------
+function SaveTeamDialog:Save()
+  local name = addon.Utils:Trim(self.NameInput:GetText() or "")
+
+  if name == "" then
+    addon.Logger:Warn("Enter a team name")
+    self.NameInput:SetFocus()
+    self.NameInput:HighlightText()
+    return false
   end
 
-  local frame =
-      addon.UI.Base.Panel:Create(
-        UIParent,
-        {
-          width = DIALOG_WIDTH,
-          height = DIALOG_HEIGHT,
-          background = "Interface/Tooltips/chatbubble-background"
-        }
-      )
+  local folderID = addon.Services.Folder:GetSelectedStorageFolderID()
 
-  frame:SetFrameStrata("DIALOG")
-  frame:SetClampedToScreen(true)
-  frame:EnableMouse(true)
+  local team, errorMessage =
+      addon.Services.Team:CreateFromBattleSlots(name, folderID)
 
-  frame:ClearAllPoints()
-  frame:SetPoint(
-    "CENTER",
-    UIParent,
-    "CENTER",
-    0,
-    0
-  )
+  if not team then
+    addon.Logger:Warn(errorMessage or "Unable to save team")
+    self.NameInput:SetFocus()
+    self.NameInput:HighlightText()
+    return false
+  end
 
-  self.Frame = frame
+  addon.Services.Team:SetActive(team.id)
 
-  self.Title =
-      addon.UI.Base.Label:Create(
-        frame,
-        {
-          text = "Save Current Team",
-          font = addon.UI.Theme.Fonts.Header,
-          width = DIALOG_WIDTH - 24,
-          justify = "CENTER",
-          color = addon.UI.Theme.Colors.Header
-        }
-      )
+  return true
+end
 
-  self.Title:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    12,
-    -12
-  )
+--------------------------------------------------
+-- Create content
+--------------------------------------------------
+function SaveTeamDialog:CreateContent(dialog)
+  local content = dialog:GetContentFrame()
 
+  --------------------------------------------------
+  -- Team name label
+  --------------------------------------------------
   self.NameLabel =
       addon.UI.Base.Label:Create(
-        frame,
+        content,
         {
           text = "Team name",
-          width = DIALOG_WIDTH - 24,
           justify = "LEFT",
         }
       )
 
   self.NameLabel:SetPoint(
     "TOPLEFT",
-    self.Title,
-    "BOTTOMLEFT",
+    content,
+    "TOPLEFT",
     0,
-    -12
+    0
   )
 
+  self.NameLabel:SetPoint(
+    "TOPRIGHT",
+    content,
+    "TOPRIGHT",
+    0,
+    0
+  )
+
+  --------------------------------------------------
+  -- Team name input
+  --------------------------------------------------
   self.NameInput =
       CreateFrame(
         "EditBox",
         nil,
-        frame,
+        content,
         "InputBoxTemplate"
       )
 
-  self.NameInput:SetSize(
-    DIALOG_WIDTH - 30,
-    28
-  )
+  self.NameInput:SetHeight(28)
 
   self.NameInput:SetPoint(
     "TOPLEFT",
     self.NameLabel,
     "BOTTOMLEFT",
     4,
+    2
+  )
+
+  self.NameInput:SetPoint(
+    "TOPRIGHT",
+    self.NameLabel,
+    "BOTTOMRIGHT",
+    0,
     -4
   )
 
   self.NameInput:SetAutoFocus(false)
   self.NameInput:SetMaxLetters(80)
 
-  self.SaveButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Save",
-          width = 100,
-
-          onClick = function()
-            self:Save()
-          end,
-        }
-      )
-
-  self.SaveButton:SetPoint(
-    "BOTTOMRIGHT",
-    frame,
-    "BOTTOMRIGHT",
-    -12,
-    12
-  )
-
-  self.CancelButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Cancel",
-          width = 100,
-
-          onClick = function()
-            self:Hide()
-          end,
-        }
-      )
-
-  self.CancelButton:SetPoint(
-    "RIGHT",
-    self.SaveButton,
-    "LEFT",
-    -8,
-    0
-  )
-
+  --------------------------------------------------
+  -- Keyboard
+  --------------------------------------------------
   self.NameInput:SetScript(
     "OnEnterPressed",
     function()
-      self:Save()
+      dialog:Accept()
     end
   )
 
   self.NameInput:SetScript(
     "OnEscapePressed",
     function()
-      self:Hide()
+      dialog:Cancel()
     end
   )
-
-  frame:Hide()
-
-  return frame
 end
 
+--------------------------------------------------
+-- Create dialog
+--------------------------------------------------
+function SaveTeamDialog:Create()
+  if dialogInstance then
+    return dialogInstance
+  end
+
+  local dialog =
+      addon.UI.Base.Dialog:Create({
+        name = "PetMatchSaveTeamDialog",
+        title = "Save Current Team",
+        width = DIALOG_WIDTH,
+        contentMargin = CONTENT_MARGIN,
+        padding = CONTENT_PADDING,
+        bottomSpacing = 0,
+        onAccept = function() return self:Save() end,
+        onCancel =
+            function()
+              self:ClearState()
+              return true
+            end,
+        onClose = function() self:ClearState() end,
+      })
+
+  self:CreateContent(dialog)
+
+  --------------------------------------------------
+  -- Footer buttons
+  --------------------------------------------------
+  self.CancelButton =
+      dialog:AddCancelButton({
+        text = "Cancel",
+        width = 100,
+      })
+
+  self.SaveButton =
+      dialog:AddAcceptButton({
+        text = "Save",
+        width = 100,
+      })
+
+  dialogInstance = dialog
+
+  self.Dialog = dialog
+  self.Frame = dialog:GetFrame()
+
+  dialog:RefreshLayout()
+
+  return dialog
+end
+
+--------------------------------------------------
+-- Show
+--------------------------------------------------
 function SaveTeamDialog:Show()
-  local frame = self:Create()
+  local dialog = self:Create()
 
   self.NameInput:SetText("")
+
+  dialog:SetTitle("Save Current Team")
+  dialog:Show()
+  dialog:RefreshLayout()
+
   self.NameInput:SetFocus()
   self.NameInput:HighlightText()
-
-  frame:Show()
 end
 
+--------------------------------------------------
+-- Hide
+--------------------------------------------------
 function SaveTeamDialog:Hide()
-  if not self.Frame then
-    return
+  if dialogInstance then
+    dialogInstance:Hide()
   end
-
-  self.NameInput:ClearFocus()
-  self.Frame:Hide()
 end
 
-function SaveTeamDialog:Save()
-  local name =
-      addon.Utils:Trim(
-        self.NameInput:GetText() or ""
-      )
-
-  local folderID =
-      addon.Services.Folder:GetSelectedStorageFolderID()
-
-  local team, errorMessage =
-      addon.Services.Team:CreateFromBattleSlots(
-        name,
-        folderID
-      )
-
-  if not team then
-    addon.Logger:Warn(
-      errorMessage or "Unable to save team"
-    )
-
-    self.NameInput:SetFocus()
-    self.NameInput:HighlightText()
-
-    return
-  end
-
-  addon.Services.Team:SetActive(
-    team.id
-  )
-
-  local destinationName = "Unsorted"
-
-  if folderID then
-    local folder =
-        addon.Services.Folder:Get(folderID)
-
-    if folder then
-      destinationName = folder.name
-    end
-  end
-
-  self:Hide()
-end
-
+--------------------------------------------------
+-- Register
+--------------------------------------------------
 addon.UI.Dialogs.SaveTeamDialog = SaveTeamDialog
