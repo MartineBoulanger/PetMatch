@@ -140,9 +140,11 @@ function Dialog:Create(options)
 
   instance:CreateFrame(options)
   instance:CreateContent()
+
   if instance.ShowFooter then
     instance:CreateFooter()
   end
+  
   instance:CreateCloseButton(options)
 
   instance.Frame:Hide()
@@ -277,7 +279,6 @@ function Dialog:CreateContent()
   --------------------------------------------------
   -- Content position
   --------------------------------------------------
-
   contentFrame:SetPoint(
     "TOPLEFT",
     self.Frame.TitleContainer,
@@ -300,18 +301,12 @@ function Dialog:CreateContent()
   --------------------------------------------------
   -- Marble background
   --------------------------------------------------
-
   contentFrame:SetBackdrop({
-    bgFile =
-    "Interface\\FrameGeneral\\UI-Background-Marble",
-
-    edgeFile =
-    "Interface\\Tooltips\\UI-Tooltip-Border",
-
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
     tile = true,
     tileSize = 128,
     edgeSize = 12,
-
     insets = {
       left = 3,
       right = 3,
@@ -337,7 +332,6 @@ function Dialog:CreateContent()
   --------------------------------------------------
   -- Inner content with padding
   --------------------------------------------------
-
   local content =
       CreateFrame(
         "Frame",

@@ -33,16 +33,11 @@ local function GetTooltipFrame()
   )
 
   frame:SetBackdrop({
-    bgFile =
-    "Interface/Tooltips/UI-Tooltip-Background",
-
-    edgeFile =
-    "Interface/Tooltips/UI-Tooltip-Border",
-
+    bgFile = "Interface/Tooltips/UI-Tooltip-Background",
+    edgeFile = "Interface/Tooltips/UI-Tooltip-Border",
     tile = true,
     tileSize = 16,
     edgeSize = 16,
-
     insets = {
       left = 4,
       right = 4,

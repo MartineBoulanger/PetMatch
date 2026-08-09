@@ -2,67 +2,111 @@ local _, addon = ...
 
 local TeamScriptDialog = {}
 
-local DIALOG_WIDTH = 360
-local DIALOG_HEIGHT = 380
+local DIALOG_WIDTH = 400
+local SCRIPT_HEIGHT = 240
 
-function TeamScriptDialog:Create()
-  if self.Frame then
-    return self.Frame
+local CONTENT_MARGIN = {
+  left = -12,
+  right = 12,
+  top = 4,
+  bottom = 8,
+}
+
+local CONTENT_PADDING = 14
+
+local dialogInstance
+
+--------------------------------------------------
+-- Clear state
+--------------------------------------------------
+function TeamScriptDialog:ClearState()
+  self.TeamID = nil
+  if self.Input then
+    self.Input:ClearFocus()
+  end
+end
+
+--------------------------------------------------
+-- Save
+--------------------------------------------------
+function TeamScriptDialog:Save()
+  if not self.TeamID then
+    addon.Logger:Warn(
+      "No team selected"
+    )
+    return false
   end
 
-  local frame =
-      addon.UI.Base.Panel:Create(
-        UIParent,
-        {
-          width = DIALOG_WIDTH,
-          height = DIALOG_HEIGHT,
-          background =
-          "Interface/Tooltips/chatbubble-background",
-        }
-      )
+  local script = self.Input:GetText() or ""
 
-  frame:SetFrameStrata("DIALOG")
-  frame:SetClampedToScreen(true)
-  frame:EnableMouse(true)
-  frame:SetMovable(true)
+  local team, errorMessage =
+      addon.Services.Team:SetScript(self.TeamID, script)
 
-  frame:ClearAllPoints()
-  frame:SetPoint(
-    "CENTER",
-    UIParent,
-    "CENTER",
-    0,
-    0
+  if not team then
+    addon.Logger:Warn(
+      errorMessage
+      or "Unable to save team script"
+    )
+    return false
+  end
+
+  return true
+end
+
+--------------------------------------------------
+-- Update the EditBox height
+--------------------------------------------------
+function TeamScriptDialog:UpdateInputHeight()
+  if not self.Input
+      or not self.ScrollFrame then
+    return
+  end
+
+  local visibleHeight = self.ScrollFrame:GetHeight() or 1
+  local textHeight = 0
+
+  if type(self.Input.GetFontString)
+      == "function" then
+    local fontString = self.Input:GetFontString()
+
+    if fontString
+        and type(
+          fontString.GetStringHeight
+        ) == "function" then
+      textHeight =
+          fontString:GetStringHeight()
+          or 0
+    end
+  end
+
+  self.Input:SetHeight(
+    math.max(
+      visibleHeight,
+      math.ceil(textHeight) + 16
+    )
   )
 
-  self.Frame = frame
+  if type(
+        self.ScrollFrame.UpdateScrollChildRect
+      ) == "function" then
+    self.ScrollFrame:UpdateScrollChildRect()
+  end
+end
 
-  self.Title =
-      addon.UI.Base.Label:Create(
-        frame,
-        {
-          text = "Team Script",
-          font = addon.UI.Theme.Fonts.Header,
-          width = DIALOG_WIDTH - 24,
-          justify = "CENTER",
-          color = addon.UI.Theme.Colors.Header,
-        }
-      )
+--------------------------------------------------
+-- Create content
+--------------------------------------------------
+function TeamScriptDialog:CreateContent(dialog)
+  local content = dialog:GetContentFrame()
 
-  self.Title:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    12,
-    -12
-  )
-
+  --------------------------------------------------
+  -- Team name
+  --------------------------------------------------
   self.TeamName =
       addon.UI.Base.Label:Create(
-        frame,
+        content,
         {
           text = "",
-          width = DIALOG_WIDTH - 24,
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -70,21 +114,31 @@ function TeamScriptDialog:Create()
 
   self.TeamName:SetPoint(
     "TOPLEFT",
-    self.Title,
-    "BOTTOMLEFT",
+    content,
+    "TOPLEFT",
     0,
-    -8
+    0
   )
 
+  self.TeamName:SetPoint(
+    "TOPRIGHT",
+    content,
+    "TOPRIGHT",
+    0,
+    0
+  )
+
+  --------------------------------------------------
+  -- Description
+  --------------------------------------------------
   self.Description =
       addon.UI.Base.Label:Create(
-        frame,
+        content,
         {
-          text =
-          "Enter a Pet Battle Script for this team.",
-          width = DIALOG_WIDTH - 24,
+          text = "Enter a Pet Battle Script "
+              .. "for this team.",
           justify = "LEFT",
-          color = addon.UI.Theme.Colors.Text,
+          color = addon.UI.Theme.Colors.TextMuted,
         }
       )
 
@@ -93,18 +147,26 @@ function TeamScriptDialog:Create()
     self.TeamName,
     "BOTTOMLEFT",
     0,
-    -6
+    -10
   )
 
+  self.Description:SetPoint(
+    "TOPRIGHT",
+    self.TeamName,
+    "BOTTOMRIGHT",
+    0,
+    -10
+  )
+
+  --------------------------------------------------
+  -- Input background
+  --------------------------------------------------
   self.InputBackground =
-      addon.UI.Base.Panel:Create(
-        frame,
-        {
-          width = DIALOG_WIDTH - 24,
-          height = DIALOG_HEIGHT - 135,
-          background =
-          "Interface/Tooltips/chatbubble-background",
-        }
+      CreateFrame(
+        "Frame",
+        nil,
+        content,
+        "BackdropTemplate"
       )
 
   self.InputBackground:SetPoint(
@@ -115,6 +177,49 @@ function TeamScriptDialog:Create()
     -10
   )
 
+  self.InputBackground:SetPoint(
+    "TOPRIGHT",
+    self.Description,
+    "BOTTOMRIGHT",
+    0,
+    -10
+  )
+
+  self.InputBackground:SetHeight(
+    SCRIPT_HEIGHT
+  )
+
+  self.InputBackground:SetBackdrop({
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 128,
+    edgeSize = 12,
+    insets = {
+      left = 3,
+      right = 3,
+      top = 3,
+      bottom = 3,
+    },
+  })
+
+  self.InputBackground:SetBackdropColor(
+    0.48,
+    0.48,
+    0.48,
+    0.55
+  )
+
+  self.InputBackground:SetBackdropBorderColor(
+    0.35,
+    0.35,
+    0.35,
+    1
+  )
+
+  --------------------------------------------------
+  -- Scroll frame
+  --------------------------------------------------
   self.ScrollFrame =
       CreateFrame(
         "ScrollFrame",
@@ -139,6 +244,9 @@ function TeamScriptDialog:Create()
     8
   )
 
+  --------------------------------------------------
+  -- Script input
+  --------------------------------------------------
   self.Input =
       CreateFrame(
         "EditBox",
@@ -148,183 +256,154 @@ function TeamScriptDialog:Create()
 
   self.Input:SetMultiLine(true)
   self.Input:SetAutoFocus(false)
+  self.Input:SetMaxLetters(0)
   self.Input:SetFontObject("ChatFontNormal")
   self.Input:SetJustifyH("LEFT")
   self.Input:SetJustifyV("TOP")
-  self.Input:SetTextInsets(4, 4, 4, 4)
+
+  self.Input:SetTextInsets(
+    4,
+    4,
+    4,
+    4
+  )
 
   self.Input:SetWidth(
-    DIALOG_WIDTH - 76
+    DIALOG_WIDTH - 100
   )
 
   self.Input:SetHeight(
-    DIALOG_HEIGHT - 155
+    SCRIPT_HEIGHT - 20
   )
 
-  self.ScrollFrame:SetScrollChild(
-    self.Input
+  self.ScrollFrame:SetScrollChild(self.Input)
+
+  --------------------------------------------------
+  -- Keep the scroll range correct
+  --------------------------------------------------
+  self.Input:SetScript(
+    "OnTextChanged",
+    function()
+      C_Timer.After(0,
+        function()
+          self:UpdateInputHeight()
+        end
+      )
+    end
   )
 
+  --------------------------------------------------
+  -- Keyboard
+  --------------------------------------------------
   self.Input:SetScript(
     "OnEscapePressed",
     function()
-      self:Hide()
+      dialog:Cancel()
     end
   )
-
-  self.SaveButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Save",
-          width = 95,
-
-          onClick = function()
-            self:Save()
-          end,
-        }
-      )
-
-  self.SaveButton:SetPoint(
-    "BOTTOMRIGHT",
-    frame,
-    "BOTTOMRIGHT",
-    -12,
-    12
-  )
-
-  self.CancelButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Cancel",
-          width = 95,
-
-          onClick = function()
-            self:Hide()
-          end,
-        }
-      )
-
-  self.CancelButton:SetPoint(
-    "RIGHT",
-    self.SaveButton,
-    "LEFT",
-    -6,
-    0
-  )
-
-  self.DragHandle =
-      CreateFrame(
-        "Frame",
-        nil,
-        frame
-      )
-
-  self.DragHandle:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    0,
-    0
-  )
-
-  self.DragHandle:SetPoint(
-    "TOPRIGHT",
-    frame,
-    "TOPRIGHT",
-    0,
-    0
-  )
-
-  self.DragHandle:SetHeight(42)
-  self.DragHandle:EnableMouse(true)
-  self.DragHandle:RegisterForDrag(
-    "LeftButton"
-  )
-
-  self.DragHandle:SetScript(
-    "OnDragStart",
-    function()
-      frame:StartMoving()
-    end
-  )
-
-  self.DragHandle:SetScript(
-    "OnDragStop",
-    function()
-      frame:StopMovingOrSizing()
-    end
-  )
-
-  frame:Hide()
-
-  return frame
 end
 
+--------------------------------------------------
+-- Create dialog
+--------------------------------------------------
+function TeamScriptDialog:Create()
+  if dialogInstance then
+    return dialogInstance
+  end
+
+  local dialog =
+      addon.UI.Base.Dialog:Create({
+        name = "PetMatchTeamScriptDialog",
+        title = "Team Script",
+        width = DIALOG_WIDTH,
+        contentMargin = CONTENT_MARGIN,
+        padding = CONTENT_PADDING,
+        bottomSpacing = 0,
+        onAccept = function() return self:Save() end,
+        onCancel =
+            function()
+              self:ClearState()
+              return true
+            end,
+        onClose = function() self:ClearState() end,
+      })
+
+  self:CreateContent(dialog)
+
+  --------------------------------------------------
+  -- Footer
+  --------------------------------------------------
+  self.CancelButton =
+      dialog:AddCancelButton({
+        text = "Cancel",
+        width = 95,
+      })
+
+  self.SaveButton =
+      dialog:AddAcceptButton({
+        text = "Save",
+        width = 95,
+      })
+
+  dialogInstance = dialog
+
+  self.Dialog = dialog
+  self.Frame = dialog:GetFrame()
+
+  dialog:RefreshLayout()
+
+  return dialog
+end
+
+--------------------------------------------------
+-- Show
+--------------------------------------------------
 function TeamScriptDialog:Show(team)
   if not team then
     return
   end
 
-  self:Create()
+  local dialog = self:Create()
 
   self.TeamID = team.id
 
+  dialog:SetTitle("Team Script")
+
   self.TeamName:SetText(
-    team.name or "Unnamed Team"
+    team.name
+    or "Unnamed Team"
   )
 
   self.Input:SetText(
-    team.script or ""
+    team.script
+    or ""
   )
 
   self.ScrollFrame:SetVerticalScroll(0)
 
-  self.Frame:Show()
-  self.Frame:Raise()
+  dialog:Show()
+  dialog:RefreshLayout()
+
+  C_Timer.After(0,
+    function()
+      self:UpdateInputHeight()
+    end
+  )
 
   self.Input:SetFocus()
   self.Input:SetCursorPosition(0)
 end
 
-function TeamScriptDialog:Save()
-  if not self.TeamID then
-    return
-  end
-
-  local script =
-      self.Input:GetText() or ""
-
-  local team, errorMessage =
-      addon.Services.Team:SetScript(
-        self.TeamID,
-        script
-      )
-
-  if not team then
-    addon.Logger:Warn(
-      errorMessage
-      or "Unable to save team script"
-    )
-
-    return
-  end
-
-  self:Hide()
-end
-
+--------------------------------------------------
+-- Hide
+--------------------------------------------------
 function TeamScriptDialog:Hide()
-  if not self.Frame then
-    return
+  if dialogInstance then
+    dialogInstance:Hide()
   end
-
-  if self.Input then
-    self.Input:ClearFocus()
-  end
-
-  self.TeamID = nil
-  self.Frame:Hide()
 end
 
+--------------------------------------------------
+-- Register
+--------------------------------------------------
 addon.UI.Dialogs.TeamScriptDialog = TeamScriptDialog
