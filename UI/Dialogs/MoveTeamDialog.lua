@@ -3,113 +3,151 @@ local _, addon = ...
 local MoveTeamDialog = {}
 
 local DIALOG_WIDTH = 320
-local DIALOG_HEIGHT = 360
-local BUTTON_WIDTH = 250
+local LIST_HEIGHT = 270
+
 local BUTTON_HEIGHT = 28
 local BUTTON_SPACING = 4
 
+local CONTENT_MARGIN = {
+  left = -12,
+  right = 12,
+  top = 4,
+  bottom = 8,
+}
+
+local CONTENT_PADDING = 12
+
+local dialogInstance
+
+--------------------------------------------------
+-- Create
+--------------------------------------------------
 function MoveTeamDialog:Create()
-  if self.Frame then
-    return self.Frame
+  if dialogInstance then
+    return dialogInstance
   end
 
-  local frame =
-      addon.UI.Base.Panel:Create(
-        UIParent,
+  local dialog =
+      addon.UI.Base.Dialog:Create({
+        name = "PetMatchMoveTeamDialog",
+        title = "Move Team",
+        width = DIALOG_WIDTH,
+        contentMargin = CONTENT_MARGIN,
+        padding = CONTENT_PADDING,
+        bottomSpacing = 0,
+        onCancel =
+            function()
+              self.Team = nil
+              return true
+            end,
+        onClose = function() self.Team = nil end,
+      })
+
+  local content = dialog:GetContentFrame()
+
+  --------------------------------------------------
+  -- Description
+  --------------------------------------------------
+  self.Description =
+      addon.UI.Base.Label:Create(
+        content,
         {
-          width = DIALOG_WIDTH,
-          height = DIALOG_HEIGHT,
-          background = "Interface/Tooltips/chatbubble-background"
+          text = "Select the folder you want "
+              .. "to move this team to.",
+          justify = "LEFT",
+          color = addon.UI.Theme.Colors.Text,
         }
       )
 
-  frame:SetFrameStrata("DIALOG")
-  frame:SetClampedToScreen(true)
-  frame:EnableMouse(true)
-
-  frame:ClearAllPoints()
-  frame:SetPoint(
-    "CENTER",
-    UIParent,
-    "CENTER",
+  self.Description:SetPoint(
+    "TOPLEFT",
+    content,
+    "TOPLEFT",
     0,
     0
   )
 
-  self.Frame = frame
-  self.Team = nil
-  self.FolderButtons = {}
-
-  self.Title =
-      addon.UI.Base.Label:Create(
-        frame,
-        {
-          text = "Move Team",
-          font = addon.UI.Theme.Fonts.Header,
-          width = DIALOG_WIDTH - 24,
-          justify = "CENTER",
-          color = addon.UI.Theme.Colors.Header
-        }
-      )
-
-  self.Title:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    12,
-    -12
+  self.Description:SetPoint(
+    "TOPRIGHT",
+    content,
+    "TOPRIGHT",
+    0,
+    0
   )
 
+  --------------------------------------------------
+  -- Folder list
+  --------------------------------------------------
   self.ScrollFrame =
       addon.UI.Components.ScrollBox:Create(
-        frame,
+        content,
         {
-          width = DIALOG_WIDTH - 40,
-          height = 270,
+          width = DIALOG_WIDTH - 70,
+          height = LIST_HEIGHT,
         }
       )
 
   self.ScrollFrame:SetPoint(
     "TOPLEFT",
-    self.Title,
+    self.Description,
     "BOTTOMLEFT",
     0,
     -12
   )
 
-  self.ScrollFrame.Content:SetWidth(
-    DIALOG_WIDTH - 52
+  self.ScrollFrame:SetPoint(
+    "TOPRIGHT",
+    content,
+    "TOPRIGHT",
+    -16,
+    0
   )
 
+  self.ScrollFrame.Content:SetWidth(DIALOG_WIDTH - 70)
+
+  --------------------------------------------------
+  -- Footer
+  --------------------------------------------------
   self.CancelButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Cancel",
-          width = 100,
+      dialog:AddCancelButton({
+        text = "Cancel",
+        width = 100,
+      })
 
-          onClick = function()
-            self:Hide()
-          end,
-        }
-      )
+  --------------------------------------------------
+  -- State
+  --------------------------------------------------
+  self.Dialog = dialog
+  self.Frame = dialog:GetFrame()
+  self.Team = nil
+  self.FolderButtons = {}
 
-  self.CancelButton:SetPoint(
-    "BOTTOMRIGHT",
-    frame,
-    "BOTTOMRIGHT",
-    -12,
-    12
+  --------------------------------------------------
+  -- Cleanup
+  --------------------------------------------------
+  self.Frame:HookScript(
+    "OnHide",
+    function()
+      self.Team = nil
+    end
   )
 
-  frame:Hide()
+  --------------------------------------------------
+  -- Layout
+  --------------------------------------------------
+  dialog:RefreshLayout()
+  dialogInstance = dialog
 
-  return frame
+  return dialog
 end
 
+--------------------------------------------------
+-- Clear folder buttons
+--------------------------------------------------
 function MoveTeamDialog:ClearFolderButtons()
   for _, button in ipairs(
-    self.FolderButtons or {}
+    self.FolderButtons
+    or {}
   ) do
     button:Hide()
     button:SetParent(nil)
@@ -118,40 +156,48 @@ function MoveTeamDialog:ClearFolderButtons()
   self.FolderButtons = {}
 end
 
-function MoveTeamDialog:CreateFolderButton(
-    text,
-    folderID,
-    index
-)
+--------------------------------------------------
+-- Create folder button
+--------------------------------------------------
+function MoveTeamDialog:CreateFolderButton(text, folderID, index)
+  local content = self.ScrollFrame.Content
+
   local button =
       addon.UI.Base.Button:Create(
-        self.ScrollFrame.Content,
+        content,
         {
           text = text,
-          width = BUTTON_WIDTH,
           height = BUTTON_HEIGHT,
-
-          onClick = function()
-            self:MoveToFolder(folderID)
-          end,
+          onClick = function() self:MoveToFolder(folderID) end,
         }
       )
 
+  --------------------------------------------------
+  -- Let the buttons follow the available width
+  -- instead of using a hard-coded 250px width.
+  --------------------------------------------------
   button:SetPoint(
     "TOPLEFT",
-    self.ScrollFrame.Content,
+    content,
     "TOPLEFT",
     4,
-    -4 - ((index - 1)
-      * (BUTTON_HEIGHT + BUTTON_SPACING))
+    -4 - ((index - 1) * (BUTTON_HEIGHT + BUTTON_SPACING))
   )
 
-  table.insert(
-    self.FolderButtons,
-    button
+  button:SetPoint(
+    "TOPRIGHT",
+    content,
+    "TOPRIGHT",
+    -4,
+    -4 - ((index - 1) * (BUTTON_HEIGHT + BUTTON_SPACING))
   )
+
+  self.FolderButtons[#self.FolderButtons + 1] = button
 end
 
+--------------------------------------------------
+-- Refresh folders
+--------------------------------------------------
 function MoveTeamDialog:RefreshFolders()
   if not self.Frame then
     return
@@ -161,6 +207,9 @@ function MoveTeamDialog:RefreshFolders()
 
   local index = 1
 
+  --------------------------------------------------
+  -- Unsorted
+  --------------------------------------------------
   self:CreateFolderButton(
     "Unsorted",
     nil,
@@ -169,6 +218,9 @@ function MoveTeamDialog:RefreshFolders()
 
   index = index + 1
 
+  --------------------------------------------------
+  -- Folders
+  --------------------------------------------------
   for _, folder in ipairs(
     addon.Services.Folder:GetSortedFolders()
   ) do
@@ -181,46 +233,65 @@ function MoveTeamDialog:RefreshFolders()
     index = index + 1
   end
 
+  --------------------------------------------------
+  -- Scroll content height
+  --------------------------------------------------
+  local buttonCount = index - 1
+
+  local contentHeight =
+      8 + (buttonCount * BUTTON_HEIGHT)
+      + (math.max(0, buttonCount - 1) * BUTTON_SPACING)
+
   self.ScrollFrame.Content:SetHeight(
-    math.max(
-      1,
-      8 + ((index - 1)
-        * (BUTTON_HEIGHT + BUTTON_SPACING))
-    )
+    math.max(1, contentHeight)
   )
 end
 
+--------------------------------------------------
+-- Show
+--------------------------------------------------
 function MoveTeamDialog:Show(team)
   if not team then
-    addon.Logger:Warn(
-      "Select a team first"
-    )
-
+    addon.Logger:Warn("Select a team first")
     return
   end
 
-  local frame = self:Create()
+  local dialog = self:Create()
 
   self.Team = team
 
-  self.Title:SetText(
-    "Move team: " .. (team.name or "Unnamed Team")
+  dialog:SetTitle("Move Team")
+
+  self.Description:SetText(
+    "Select the folder you want to move "
+    .. "\""
+    .. (team.name or "Unnamed Team")
+    .. "\" to."
   )
 
   self:RefreshFolders()
 
-  frame:Show()
+  dialog:Show()
+  dialog:RefreshLayout()
+
+  self.Frame:Raise()
 end
 
+--------------------------------------------------
+-- Hide
+--------------------------------------------------
 function MoveTeamDialog:Hide()
-  if not self.Frame then
+  if not dialogInstance then
     return
   end
 
-  self.Frame:Hide()
+  dialogInstance:Hide()
   self.Team = nil
 end
 
+--------------------------------------------------
+-- Move team
+--------------------------------------------------
 function MoveTeamDialog:MoveToFolder(folderID)
   local team = self.Team
 
@@ -228,17 +299,13 @@ function MoveTeamDialog:MoveToFolder(folderID)
     return
   end
 
-  local movedTeam, errorMessage =
-      addon.Services.Team:MoveToFolder(
-        team.id,
-        folderID
-      )
+  local movedTeam, errorMessage = addon.Services.Team:MoveToFolder(team.id, folderID)
 
   if not movedTeam then
     addon.Logger:Warn(
-      errorMessage or "Unable to move team"
+      errorMessage
+      or "Unable to move team"
     )
-
     return
   end
 
@@ -246,21 +313,7 @@ function MoveTeamDialog:MoveToFolder(folderID)
       folderID
       or addon.Services.Folder.UNSORTED
 
-  addon.Services.Folder:Select(
-    destinationKey
-  )
-
-  local destinationName = "Unsorted"
-
-  if folderID then
-    local folder =
-        addon.Services.Folder:Get(folderID)
-
-    destinationName =
-        folder
-        and folder.name
-        or "Unknown Folder"
-  end
+  addon.Services.Folder:Select(destinationKey)
 
   addon.EventBus:Fire(
     addon.Events.TEAM_SELECTED,
@@ -271,4 +324,7 @@ function MoveTeamDialog:MoveToFolder(folderID)
   self:Hide()
 end
 
+--------------------------------------------------
+-- Register
+--------------------------------------------------
 addon.UI.Dialogs.MoveTeamDialog = MoveTeamDialog

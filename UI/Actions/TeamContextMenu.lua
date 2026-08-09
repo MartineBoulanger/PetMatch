@@ -58,7 +58,7 @@ function TeamContextMenu:Show(owner, team)
       rootDescription:CreateButton(
         "Move Team",
         function()
-          addon.UI.Dialog.MoveTeamDialog:Show(team)
+          addon.UI.Dialogs.MoveTeamDialog:Show(team)
         end
       )
 
