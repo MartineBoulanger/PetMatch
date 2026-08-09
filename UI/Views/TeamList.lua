@@ -23,10 +23,13 @@ function TeamList:Create(parent)
   frame.cards = {}
   frame.items = {}
 
+  local selectedKey = addon.Services.Folder:GetSelectedKey()
 
-  self.ExpandedFolderKey =
-      addon.Services.Folder:GetSelectedKey()
-      or addon.Services.Folder.ALL
+  if selectedKey == addon.Services.Folder.ALL then
+    selectedKey = nil
+  end
+
+  self.ExpandedFolderKey = selectedKey
 
   self:RegisterEvents()
   self:Refresh()
@@ -102,9 +105,13 @@ function TeamList:RegisterEvents()
     addon.EventBus:Register(
       addon.Events.FOLDER_SELECTED,
       function()
-        self.ExpandedFolderKey =
-            addon.Services.Folder:GetSelectedKey()
+        local selectedKey = addon.Services.Folder:GetSelectedKey()
 
+        if selectedKey == addon.Services.Folder.ALL then
+          selectedKey = nil
+        end
+
+        self.ExpandedFolderKey = selectedKey
         self:Refresh()
       end
     )
@@ -126,13 +133,11 @@ function TeamList:RegisterEvents()
     addon.EventBus:Register(
       addon.Events.FOLDER_DELETED,
       function()
-        local selectedKey =
-            addon.Services.Folder:GetSelectedKey()
-
-        self.ExpandedFolderKey =
-            selectedKey
-            or addon.Services.Folder.UNSORTED
-
+        local selectedKey = addon.Services.Folder:GetSelectedKey()
+        if selectedKey == addon.Services.Folder.ALL then
+          selectedKey = nil
+        end
+        self.ExpandedFolderKey = selectedKey
         self:Refresh()
       end
     )
@@ -190,10 +195,6 @@ end
 function TeamList:GetFolderSections()
   local sections = {
     {
-      label = "All Teams",
-      folderKey = addon.Services.Folder.ALL,
-    },
-    {
       label = "Favorites",
       folderKey = addon.Services.Folder.FAVORITES,
     },
@@ -218,14 +219,8 @@ end
 
 function TeamList:CreateFolderHeader(section, currentOffset)
   local folderKey = section.folderKey
-
-  local expanded =
-      self.ExpandedFolderKey == folderKey
-
-  local teams =
-      addon.Services.Team:GetVisibleTeams(
-        folderKey
-      )
+  local expanded = self.ExpandedFolderKey == folderKey
+  local teams = addon.Services.Team:GetVisibleTeams(folderKey)
 
   local button =
       addon.UI.Components.AccordionHeader:Create(
@@ -421,11 +416,8 @@ function TeamList:Refresh()
   self.Frame.items = {}
   self.Frame.cards = {}
 
-  local sections =
-      self:GetFolderSections()
-
-  local currentOffset =
-      CONTENT_PADDING
+  local sections = self:GetFolderSections()
+  local currentOffset = CONTENT_PADDING
 
   for _, section in ipairs(sections) do
     currentOffset =
@@ -434,8 +426,7 @@ function TeamList:Refresh()
           currentOffset
         )
 
-    if self.ExpandedFolderKey
-        == section.folderKey then
+    if self.ExpandedFolderKey == section.folderKey then
       currentOffset =
           self:CreateTeamCards(
             section.folderKey,
@@ -452,7 +443,6 @@ function TeamList:Refresh()
   )
 
   self:UpdateCardSelection()
-
   self.Refreshing = false
 end
 

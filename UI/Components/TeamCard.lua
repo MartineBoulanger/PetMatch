@@ -55,8 +55,8 @@ function TeamCard:Create(parent, team)
   frame:SetSize(CARD_WIDTH, CARD_HEIGHT)
 
   frame:SetBackdrop({
-    bgFile = "Interface/Buttons/WHITE8X8",
-    edgeFile = "Interface/Buttons/WHITE8X8",
+    bgFile = "Interface\\Buttons\\WHITE8X8",
+    edgeFile = "Interface\\Buttons\\WHITE8X8",
     edgeSize = 1,
   })
 
@@ -425,33 +425,5 @@ function TeamCard:Create(parent, team)
 
   return frame
 end
-
-StaticPopupDialogs.PETMATCH_DELETE_TEAM = {
-  text = "Delete team \"%s\"?",
-  button1 = "Delete",
-  button2 = "Cancel",
-
-  OnAccept = function(_, team)
-    if not team then
-      return
-    end
-
-    local deleted =
-        addon.Services.Team:Delete(
-          team.id
-        )
-
-    if not deleted then
-      addon.Logger:Warn(
-        "Unable to delete team"
-      )
-    end
-  end,
-
-  timeout = 0,
-  whileDead = true,
-  hideOnEscape = true,
-  preferredIndex = 3,
-}
 
 addon.UI.Components.TeamCard = TeamCard

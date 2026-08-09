@@ -1,6 +1,7 @@
 local _, addon = ...
 
 local FolderService = {}
+
 FolderService.ALL = "__ALL__"
 FolderService.UNSORTED = "__UNSORTED__"
 FolderService.FAVORITES = "__FAVORITES__"
