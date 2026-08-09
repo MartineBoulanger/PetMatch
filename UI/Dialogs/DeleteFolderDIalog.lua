@@ -55,27 +55,23 @@ local function CreateDialog()
     title = "Delete Folder",
     width = DIALOG_WIDTH,
     contentMargin = {
-      left = -12
+      left = -12,
+      top = 4
     },
     bottomSpacing = 0,
-
     onAccept = function(control)
       DeleteFolder(
         control.folder,
         false
       )
     end,
-
     onExtraAccept = function(control)
       DeleteFolder(
         control.folder,
         true
       )
     end,
-
-    onCancel = function(control)
-      control.folder = nil
-    end
+    onCancel = function(control) control.folder = nil end
   })
 
   dialog.CancelButton = dialog:AddCancelButton({
@@ -92,9 +88,7 @@ local function CreateDialog()
     width = 110
   })
 
-
   local content = dialog:GetContentFrame()
-
   local message = content:CreateFontString(
     nil,
     "OVERLAY",

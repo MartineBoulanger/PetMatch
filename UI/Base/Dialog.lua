@@ -4,7 +4,7 @@ local Dialog = {}
 Dialog.__index = Dialog
 
 local DEFAULT_WIDTH = 360
-local DEFAULT_HEIGHT = 220
+local DEFAULT_HEIGHT = 100
 local DEFAULT_FOOTER_HEIGHT = 48
 local DEFAULT_PADDING = 14
 local DEFAULT_BUTTON_SPACING = 8
@@ -272,8 +272,7 @@ function Dialog:CreateContent()
         "BackdropTemplate"
       )
 
-  local margin =
-      self.ContentMargin
+  local margin = self.ContentMargin
 
   --------------------------------------------------
   -- Content position

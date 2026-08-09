@@ -188,8 +188,6 @@ function EditTeamDialog:Create()
 
   --------------------------------------------------
   -- Footer buttons
-  --
-  -- The first button is placed on the right side
   --------------------------------------------------
   self.CancelButton = dialog:AddCancelButton({ text = "Cancel", width = 100 })
   self.SaveButton = dialog:AddAcceptButton({ text = "Save Changes", width = 120 })

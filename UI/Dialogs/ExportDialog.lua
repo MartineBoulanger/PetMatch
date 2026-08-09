@@ -2,104 +2,164 @@ local _, addon = ...
 
 local ExportDialog = {}
 
-local DIALOG_WIDTH = 360
-local DIALOG_HEIGHT = 380
+local DIALOG_WIDTH = 420
+local INPUT_HEIGHT = 220
 
-function ExportDialog:Create()
-  if self.Frame then
-    return self.Frame
+local CONTENT_MARGIN = {
+  left = -12,
+  right = 12,
+  top = 4,
+  bottom = 8,
+}
+
+local CONTENT_PADDING = 14
+
+local dialogInstance
+
+--------------------------------------------------
+-- State
+--------------------------------------------------
+function ExportDialog:ClearState()
+  if self.Input then
+    self.Input:ClearFocus()
+    self.Input:HighlightText(0, 0)
+  end
+end
+
+--------------------------------------------------
+-- Select all
+--------------------------------------------------
+function ExportDialog:SelectAll()
+  if not self.Input then
+    return
   end
 
-  local frame =
-      addon.UI.Base.Panel:Create(
-        UIParent,
+  self.Input:SetFocus()
+  self.Input:HighlightText()
+end
+
+--------------------------------------------------
+-- Set export value
+--------------------------------------------------
+function ExportDialog:SetValue(value)
+  if not self.Input then
+    return
+  end
+
+  self.Input:SetText(
+    value or ""
+  )
+
+  self.Input:SetCursorPosition(0)
+
+  if self.ScrollFrame
+      and type(
+        self.ScrollFrame.UpdateScrollChildRect
+      ) == "function" then
+    self.ScrollFrame:
+        UpdateScrollChildRect()
+  end
+end
+
+--------------------------------------------------
+-- Create content
+--------------------------------------------------
+function ExportDialog:CreateContent(dialog)
+  local content = dialog:GetContentFrame()
+
+  --------------------------------------------------
+  -- Description
+  --------------------------------------------------
+  self.Description =
+      addon.UI.Base.Label:Create(
+        content,
         {
-          width = DIALOG_WIDTH,
-          height = DIALOG_HEIGHT,
-          background = "Interface/Tooltips/chatbubble-background"
+          text = "Copy this Rematch string "
+              .. "and share it with another player.",
+          fontObject = "GameFontHighlightSmall",
+          justify = "LEFT",
         }
       )
 
-  frame:SetPoint(
-    "CENTER",
-    UIParent,
-    "CENTER",
+  self.Description:SetPoint(
+    "TOPLEFT",
+    content,
+    "TOPLEFT",
     0,
     0
   )
 
-  frame:SetFrameStrata("DIALOG")
-  frame:SetClampedToScreen(true)
-  frame:EnableMouse(true)
-
-  self.Frame = frame
-
-  self.Title =
-      addon.UI.Base.Label:Create(
-        frame,
-        {
-          text = "Export Team",
-          font = addon.UI.Theme.Fonts.Header,
-          width = DIALOG_WIDTH - 24,
-          justify = "CENTER",
-          color = addon.UI.Theme.Colors.Header,
-        }
-      )
-
-  self.Title:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    12,
-    -12
-  )
-
-  self.Description =
-      addon.UI.Base.Label:Create(
-        frame,
-        {
-          text =
-          "Copy this Rematch string and share it with another player.",
-          fontObject = "GameFontHighlightSmall",
-        }
-      )
-
   self.Description:SetPoint(
-    "TOPLEFT",
-    self.Title,
-    "BOTTOMLEFT",
+    "TOPRIGHT",
+    content,
+    "TOPRIGHT",
     0,
-    -8
-  )
-
-  self.Description:SetPoint(
-    "RIGHT",
-    frame,
-    "RIGHT",
-    -16,
     0
   )
 
   self.Description:SetJustifyH("LEFT")
 
+  --------------------------------------------------
+  -- Input background
+  --------------------------------------------------
   self.InputBackground =
-      addon.UI.Base.Panel:Create(
-        frame,
-        {
-          width = DIALOG_WIDTH - 23,
-          height = 220,
-          background = "Interface/Tooltips/chatbubble-background"
-        }
+      CreateFrame(
+        "Frame",
+        nil,
+        content,
+        "BackdropTemplate"
       )
 
   self.InputBackground:SetPoint(
     "TOPLEFT",
     self.Description,
     "BOTTOMLEFT",
-    0,
-    -12
+    -2,
+    -10
   )
 
+  self.InputBackground:SetPoint(
+    "TOPRIGHT",
+    self.Description,
+    "BOTTOMRIGHT",
+    2,
+    -10
+  )
+
+  self.InputBackground:SetHeight(INPUT_HEIGHT)
+  self.InputBackground:SetBackdrop({
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+
+    tile = true,
+    tileSize = 128,
+    edgeSize = 12,
+
+    insets = {
+      left = 3,
+      right = 3,
+      top = 3,
+      bottom = 3,
+    },
+  })
+
+  self.InputBackground:SetBackdropColor(
+    0.48,
+    0.48,
+    0.48,
+    0.55
+  )
+
+  self.InputBackground:SetBackdropBorderColor(
+    0.35,
+    0.35,
+    0.35,
+    1
+  )
+
+  --------------------------------------------------
+  -- Scroll frame
+  --------------------------------------------------
   self.ScrollFrame =
       CreateFrame(
         "ScrollFrame",
@@ -120,10 +180,13 @@ function ExportDialog:Create()
     "BOTTOMRIGHT",
     self.InputBackground,
     "BOTTOMRIGHT",
-    -28,
+    -26,
     8
   )
 
+  --------------------------------------------------
+  -- Export text input
+  --------------------------------------------------
   self.Input =
       CreateFrame(
         "EditBox",
@@ -133,11 +196,10 @@ function ExportDialog:Create()
 
   self.Input:SetMultiLine(true)
   self.Input:SetAutoFocus(false)
-  self.Input:SetFontObject(
-    "ChatFontNormal"
-  )
+  self.Input:SetMaxLetters(0)
+  self.Input:SetFontObject("ChatFontNormal")
+  self.Input:SetWidth(DIALOG_WIDTH - 88)
 
-  self.Input:SetWidth(250)
   self.Input:SetTextInsets(
     4,
     4,
@@ -148,187 +210,194 @@ function ExportDialog:Create()
   self.Input:SetScript(
     "OnEscapePressed",
     function()
-      self:Hide()
+      dialog:Cancel()
     end
   )
-
-  self.Input:SetHeight(200)
 
   self.Input:SetScript(
     "OnTextChanged",
     function()
-      self.ScrollFrame:
-          UpdateScrollChildRect()
+      if self.ScrollFrame
+          and type(self.ScrollFrame.UpdateScrollChildRect) == "function" then
+        self.ScrollFrame:UpdateScrollChildRect()
+      end
     end
   )
 
-  self.ScrollFrame:SetScrollChild(
-    self.Input
-  )
-
-  self.CopyButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Select All",
-          width = 90,
-          height = 24,
-
-          onClick = function()
-            self.Input:SetFocus()
-            self.Input:HighlightText()
-          end,
-        }
-      )
-
-  self.CopyButton:SetPoint(
-    "BOTTOMLEFT",
-    frame,
-    "BOTTOMLEFT",
-    16,
-    16
-  )
-
-  self.CloseButton =
-      addon.UI.Base.Button:Create(
-        frame,
-        {
-          text = "Close",
-          width = 80,
-          height = 24,
-
-          onClick = function()
-            self:Hide()
-          end,
-        }
-      )
-
-  self.CloseButton:SetPoint(
-    "BOTTOMRIGHT",
-    frame,
-    "BOTTOMRIGHT",
-    -16,
-    16
-  )
-
-  frame:Hide()
-
-  return frame
+  self.Input:SetHeight(INPUT_HEIGHT - 20)
+  self.ScrollFrame:SetScrollChild(self.Input)
 end
 
-function ExportDialog:Show(team)
-  local frame = self:Create()
+--------------------------------------------------
+-- Create dialog
+--------------------------------------------------
+function ExportDialog:Create()
+  if dialogInstance then
+    return dialogInstance
+  end
 
-  team =
-      team
-      or addon.Services.Team:GetSelected()
+  local dialog =
+      addon.UI.Base.Dialog:Create({
+        name = "PetMatchExportDialog",
+        title = "Export Team",
+        width = DIALOG_WIDTH,
+        contentMargin = CONTENT_MARGIN,
+        padding = CONTENT_PADDING,
+        bottomSpacing = 0,
+        onCancel =
+            function()
+              self:ClearState()
+              return true
+            end,
+        onClose = function() self:ClearState() end,
+      })
+
+  self:CreateContent(dialog)
+
+  --------------------------------------------------
+  -- Footer buttons
+  --------------------------------------------------
+  self.CloseButton = dialog:AddCancelButton({ text = "Cancel", width = 80, })
+
+  self.CopyButton =
+      dialog:AddFooterButton({
+        text = "Select All",
+        width = 90,
+        onClick = function() self:SelectAll() end,
+      })
+
+  dialogInstance = dialog
+  self.Dialog = dialog
+  self.Frame = dialog:GetFrame()
+
+  dialog:RefreshLayout()
+
+  return dialog
+end
+
+--------------------------------------------------
+-- Show a team
+--------------------------------------------------
+function ExportDialog:Show(team)
+  local dialog = self:Create()
+
+  team = team or addon.Services.Team:GetSelected()
 
   if not team then
-    addon.Logger:Warn(
-      "Select a team first"
-    )
-
+    addon.Logger:Warn("Select a team first")
     return
   end
 
-  local value, errorMessage =
+  local value,
+  errorMessage =
       addon.Services.ImportExport:
-      ExportRematchTeam(team)
+      ExportRematchTeam(
+        team
+      )
 
   if not value then
     addon.Logger:Warn(
       errorMessage
       or "Unable to export team"
     )
-
     return
   end
 
-  self.Input:SetText(value)
-  self.Input:SetCursorPosition(0)
+  dialog:SetTitle("Export Team")
 
-  frame:Show()
-  frame:Raise()
+  self.Description:SetText(
+    "Copy this Rematch string "
+    .. "and share it with another player."
+  )
 
-  self.Input:SetFocus()
-  self.Input:HighlightText()
+  self:SetValue(value)
+
+  dialog:Show()
+  dialog:RefreshLayout()
+
+  self:SelectAll()
 end
 
+--------------------------------------------------
+-- Show all folders and teams
+--------------------------------------------------
 function ExportDialog:ShowAll()
-  self:Create()
-
-  local exportString, errorMessage =
-      addon.Services.ImportExport:ExportAll()
+  local dialog = self:Create()
+  local exportString, errorMessage = addon.Services.ImportExport:ExportAll()
 
   if not exportString then
     addon.Logger:Warn(
       errorMessage
       or "Unable to export folders and teams"
     )
-
     return
   end
 
-  self.Title:SetText(
-    "Export All Folders and Teams"
+  dialog:SetTitle("Export All Folders and Teams")
+
+  self.Description:SetText(
+    "Copy this export string to share "
+    .. "all folders and teams."
   )
 
+  self:SetValue(exportString)
 
-  self.Input:SetText(exportString)
-  self.Input:HighlightText()
+  dialog:Show()
+  dialog:RefreshLayout()
 
-  self.Frame:Show()
-  self.Input:SetFocus()
+  self:SelectAll()
 end
 
-function ExportDialog:ShowFolder(
-    folderKey
-)
+--------------------------------------------------
+-- Show a folder
+--------------------------------------------------
+function ExportDialog:ShowFolder(folderKey)
   if not folderKey then
     return
   end
 
-  self:Create()
-
-  local exportString, errorMessage =
-      addon.Services.ImportExport:ExportFolder(folderKey)
+  local dialog = self:Create()
+  local exportString, errorMessage = addon.Services.ImportExport:ExportFolder(folderKey)
 
   if not exportString then
     addon.Logger:Warn(
       errorMessage
       or "Unable to export folder"
     )
-
     return
   end
 
-  local folder =
-      addon.Services.Folder:Get(folderKey)
+  local folder = addon.Services.Folder:Get(folderKey)
+  local folderName = folder and folder.name or "Folder"
 
-  local folderName =
-      folder
-      and folder.name
-      or "Folder"
-
-  self.Title:SetText(
-    "Export Folder: " .. folderName
+  dialog:SetTitle(
+    "Export Folder: "
+    .. folderName
   )
 
-  self.Input:SetText(exportString)
-  self.Input:HighlightText()
+  self.Description:SetText(
+    "Copy this export string "
+    .. "to share the selected folder."
+  )
 
-  self.Frame:Show()
-  self.Input:SetFocus()
+  self:SetValue(exportString)
+
+  dialog:Show()
+  dialog:RefreshLayout()
+
+  self:SelectAll()
 end
 
+--------------------------------------------------
+-- Hide
+--------------------------------------------------
 function ExportDialog:Hide()
-  if not self.Frame then
-    return
+  if dialogInstance then
+    dialogInstance:Hide()
   end
-
-  self.Input:ClearFocus()
-  self.Input:HighlightText(0, 0)
-  self.Frame:Hide()
 end
 
+--------------------------------------------------
+-- Register
+--------------------------------------------------
 addon.UI.Dialogs.ExportDialog = ExportDialog
