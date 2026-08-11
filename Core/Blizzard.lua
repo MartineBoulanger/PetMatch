@@ -88,6 +88,24 @@ function Blizzard:Initialize()
   end
 end
 
+function Blizzard:IsCollectionsLoaded()
+  if C_AddOns
+      and type(C_AddOns.IsAddOnLoaded)
+      == "function" then
+    return C_AddOns.IsAddOnLoaded(
+      "Blizzard_Collections"
+    )
+  end
+
+  if type(IsAddOnLoaded) == "function" then
+    return IsAddOnLoaded(
+      "Blizzard_Collections"
+    )
+  end
+
+  return PetJournal ~= nil
+end
+
 local frame = CreateFrame("Frame")
 
 frame:RegisterEvent("ADDON_LOADED")
