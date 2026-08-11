@@ -183,7 +183,6 @@ function Dialog:CreateFrame(options)
   --------------------------------------------------
   -- Blizzard title
   --------------------------------------------------
-
   if frame.TitleContainer
       and frame.TitleContainer.TitleText then
     frame.TitleContainer.TitleText:SetText(
@@ -200,7 +199,6 @@ function Dialog:CreateFrame(options)
   --------------------------------------------------
   -- Dragging
   --------------------------------------------------
-
   frame:SetScript(
     "OnDragStart",
 
@@ -220,7 +218,6 @@ function Dialog:CreateFrame(options)
   --------------------------------------------------
   -- Position
   --------------------------------------------------
-
   frame:SetPoint(
     options.point
     or "CENTER",
@@ -241,7 +238,6 @@ function Dialog:CreateFrame(options)
   --------------------------------------------------
   -- Escape
   --------------------------------------------------
-
   if self.CloseOnEscape then
     frame:EnableKeyboard(
       true

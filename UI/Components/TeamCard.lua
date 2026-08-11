@@ -2,7 +2,7 @@ local _, addon = ...
 
 local TeamCard = {}
 
-local CARD_WIDTH = 238
+local CARD_WIDTH = 230
 local CARD_HEIGHT = 26
 local SLOT_SPACING = 0
 local SLOT_START_X = 1

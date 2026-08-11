@@ -3,9 +3,167 @@ local _, addon = ...
 local Panels = {}
 
 local PANEL_WIDTH = 275
-local PANEL_HEIGHT = 608
+local PANEL_HEIGHT = 606
 local CONTENT_GAP = 5
 local TAB_HEIGHT = 28
+
+local function GetPetJournalCloseButton()
+  if CollectionsJournal
+      and CollectionsJournal.CloseButton then
+    return CollectionsJournal.CloseButton
+  end
+
+  if PetJournal
+      and PetJournal.CloseButton then
+    return PetJournal.CloseButton
+  end
+
+  local parent =
+      PetJournal
+      and PetJournal:GetParent()
+
+  if parent
+      and parent.CloseButton then
+    return parent.CloseButton
+  end
+
+  return _G.CollectionsJournalCloseButton
+end
+
+function Panels:MoveCloseButton()
+  if not self.Frame then
+    return
+  end
+
+  local closeButton = GetPetJournalCloseButton()
+
+  if not closeButton then
+    addon.Logger:Warn(
+      "PetMatch: Pet Journal close button was not found."
+    )
+    return
+  end
+
+  if not self.CloseButtonState then
+    local points = {}
+
+    for index = 1, closeButton:GetNumPoints() do
+      local point,
+      relativeTo,
+      relativePoint,
+      offsetX,
+      offsetY =
+          closeButton:GetPoint(index)
+
+      points[#points + 1] = {
+        point = point,
+        relativeTo = relativeTo,
+        relativePoint = relativePoint,
+        offsetX = offsetX,
+        offsetY = offsetY,
+      }
+    end
+
+    self.CloseButtonState = {
+      button = closeButton,
+      parent = closeButton:GetParent(),
+      points = points,
+      frameStrata = closeButton:GetFrameStrata(),
+      frameLevel = closeButton:GetFrameLevel(),
+    }
+  end
+
+  closeButton:SetParent(
+    self.Frame
+  )
+
+  closeButton:ClearAllPoints()
+
+  closeButton:SetPoint(
+    "TOPRIGHT",
+    self.Frame,
+    "TOPRIGHT",
+    0,
+    0
+  )
+
+  closeButton:SetFrameStrata(
+    "DIALOG"
+  )
+
+  closeButton:SetFrameLevel(
+    1000
+  )
+
+  closeButton:Show()
+
+  if not closeButton.__PetMatchCloseHooked then
+    closeButton.__PetMatchCloseHooked = true
+
+    closeButton:SetScript(
+      "OnClick",
+      function()
+        if self.Frame then
+          self.Frame:Hide()
+        end
+
+        if CollectionsJournal then
+          CollectionsJournal:Hide()
+        elseif PetJournal then
+          local parent =
+              PetJournal:GetParent()
+
+          if parent then
+            parent:Hide()
+          else
+            PetJournal:Hide()
+          end
+        end
+      end
+    )
+  end
+
+  self.CloseButton = closeButton
+end
+
+function Panels:RestoreCloseButton()
+  local state = self.CloseButtonState
+
+  if not state
+      or not state.button then
+    return
+  end
+
+  local closeButton = state.button
+
+  closeButton:SetParent(
+    state.parent
+  )
+
+  closeButton:ClearAllPoints()
+
+  for _, pointData in ipairs(
+    state.points or {}
+  ) do
+    closeButton:SetPoint(
+      pointData.point,
+      pointData.relativeTo,
+      pointData.relativePoint,
+      pointData.offsetX,
+      pointData.offsetY
+    )
+  end
+
+  closeButton:SetFrameStrata(
+    state.frameStrata
+  )
+
+  closeButton:SetFrameLevel(
+    state.frameLevel
+  )
+
+  closeButton:Show()
+end
 
 function Panels:Create()
   if self.Frame then
@@ -22,7 +180,7 @@ function Panels:Create()
         "Frame",
         "PetMatchPanels",
         PetJournal,
-        "SimplePanelTemplate"
+        "DefaultPanelTemplate"
       )
 
   frame:SetSize(
@@ -30,55 +188,34 @@ function Panels:Create()
     PANEL_HEIGHT
   )
 
-  local text = frame:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontNormalLarge"
-  )
-
-  text:SetPoint(
-    "TOP",
-    frame,
-    "TOP",
-    0,
-    -9
-  )
-
-  text:SetText("PetMatch")
-
-  frame.Background =
-      frame:CreateTexture(
-        nil,
-        "BACKGROUND"
-      )
-
-  frame.Background:SetPoint(
-    "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    4,
-    -4
-  )
-
-  frame.Background:SetPoint(
-    "BOTTOMRIGHT",
-    frame,
-    "BOTTOMRIGHT",
-    -4,
-    4
-  )
-
   frame:ClearAllPoints()
   frame:SetPoint(
     "TOPLEFT",
     PetJournal,
     "TOPRIGHT",
-    0,
-    2
+    -6,
+    0
   )
+
+  --------------------------------------------------
+  -- Blizzard title
+  --------------------------------------------------
+  if frame.TitleContainer
+      and frame.TitleContainer.TitleText then
+    frame.TitleContainer.TitleText:SetText(
+      "PetMatch"
+    )
+  elseif type(frame.SetTitle) == "function" then
+    frame:SetTitle(
+      "PetMatch"
+    )
+  end
 
   self.Frame = frame
 
+  --------------------------------------------------
+  -- Existing content frame
+  --------------------------------------------------
   self.ContentFrame =
       CreateFrame(
         "Frame",
@@ -88,10 +225,26 @@ function Panels:Create()
 
   self.ContentFrame:SetPoint(
     "TOPLEFT",
-    frame,
-    "TOPLEFT",
-    4,
+    frame.TitleContainer,
+    "BOTTOMLEFT",
+    0,
     -4
+  )
+
+  self.ContentFrame:SetPoint(
+    "TOPRIGHT",
+    frame,
+    "TOPRIGHT",
+    -4,
+    0
+  )
+
+  self.ContentFrame:SetPoint(
+    "BOTTOMLEFT",
+    frame,
+    "BOTTOMLEFT",
+    0,
+    4
   )
 
   self.ContentFrame:SetPoint(
@@ -102,6 +255,9 @@ function Panels:Create()
     4
   )
 
+  --------------------------------------------------
+  -- Teams
+  --------------------------------------------------
   self.TeamsFrame =
       CreateFrame(
         "Frame",
@@ -113,6 +269,9 @@ function Panels:Create()
     self.ContentFrame
   )
 
+  --------------------------------------------------
+  -- Options
+  --------------------------------------------------
   self.OptionsFrame =
       CreateFrame(
         "Frame",
@@ -126,29 +285,90 @@ function Panels:Create()
 
   self.OptionsFrame:Hide()
 
+  --------------------------------------------------
+  -- Options marble background
+  --------------------------------------------------
+  self.OptionsBackground =
+      CreateFrame(
+        "Frame",
+        nil,
+        self.OptionsFrame,
+        "BackdropTemplate"
+      )
+
+  self.OptionsBackground:SetBackdrop({
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 128,
+    edgeSize = 12,
+    insets = {
+      left = 3,
+      right = 3,
+      top = 3,
+      bottom = 3,
+    },
+  })
+
+  self.OptionsBackground:SetBackdropColor(
+    0.55,
+    0.55,
+    0.55,
+    0.95
+  )
+
+  self.OptionsBackground:SetBackdropBorderColor(
+    0.35,
+    0.35,
+    0.35,
+    1
+  )
+
+  self.OptionsBackground:SetPoint(
+    "TOPLEFT",
+    self.OptionsFrame,
+    "TOPLEFT",
+    -22,
+    2
+  )
+
+  self.OptionsBackground:SetPoint(
+    "BOTTOMRIGHT",
+    self.OptionsFrame,
+    "BOTTOMRIGHT",
+    -20,
+    0
+  )
+
+  --------------------------------------------------
+  -- Options list
+  --------------------------------------------------
   self.OptionsList =
       addon.UI.Views.OptionsList:Create(
-        self.OptionsFrame
+        self.OptionsBackground
       )
 
   self.OptionsList:ClearAllPoints()
 
   self.OptionsList:SetPoint(
     "TOPLEFT",
-    self.OptionsFrame,
+    self.OptionsBackground,
     "TOPLEFT",
-    4,
-    -26
+    3,
+    -3
   )
 
   self.OptionsList:SetPoint(
     "BOTTOMRIGHT",
-    self.OptionsFrame,
+    self.OptionsBackground,
     "BOTTOMRIGHT",
-    -25,
-    24
+    -3,
+    3
   )
 
+  --------------------------------------------------
+  -- Team controls
+  --------------------------------------------------
   self.TeamListControls =
       addon.UI.Actions.TeamListControls:Create(
         self.TeamsFrame
@@ -159,15 +379,93 @@ function Panels:Create()
     "TOPLEFT",
     self.TeamsFrame,
     "TOPLEFT",
-    3,
-    -18
+    -20,
+    5
   )
 
+  --------------------------------------------------
+  -- New folder
+  --------------------------------------------------
   self.NewFolderButton =
       self:CreateNewFolderButton(
         self.TeamsFrame
       )
 
+
+  self.TeamListBackground =
+      CreateFrame(
+        "Frame",
+        nil,
+        self.TeamsFrame,
+        "BackdropTemplate"
+      )
+
+  --------------------------------------------------
+  -- Team list background
+  --------------------------------------------------
+  self.TeamListBackground:SetBackdrop({
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 128,
+    edgeSize = 12,
+    insets = {
+      left = 3,
+      right = 3,
+      top = 3,
+      bottom = 3,
+    },
+  })
+
+  self.TeamListBackground:SetBackdropColor(
+    0.55,
+    0.55,
+    0.55,
+    0.95
+  )
+
+  self.TeamListBackground:SetBackdropBorderColor(
+    0.35,
+    0.35,
+    0.35,
+    1
+  )
+
+  self.TeamListBackground:SetPoint(
+    "TOPLEFT",
+    self.TeamListControls,
+    "BOTTOMLEFT",
+    0,
+    -CONTENT_GAP
+  )
+
+  self.TeamListBackground:SetPoint(
+    "TOPRIGHT",
+    self.TeamListControls,
+    "BOTTOMRIGHT",
+    0,
+    -CONTENT_GAP
+  )
+
+  self.TeamListBackground:SetPoint(
+    "BOTTOMLEFT",
+    self.NewFolderButton,
+    "TOPLEFT",
+    0,
+    -1
+  )
+
+  self.TeamListBackground:SetPoint(
+    "BOTTOMRIGHT",
+    self.NewFolderButton,
+    "TOPRIGHT",
+    0,
+    -1
+  )
+
+  --------------------------------------------------
+  -- Team list
+  --------------------------------------------------
   self.TeamListFrame =
       addon.UI.Views.TeamList:Create(
         self.TeamsFrame
@@ -177,38 +475,55 @@ function Panels:Create()
 
   self.TeamListFrame:SetPoint(
     "TOPLEFT",
-    self.TeamListControls,
-    "BOTTOMLEFT",
-    0,
-    -CONTENT_GAP
-  )
-
-  self.TeamListFrame:SetPoint(
-    "TOPRIGHT",
-    self.TeamListControls,
-    "BOTTOMRIGHT",
-    0,
-    -CONTENT_GAP
-  )
-
-  self.TeamListFrame:SetPoint(
-    "BOTTOMLEFT",
-    self.NewFolderButton,
+    self.TeamListBackground,
     "TOPLEFT",
-    0,
-    2
+    4,
+    -4
+  )
+
+  self.TeamListFrame:SetPoint(
+    "TOPRIGHT",
+    self.TeamListBackground,
+    "TOPRIGHT",
+    -4,
+    -4
+  )
+
+  self.TeamListFrame:SetPoint(
+    "BOTTOMLEFT",
+    self.TeamListBackground,
+    "BOTTOMLEFT",
+    4,
+    4
   )
 
   self.TeamListFrame:SetPoint(
     "BOTTOMRIGHT",
-    self.NewFolderButton,
-    "TOPRIGHT",
-    0,
-    2
+    self.TeamListBackground,
+    "BOTTOMRIGHT",
+    -4,
+    4
   )
 
+  --------------------------------------------------
+  -- Tabs
+  --------------------------------------------------
   self:CreateTabs(frame)
   self:SelectTab("teams")
+
+  frame:HookScript(
+    "OnShow",
+    function()
+      self:MoveCloseButton()
+    end
+  )
+
+  frame:HookScript(
+    "OnHide",
+    function()
+      self:RestoreCloseButton()
+    end
+  )
 
   frame:Hide()
 
@@ -323,12 +638,16 @@ function Panels:Show()
   end
 
   frame:Show()
+  self:MoveCloseButton()
 end
 
 function Panels:Hide()
-  if self.Frame then
-    self.Frame:Hide()
+  if not self.Frame then
+    return
   end
+
+  self:RestoreCloseButton()
+  self.Frame:Hide()
 end
 
 function Panels:CreateNewFolderButton(parent)
@@ -353,7 +672,7 @@ function Panels:CreateNewFolderButton(parent)
     "BOTTOMLEFT",
     parent,
     "BOTTOMLEFT",
-    1,
+    -20,
     0
   )
 

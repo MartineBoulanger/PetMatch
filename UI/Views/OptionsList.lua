@@ -2,7 +2,7 @@ local _, addon = ...
 
 local OptionsList = {}
 
-local CONTENT_WIDTH = 238
+local CONTENT_WIDTH = 235
 local CONTENT_HEIGHT = 545
 
 local SECTION_SPACING = 0
@@ -20,8 +20,11 @@ function OptionsList:Create(parent)
         {
           width = CONTENT_WIDTH,
           height = CONTENT_HEIGHT,
+          contentGap = 4
         }
       )
+
+  frame:SetPoint("TOPLEFT")
 
   self.Frame = frame
 
@@ -740,6 +743,10 @@ function OptionsList:UpdateContentHeight()
       + CONTENT_PADDING
     )
   )
+
+  if self.Frame.RefreshScrollBar then
+    self.Frame:RefreshScrollBar()
+  end
 end
 
 function OptionsList:Refresh()

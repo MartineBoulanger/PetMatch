@@ -6,15 +6,16 @@ local HEADER_HEIGHT = 28
 local HEADER_SPACING = 0
 local CARD_SPACING = 0
 local CONTENT_PADDING = 0
-local CONTENT_WIDTH = 238
+local CONTENT_WIDTH = 230
 
 function TeamList:Create(parent)
   local frame =
       addon.UI.Components.ScrollBox:Create(
         parent,
         {
-          width = CONTENT_WIDTH,
+          width = CONTENT_WIDTH + 5,
           height = 545,
+          contentGap = 6
         }
       )
 
@@ -441,6 +442,10 @@ function TeamList:Refresh()
       currentOffset + CONTENT_PADDING
     )
   )
+
+  if self.Frame.RefreshScrollBar then
+    self.Frame:RefreshScrollBar()
+  end
 
   self:UpdateCardSelection()
   self.Refreshing = false
