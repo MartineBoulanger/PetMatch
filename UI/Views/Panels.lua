@@ -391,6 +391,14 @@ function Panels:Create()
         self.TeamsFrame
       )
 
+  --------------------------------------------------
+  -- Open PML Logs Addon button
+  --------------------------------------------------
+  self.PMLButton =
+      self:CreatePMLButton(
+        self.TeamsFrame
+      )
+
 
   self.TeamListBackground =
       CreateFrame(
@@ -677,6 +685,47 @@ function Panels:CreateNewFolderButton(parent)
   )
 
   self.NewFolderButton = button
+
+  return button
+end
+
+function Panels:CreatePMLButton(parent)
+  local addonName = "PetMastersLeagueLogs"
+
+  local loaded = C_AddOns.IsAddOnLoaded(addonName)
+
+  if not loaded then
+    return nil
+  end
+
+  local button =
+      addon.UI.Base.Button:Create(
+        parent,
+        {
+          text = "Open PML Logs",
+          width = 120,
+          height = 22,
+
+          onClick = function()
+            local pml = _G.PetMastersLeagueLogs
+            if pml and pml.Toggle then
+              pml.Toggle()
+            end
+          end,
+        }
+      )
+
+  button:ClearAllPoints()
+
+  button:SetPoint(
+    "BOTTOMRIGHT",
+    parent,
+    "BOTTOMRIGHT",
+    0,
+    0
+  )
+
+  self.AddonButton = button
 
   return button
 end
