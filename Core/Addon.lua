@@ -26,6 +26,10 @@ local function Enable()
   addon.ModuleManager:Enable()
   addon.Enabled = true
 
+  if addon.Blizzard:IsCollectionsLoaded() then
+    addon.Blizzard:Initialize()
+  end
+
   C_Timer.After(
     2,
     function()
