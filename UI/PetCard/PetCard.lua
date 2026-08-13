@@ -6,7 +6,7 @@ local PetCard = {}
 PetCard.__index = PetCard
 
 local CARD_WIDTH = 300
-local CONTENT_PADDING = 0
+local CONTENT_PADDING = 14
 local CONTENT_TOP_SPACING = 0
 local SECTION_SPACING = 5
 
@@ -59,19 +59,18 @@ function PetCard:Create(parent)
       ""
     )
   elseif type(instance.Frame.SetTitle) == "function" then
-    instance.Frame:SetTitle("Pet Card")
+    instance.Frame:SetTitle("Pet Details")
   end
 
   --------------------------------------------------
   -- Components
   --------------------------------------------------
 
-  instance:CreatePetModel()
   instance:CreateContent()
   instance:CreateCloseButton()
 
   instance:CreateHeader()
-  instance:CreateStats()
+  instance:CreateDetails()
   instance:CreateSource()
   instance:CreateDescription()
   instance:CreateAbilityGrid()
@@ -96,32 +95,33 @@ function PetCard:CreateContent()
       )
 
   --------------------------------------------------
-  -- Start underneath Blizzard title container
+  -- Content starts below Blizzard title bar
+  -- but uses the Pet Card itself for horizontal
+  -- alignment.
   --------------------------------------------------
+
+  local titleHeight = 0
+
   if self.Frame.TitleContainer then
-    self.Content:SetPoint(
-      "TOPLEFT",
-      self.Frame.TitleContainer,
-      "BOTTOMLEFT",
-      CONTENT_PADDING,
-      -CONTENT_TOP_SPACING
-    )
-  else
-    self.Content:SetPoint(
-      "TOPLEFT",
-      self.Frame,
-      "TOPLEFT",
-      CONTENT_PADDING,
-      -CONTENT_PADDING
-    )
+    titleHeight =
+        self.Frame.TitleContainer:GetHeight()
+        or 0
   end
+
+  self.Content:SetPoint(
+    "TOPLEFT",
+    self.Frame,
+    "TOPLEFT",
+    CONTENT_PADDING + 2,
+    -(titleHeight + CONTENT_TOP_SPACING)
+  )
 
   self.Content:SetPoint(
     "TOPRIGHT",
     self.Frame,
     "TOPRIGHT",
-    -CONTENT_PADDING,
-    0
+    -CONTENT_PADDING + 2,
+    -(titleHeight + CONTENT_TOP_SPACING)
   )
 
   self.Content:SetHeight(1)
@@ -235,9 +235,9 @@ function PetCard:CreateHeader()
       )
 end
 
-function PetCard:CreateStats()
-  self.Stats =
-      addon.UI.PetCard.Stats:Create(
+function PetCard:CreateDetails()
+  self.Details =
+      addon.UI.PetCard.Details:Create(
         self.Content
       )
 end
@@ -281,12 +281,8 @@ function PetCard:SetPet(pet)
 
   self.Pet = pet
 
-  self:SetPetModel(
-    pet.displayID
-  )
-
   self.Header:SetPet(pet)
-  self.Stats:SetPet(pet)
+  self.Details:SetPet(pet)
   self.Source:SetPet(pet)
   self.Description:SetPet(pet)
   self.AbilityGrid:SetPet(pet)
@@ -314,7 +310,7 @@ end
 function PetCard:Layout()
   local sections = {
     self.Header,
-    self.Stats,
+    self.Details,
     self.Source,
     self.Description,
     self.AbilityGrid,
@@ -333,21 +329,45 @@ function PetCard:Layout()
       if frame:IsShown() then
         frame:ClearAllPoints()
 
-        frame:SetPoint(
-          "TOPLEFT",
-          self.Content,
-          "TOPLEFT",
-          0,
-          -offsetY
-        )
+        if section == self.Details then
+          local edgeInset = 3
 
-        frame:SetPoint(
-          "TOPRIGHT",
-          self.Content,
-          "TOPRIGHT",
-          0,
-          -offsetY
-        )
+          local offset =
+              CONTENT_PADDING
+              - edgeInset
+
+          frame:SetPoint(
+            "TOPLEFT",
+            self.Content,
+            "TOPLEFT",
+            -offset,
+            -offsetY
+          )
+
+          frame:SetPoint(
+            "TOPRIGHT",
+            self.Content,
+            "TOPRIGHT",
+            offset,
+            -offsetY
+          )
+        else
+          frame:SetPoint(
+            "TOPLEFT",
+            self.Content,
+            "TOPLEFT",
+            0,
+            -offsetY
+          )
+
+          frame:SetPoint(
+            "TOPRIGHT",
+            self.Content,
+            "TOPRIGHT",
+            0,
+            -offsetY
+          )
+        end
 
         local height =
             math.max(
@@ -510,76 +530,6 @@ end
 
 function PetCard:IsOwnedBy(owner)
   return self.Owner == owner
-end
-
---------------------------------------------------
--- Pet model
---------------------------------------------------
-function PetCard:CreatePetModel()
-  self.Model =
-      CreateFrame(
-        "PlayerModel",
-        nil,
-        self.Frame
-      )
-
-  self.Model:SetPoint(
-    "TOPRIGHT",
-    self.Frame,
-    "TOPRIGHT",
-    -20,
-    -55
-  )
-
-  self.Model:SetSize(
-    130,
-    120
-  )
-
-  self.Model:SetFrameLevel(
-    self.Frame:GetFrameLevel() + 2
-  )
-
-  self.Model:EnableMouse(false)
-  self.Model:Hide()
-end
-
-function PetCard:SetPetModel(displayID)
-  displayID =
-      tonumber(displayID)
-
-  if not displayID then
-    self.Model:ClearModel()
-    self.Model:Hide()
-    return
-  end
-
-  local success =
-      pcall(
-        self.Model.SetDisplayInfo,
-        self.Model,
-        displayID
-      )
-
-  if not success then
-    self.Model:ClearModel()
-    self.Model:Hide()
-    return
-  end
-
-  if self.Model.SetFacing then
-    self.Model:SetFacing(
-      math.rad(-25)
-    )
-  end
-
-  if self.Model.SetCamDistanceScale then
-    self.Model:SetCamDistanceScale(
-      1.05
-    )
-  end
-
-  self.Model:Show()
 end
 
 addon.UI.PetCard.Card = PetCard

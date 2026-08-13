@@ -419,7 +419,7 @@ function Header:Create(parent)
     "LEFT",
     instance.Frame,
     "LEFT",
-    -15,
+    0,
     -5
   )
 
@@ -436,7 +436,7 @@ function Header:Create(parent)
     "RIGHT",
     instance.Frame,
     "RIGHT",
-    -10,
+    0,
     -5
   )
 

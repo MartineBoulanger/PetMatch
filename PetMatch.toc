@@ -1,5 +1,5 @@
 ## Interface: 120100
-## Version: 1.12.0
+## Version: 1.12.1
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
@@ -70,6 +70,7 @@ UI/PetCard/Sections/AbilityCell.lua
 UI/PetCard/Sections/AbilityGrid.lua
 UI/PetCard/Sections/Header.lua
 UI/PetCard/Sections/Stats.lua
+UI/PetCard/Sections/Details.lua
 UI/PetCard/Sections/Source.lua
 UI/PetCard/Sections/Description.lua
 UI/PetCard/Sections/BreedSection.lua

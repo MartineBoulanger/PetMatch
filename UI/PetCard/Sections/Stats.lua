@@ -3,8 +3,10 @@ local _, addon = ...
 local Stats = {}
 Stats.__index = Stats
 
-local ROW_HEIGHT = 16
+local INFO_ROW_HEIGHT = 18
+local STAT_ROW_HEIGHT = 16
 local ROW_SPACING = 2
+local SECTION_SPACING = 6
 local ICON_SIZE = 14
 
 local STAT_ICONS = {
@@ -12,6 +14,76 @@ local STAT_ICONS = {
   power = "Interface\\Icons\\Petbattle_Attack",
   speed = "Interface\\Icons\\Petbattle_Speed",
 }
+
+local PET_RARITY_COLORS = {
+  [1] = ITEM_QUALITY_COLORS[0],
+  [2] = ITEM_QUALITY_COLORS[1],
+  [3] = ITEM_QUALITY_COLORS[2],
+  [4] = ITEM_QUALITY_COLORS[3],
+  [5] = ITEM_QUALITY_COLORS[4],
+  [6] = ITEM_QUALITY_COLORS[5],
+}
+
+--------------------------------------------------
+-- Helpers
+--------------------------------------------------
+
+local function GetQualityColor(quality)
+  quality = tonumber(quality) or 0
+
+  local color =
+      PET_RARITY_COLORS[quality]
+
+  if not color then
+    return 1, 1, 1
+  end
+
+  return
+      color.r or 1,
+      color.g or 1,
+      color.b or 1
+end
+
+local function CreateInfoRow(parent, font)
+  local row =
+      CreateFrame(
+        "Frame",
+        nil,
+        parent
+      )
+
+  row:SetHeight(
+    INFO_ROW_HEIGHT
+  )
+
+  row.Value =
+      row:CreateFontString(
+        nil,
+        "OVERLAY",
+        font or "GameFontHighlight"
+      )
+
+  row.Value:SetPoint(
+    "LEFT",
+    row,
+    "LEFT",
+    0,
+    0
+  )
+
+  row.Value:SetPoint(
+    "RIGHT",
+    row,
+    "RIGHT",
+    0,
+    0
+  )
+
+  row.Value:SetJustifyH("LEFT")
+  row.Value:SetWordWrap(false)
+
+  return row
+end
 
 local function CreateStatRow(
     parent,
@@ -25,7 +97,7 @@ local function CreateStatRow(
       )
 
   row:SetHeight(
-    ROW_HEIGHT
+    STAT_ROW_HEIGHT
   )
 
   row.Icon =
@@ -80,6 +152,10 @@ local function CreateStatRow(
   return row
 end
 
+--------------------------------------------------
+-- Create
+--------------------------------------------------
+
 function Stats:Create(parent)
   local instance =
       setmetatable(
@@ -94,11 +170,87 @@ function Stats:Create(parent)
         parent
       )
 
+  --------------------------------------------------
+  -- Level
+  --------------------------------------------------
+
+  instance.Level =
+      CreateInfoRow(
+        instance.Frame,
+        "GameFontNormal"
+      )
+
+  instance.Level:SetPoint(
+    "TOPLEFT",
+    instance.Frame,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  instance.Level:SetPoint(
+    "TOPRIGHT",
+    instance.Frame,
+    "TOPRIGHT",
+    0,
+    0
+  )
+
+  --------------------------------------------------
+  -- Expansion
+  --------------------------------------------------
+
+  instance.Expansion =
+      CreateInfoRow(
+        instance.Frame,
+        "GameFontHighlight"
+      )
+
+  instance.Expansion:SetPoint(
+    "TOPLEFT",
+    instance.Level,
+    "BOTTOMLEFT",
+    0,
+    -ROW_SPACING
+  )
+
+  instance.Expansion:SetPoint(
+    "TOPRIGHT",
+    instance.Level,
+    "BOTTOMRIGHT",
+    0,
+    -ROW_SPACING
+  )
+
+  --------------------------------------------------
+  -- Health
+  --------------------------------------------------
+
   instance.Health =
       CreateStatRow(
         instance.Frame,
         STAT_ICONS.health
       )
+
+  instance.Health:SetPoint(
+    "TOPLEFT",
+    instance.Expansion,
+    "BOTTOMLEFT",
+    0,
+    -SECTION_SPACING
+  )
+
+  instance.Health:SetPoint(
+    "TOPRIGHT",
+    instance.Expansion,
+    "BOTTOMRIGHT",
+    0,
+    -SECTION_SPACING
+  )
+
+  --------------------------------------------------
+  -- Power
+  --------------------------------------------------
 
   instance.Power =
       CreateStatRow(
@@ -106,61 +258,58 @@ function Stats:Create(parent)
         STAT_ICONS.power
       )
 
+  instance.Power:SetPoint(
+    "TOPLEFT",
+    instance.Health,
+    "BOTTOMLEFT",
+    0,
+    -ROW_SPACING
+  )
+
+  instance.Power:SetPoint(
+    "TOPRIGHT",
+    instance.Health,
+    "BOTTOMRIGHT",
+    0,
+    -ROW_SPACING
+  )
+
+  --------------------------------------------------
+  -- Speed
+  --------------------------------------------------
+
   instance.Speed =
       CreateStatRow(
         instance.Frame,
         STAT_ICONS.speed
       )
 
-  local rows = {
-    instance.Health,
+  instance.Speed:SetPoint(
+    "TOPLEFT",
     instance.Power,
-    instance.Speed,
-    instance.SpeciesID,
-  }
+    "BOTTOMLEFT",
+    0,
+    -ROW_SPACING
+  )
 
-  for index, row in ipairs(rows) do
-    row:SetPoint(
-      "LEFT",
-      instance.Frame,
-      "LEFT",
-      0,
-      0
-    )
+  instance.Speed:SetPoint(
+    "TOPRIGHT",
+    instance.Power,
+    "BOTTOMRIGHT",
+    0,
+    -ROW_SPACING
+  )
 
-    row:SetPoint(
-      "RIGHT",
-      instance.Frame,
-      "RIGHT",
-      0,
-      0
-    )
-
-    if index == 1 then
-      row:SetPoint(
-        "TOP",
-        instance.Frame,
-        "TOP",
-        0,
-        0
-      )
-    else
-      row:SetPoint(
-        "TOP",
-        rows[index - 1],
-        "BOTTOM",
-        0,
-        -ROW_SPACING
-      )
-    end
-  end
+  --------------------------------------------------
+  -- Height
+  --------------------------------------------------
 
   local totalHeight =
-      (#rows * ROW_HEIGHT)
-      + (
-        (#rows - 1)
-        * ROW_SPACING
-      )
+      (INFO_ROW_HEIGHT * 2)
+      + (STAT_ROW_HEIGHT * 3)
+      + ROW_SPACING
+      + SECTION_SPACING
+      + (ROW_SPACING * 2)
 
   instance.Frame:SetHeight(
     totalHeight
@@ -169,48 +318,119 @@ function Stats:Create(parent)
   return instance
 end
 
-function Stats:SetPet(pet)
-  local hasStats =
-      pet
-      and pet.petGUID
-      and (
-        pet.health ~= nil
-        or pet.power ~= nil
-        or pet.speed ~= nil
-      )
+--------------------------------------------------
+-- Set pet
+--------------------------------------------------
 
-  if not hasStats then
+function Stats:SetPet(pet)
+  if not pet then
     self.Frame:Hide()
     return false
   end
 
   self.Frame:Show()
 
-  self.Health.Value:SetFormattedText(
-    "%s",
-    tostring(
-      pet.maxHealth
-      or pet.health
-      or "0"
+  --------------------------------------------------
+  -- Quality
+  --------------------------------------------------
+
+  local r, g, b =
+      GetQualityColor(
+        pet.quality
+      )
+
+  --------------------------------------------------
+  -- Level
+  --------------------------------------------------
+
+  if pet.level
+      and pet.level > 0 then
+    self.Level.Value:SetFormattedText(
+      "Level %d",
+      pet.level
     )
+  else
+    self.Level.Value:SetText(
+      "Not Collected"
+    )
+  end
+
+  self.Level.Value:SetTextColor(
+    r,
+    g,
+    b,
+    1
   )
 
-  self.Power.Value:SetFormattedText(
-    "%s",
-    tostring(
-      pet.power or "0"
-    )
-  )
+  --------------------------------------------------
+  -- Expansion
+  --------------------------------------------------
 
-  self.Speed.Value:SetFormattedText(
-    "%s",
-    tostring(
-      pet.speed or "0"
+  if pet.expansionName
+      and pet.expansionName ~= "" then
+    self.Expansion.Value:SetText(
+      pet.expansionName
     )
-  )
+
+    self.Expansion:Show()
+  else
+    self.Expansion.Value:SetText("")
+    self.Expansion:Hide()
+  end
+
+  --------------------------------------------------
+  -- Stats
+  --------------------------------------------------
+
+  local hasStats =
+      pet.petGUID
+      and (
+        pet.health ~= nil
+        or pet.power ~= nil
+        or pet.speed ~= nil
+      )
+
+  if hasStats then
+    self.Health.Value:SetFormattedText(
+      "%s",
+      tostring(
+        pet.maxHealth
+        or pet.health
+        or "0"
+      )
+    )
+
+    self.Power.Value:SetFormattedText(
+      "%s",
+      tostring(
+        pet.power
+        or "0"
+      )
+    )
+
+    self.Speed.Value:SetFormattedText(
+      "%s",
+      tostring(
+        pet.speed
+        or "0"
+      )
+    )
+
+    self.Health:Show()
+    self.Power:Show()
+    self.Speed:Show()
+  else
+    self.Health:Hide()
+    self.Power:Hide()
+    self.Speed:Hide()
+  end
 
   return true
 end
+
+--------------------------------------------------
+-- Accessors
+--------------------------------------------------
 
 function Stats:GetFrame()
   return self.Frame
