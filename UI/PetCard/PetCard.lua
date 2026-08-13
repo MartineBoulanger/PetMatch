@@ -5,9 +5,10 @@ addon.UI.PetCard = addon.UI.PetCard or {}
 local PetCard = {}
 PetCard.__index = PetCard
 
-local CARD_WIDTH = 360
-local CONTENT_PADDING = 14
-local SECTION_SPACING = 8
+local CARD_WIDTH = 300
+local CONTENT_PADDING = 0
+local CONTENT_TOP_SPACING = 0
+local SECTION_SPACING = 5
 
 function PetCard:Create(parent)
   assert(
@@ -21,11 +22,15 @@ function PetCard:Create(parent)
         PetCard
       )
 
+  --------------------------------------------------
+  -- Frame
+  --------------------------------------------------
   instance.Frame =
       CreateFrame(
         "Frame",
         nil,
-        parent
+        parent,
+        "DefaultPanelTemplate"
       )
 
   instance.Frame:SetWidth(
@@ -44,11 +49,24 @@ function PetCard:Create(parent)
     true
   )
 
-  instance:CreateBackground()
-  instance:CreateArtwork()
+  --------------------------------------------------
+  -- Blizzard title
+  --------------------------------------------------
+
+  if instance.Frame.TitleContainer
+      and instance.Frame.TitleContainer.TitleText then
+    instance.Frame.TitleContainer.TitleText:SetText(
+      ""
+    )
+  elseif type(instance.Frame.SetTitle) == "function" then
+    instance.Frame:SetTitle("Pet Card")
+  end
+
+  --------------------------------------------------
+  -- Components
+  --------------------------------------------------
+
   instance:CreatePetModel()
-  instance:CreateOverlay()
-  instance:CreateBorder()
   instance:CreateContent()
   instance:CreateCloseButton()
 
@@ -66,133 +84,9 @@ function PetCard:Create(parent)
   return instance
 end
 
-function PetCard:CreateBackground()
-  self.Background =
-      self.Frame:CreateTexture(
-        nil,
-        "BACKGROUND"
-      )
-
-  self.Background:SetAllPoints()
-
-  self.Background:SetTexture(
-    "Interface\\FrameGeneral\\UI-Background-Marble"
-  )
-
-  self.Background:SetHorizTile(true)
-  self.Background:SetVertTile(true)
-
-  self.Background:SetVertexColor(
-    0.28,
-    0.25,
-    0.20,
-    1
-  )
-end
-
-function PetCard:CreateArtwork()
-  self.Artwork =
-      self.Frame:CreateTexture(
-        nil,
-        "BORDER"
-      )
-
-  self.Artwork:SetPoint(
-    "TOPLEFT",
-    self.Frame,
-    "TOPLEFT",
-    12,
-    -12
-  )
-
-  self.Artwork:SetPoint(
-    "BOTTOMRIGHT",
-    self.Frame,
-    "BOTTOMRIGHT",
-    -12,
-    12
-  )
-
-  self.Artwork:SetTexCoord(
-    0.08,
-    0.92,
-    0.08,
-    0.92
-  )
-
-  self.Artwork:SetAlpha(0.10)
-end
-
-function PetCard:SetArtwork(icon)
-  if icon then
-    self.Artwork:SetTexture(icon)
-    self.Artwork:Show()
-  else
-    self.Artwork:SetTexture(nil)
-    self.Artwork:Hide()
-  end
-end
-
-function PetCard:CreateOverlay()
-  self.Overlay =
-      self.Frame:CreateTexture(
-        nil,
-        "ARTWORK"
-      )
-
-  self.Overlay:SetPoint(
-    "TOPLEFT",
-    self.Frame,
-    "TOPLEFT",
-    8,
-    -8
-  )
-
-  self.Overlay:SetPoint(
-    "BOTTOMRIGHT",
-    self.Frame,
-    "BOTTOMRIGHT",
-    -8,
-    8
-  )
-
-  self.Overlay:SetColorTexture(
-    0.02,
-    0.02,
-    0.02,
-    0.58
-  )
-end
-
-function PetCard:CreateBorder()
-  self.Border =
-      CreateFrame(
-        "Frame",
-        nil,
-        self.Frame,
-        "BackdropTemplate"
-      )
-
-  self.Border:SetAllPoints()
-
-  self.Border:SetBackdrop({
-    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-    edgeSize = 20,
-    insets = {
-      left = 5,
-      right = 5,
-      top = 5,
-      bottom = 5,
-    },
-  })
-
-  self.Border:SetFrameLevel(
-    self.Frame:GetFrameLevel() + 20
-  )
-
-  self.Border:EnableMouse(false)
-end
-
+--------------------------------------------------
+-- Content
+--------------------------------------------------
 function PetCard:CreateContent()
   self.Content =
       CreateFrame(
@@ -201,32 +95,52 @@ function PetCard:CreateContent()
         self.Frame
       )
 
-  self.Content:SetPoint(
-    "TOPLEFT",
-    self.Frame,
-    "TOPLEFT",
-    CONTENT_PADDING,
-    -CONTENT_PADDING
-  )
+  --------------------------------------------------
+  -- Start underneath Blizzard title container
+  --------------------------------------------------
+  if self.Frame.TitleContainer then
+    self.Content:SetPoint(
+      "TOPLEFT",
+      self.Frame.TitleContainer,
+      "BOTTOMLEFT",
+      CONTENT_PADDING,
+      -CONTENT_TOP_SPACING
+    )
+  else
+    self.Content:SetPoint(
+      "TOPLEFT",
+      self.Frame,
+      "TOPLEFT",
+      CONTENT_PADDING,
+      -CONTENT_PADDING
+    )
+  end
 
   self.Content:SetPoint(
     "TOPRIGHT",
     self.Frame,
     "TOPRIGHT",
     -CONTENT_PADDING,
-    -CONTENT_PADDING
+    0
   )
 
   self.Content:SetHeight(1)
   self.Content:EnableMouse(false)
 end
 
+--------------------------------------------------
+-- Close button
+--------------------------------------------------
 function PetCard:CreateCloseButton()
+  local parent =
+      self.Frame.TitleContainer
+      or self.Frame
+
   self.CloseButton =
       CreateFrame(
         "Button",
         nil,
-        self.Frame,
+        parent,
         "UIPanelCloseButton"
       )
 
@@ -234,17 +148,26 @@ function PetCard:CreateCloseButton()
     "TOPRIGHT",
     self.Frame,
     "TOPRIGHT",
-    3,
-    3
+    0,
+    0
+  )
+
+  --------------------------------------------------
+  -- Make sure the button stays above the panel
+  --------------------------------------------------
+  self.CloseButton:SetFrameStrata(
+    self.Frame:GetFrameStrata()
   )
 
   self.CloseButton:SetFrameLevel(
-    self.Border:GetFrameLevel() + 5
+    parent:GetFrameLevel() + 20
   )
 
+  --------------------------------------------------
+  -- Click
+  --------------------------------------------------
   self.CloseButton:SetScript(
     "OnClick",
-
     function()
       if self.CloseHandler then
         self.CloseHandler()
@@ -269,6 +192,9 @@ function PetCard:SetCloseHandler(handler)
   self.CloseHandler = handler
 end
 
+--------------------------------------------------
+-- Pinning
+--------------------------------------------------
 function PetCard:SetPinned(pinned)
   self.Pinned =
       pinned == true
@@ -286,12 +212,22 @@ function PetCard:SetPinned(pinned)
   self.Content:EnableMouse(
     self.Pinned
   )
+
+  if self.Header
+      and self.Header.SetInteractive then
+    self.Header:SetInteractive(
+      self.Pinned
+    )
+  end
 end
 
 function PetCard:IsPinned()
   return self.Pinned == true
 end
 
+--------------------------------------------------
+-- Sections
+--------------------------------------------------
 function PetCard:CreateHeader()
   self.Header =
       addon.UI.PetCard.Header:Create(
@@ -334,6 +270,9 @@ function PetCard:CreateBreedSection()
       )
 end
 
+--------------------------------------------------
+-- Pet
+--------------------------------------------------
 function PetCard:SetPet(pet)
   if not pet then
     self:Hide()
@@ -341,10 +280,6 @@ function PetCard:SetPet(pet)
   end
 
   self.Pet = pet
-
-  self:SetArtwork(
-    pet.icon
-  )
 
   self:SetPetModel(
     pet.displayID
@@ -373,6 +308,9 @@ function PetCard:SetPet(pet)
   self:Layout()
 end
 
+--------------------------------------------------
+-- Layout
+--------------------------------------------------
 function PetCard:Layout()
   local sections = {
     self.Header,
@@ -431,6 +369,9 @@ function PetCard:Layout()
         - SECTION_SPACING
   end
 
+  --------------------------------------------------
+  -- Content height
+  --------------------------------------------------
   self.Content:SetHeight(
     math.max(
       1,
@@ -438,12 +379,27 @@ function PetCard:Layout()
     )
   )
 
+  --------------------------------------------------
+  -- Total card height
+  --------------------------------------------------
+  local titleHeight = 0
+  if self.Frame.TitleContainer then
+    titleHeight =
+        self.Frame.TitleContainer:GetHeight()
+        or 0
+  end
+
   self.Frame:SetHeight(
-    offsetY
-    + (CONTENT_PADDING * 2)
+    titleHeight
+    + CONTENT_TOP_SPACING
+    + offsetY
+    + CONTENT_PADDING
   )
 end
 
+--------------------------------------------------
+-- Owner / anchor
+--------------------------------------------------
 function PetCard:SetOwner(
     owner,
     anchor
@@ -454,7 +410,8 @@ function PetCard:SetOwner(
 
   self.Owner = owner
 
-  local frame = self.Frame
+  local frame =
+      self.Frame
 
   frame:ClearAllPoints()
 
@@ -514,6 +471,9 @@ function PetCard:SetOwner(
   end
 end
 
+--------------------------------------------------
+-- Accessors
+--------------------------------------------------
 function PetCard:GetFrame()
   return self.Frame
 end
@@ -522,6 +482,9 @@ function PetCard:GetContentFrame()
   return self.Content
 end
 
+--------------------------------------------------
+-- Show / Hide
+--------------------------------------------------
 function PetCard:Show()
   self.Frame:Show()
 end
@@ -549,6 +512,9 @@ function PetCard:IsOwnedBy(owner)
   return self.Owner == owner
 end
 
+--------------------------------------------------
+-- Pet model
+--------------------------------------------------
 function PetCard:CreatePetModel()
   self.Model =
       CreateFrame(
@@ -579,7 +545,8 @@ function PetCard:CreatePetModel()
 end
 
 function PetCard:SetPetModel(displayID)
-  displayID = tonumber(displayID)
+  displayID =
+      tonumber(displayID)
 
   if not displayID then
     self.Model:ClearModel()
@@ -600,19 +567,16 @@ function PetCard:SetPetModel(displayID)
     return
   end
 
-  self.Artwork:SetTexCoord(
-    0.12,
-    0.88,
-    0.12,
-    0.88
-  )
-
   if self.Model.SetFacing then
-    self.Model:SetFacing(math.rad(-25))
+    self.Model:SetFacing(
+      math.rad(-25)
+    )
   end
 
   if self.Model.SetCamDistanceScale then
-    self.Model:SetCamDistanceScale(1.05)
+    self.Model:SetCamDistanceScale(
+      1.05
+    )
   end
 
   self.Model:Show()

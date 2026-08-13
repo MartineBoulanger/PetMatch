@@ -3,9 +3,14 @@ local _, addon = ...
 local Header = {}
 Header.__index = Header
 
-local HEADER_HEIGHT = 60
+local HEADER_HEIGHT = 56
+
 local PET_ICON_SIZE = 48
-local FAMILY_ICON_SIZE = 18
+local FAMILY_ICON_SIZE = 40
+local ICON_BORDER_PADDING = 4
+
+-- local CIRCLE_MASK = "Interface\\Common\\RingBorder"
+local CIRCLE_MASK = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
 
 local PET_RARITY_COLORS = {
   [1] = ITEM_QUALITY_COLORS[0],
@@ -13,7 +18,7 @@ local PET_RARITY_COLORS = {
   [3] = ITEM_QUALITY_COLORS[2],
   [4] = ITEM_QUALITY_COLORS[3],
   [5] = ITEM_QUALITY_COLORS[4],
-  [6] = ITEM_QUALITY_COLORS[5]
+  [6] = ITEM_QUALITY_COLORS[5],
 }
 
 local PET_FAMILY_ICONS = {
@@ -29,33 +34,9 @@ local PET_FAMILY_ICONS = {
   [10] = "Interface\\Icons\\Pet_Type_Mechanical",
 }
 
-local PET_TYPE_SUFFIX = {
-  [1]  = "Humanoid",
-  [2]  = "Dragonkin",
-  [3]  = "Flying",
-  [4]  = "Undead",
-  [5]  = "Critter",
-  [6]  = "Magic",
-  [7]  = "Elemental",
-  [8]  = "Beast",
-  [9]  = "Aquatic",
-  [10] = "Mechanical"
-}
-
-local function GetPetTypeName(petType)
-  petType = tonumber(petType)
-
-  if not petType then
-    return nil
-  end
-
-  if PET_TYPE_SUFFIX then
-    return PET_TYPE_SUFFIX[petType]
-  end
-
-  return nil
-end
-
+--------------------------------------------------
+-- Helpers
+--------------------------------------------------
 local function GetQualityColor(quality)
   quality = tonumber(quality) or 0
 
@@ -67,33 +48,346 @@ local function GetQualityColor(quality)
     return 1, 1, 1
   end
 
-  return color.r or 1,
+  return
+      color.r or 1,
       color.g or 1,
       color.b or 1
 end
 
-local function BuildSubtitle(pet)
-  local petTypeName =
-      pet.petTypeName
-      or GetPetTypeName(
-        pet.petType
-      )
+local function GetPetFamilyName(petType)
+  petType = tonumber(petType)
 
-  local expansionName =
-      pet.expansionName
-
-  if petTypeName
-      and expansionName then
-    return petTypeName
-        .. " • "
-        .. expansionName
+  if not petType then
+    return nil
   end
 
-  return petTypeName
-      or expansionName
-      or ""
+  return _G[
+  "BATTLE_PET_NAME_" .. petType
+  ]
 end
 
+--------------------------------------------------
+-- Circular icon
+--------------------------------------------------
+local function CreateCircularIcon(parent, iconSize)
+  local frame =
+      CreateFrame(
+        "Frame",
+        nil,
+        parent
+      )
+
+  frame:SetSize(
+    iconSize + ICON_BORDER_PADDING,
+    iconSize + ICON_BORDER_PADDING
+  )
+
+  --------------------------------------------------
+  -- Quality border
+  --------------------------------------------------
+
+  frame.Border =
+      frame:CreateTexture(
+        nil,
+        "BACKGROUND"
+      )
+
+  frame.Border:SetAllPoints()
+
+  frame.Border:SetColorTexture(
+    1,
+    1,
+    1,
+    1
+  )
+
+  frame.BorderMask =
+      frame:CreateMaskTexture()
+
+  frame.BorderMask:SetTexture(
+    CIRCLE_MASK,
+    "CLAMPTOBLACKADDITIVE",
+    "CLAMPTOBLACKADDITIVE"
+  )
+
+  frame.BorderMask:SetAllPoints(
+    frame.Border
+  )
+
+  frame.Border:AddMaskTexture(
+    frame.BorderMask
+  )
+
+  --------------------------------------------------
+  -- Pet icon
+  --------------------------------------------------
+
+  frame.Icon =
+      frame:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  frame.Icon:SetSize(
+    iconSize,
+    iconSize
+  )
+
+  frame.Icon:SetPoint(
+    "CENTER"
+  )
+
+  frame.Icon:SetTexCoord(
+    0.08,
+    0.92,
+    0.08,
+    0.92
+  )
+
+  --------------------------------------------------
+  -- Circular icon mask
+  --------------------------------------------------
+
+  frame.IconMask =
+      frame:CreateMaskTexture()
+
+  frame.IconMask:SetTexture(
+    CIRCLE_MASK,
+    "CLAMPTOBLACKADDITIVE",
+    "CLAMPTOBLACKADDITIVE"
+  )
+
+  frame.IconMask:SetAllPoints(
+    frame.Icon
+  )
+
+  frame.Icon:AddMaskTexture(
+    frame.IconMask
+  )
+
+  return frame
+end
+
+local function ShowPetFamilyTooltip(
+    owner,
+    abilityID,
+    speciesID,
+    petID
+)
+  abilityID =
+      tonumber(
+        abilityID
+      )
+
+  if not abilityID then
+    return
+  end
+
+  if type(
+        _G.PetJournal_ShowAbilityTooltip
+      ) ~= "function" then
+    return
+  end
+
+  --------------------------------------------------
+  -- Use Blizzard's own tooltip
+  --------------------------------------------------
+
+  _G.PetJournal_ShowAbilityTooltip(
+    owner,
+    abilityID,
+    speciesID,
+    petID
+  )
+
+  local tooltip =
+      _G.PetJournalPrimaryAbilityTooltip
+
+  if not tooltip then
+    return
+  end
+
+  --------------------------------------------------
+  -- Keep tooltip above Pet Card
+  --------------------------------------------------
+
+  tooltip:SetFrameStrata(
+    "TOOLTIP"
+  )
+
+  local cardFrame =
+      owner:GetParent()
+
+  while cardFrame
+    and cardFrame:GetParent() do
+    if cardFrame:GetWidth() == 360 then
+      break
+    end
+
+    cardFrame =
+        cardFrame:GetParent()
+  end
+
+  local minimumLevel = 200
+
+  if cardFrame then
+    minimumLevel =
+        math.max(
+          minimumLevel,
+          cardFrame:GetFrameLevel() + 50
+        )
+  end
+
+  tooltip:SetFrameLevel(
+    minimumLevel
+  )
+
+  --------------------------------------------------
+  -- Ownership
+  --------------------------------------------------
+
+  tooltip.anchoredTo =
+      owner
+
+  tooltip:Show()
+end
+
+local function HidePetFamilyTooltip(owner)
+  local tooltip =
+      _G.PetJournalPrimaryAbilityTooltip
+
+  if not tooltip then
+    return
+  end
+
+  if tooltip.anchoredTo
+      and tooltip.anchoredTo ~= owner then
+    return
+  end
+
+  tooltip:Hide()
+  tooltip.anchoredTo = nil
+end
+
+local function CreateFamilyIcon(parent, iconSize)
+  local borderWidth = 2
+  local frameSize = iconSize + (borderWidth * 2)
+
+  local frame =
+      CreateFrame(
+        "Frame",
+        nil,
+        parent
+      )
+
+  frame:SetSize(
+    frameSize,
+    frameSize
+  )
+
+  --------------------------------------------------
+  -- Gold circular border
+  --------------------------------------------------
+
+  frame.Border =
+      frame:CreateTexture(
+        nil,
+        "BACKGROUND"
+      )
+
+  frame.Border:SetAllPoints()
+
+  frame.Border:SetColorTexture(
+    0.75,
+    0.55,
+    0.20,
+    1
+  )
+
+  frame.BorderMask =
+      frame:CreateMaskTexture()
+
+  frame.BorderMask:SetTexture(
+    CIRCLE_MASK,
+    "CLAMPTOBLACKADDITIVE",
+    "CLAMPTOBLACKADDITIVE"
+  )
+
+  frame.BorderMask:SetAllPoints(
+    frame.Border
+  )
+
+  frame.Border:AddMaskTexture(
+    frame.BorderMask
+  )
+
+  --------------------------------------------------
+  -- Black inner circle
+  --------------------------------------------------
+  frame.Background =
+      frame:CreateTexture(
+        nil,
+        "BORDER"
+      )
+
+  frame.Background:SetSize(
+    iconSize,
+    iconSize
+  )
+
+  frame.Background:SetPoint(
+    "CENTER"
+  )
+
+  frame.Background:SetColorTexture(
+    0.03,
+    0.03,
+    0.03,
+    0.88
+  )
+
+  frame.BackgroundMask =
+      frame:CreateMaskTexture()
+
+  frame.BackgroundMask:SetTexture(
+    CIRCLE_MASK,
+    "CLAMPTOBLACKADDITIVE",
+    "CLAMPTOBLACKADDITIVE"
+  )
+
+  frame.BackgroundMask:SetAllPoints(
+    frame.Background
+  )
+
+  frame.Background:AddMaskTexture(
+    frame.BackgroundMask
+  )
+
+  --------------------------------------------------
+  -- Family icon
+  --------------------------------------------------
+
+  frame.Icon =
+      frame:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  frame.Icon:SetSize(
+    iconSize - 4,
+    iconSize - 4
+  )
+
+  frame.Icon:SetPoint(
+    "CENTER"
+  )
+
+  return frame
+end
+
+--------------------------------------------------
+-- Create
+--------------------------------------------------
 function Header:Create(parent)
   local instance =
       setmetatable(
@@ -112,45 +406,77 @@ function Header:Create(parent)
     HEADER_HEIGHT
   )
 
-  instance.IconBorder =
-      CreateFrame(
-        "Frame",
-        nil,
+  --------------------------------------------------
+  -- Pet icon
+  --------------------------------------------------
+  instance.PetIcon =
+      CreateCircularIcon(
         instance.Frame,
-        "BackdropTemplate"
+        PET_ICON_SIZE
       )
 
-  instance.IconBorder:SetSize(
-    PET_ICON_SIZE + 6,
-    PET_ICON_SIZE + 6
-  )
-
-  instance.IconBorder:SetPoint(
-    "TOPLEFT",
+  instance.PetIcon:SetPoint(
+    "LEFT",
     instance.Frame,
-    "TOPLEFT",
-    0,
-    0
+    "LEFT",
+    -15,
+    -5
   )
 
-  instance.IconBorder:SetBackdrop({
-    bgFile = "Interface\\Buttons\\WHITE8X8",
-    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-    edgeSize = 12,
-  })
+  --------------------------------------------------
+  -- Family icon
+  --------------------------------------------------
+  instance.FamilyIcon =
+      CreateFamilyIcon(
+        instance.Frame,
+        FAMILY_ICON_SIZE
+      )
 
-  instance.IconBorder:SetBackdropColor(
-    0.03,
-    0.03,
-    0.03,
-    0.9
+  instance.FamilyIcon:SetPoint(
+    "RIGHT",
+    instance.Frame,
+    "RIGHT",
+    -10,
+    -5
   )
 
-  instance.Icon = instance.IconBorder:CreateTexture(nil, "ARTWORK")
-  instance.Icon:SetSize(PET_ICON_SIZE, PET_ICON_SIZE)
-  instance.Icon:SetPoint("CENTER")
-  instance.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+  --------------------------------------------------
+  -- Pet family tooltip
+  --------------------------------------------------
+  instance.FamilyIcon:SetScript(
+    "OnEnter",
+    function(control)
+      if not instance.Interactive then
+        return
+      end
 
+      if not instance.PassiveAbilityID then
+        return
+      end
+
+      ShowPetFamilyTooltip(
+        control,
+        instance.PassiveAbilityID,
+        instance.SpeciesID,
+        instance.PetID
+      )
+    end
+  )
+
+  instance.FamilyIcon:SetScript(
+    "OnLeave",
+    function(control)
+      HidePetFamilyTooltip(
+        control
+      )
+    end
+  )
+
+  instance.FamilyIcon:EnableMouse(false)
+
+  --------------------------------------------------
+  -- Pet name
+  --------------------------------------------------
   instance.Name =
       instance.Frame:CreateFontString(
         nil,
@@ -159,111 +485,77 @@ function Header:Create(parent)
       )
 
   instance.Name:SetPoint(
-    "TOPLEFT",
-    instance.IconBorder,
-    "TOPRIGHT",
-    12,
-    -2
+    "CENTER",
+    instance.Frame,
+    "CENTER",
+    0,
+    0
+  )
+
+  instance.Name:SetPoint(
+    "LEFT",
+    instance.PetIcon,
+    "RIGHT",
+    10,
+    0
   )
 
   instance.Name:SetPoint(
     "RIGHT",
-    instance.Frame,
-    "RIGHT",
-    -65,
-    0
-  )
-
-  instance.Name:SetJustifyH("LEFT")
-  instance.Name:SetWordWrap(false)
-
-  instance.FamilyIcon =
-      instance.Frame:CreateTexture(
-        nil,
-        "ARTWORK"
-      )
-
-  instance.FamilyIcon:SetSize(
-    FAMILY_ICON_SIZE,
-    FAMILY_ICON_SIZE
-  )
-
-  instance.FamilyIcon:SetPoint(
-    "TOPLEFT",
-    instance.Name,
-    "BOTTOMLEFT",
-    0,
-    -6
-  )
-
-  instance.Subtitle =
-      instance.Frame:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-      )
-
-  instance.Subtitle:SetPoint(
-    "LEFT",
     instance.FamilyIcon,
-    "RIGHT",
-    5,
+    "LEFT",
+    -10,
     0
   )
 
-  instance.Subtitle:SetPoint(
-    "RIGHT",
-    instance.Frame,
-    "RIGHT",
-    -30,
-    0
+  instance.Name:SetJustifyH(
+    "CENTER"
   )
 
-  instance.Subtitle:SetJustifyH("LEFT")
-  instance.Subtitle:SetWordWrap(false)
-
-  instance.Level =
-      instance.Frame:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontHighlight"
-      )
-
-  instance.Level:SetPoint(
-    "TOPRIGHT",
-    instance.Frame,
-    "TOPRIGHT",
-    0,
-    -2
+  instance.Name:SetJustifyV(
+    "MIDDLE"
   )
 
-  instance.Breed =
-      instance.Frame:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontNormal"
-      )
-
-  instance.Breed:SetPoint(
-    "TOPRIGHT",
-    instance.Level,
-    "BOTTOMRIGHT",
-    0,
-    -8
+  instance.Name:SetWordWrap(
+    true
   )
+
+  instance.Name:SetNonSpaceWrap(
+    false
+  )
+
+  instance.Interactive = false
 
   return instance
 end
 
+--------------------------------------------------
+-- Pet
+--------------------------------------------------
 function Header:SetPet(pet)
-  self.Icon:SetTexture(
-    pet.icon
-  )
+  self.PetType =
+      tonumber(
+        pet.petType
+      )
 
-  self.Name:SetText(
-    pet.name or "Unknown"
-  )
+  self.SpeciesID =
+      tonumber(
+        pet.speciesID
+      )
 
+  self.PetID =
+      pet.petGUID
+      or pet.petID
+
+  self.PassiveAbilityID =
+      PET_BATTLE_PET_TYPE_PASSIVES
+      and PET_BATTLE_PET_TYPE_PASSIVES[
+      self.PetType
+      ]
+
+  --------------------------------------------------
+  -- Quality
+  --------------------------------------------------
   local r, g, b
 
   if pet.quality ~= nil then
@@ -278,6 +570,30 @@ function Header:SetPet(pet)
         0.82
   end
 
+  --------------------------------------------------
+  -- Pet icon
+  --------------------------------------------------
+
+  self.PetIcon.Icon:SetTexture(
+    pet.icon
+  )
+
+  self.PetIcon.Border:SetVertexColor(
+    r,
+    g,
+    b,
+    1
+  )
+
+  --------------------------------------------------
+  -- Name
+  --------------------------------------------------
+
+  self.Name:SetText(
+    pet.name
+    or "Unknown"
+  )
+
   self.Name:SetTextColor(
     r,
     g,
@@ -285,75 +601,52 @@ function Header:SetPet(pet)
     1
   )
 
-  self.Breed:SetTextColor(
-    r,
-    g,
-    b,
-    1
-  )
-
-  self.Level:SetTextColor(
-    r,
-    g,
-    b,
-    1
-  )
-
-  self.IconBorder:SetBackdropBorderColor(
-    r,
-    g,
-    b,
-    1
-  )
-
-  if pet.level and pet.level > 0 then
-    self.Level:SetFormattedText(
-      "Level %d",
-      pet.level
-    )
-  else
-    self.Level:SetText(
-      "Not Collected"
-    )
-  end
-
-  local breed =
-      pet.breedName
-      or pet.breedID
-
-  if breed then
-    self.Breed:SetFormattedText(
-      "%s",
-      tostring(breed)
-    )
-
-    self.Breed:Show()
-  else
-    self.Breed:SetText("")
-    self.Breed:Hide()
-  end
+  --------------------------------------------------
+  -- Family icon
+  --------------------------------------------------
 
   local familyIcon =
       PET_FAMILY_ICONS[
-      tonumber(pet.petType)
+      self.PetType
       ]
 
   if familyIcon then
-    self.FamilyIcon:SetTexture(
+    self.FamilyIcon.Icon:SetTexture(
       familyIcon
     )
 
     self.FamilyIcon:Show()
   else
-    self.FamilyIcon:SetTexture(nil)
+    self.FamilyIcon.Icon:SetTexture(
+      nil
+    )
+
     self.FamilyIcon:Hide()
   end
-
-  self.Subtitle:SetText(
-    BuildSubtitle(pet)
-  )
 end
 
+--------------------------------------------------
+-- Interaction
+--------------------------------------------------
+function Header:SetInteractive(interactive)
+  self.Interactive =
+      interactive == true
+
+  self.FamilyIcon:EnableMouse(
+    self.Interactive
+  )
+
+  if not self.Interactive
+      and GameTooltip:IsOwned(
+        self.FamilyIcon
+      ) then
+    GameTooltip:Hide()
+  end
+end
+
+--------------------------------------------------
+-- Accessors
+--------------------------------------------------
 function Header:GetFrame()
   return self.Frame
 end
