@@ -112,6 +112,6 @@ UI/Views/TeamList.lua
 UI/Views/Panels.lua
 
 Modules/PetList.lua
-Modules/Slash.lua
+# Modules/Slash.lua
 Modules/PetJournalFilterExtension.lua
 Core/Addon.lua
