@@ -1,8 +1,9 @@
 ## Interface: 120100
-## Version: 1.0.1
+## Version: 1.0.2
 ## Title: PetMatch - Pet Battle Scripts
 ## Notes: Pet Battle Scripts integration for PetMatch
 ## Author: FwenTheHunter
+## IconTexture: Interface\Addons\PetMatch_PetBattleScripts\Media\PetMatch_Logo
 ## X-Category: Pet Battles
 ## Category-enUS: Pet Battles
 ## Category-deDE: Haustierkämpfe

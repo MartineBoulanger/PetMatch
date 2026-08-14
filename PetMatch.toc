@@ -1,8 +1,9 @@
 ## Interface: 120100
-## Version: 1.12.3
+## Version: 1.12.4
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
+## IconTexture: Interface\AddOns\PetMatch\Media\PetMatch_Logo
 ## X-Category: Pet Battles
 ## Category-enUS: Pet Battles
 ## Category-deDE: Haustierkämpfe
