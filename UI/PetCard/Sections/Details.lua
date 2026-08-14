@@ -5,7 +5,7 @@ Details.__index = Details
 
 local SECTION_HEIGHT = 140
 
-local MODEL_WIDTH = 120
+local MODEL_WIDTH = 150
 local MODEL_HEIGHT = 120
 
 local INNER_PADDING = 10
@@ -21,7 +21,6 @@ function Details:Create(parent)
   --------------------------------------------------
   -- Section
   --------------------------------------------------
-
   instance.Frame =
       CreateFrame(
         "Frame",
@@ -37,13 +36,9 @@ function Details:Create(parent)
   --------------------------------------------------
   -- Background
   --------------------------------------------------
-
   instance.Frame:SetBackdrop({
-    bgFile =
-    "Interface\\FrameGeneral\\UI-Background-Marble",
-
-    edgeFile =
-    "Interface\\Tooltips\\UI-Tooltip-Border",
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 
     tile = true,
     tileSize = 128,
@@ -74,7 +69,6 @@ function Details:Create(parent)
   --------------------------------------------------
   -- Pet model
   --------------------------------------------------
-
   instance.Model =
       CreateFrame(
         "PlayerModel",
@@ -105,7 +99,6 @@ function Details:Create(parent)
   --------------------------------------------------
   -- Stats
   --------------------------------------------------
-
   instance.Stats =
       addon.UI.PetCard.Stats:Create(
         instance.Frame
@@ -181,7 +174,7 @@ function Details:SetPetModel(displayID)
 
   if self.Model.SetCamDistanceScale then
     self.Model:SetCamDistanceScale(
-      0.85
+      0.95
     )
   end
 

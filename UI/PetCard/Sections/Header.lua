@@ -54,16 +54,50 @@ local function GetQualityColor(quality)
       color.b or 1
 end
 
-local function GetPetFamilyName(petType)
-  petType = tonumber(petType)
-
-  if not petType then
-    return nil
+local function PositionTooltipAtPetCard(
+    tooltip,
+    cardFrame,
+    side
+)
+  if not tooltip
+      or not cardFrame then
+    return
   end
 
-  return _G[
-  "BATTLE_PET_NAME_" .. petType
-  ]
+  tooltip:ClearAllPoints()
+
+  if side == "LEFT" then
+    tooltip:SetPoint(
+      "TOPRIGHT",
+      cardFrame,
+      "TOPLEFT",
+      -8,
+      0
+    )
+  else
+    tooltip:SetPoint(
+      "TOPLEFT",
+      cardFrame,
+      "TOPRIGHT",
+      8,
+      0
+    )
+  end
+
+  tooltip:SetClampedToScreen(
+    true
+  )
+
+  tooltip:SetFrameStrata(
+    "TOOLTIP"
+  )
+
+  tooltip:SetFrameLevel(
+    math.max(
+      1000,
+      cardFrame:GetFrameLevel() + 100
+    )
+  )
 end
 
 --------------------------------------------------
@@ -85,7 +119,6 @@ local function CreateCircularIcon(parent, iconSize)
   --------------------------------------------------
   -- Quality border
   --------------------------------------------------
-
   frame.Border =
       frame:CreateTexture(
         nil,
@@ -121,7 +154,6 @@ local function CreateCircularIcon(parent, iconSize)
   --------------------------------------------------
   -- Pet icon
   --------------------------------------------------
-
   frame.Icon =
       frame:CreateTexture(
         nil,
@@ -147,9 +179,7 @@ local function CreateCircularIcon(parent, iconSize)
   --------------------------------------------------
   -- Circular icon mask
   --------------------------------------------------
-
-  frame.IconMask =
-      frame:CreateMaskTexture()
+  frame.IconMask = frame:CreateMaskTexture()
 
   frame.IconMask:SetTexture(
     CIRCLE_MASK,
@@ -288,7 +318,6 @@ local function CreateFamilyIcon(parent, iconSize)
   --------------------------------------------------
   -- Gold circular border
   --------------------------------------------------
-
   frame.Border =
       frame:CreateTexture(
         nil,
@@ -343,7 +372,7 @@ local function CreateFamilyIcon(parent, iconSize)
     0.03,
     0.03,
     0.03,
-    0.88
+    1
   )
 
   frame.BackgroundMask =
@@ -366,7 +395,6 @@ local function CreateFamilyIcon(parent, iconSize)
   --------------------------------------------------
   -- Family icon
   --------------------------------------------------
-
   frame.Icon =
       frame:CreateTexture(
         nil,
@@ -374,8 +402,8 @@ local function CreateFamilyIcon(parent, iconSize)
       )
 
   frame.Icon:SetSize(
-    iconSize - 4,
-    iconSize - 4
+    iconSize - 2,
+    iconSize - 2
   )
 
   frame.Icon:SetPoint(
@@ -383,6 +411,90 @@ local function CreateFamilyIcon(parent, iconSize)
   )
 
   return frame
+end
+
+local function ShowPetInfoTooltip(owner, pet)
+  if not pet then
+    return
+  end
+
+  local sourceText = pet.sourceText
+
+  if type(sourceText) ~= "string"
+      or sourceText == "" then
+    sourceText = "Unknown"
+  end
+
+  local description = pet.description
+
+  if type(description) ~= "string"
+      or description == "" then
+    description =
+    "No description available."
+  end
+
+  --------------------------------------------------
+  -- Tooltip
+  --------------------------------------------------
+  GameTooltip:SetOwner(
+    owner,
+    "ANCHOR_NONE"
+  )
+
+  GameTooltip:ClearLines()
+
+  GameTooltip:SetFrameStrata(
+    "TOOLTIP"
+  )
+
+  PositionTooltipAtPetCard(
+    GameTooltip,
+    owner,
+    "LEFT"
+  )
+
+  --------------------------------------------------
+  -- Source
+  --------------------------------------------------
+  GameTooltip:AddLine(
+    sourceText,
+    1,
+    1,
+    1,
+    true
+  )
+
+  --------------------------------------------------
+  -- Description
+  --------------------------------------------------
+  if description then
+    GameTooltip:AddLine(" ")
+
+    GameTooltip:AddLine(
+      description,
+      1,
+      0.82,
+      0,
+      true
+    )
+  end
+
+  --------------------------------------------------
+  -- Ownership
+  --------------------------------------------------
+  GameTooltip.anchoredTo = owner
+
+  GameTooltip:Show()
+end
+
+local function HidePetInfoTooltip(owner)
+  if GameTooltip.anchoredTo
+      and GameTooltip.anchoredTo ~= owner then
+    return
+  end
+
+  GameTooltip:Hide()
+  GameTooltip.anchoredTo = nil
 end
 
 --------------------------------------------------
@@ -421,6 +533,35 @@ function Header:Create(parent)
     "LEFT",
     0,
     -5
+  )
+
+  instance.PetIcon:EnableMouse(false)
+
+  instance.PetIcon:SetScript(
+    "OnEnter",
+    function(control)
+      if not instance.Interactive then
+        return
+      end
+
+      if not instance.Pet then
+        return
+      end
+
+      ShowPetInfoTooltip(
+        control,
+        instance.Pet
+      )
+    end
+  )
+
+  instance.PetIcon:SetScript(
+    "OnLeave",
+    function(control)
+      HidePetInfoTooltip(
+        control
+      )
+    end
   )
 
   --------------------------------------------------
@@ -533,6 +674,8 @@ end
 -- Pet
 --------------------------------------------------
 function Header:SetPet(pet)
+  self.Pet = pet
+
   self.PetType =
       tonumber(
         pet.petType
@@ -632,15 +775,20 @@ function Header:SetInteractive(interactive)
   self.Interactive =
       interactive == true
 
+  self.PetIcon:EnableMouse(
+    self.Interactive
+  )
+
   self.FamilyIcon:EnableMouse(
     self.Interactive
   )
 
-  if not self.Interactive
-      and GameTooltip:IsOwned(
-        self.FamilyIcon
-      ) then
-    GameTooltip:Hide()
+  if not self.Interactive then
+    if GameTooltip.anchoredTo == self.PetIcon
+        or GameTooltip.anchoredTo == self.FamilyIcon then
+      GameTooltip:Hide()
+      GameTooltip.anchoredTo = nil
+    end
   end
 end
 

@@ -183,6 +183,8 @@ function Panels:Create()
         "DefaultPanelTemplate"
       )
 
+  frame:EnableMouse(true)
+
   frame:SetSize(
     PANEL_WIDTH,
     PANEL_HEIGHT

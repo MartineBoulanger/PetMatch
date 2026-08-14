@@ -1,50 +1,48 @@
 local _, addon = ...
 
-local AbilityCell = addon.UI.PetCard.AbilityCell
+local AbilityCell =
+    addon.UI.PetCard.AbilityCell
 
 local AbilityGrid = {}
 AbilityGrid.__index = AbilityGrid
 
-local COLUMN_COUNT = 3
-local ROW_COUNT = 2
+local SLOT_COUNT = 3
+local CHOICE_COUNT = 2
 
-local HEADER_HEIGHT = 18
-local CELL_HEIGHT = 72
-local ROW_SPACING = 0
-local HEADER_SPACING = 4
+local CELL_HEIGHT = 44
 
 function AbilityGrid:Create(parent)
-  local self = setmetatable({}, AbilityGrid)
+  local self =
+      setmetatable(
+        {},
+        AbilityGrid
+      )
 
-  self.Frame = CreateFrame("Frame", nil, parent)
+  self.Frame =
+      CreateFrame(
+        "Frame",
+        nil,
+        parent
+      )
 
-  self.Headers = {}
   self.Cells = {}
 
-  for slot = 1, COLUMN_COUNT do
-    local header = self.Frame:CreateFontString(
-      nil,
-      "OVERLAY",
-      "GameTooltipText"
-    )
-
-    header:SetText(("Slot %d"):format(slot))
-    header:SetJustifyH("CENTER")
-
-    self.Headers[slot] = header
-
+  --------------------------------------------------
+  -- 3 rows × 2 columns
+  --------------------------------------------------
+  for slot = 1, SLOT_COUNT do
     self.Cells[slot] = {}
 
-    for choice = 1, ROW_COUNT do
+    for choice = 1, CHOICE_COUNT do
       self.Cells[slot][choice] =
-          AbilityCell:Create(self.Frame)
+          AbilityCell:Create(
+            self.Frame
+          )
     end
   end
 
   self.Frame:SetHeight(
-    HEADER_HEIGHT +
-    HEADER_SPACING +
-    (CELL_HEIGHT * ROW_COUNT)
+    SLOT_COUNT * CELL_HEIGHT
   )
 
   self.Frame:SetScript(
@@ -58,82 +56,42 @@ function AbilityGrid:Create(parent)
 end
 
 function AbilityGrid:Layout()
-  local width =
-      self.Frame:GetWidth()
+  local width = self.Frame:GetWidth()
 
   if not width
       or width <= 0 then
     return
   end
 
-  local columnWidth =
-      width / COLUMN_COUNT
+  local columnWidth = width / CHOICE_COUNT
 
   --------------------------------------------------
-  -- Headers
+  -- 3 rows × 2 columns
   --------------------------------------------------
-
-  for slot = 1, COLUMN_COUNT do
-    local center =
-        ((slot - 1) * columnWidth)
-        + (columnWidth / 2)
-
-    local header =
-        self.Headers[slot]
-
-    if header then
-      header:ClearAllPoints()
-
-      header:SetPoint(
-        "TOP",
-        self.Frame,
-        "TOPLEFT",
-        center,
-        0
-      )
-
-      header:SetWidth(
-        columnWidth
-      )
-    end
-  end
-
-  --------------------------------------------------
-  -- Ability cells
-  --------------------------------------------------
-
-  for slot = 1, COLUMN_COUNT do
-    local center =
-        ((slot - 1) * columnWidth)
-        + (columnWidth / 2)
-
-    for choice = 1, ROW_COUNT do
+  for slot = 1, SLOT_COUNT do
+    for choice = 1, CHOICE_COUNT do
       local cell =
           self.Cells[slot]
           and self.Cells[slot][choice]
 
       if cell then
-        local cellFrame =
-            cell:GetFrame()
-
-        local y =
-            HEADER_HEIGHT
-            + HEADER_SPACING
-            + (
-              (choice - 1)
-              * (
-                CELL_HEIGHT
-                + ROW_SPACING
-              )
-            )
+        local cellFrame = cell:GetFrame()
 
         cellFrame:ClearAllPoints()
 
+        local x =
+            (choice - 1)
+            * columnWidth
+
+        local y =
+            (slot - 1)
+            * CELL_HEIGHT
+
         cellFrame:SetPoint(
-          "TOP",
+          "TOPLEFT",
           self.Frame,
           "TOPLEFT",
-          center,
+          x,
           -y
         )
 
@@ -149,43 +107,30 @@ function AbilityGrid:Layout()
   end
 
   --------------------------------------------------
-  -- Totale gridhoogte
+  -- Total height
   --------------------------------------------------
-
-  local totalHeight =
-      HEADER_HEIGHT
-      + HEADER_SPACING
-      + (ROW_COUNT * CELL_HEIGHT)
-      + (
-        math.max(
-          0,
-          ROW_COUNT - 1
-        )
-        * ROW_SPACING
-      )
-
   self.Frame:SetHeight(
-    totalHeight
+    SLOT_COUNT
+    * CELL_HEIGHT
   )
 end
 
-function AbilityCell:ClearAllPoints()
-  self.Frame:ClearAllPoints()
-end
-
 function AbilityGrid:SetAbilities(slots)
-  for slot = 1, COLUMN_COUNT do
-    local abilities = slots[slot] or {}
+  for slot = 1, SLOT_COUNT do
+    local abilities =
+        slots[slot] or {}
 
     table.sort(
       abilities,
       function(a, b)
-        return (a.choice or 1) <
+        return
+            (a.choice or 1)
+            <
             (b.choice or 1)
       end
     )
 
-    for choice = 1, ROW_COUNT do
+    for choice = 1, CHOICE_COUNT do
       self.Cells[slot][choice]:SetAbility(
         abilities[choice]
       )
@@ -228,16 +173,10 @@ function AbilityGrid:SetPet(pet)
         id =
             ability.id
             or ability.abilityID,
-
-        name =
-            ability.name,
-
-        icon =
-            ability.icon,
-
-        slot =
-            slot,
-
+        name = ability.name,
+        icon = ability.icon,
+        slot = slot,
+        choice = ability.choice,
         requiredLevel =
             ability.requiredLevel
             or ability.level,
@@ -245,6 +184,9 @@ function AbilityGrid:SetPet(pet)
         additionalText =
             ability.additionalText,
 
+        --------------------------------------------------
+        -- Ability family
+        --------------------------------------------------
         speciesID =
             pet.speciesID,
 
@@ -278,8 +220,8 @@ function AbilityGrid:SetPet(pet)
 end
 
 function AbilityGrid:Clear()
-  for slot = 1, COLUMN_COUNT do
-    for choice = 1, ROW_COUNT do
+  for slot = 1, SLOT_COUNT do
+    for choice = 1, CHOICE_COUNT do
       self.Cells[slot][choice]:Clear()
       self.Cells[slot][choice]:Hide()
     end

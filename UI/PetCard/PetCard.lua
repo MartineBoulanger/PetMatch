@@ -8,7 +8,7 @@ PetCard.__index = PetCard
 local CARD_WIDTH = 300
 local CONTENT_PADDING = 14
 local CONTENT_TOP_SPACING = 0
-local SECTION_SPACING = 5
+local SECTION_SPACING = 8
 
 function PetCard:Create(parent)
   assert(
@@ -38,7 +38,7 @@ function PetCard:Create(parent)
   )
 
   instance.Frame:SetFrameStrata(
-    "TOOLTIP"
+    "DIALOG"
   )
 
   instance.Frame:SetFrameLevel(
@@ -52,11 +52,10 @@ function PetCard:Create(parent)
   --------------------------------------------------
   -- Blizzard title
   --------------------------------------------------
-
   if instance.Frame.TitleContainer
       and instance.Frame.TitleContainer.TitleText then
     instance.Frame.TitleContainer.TitleText:SetText(
-      ""
+      "Pet Details"
     )
   elseif type(instance.Frame.SetTitle) == "function" then
     instance.Frame:SetTitle("Pet Details")
@@ -71,8 +70,6 @@ function PetCard:Create(parent)
 
   instance:CreateHeader()
   instance:CreateDetails()
-  instance:CreateSource()
-  instance:CreateDescription()
   instance:CreateAbilityGrid()
   instance:CreateBreedSection()
 
@@ -99,7 +96,6 @@ function PetCard:CreateContent()
   -- but uses the Pet Card itself for horizontal
   -- alignment.
   --------------------------------------------------
-
   local titleHeight = 0
 
   if self.Frame.TitleContainer then
@@ -112,7 +108,7 @@ function PetCard:CreateContent()
     "TOPLEFT",
     self.Frame,
     "TOPLEFT",
-    CONTENT_PADDING + 2,
+    CONTENT_PADDING + 4,
     -(titleHeight + CONTENT_TOP_SPACING)
   )
 
@@ -120,7 +116,7 @@ function PetCard:CreateContent()
     "TOPRIGHT",
     self.Frame,
     "TOPRIGHT",
-    -CONTENT_PADDING + 2,
+    -CONTENT_PADDING,
     -(titleHeight + CONTENT_TOP_SPACING)
   )
 
@@ -242,20 +238,6 @@ function PetCard:CreateDetails()
       )
 end
 
-function PetCard:CreateSource()
-  self.Source =
-      addon.UI.PetCard.Source:Create(
-        self.Content
-      )
-end
-
-function PetCard:CreateDescription()
-  self.Description =
-      addon.UI.PetCard.Description:Create(
-        self.Content
-      )
-end
-
 function PetCard:CreateAbilityGrid()
   self.AbilityGrid =
       addon.UI.PetCard.AbilityGrid:Create(
@@ -283,15 +265,10 @@ function PetCard:SetPet(pet)
 
   self.Header:SetPet(pet)
   self.Details:SetPet(pet)
-  self.Source:SetPet(pet)
-  self.Description:SetPet(pet)
   self.AbilityGrid:SetPet(pet)
   self.BreedSection:SetPet(pet)
 
   self:Layout()
-
-  self.Source:UpdateHeight()
-  self.Description:UpdateHeight()
 
   if self.BreedSection:GetFrame():IsShown() then
     self.BreedSection:UpdateHeight()
@@ -311,30 +288,46 @@ function PetCard:Layout()
   local sections = {
     self.Header,
     self.Details,
-    self.Source,
-    self.Description,
     self.AbilityGrid,
     self.BreedSection,
   }
 
   local offsetY = 0
+  local hasPreviousSection = false
+  local previousSection = nil
 
   for _, section in ipairs(sections) do
-    if section
-        and type(section.GetFrame)
-        == "function" then
-      local frame =
-          section:GetFrame()
+    if section and type(section.GetFrame) == "function" then
+      local frame = section:GetFrame()
 
       if frame:IsShown() then
+        --------------------------------------------------
+        -- Spacing only BETWEEN visible sections
+        --------------------------------------------------
+        if hasPreviousSection then
+          local spacing =
+              SECTION_SPACING
+
+          -- Details and abilities touch each other
+          if previousSection == self.Details
+              and section == self.AbilityGrid then
+            spacing = 0
+          end
+
+          offsetY =
+              offsetY
+              + spacing
+        end
+
+        --------------------------------------------------
+        -- Position
+        --------------------------------------------------
         frame:ClearAllPoints()
 
-        if section == self.Details then
-          local edgeInset = 3
-
+        if section == self.Details
+            or section == self.AbilityGrid then
           local offset =
               CONTENT_PADDING
-              - edgeInset
 
           frame:SetPoint(
             "TOPLEFT",
@@ -369,24 +362,20 @@ function PetCard:Layout()
           )
         end
 
-        local height =
-            math.max(
+        --------------------------------------------------
+        -- Add section height
+        --------------------------------------------------
+        offsetY =
+            offsetY
+            + math.max(
               1,
               frame:GetHeight() or 0
             )
 
-        offsetY =
-            offsetY
-            + height
-            + SECTION_SPACING
+        previousSection = section
+        hasPreviousSection = true
       end
     end
-  end
-
-  if offsetY > 0 then
-    offsetY =
-        offsetY
-        - SECTION_SPACING
   end
 
   --------------------------------------------------
@@ -400,9 +389,10 @@ function PetCard:Layout()
   )
 
   --------------------------------------------------
-  -- Total card height
+  -- Pet Card height
   --------------------------------------------------
   local titleHeight = 0
+
   if self.Frame.TitleContainer then
     titleHeight =
         self.Frame.TitleContainer:GetHeight()

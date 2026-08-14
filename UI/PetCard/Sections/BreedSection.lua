@@ -114,25 +114,6 @@ local function GetCurrentBreedID(pet)
       or nil
 end
 
-local function IsBattlePetBreedIDLoaded()
-  if C_AddOns
-      and type(C_AddOns.IsAddOnLoaded)
-      == "function" then
-    return C_AddOns.IsAddOnLoaded(
-      "BattlePetBreedID"
-    )
-  end
-
-  if type(IsAddOnLoaded)
-      == "function" then
-    return IsAddOnLoaded(
-      "BattlePetBreedID"
-    )
-  end
-
-  return false
-end
-
 function BreedSection:Create(parent)
   local instance =
       setmetatable(
@@ -147,7 +128,7 @@ function BreedSection:Create(parent)
         parent
       )
 
-  instance.Frame:SetHeight(1)
+  instance.Frame:SetHeight(0)
 
   instance.CardFrame =
       parent
@@ -185,7 +166,7 @@ function BreedSection:Create(parent)
     "TOPLEFT",
     instance.Title,
     "BOTTOMLEFT",
-    0,
+    -HELP_TOP_SPACING,
     -4
   )
 
@@ -193,7 +174,7 @@ function BreedSection:Create(parent)
     "RIGHT",
     instance.Frame,
     "RIGHT",
-    0,
+    HELP_TOP_SPACING,
     0
   )
 
@@ -215,7 +196,7 @@ function BreedSection:Create(parent)
     "TOPLEFT",
     instance.Divider,
     "BOTTOMLEFT",
-    0,
+    HELP_TOP_SPACING,
     -BREED_TOP_SPACING
   )
 
@@ -229,37 +210,6 @@ function BreedSection:Create(parent)
 
   instance.Breeds:SetJustifyH("LEFT")
   instance.Breeds:SetWordWrap(true)
-
-  instance.HelpText =
-      instance.Frame:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontDisableSmall"
-      )
-
-  instance.HelpText:SetPoint(
-    "TOPLEFT",
-    instance.Breeds,
-    "BOTTOMLEFT",
-    0,
-    -HELP_TOP_SPACING
-  )
-
-  instance.HelpText:SetPoint(
-    "RIGHT",
-    instance.Frame,
-    "RIGHT",
-    0,
-    0
-  )
-
-  instance.HelpText:SetJustifyH("LEFT")
-  instance.HelpText:SetJustifyV("TOP")
-  instance.HelpText:SetWordWrap(true)
-
-  instance.HelpText:SetText(
-    "Hover the possible breeds to view detailed breed and base-stat information."
-  )
 
   instance.HoverButton =
       CreateFrame(
@@ -464,8 +414,10 @@ function BreedSection:SetPet(pet)
 
   if not breedService
       or not pet
+      or pet.canBattle ~= true
       or not pet.speciesID then
     self.Pet = nil
+    self.Breeds:SetText("")
     self.HoverButton:Hide()
     self.Frame:Hide()
 
@@ -489,8 +441,7 @@ function BreedSection:SetPet(pet)
 
   self.Pet = pet
 
-  local currentBreed =
-      pet.breedName
+  local currentBreed = pet.breedName
 
   if not currentBreed
       and pet.breedID then
@@ -510,12 +461,10 @@ function BreedSection:SetPet(pet)
   for _, breed in ipairs(
     possibleBreeds
   ) do
-    local label =
-        breed.name
+    local label = breed.name
 
     if currentBreed
-        and breed.name
-        == currentBreed then
+        and breed.name == currentBreed then
       label =
           "|c"
           .. qualityHex
@@ -530,19 +479,9 @@ function BreedSection:SetPet(pet)
   self.Breeds:SetText(
     table.concat(
       labels,
-      "   "
+      "  "
     )
   )
-
-  if IsBattlePetBreedIDLoaded() then
-    self.HelpText:SetText(
-      "Hover the possible breeds to view detailed breed and base-stat information."
-    )
-  else
-    self.HelpText:SetText(
-      "Install BattlePetBreedID to view detailed breed and base-stat information."
-    )
-  end
 
   self.Frame:Show()
   self:UpdateHeight()
@@ -560,7 +499,6 @@ function BreedSection:UpdateHeight()
 
   if width and width > 0 then
     self.Breeds:SetWidth(width)
-    self.HelpText:SetWidth(width)
   end
 
   local breedHeight =
@@ -569,20 +507,10 @@ function BreedSection:UpdateHeight()
         or 0
       )
 
-  local helpHeight =
-      math.ceil(
-        self.HelpText:GetStringHeight()
-        or 0
-      )
-
   local height =
       TITLE_HEIGHT
-      + 5
       + BREED_TOP_SPACING
       + breedHeight
-      + HELP_TOP_SPACING
-      + helpHeight
-      + BOTTOM_PADDING
 
   self.Frame:SetHeight(
     math.max(

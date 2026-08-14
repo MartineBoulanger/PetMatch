@@ -155,7 +155,6 @@ end
 --------------------------------------------------
 -- Create
 --------------------------------------------------
-
 function Stats:Create(parent)
   local instance =
       setmetatable(
@@ -321,7 +320,6 @@ end
 --------------------------------------------------
 -- Set pet
 --------------------------------------------------
-
 function Stats:SetPet(pet)
   if not pet then
     self.Frame:Hide()
@@ -431,7 +429,6 @@ end
 --------------------------------------------------
 -- Accessors
 --------------------------------------------------
-
 function Stats:GetFrame()
   return self.Frame
 end
