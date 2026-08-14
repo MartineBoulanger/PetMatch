@@ -5,6 +5,27 @@ local Blizzard = {}
 
 Blizzard.Hooked = false
 
+local function UpdateLoadoutTitle(team)
+  local titleText = _G.PetJournalLoadoutBorderSlotHeaderText
+
+  if not titleText then
+    return
+  end
+
+  local title =
+      BATTLE_PET_SLOTS
+      or "Battle Pet Slots"
+
+  if team
+      and type(team.name) == "string"
+      and team.name ~= "" then
+    title =
+        team.name
+  end
+
+  titleText:SetText(title)
+end
+
 function Blizzard:AttachPetLoadoutTooltips()
   if not PetJournalLoadout then
     return
@@ -45,6 +66,8 @@ function Blizzard:Initialize()
     "OnShow",
     function()
       addon.UI.Host:Update()
+      local team = addon.Services.Team and addon.Services.Team:GetActive()
+      UpdateLoadoutTitle(team)
     end
   )
 
@@ -52,6 +75,13 @@ function Blizzard:Initialize()
     "OnHide",
     function()
       addon.UI.Host:Update()
+    end
+  )
+
+  addon.EventBus:Register(
+    addon.Events.TEAM_LOADED,
+    function(team)
+      UpdateLoadoutTitle(team)
     end
   )
 
@@ -78,7 +108,9 @@ function Blizzard:Initialize()
           end
 
           return nil
-        end
+        end,
+        "ANCHOR_RIGHT",
+        "petList"
       )
     end
   )
@@ -86,6 +118,10 @@ function Blizzard:Initialize()
   if addon.Services.LoadoutMonitor then
     addon.Services.LoadoutMonitor:Initialize()
   end
+
+  local teamService = addon.Services.Team
+  local activeTeam = teamService and teamService:GetActive()
+  UpdateLoadoutTitle(activeTeam)
 end
 
 function Blizzard:IsCollectionsLoaded()

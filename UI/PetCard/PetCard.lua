@@ -10,6 +10,20 @@ local CONTENT_PADDING = 14
 local CONTENT_TOP_SPACING = 0
 local SECTION_SPACING = 8
 
+local function IsPetCardAllowed(source)
+  local mode =
+      addon.Settings:Get(
+        "petCardVisibilityMode"
+      )
+      or "both"
+
+  if mode == "both" then
+    return true
+  end
+
+  return mode == source
+end
+
 function PetCard:Create(parent)
   assert(
     parent,

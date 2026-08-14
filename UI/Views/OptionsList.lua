@@ -12,6 +12,7 @@ local DUPLICATE_SECTION_HEIGHT = 104
 local BREED_SECTION_HEIGHT = 104
 local PET_LIST_SECTION_HEIGHT = 86
 local PET_CARD_SECTION_HEIGHT = 104
+local PET_CARD_VISIBILITY_SECTION_HEIGHT = 104
 
 function OptionsList:Create(parent)
   local frame =
@@ -35,6 +36,7 @@ function OptionsList:Create(parent)
     petBreeds = true,
     petList = true,
     petCard = true,
+    petCardVisibility = true,
   }
 
   self:RegisterEvents()
@@ -67,6 +69,8 @@ function OptionsList:RegisterEvents()
         self:RefreshPetListMode()
       elseif key == "petCardInteractionMode" then
         self:RefreshPetCardMode()
+      elseif key == "petCardVisibilityMode" then
+        self:RefreshPetCardVisibilityMode()
       end
     end
   )
@@ -109,6 +113,12 @@ function OptionsList:ClearItems()
   self.PetCardHoverButton = nil
   self.PetCardClickButton = nil
   self.PetCardBothButton = nil
+
+  -- Pet Card Visibility Option
+  self.PetCardVisibilityAccordion = nil
+  self.PetCardPetListButton = nil
+  self.PetCardTeamsButton = nil
+  self.PetCardVisibilityBothButton = nil
 end
 
 function OptionsList:GetSections()
@@ -151,6 +161,17 @@ function OptionsList:GetSections()
 
       build = function(content)
         self:BuildPetCardOptions(
+          content
+        )
+      end,
+    },
+    {
+      key = "petCardVisibility",
+      title = "Pet Card Visibility",
+      contentHeight = PET_CARD_VISIBILITY_SECTION_HEIGHT,
+
+      build = function(content)
+        self:BuildPetCardVisibilityOptions(
           content
         )
       end,
@@ -235,6 +256,10 @@ function OptionsList:CreateSection(
 
   if section.key == "petCard" then
     self.PetCardAccordion = accordion
+  end
+
+  if section.key == "petCardVisibility" then
+    self.PetCardVisibilityAccordion = accordion
   end
 
   return currentOffset
@@ -608,6 +633,94 @@ function OptionsList:BuildPetCardOptions(
   self:RefreshPetCardMode()
 end
 
+function OptionsList:BuildPetCardVisibilityOptions(
+    parent
+)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose where the Pet Card is available."
+  )
+
+  self.PetCardPetListButton =
+      self:CreateRadioButton(
+        parent,
+        "Pet Journal list only",
+        "petCardVisibilityMode",
+        "petList",
+        self.RefreshPetCardVisibilityMode
+      )
+
+  self.PetCardPetListButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.PetCardTeamsButton =
+      self:CreateRadioButton(
+        parent,
+        "Team pets only",
+        "petCardVisibilityMode",
+        "teams",
+        self.RefreshPetCardVisibilityMode
+      )
+
+  self.PetCardTeamsButton:SetPoint(
+    "TOPLEFT",
+    self.PetCardPetListButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.PetCardVisibilityBothButton =
+      self:CreateRadioButton(
+        parent,
+        "Pet Journal list and team pets",
+        "petCardVisibilityMode",
+        "both",
+        self.RefreshPetCardVisibilityMode
+      )
+
+  self.PetCardVisibilityBothButton:SetPoint(
+    "TOPLEFT",
+    self.PetCardTeamsButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshPetCardVisibilityMode()
+end
+
 function OptionsList:RefreshDuplicateMode()
   if not self.SkipButton
       or not self.ReplaceButton
@@ -698,6 +811,32 @@ function OptionsList:RefreshPetCardMode()
   )
 
   self.PetCardBothButton:SetChecked(
+    mode == "both"
+  )
+end
+
+function OptionsList:RefreshPetCardVisibilityMode()
+  if not self.PetCardPetListButton
+      or not self.PetCardTeamsButton
+      or not self.PetCardVisibilityBothButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get(
+        "petCardVisibilityMode"
+      )
+      or "both"
+
+  self.PetCardPetListButton:SetChecked(
+    mode == "petList"
+  )
+
+  self.PetCardTeamsButton:SetChecked(
+    mode == "teams"
+  )
+
+  self.PetCardVisibilityBothButton:SetChecked(
     mode == "both"
   )
 end

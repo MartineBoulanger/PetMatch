@@ -16,6 +16,7 @@ local DEFAULT_SETTINGS = {
   petListBreedPosition = "right",
   compactPetListRows = false,
   petCardInteractionMode = "hover",
+  petCardVisibilityMode = "both",
 
   ui = {
     selectedFolderKey = "__ALL__",

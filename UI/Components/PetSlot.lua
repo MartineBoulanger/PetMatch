@@ -61,7 +61,9 @@ function PetSlot:Create(parent)
         return nil
       end
       return "petGUID", control.petGUID
-    end
+    end,
+    "ANCHOR_LEFT",
+    "teams"
   )
 
   frame:SetSize(ICON_SIZE, ICON_SIZE)

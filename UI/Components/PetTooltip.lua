@@ -14,6 +14,11 @@ local VALID_MODES = {
   both = true,
 }
 
+local VALID_SOURCES = {
+  petList = true,
+  teams = true,
+}
+
 local function GetInteractionMode()
   local mode =
       addon.Settings:Get(
@@ -41,6 +46,35 @@ local function AllowsClick()
 
   return mode == "click"
       or mode == "both"
+end
+
+local function GetVisibilityMode()
+  local mode =
+      addon.Settings:Get(
+        "petCardVisibilityMode"
+      )
+
+  if mode ~= "petList"
+      and mode ~= "teams"
+      and mode ~= "both" then
+    return "both"
+  end
+
+  return mode
+end
+
+local function AllowsSource(source)
+  if not VALID_SOURCES[source] then
+    return true
+  end
+
+  local mode = GetVisibilityMode()
+
+  if mode == "both" then
+    return true
+  end
+
+  return mode == source
 end
 
 local function GetPetCard()
@@ -354,7 +388,8 @@ end
 function PetTooltip:Attach(
     frame,
     provider,
-    anchor
+    anchor,
+    source
 )
   if not frame then
     return
@@ -366,11 +401,9 @@ function PetTooltip:Attach(
     )
   end
 
-  frame.__PetMatchTooltipProvider =
-      provider
-
-  frame.__PetMatchTooltipAnchor =
-      anchor or "ANCHOR_RIGHT"
+  frame.__PetMatchTooltipProvider = provider
+  frame.__PetMatchTooltipAnchor = anchor or "ANCHOR_RIGHT"
+  frame.__PetMatchTooltipSource = source
 
   if frame.__PetMatchTooltipAttached then
     return
@@ -382,6 +415,10 @@ function PetTooltip:Attach(
     "OnEnter",
 
     function(control)
+      if not AllowsSource(control.__PetMatchTooltipSource) then
+        return
+      end
+
       if not AllowsHover() then
         return
       end
@@ -433,12 +470,15 @@ function PetTooltip:Attach(
         return
       end
 
+      if not AllowsSource(control.__PetMatchTooltipSource) then
+        return
+      end
+
       if not AllowsClick() then
         return
       end
 
-      local currentProvider =
-          control.__PetMatchTooltipProvider
+      local currentProvider = control.__PetMatchTooltipProvider
 
       local valueType, value =
           ResolveProviderValue(

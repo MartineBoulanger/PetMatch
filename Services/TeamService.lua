@@ -2,8 +2,6 @@ local _, addon = ...
 
 local TeamService = {}
 
-local resolvedPetsBySpeciesID = {}
-
 local function GetProfile()
   return addon.Profiles:GetCurrentProfile()
 end
