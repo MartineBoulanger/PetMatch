@@ -1,5 +1,5 @@
 ## Interface: 120100
-## Version: 1.12.5
+## Version: 1.12.6
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter

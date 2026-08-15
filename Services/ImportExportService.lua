@@ -843,6 +843,262 @@ function ImportExportService:ImportRematchDocument(
   return result
 end
 
+function ImportExportService:ImportRematchDocumentAsync(
+    document,
+    options
+)
+  options = options or {}
+
+  local defaultFolderID =
+      options.defaultFolderID
+      or addon.Services.Folder:
+      GetSelectedStorageFolderID()
+
+  local conflictMode =
+      options.conflictMode
+      or addon.Settings:Get(
+        "duplicateTeamMode"
+      )
+      or "replace"
+
+  local batchSize =
+      tonumber(options.batchSize)
+      or 5
+
+  local onProgress =
+      options.onProgress
+
+  local onComplete =
+      options.onComplete
+
+  local onError =
+      options.onError
+
+  local result = {
+    teams = {},
+    folders = {},
+    warnings = {},
+    failed = {},
+    missingSpecies = {},
+  }
+
+  --------------------------------------------------
+  -- Flatten groups into work items
+  --------------------------------------------------
+
+  local workItems = {}
+
+  for _, groupData in ipairs(
+    document.groups or {}
+  ) do
+    local folderID =
+        defaultFolderID
+
+    if groupData.name then
+      if string.lower(
+            addon.Utils:Trim(
+              groupData.name
+            )
+          ) == "unsorted" then
+        folderID = nil
+      else
+        local folder =
+            addon.Services.Folder:
+            FindByName(
+              groupData.name
+            )
+
+        if not folder then
+          folder =
+              addon.Services.Folder:
+              Create(
+                groupData.name
+              )
+        end
+
+        if folder then
+          folderID =
+              folder.id
+
+          result.folders[
+          #result.folders + 1
+          ] =
+              folder
+        else
+          result.warnings[
+          #result.warnings + 1
+          ] =
+              "Unable to create folder: "
+              .. groupData.name
+        end
+      end
+    end
+
+    for _, teamData in ipairs(
+      groupData.teams or {}
+    ) do
+      workItems[
+      #workItems + 1
+      ] = {
+        teamData =
+            teamData,
+
+        folderID =
+            folderID,
+      }
+    end
+  end
+
+  local total =
+      #workItems
+
+  if total == 0 then
+    if onError then
+      onError(
+        "No teams selected."
+      )
+    end
+
+    return
+  end
+
+  local resolvedPetsBySpeciesID = {}
+  local index = 1
+
+  --------------------------------------------------
+  -- Finish
+  --------------------------------------------------
+
+  local function Finish()
+    if onProgress then
+      onProgress(
+        1,
+        total,
+        total
+      )
+    end
+
+    if onComplete then
+      onComplete(
+        result
+      )
+    end
+  end
+
+  --------------------------------------------------
+  -- Process a batch
+  --------------------------------------------------
+
+  local function ProcessBatch()
+    local processed = 0
+
+    while index <= total
+      and processed < batchSize
+    do
+      local item =
+          workItems[index]
+
+      local teamData =
+          item.teamData
+
+      teamData.folderID =
+          item.folderID
+
+      local team,
+      errorMessage,
+      missingSpecies =
+          addon.Services.Team:
+          CreateFromImport(
+            teamData,
+            {
+              conflictMode =
+                  conflictMode,
+
+              resolvedPetsBySpeciesID =
+                  resolvedPetsBySpeciesID,
+            }
+          )
+
+      if team then
+        result.teams[
+        #result.teams + 1
+        ] =
+            team
+      else
+        result.failed[
+        #result.failed + 1
+        ] = {
+          name =
+              teamData.name,
+
+          error =
+              errorMessage,
+        }
+
+        if errorMessage then
+          result.warnings[
+          #result.warnings + 1
+          ] =
+              errorMessage
+        end
+      end
+
+      for _, speciesID in ipairs(
+        missingSpecies or {}
+      ) do
+        result.missingSpecies[
+        #result.missingSpecies + 1
+        ] =
+            speciesID
+      end
+
+      index =
+          index + 1
+
+      processed =
+          processed + 1
+    end
+
+    --------------------------------------------------
+    -- Progress
+    --------------------------------------------------
+
+    local completed =
+        math.min(
+          index - 1,
+          total
+        )
+
+    if onProgress then
+      onProgress(
+        completed / total,
+        completed,
+        total
+      )
+    end
+
+    --------------------------------------------------
+    -- Continue next frame
+    --------------------------------------------------
+
+    if index <= total then
+      C_Timer.After(
+        0,
+        ProcessBatch
+      )
+
+      return
+    end
+
+    Finish()
+  end
+
+  C_Timer.After(
+    0,
+    ProcessBatch
+  )
+end
+
 function ImportExportService:DecodeRematchPetTag(token)
   token = string.upper(Trim(token))
 
@@ -1132,6 +1388,247 @@ function ImportExportService:ParseRematchDocument(value)
   return document
 end
 
+function ImportExportService:ParseRematchDocumentAsync(value, options)
+  options = options or {}
+
+  local onProgress =
+      options.onProgress
+
+  local onComplete =
+      options.onComplete
+
+  local onError =
+      options.onError
+
+  local batchSize =
+      tonumber(
+        options.batchSize
+      )
+      or 25
+
+  value =
+      NormalizeNewlines(
+        value
+      )
+
+  if IsBlank(value) then
+    if onError then
+      onError(
+        "Paste a Rematch team or group export"
+      )
+    end
+
+    return
+  end
+
+  --------------------------------------------------
+  -- Build line list
+  --------------------------------------------------
+  local lines = {}
+
+  for rawLine in
+  value:gmatch(
+    "([^\n]*)\n?"
+  )
+  do
+    lines[#lines + 1] =
+        rawLine
+  end
+
+  local total =
+      #lines
+
+  --------------------------------------------------
+  -- Document
+  --------------------------------------------------
+  local document = {
+    format = "rematch",
+    groups = {},
+    warnings = {},
+  }
+
+  local ungrouped = {
+    name = nil,
+    teams = {},
+  }
+
+  local currentGroup =
+      ungrouped
+
+  local index = 1
+
+  --------------------------------------------------
+  -- Finish
+  --------------------------------------------------
+  local function Finish()
+    if #ungrouped.teams > 0 then
+      table.insert(
+        document.groups,
+        1,
+        ungrouped
+      )
+    end
+
+    local teamCount = 0
+
+    for _, group in ipairs(
+      document.groups
+    ) do
+      teamCount =
+          teamCount
+          + #group.teams
+    end
+
+    if teamCount == 0 then
+      if onError then
+        onError(
+          "No valid Rematch teams were found"
+        )
+      end
+
+      return
+    end
+
+    if onProgress then
+      onProgress(
+        1,
+        total,
+        total
+      )
+    end
+
+    if onComplete then
+      onComplete(
+        document
+      )
+    end
+  end
+
+  --------------------------------------------------
+  -- Process batch
+  --------------------------------------------------
+  local function ProcessBatch()
+    local processed = 0
+
+    while index <= total
+      and processed < batchSize
+    do
+      local rawLine =
+          lines[index]
+
+      local line =
+          addon.Utils:Trim(
+            rawLine
+          )
+
+      if line ~= "" then
+        if IsGroupHeader(line) then
+          local group,
+          errorMessage =
+              self:
+              ParseRematchGroupHeader(
+                line
+              )
+
+          if not group then
+            document.warnings[
+            #document.warnings + 1
+            ] =
+                errorMessage
+          else
+            document.groups[
+            #document.groups + 1
+            ] =
+                group
+
+            currentGroup =
+                group
+          end
+        else
+          local team,
+          errorMessage =
+              self:
+              ParseRematchTeam(
+                line
+              )
+
+          if team then
+            currentGroup.teams[
+            #currentGroup.teams + 1
+            ] =
+                team
+          else
+            document.warnings[
+            #document.warnings + 1
+            ] =
+                errorMessage
+                or (
+                  "Unable to parse line: "
+                  .. line
+                )
+          end
+        end
+      end
+
+      index =
+          index + 1
+
+      processed =
+          processed + 1
+    end
+
+    --------------------------------------------------
+    -- Progress
+    --------------------------------------------------
+
+    if onProgress then
+      local completed =
+          math.min(
+            index - 1,
+            total
+          )
+
+      local progress = 1
+
+      if total > 0 then
+        progress =
+            completed
+            / total
+      end
+
+      onProgress(
+        progress,
+        completed,
+        total
+      )
+    end
+
+    --------------------------------------------------
+    -- Continue next frame
+    --------------------------------------------------
+
+    if index <= total then
+      C_Timer.After(
+        0,
+        ProcessBatch
+      )
+
+      return
+    end
+
+    Finish()
+  end
+
+  --------------------------------------------------
+  -- Start next frame
+  --------------------------------------------------
+
+  C_Timer.After(
+    0,
+    ProcessBatch
+  )
+end
+
 function ImportExportService:ImportRematch(
     value,
     options
@@ -1217,6 +1714,105 @@ function ImportExportService:PrepareImport(
     value = value,
     requiresPreview = false,
   }
+end
+
+function ImportExportService:PrepareImportAsync(
+    value,
+    options
+)
+  options = options or {}
+
+  local onComplete =
+      options.onComplete
+
+  local onError =
+      options.onError
+
+  local onProgress =
+      options.onProgress
+
+  local format =
+      self:DetectFormat(
+        value
+      )
+
+  if not format then
+    if onError then
+      onError(
+        "Het importformaat kon niet worden herkend."
+      )
+    end
+
+    return
+  end
+
+  --------------------------------------------------
+  -- Rematch
+  --------------------------------------------------
+
+  if format == "rematch" then
+    self:ParseRematchDocumentAsync(
+      value,
+      {
+        batchSize =
+            options.batchSize,
+
+        onProgress =
+            onProgress,
+
+        onError =
+            onError,
+
+        onComplete =
+            function(document)
+              if not onComplete then
+                return
+              end
+
+              onComplete({
+                format =
+                    format,
+
+                document =
+                    document,
+
+                requiresPreview =
+                    self:
+                    NeedsPreview(
+                      document
+                    ),
+              })
+            end,
+      }
+    )
+
+    return
+  end
+
+  --------------------------------------------------
+  -- PetMatch
+  --------------------------------------------------
+
+  if onProgress then
+    onProgress(
+      1,
+      1,
+      1
+    )
+  end
+
+  if onComplete then
+    onComplete({
+      format =
+          format,
+
+      value =
+          value,
+
+      requiresPreview =
+          false,
+    })
+  end
 end
 
 function ImportExportService:ExportRematchTeam(

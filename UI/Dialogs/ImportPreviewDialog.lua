@@ -382,43 +382,154 @@ end
 -- Import
 --------------------------------------------------
 local function ImportSelected(dialog)
-  local document = CreateFilteredDocument(dialog)
+  local document =
+      CreateFilteredDocument(
+        dialog
+      )
 
   if #document.groups == 0 then
-    dialog.Status:SetText("Select at least one team.")
-    dialog.Status:SetTextColor(unpack(addon.UI.Theme.Colors.Error))
-    return
-  end
-
-  dialog.ImportButton:SetEnabled(false)
-  dialog.CancelButton:SetEnabled(false)
-
-  local result, errorMessage =
-      addon.Services.ImportExport:ImportRematchDocument(
-        document,
-        dialog.options
-        or {}
-      )
-
-  dialog.ImportButton:SetEnabled(true)
-  dialog.CancelButton:SetEnabled(true)
-
-  if not result then
     dialog.Status:SetText(
-      errorMessage
-      or "Unable to import the selected teams."
-    )
-
-    dialog.Status:SetTextColor(
-      unpack(
-        addon.UI.Theme.Colors.Error
-      )
+      "Select at least one team."
     )
 
     return
   end
 
-  dialog:Hide()
+  --------------------------------------------------
+  -- Loading state
+  --------------------------------------------------
+  dialog.ImportButton:SetEnabled(
+    false
+  )
+
+  dialog.CancelButton:SetEnabled(
+    false
+  )
+
+  dialog.Status:SetText(
+    "Importing selected teams..."
+  )
+
+  dialog.Progress:SetValue(0)
+  dialog.Progress.Text:SetText(
+    "0%"
+  )
+
+  dialog.Progress:Show()
+
+  --------------------------------------------------
+  -- Async import
+  --------------------------------------------------
+  local options = {}
+
+  for key, value in pairs(
+    dialog.options or {}
+  ) do
+    options[key] =
+        value
+  end
+
+  options.batchSize = 5
+
+  options.onProgress =
+      function(
+          progress,
+          completed,
+          total
+      )
+        local frame =
+            dialog:GetFrame()
+
+        if not frame
+            or not frame:IsShown() then
+          return
+        end
+
+        dialog.Progress:SetValue(
+          progress
+        )
+
+        dialog.Progress.Text:SetText(
+          string.format(
+            "%d%%",
+            math.floor(
+              progress * 100
+            )
+          )
+        )
+
+        dialog.Status:SetText(
+          string.format(
+            "Importing team %d of %d...",
+            completed,
+            total
+          )
+        )
+      end
+
+  options.onError =
+      function(errorMessage)
+        dialog.ImportButton:SetEnabled(
+          true
+        )
+
+        dialog.CancelButton:SetEnabled(
+          true
+        )
+
+        dialog.Progress:Hide()
+
+        dialog.Status:SetText(
+          errorMessage
+          or "Unable to import the selected teams."
+        )
+      end
+
+  options.onComplete =
+      function(result)
+        dialog.ImportButton:SetEnabled(
+          true
+        )
+
+        dialog.CancelButton:SetEnabled(
+          true
+        )
+
+        dialog.Progress:SetValue(1)
+
+        dialog.Progress.Text:SetText(
+          "100%"
+        )
+
+        dialog.Status:SetText(
+          string.format(
+            "%d team%s imported.",
+            #result.teams,
+            #result.teams == 1
+            and ""
+            or "s"
+          )
+        )
+
+        C_Timer.After(
+          0.3,
+          function()
+            local frame =
+                dialog:GetFrame()
+
+            if frame
+                and frame:IsShown() then
+              dialog:Hide()
+            end
+          end
+        )
+      end
+
+  addon.Services.ImportExport:
+      ImportRematchDocumentAsync(
+        document,
+        options
+      )
 end
 
 --------------------------------------------------
@@ -553,6 +664,84 @@ local function CreateContent(dialog)
   dialog.Status:SetHeight(22)
   dialog.Status:SetJustifyH("CENTER")
   dialog.Status:SetJustifyV("MIDDLE")
+
+  --------------------------------------------------
+  -- Progress
+  --------------------------------------------------
+  dialog.Progress =
+      CreateFrame(
+        "StatusBar",
+        nil,
+        content,
+        "BackdropTemplate"
+      )
+
+  dialog.Progress:SetPoint(
+    "TOPLEFT",
+    dialog.Status,
+    "BOTTOMLEFT",
+    0,
+    -4
+  )
+
+  dialog.Progress:SetPoint(
+    "TOPRIGHT",
+    dialog.Status,
+    "BOTTOMRIGHT",
+    0,
+    -4
+  )
+
+  dialog.Progress:SetHeight(14)
+
+  dialog.Progress:SetStatusBarTexture(
+    "Interface\\TargetingFrame\\UI-StatusBar"
+  )
+
+  dialog.Progress:SetMinMaxValues(
+    0,
+    1
+  )
+
+  dialog.Progress:SetValue(0)
+
+  dialog.Progress:SetBackdrop({
+    bgFile =
+    "Interface\\Buttons\\WHITE8X8",
+
+    edgeFile =
+    "Interface\\Buttons\\WHITE8X8",
+
+    edgeSize = 1,
+  })
+
+  dialog.Progress:SetBackdropColor(
+    0.04,
+    0.04,
+    0.04,
+    0.9
+  )
+
+  dialog.Progress:SetBackdropBorderColor(
+    0.35,
+    0.30,
+    0.20,
+    1
+  )
+
+  dialog.Progress.Text =
+      dialog.Progress:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  dialog.Progress.Text:SetPoint(
+    "CENTER"
+  )
+
+  dialog.Progress.Text:SetText("")
+  dialog.Progress:Hide()
 end
 
 --------------------------------------------------

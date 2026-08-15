@@ -6,6 +6,8 @@ local DIALOG_WIDTH = 400
 local INPUT_HEIGHT = 130
 local STATUS_HEIGHT = 42
 
+local PROGRESS_HEIGHT = 14
+
 local CONTENT_MARGIN = {
   left = -12,
   right = 12,
@@ -48,6 +50,181 @@ local function GetSortedFolders()
   )
 
   return folders
+end
+
+--------------------------------------------------
+-- Loading
+--------------------------------------------------
+function ImportDialog:SetLoading(
+    loading,
+    message
+)
+  self.Loading = loading == true
+
+  if self.SaveButton then
+    self.SaveButton:SetEnabled(
+      not self.Loading
+    )
+  end
+
+  if self.LoadButton then
+    self.LoadButton:SetEnabled(
+      not self.Loading
+    )
+  end
+
+  if self.CancelButton then
+    self.CancelButton:SetEnabled(
+      not self.Loading
+    )
+  end
+
+  if self.Input then
+    self.Input:SetEnabled(
+      not self.Loading
+    )
+  end
+
+  if self.FolderDropdown then
+    self.FolderDropdown:SetEnabled(
+      not self.Loading
+    )
+  end
+
+  if self.NewTeamRadio then
+    self.NewTeamRadio:SetEnabled(
+      not self.Loading
+    )
+  end
+
+  if self.OverrideRadio then
+    self.OverrideRadio:SetEnabled(
+      not self.Loading
+    )
+  end
+
+  if self.Loading then
+    self:SetStatus(
+      message
+      or "Preparing import..."
+    )
+
+    self:StartProgress()
+  else
+    self:StopProgress()
+
+    self:UpdateButtons()
+    self:UpdateSaveMode()
+  end
+end
+
+function ImportDialog:StartProgress()
+  if not self.Progress then
+    return
+  end
+
+  self.Progress:SetMinMaxValues(
+    0,
+    1
+  )
+
+  self.Progress:SetValue(0)
+
+  if self.Progress.Text then
+    self.Progress.Text:SetText(
+      "0%"
+    )
+  end
+
+  self.Progress:Show()
+end
+
+function ImportDialog:SetProgress(
+    progress,
+    completed,
+    total
+)
+  if not self.Progress then
+    return
+  end
+
+  progress =
+      math.max(
+        0,
+        math.min(
+          1,
+          progress or 0
+        )
+      )
+
+  self.Progress:SetValue(
+    progress
+  )
+
+  local percent =
+      math.floor(
+        progress * 100
+      )
+
+  self.Progress.Text:SetText(
+    string.format(
+      "%d%%",
+      percent
+    )
+  )
+end
+
+function ImportDialog:StopProgress()
+  if not self.Progress then
+    return
+  end
+
+  self.Progress:SetValue(0)
+
+  if self.Progress.Text then
+    self.Progress.Text:SetText("")
+  end
+
+  self.Progress:Hide()
+end
+
+function ImportDialog:HandleLargePaste()
+  local value =
+      self.Input:GetText()
+      or ""
+
+  if #value < 5000 then
+    return
+  end
+
+  self:SetLoading(
+    true,
+    "Reading pasted import..."
+  )
+
+  C_Timer.After(
+    0,
+    function()
+      local format =
+          addon.Services.ImportExport:
+          DetectFormat(value)
+
+      self:SetLoading(false)
+
+      if not format then
+        self:SetStatus(
+          "Unknown import format.",
+          true
+        )
+
+        return
+      end
+
+      self:SetStatus(
+        "Import string ready."
+      )
+    end
+  )
 end
 
 --------------------------------------------------
@@ -224,8 +401,64 @@ function ImportDialog:CreateContent(dialog)
 
   self.Input:SetScript(
     "OnTextChanged",
-    function()
+    function(editBox, userInput)
       self:UpdateButtons()
+
+      if not userInput then
+        return
+      end
+
+      local text =
+          editBox:GetText()
+          or ""
+
+      --------------------------------------------------
+      -- Only react to large pasted strings
+      --------------------------------------------------
+      if #text < 5000 then
+        return
+      end
+
+      self:SetStatus(
+        "Large import string detected."
+      )
+
+      --------------------------------------------------
+      -- Let the UI actually render first
+      --------------------------------------------------
+      C_Timer.After(
+        0.15,
+        function()
+          if not self.Input then
+            return
+          end
+
+          local currentText =
+              self.Input:GetText()
+              or ""
+
+          if currentText == "" then
+            return
+          end
+
+          local format =
+              addon.Services.ImportExport:
+              DetectFormat(
+                currentText
+              )
+
+          if format then
+            self:SetStatus(
+              "Import string ready."
+            )
+          else
+            self:SetStatus(
+              "Unknown import format.",
+              true
+            )
+          end
+        end
+      )
     end
   )
 
@@ -380,6 +613,88 @@ function ImportDialog:CreateContent(dialog)
   )
 
   self.Status:SetHeight(STATUS_HEIGHT)
+
+  --------------------------------------------------
+  -- Progress
+  --------------------------------------------------
+  self.Progress =
+      CreateFrame(
+        "StatusBar",
+        nil,
+        content,
+        "BackdropTemplate"
+      )
+
+  self.Progress:SetPoint(
+    "TOPLEFT",
+    self.Status,
+    "BOTTOMLEFT",
+    0,
+    -4
+  )
+
+  self.Progress:SetPoint(
+    "TOPRIGHT",
+    self.Status,
+    "BOTTOMRIGHT",
+    0,
+    -4
+  )
+
+  self.Progress:SetHeight(
+    PROGRESS_HEIGHT
+  )
+
+  self.Progress:SetStatusBarTexture(
+    "Interface\\TargetingFrame\\UI-StatusBar"
+  )
+
+  self.Progress:SetMinMaxValues(
+    0,
+    1
+  )
+
+  self.Progress:SetValue(0)
+
+  self.Progress:SetBackdrop({
+    bgFile = "Interface\\Buttons\\WHITE8X8",
+    edgeFile = "Interface\\Buttons\\WHITE8X8",
+
+    edgeSize = 1,
+  })
+
+  self.Progress:SetBackdropColor(
+    0.04,
+    0.04,
+    0.04,
+    0.9
+  )
+
+  self.Progress:SetBackdropBorderColor(
+    0.35,
+    0.30,
+    0.20,
+    1
+  )
+
+  self.Progress.Text =
+      self.Progress:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  self.Progress.Text:SetPoint(
+    "CENTER",
+    self.Progress,
+    "CENTER",
+    0,
+    0
+  )
+
+  self.Progress.Text:SetText("")
+
+  self.Progress:Hide()
 end
 
 --------------------------------------------------
@@ -538,48 +853,6 @@ function ImportDialog:ClearStatus()
 end
 
 --------------------------------------------------
--- Import
---------------------------------------------------
-function ImportDialog:Import()
-  local value = self.Input:GetText() or ""
-  value = addon.Utils:Trim(value)
-
-  if value == "" then
-    self:SetStatus(
-      "Paste an export string first.",
-      true
-    )
-    return
-  end
-
-  self.ImportButton:SetEnabled(false)
-
-  local result, errorMessage =
-      addon.Services.ImportExport:
-      Import(value)
-
-  self.ImportButton:SetEnabled(true)
-
-  if not result then
-    self:SetStatus(
-      errorMessage
-      or "Import failed.",
-      true
-    )
-    return
-  end
-
-  local importedTeam = result.teams and result.teams[#result.teams]
-
-  if importedTeam then
-    addon.Services.Team:SelectForUI(importedTeam.id)
-    addon.Services.Team:Load(importedTeam.id)
-  end
-
-  self:Hide()
-end
-
---------------------------------------------------
 -- Folder options
 --------------------------------------------------
 function ImportDialog:GetFolderOptions()
@@ -638,51 +911,148 @@ function ImportDialog:SaveTeam()
     return
   end
 
-  local value = addon.Utils:Trim(self.Input:GetText() or "")
+  local value =
+      addon.Utils:Trim(
+        self.Input:GetText()
+        or ""
+      )
 
   if value == "" then
     self:SetStatus(
       "Paste an export string first.",
       true
     )
+
     return
   end
 
-  self.SaveButton:SetEnabled(false)
+  self:SetLoading(
+    true,
+    "Preparing import..."
+  )
 
-  local prepared, errorMessage = addon.Services.ImportExport:PrepareImport(value)
+  self.Progress:SetValue(0)
+  self.Progress:Show()
 
-  if not prepared then
-    self:SetStatus(
-      errorMessage
-      or "Unable to prepare import.",
-      true
+  if self.Progress.Text then
+    self.Progress.Text:SetText(
+      "0%"
     )
-    return
   end
 
-  if prepared.requiresPreview then
-    addon.UI.Dialogs.ImportPreviewDialog:Show(
-      prepared.document,
-      {
-        defaultFolderID = self.SelectedFolderID,
-        conflictMode = addon.Settings:Get("duplicateTeamMode") or "replace",
-      }
-    )
-    self:Hide()
-    return
-  end
-
-  local result, importError =
-      addon.Services.ImportExport:Import(
+  addon.Services.ImportExport:
+      PrepareImportAsync(
         value,
         {
-          defaultFolderID = self.SelectedFolderID,
-          conflictMode = addon.Settings:Get("duplicateTeamMode") or "replace",
+          batchSize = 25,
+
+          --------------------------------------------------
+          -- Progress
+          --------------------------------------------------
+
+          onProgress =
+              function(
+                  progress,
+                  completed,
+                  total
+              )
+                self:SetProgress(
+                  progress,
+                  completed,
+                  total
+                )
+              end,
+
+          --------------------------------------------------
+          -- Error
+          --------------------------------------------------
+
+          onError =
+              function(errorMessage)
+                self:SetLoading(
+                  false
+                )
+
+                self:SetStatus(
+                  errorMessage
+                  or "Unable to prepare import.",
+                  true
+                )
+              end,
+
+          --------------------------------------------------
+          -- Complete
+          --------------------------------------------------
+
+          onComplete =
+              function(prepared)
+                self:
+                    HandlePreparedImport(
+                      value,
+                      prepared
+                    )
+              end,
+        }
+      )
+end
+
+function ImportDialog:HandlePreparedImport(
+    value,
+    prepared
+)
+  --------------------------------------------------
+  -- Preview
+  --------------------------------------------------
+
+  if prepared.requiresPreview then
+    self:SetLoading(false)
+
+    addon.UI.Dialogs.ImportPreviewDialog:
+        Show(
+          prepared.document,
+          {
+            defaultFolderID =
+                self.SelectedFolderID,
+
+            conflictMode =
+                addon.Settings:Get(
+                  "duplicateTeamMode"
+                )
+                or "replace",
+          }
+        )
+
+    self:Hide()
+
+    return
+  end
+
+  --------------------------------------------------
+  -- Import
+  --------------------------------------------------
+
+  self:SetStatus(
+    "Importing team..."
+  )
+
+  local result,
+  importError =
+      addon.Services.ImportExport:
+      Import(
+        value,
+        {
+          defaultFolderID =
+              self.SelectedFolderID,
+
+          conflictMode =
+              addon.Settings:Get(
+                "duplicateTeamMode"
+              )
+              or "replace",
         }
       )
 
-  self.SaveButton:SetEnabled(true)
+  self:SetLoading(false)
 
   if not result then
     self:SetStatus(
@@ -690,14 +1060,26 @@ function ImportDialog:SaveTeam()
       or "Unable to import.",
       true
     )
+
     return
   end
 
-  local importedTeam = result.teams and result.teams[#result.teams]
+  local importedTeam =
+      result.teams
+      and result.teams[
+      #result.teams
+      ]
 
   if importedTeam then
-    addon.Services.Team:SelectForUI(importedTeam.id)
-    addon.Services.Team:Load(importedTeam.id)
+    addon.Services.Team:
+        SelectForUI(
+          importedTeam.id
+        )
+
+    addon.Services.Team:
+        Load(
+          importedTeam.id
+        )
   end
 
   self:Hide()
@@ -764,22 +1146,67 @@ end
 -- Load team
 --------------------------------------------------
 function ImportDialog:LoadTeam()
-  local importData = self:GetImportData()
+  local value =
+      addon.Utils:Trim(
+        self.Input:GetText()
+        or ""
+      )
+
+  if value == "" then
+    self:SetStatus(
+      "Paste an export string first.",
+      true
+    )
+
+    return
+  end
+
+  self:SetLoading(
+    true,
+    "Preparing team..."
+  )
+
+  C_Timer.After(
+    0,
+
+    function()
+      self:ProcessLoad()
+    end
+  )
+end
+
+function ImportDialog:ProcessLoad()
+  local importData =
+      self:GetImportData()
 
   if not importData then
+    self:SetLoading(false)
     return
   end
 
-  local success, errorMessage = addon.Services.Team:LoadFromImport(importData)
+  self:SetStatus(
+    "Loading team..."
+  )
+
+  local success, errorMessage =
+      addon.Services.Team:
+      LoadFromImport(
+        importData
+      )
 
   if not success then
+    self:SetLoading(false)
+
     self:SetStatus(
       errorMessage
-      or "Unable to load team"
+      or "Unable to load team",
+      true
     )
+
     return
   end
 
+  self:SetLoading(false)
   self:Hide()
 end
 
