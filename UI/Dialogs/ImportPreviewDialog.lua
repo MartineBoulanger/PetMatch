@@ -137,8 +137,8 @@ local function ClearPreview(dialog)
   dialog.CreatedControls = {}
   dialog.GroupControls = {}
 
-  if dialog.Content then
-    dialog.Content:SetHeight(1)
+  if dialog.PreviewContent then
+    dialog.PreviewContent:SetHeight(1)
   end
 end
 
@@ -191,7 +191,7 @@ end
 local function BuildPreview(dialog)
   ClearPreview(dialog)
 
-  local content = dialog.Content
+  local content = dialog.PreviewContent
   local y = -8
   local contentWidth = content:GetWidth()
 
@@ -488,15 +488,15 @@ local function CreateContent(dialog)
   --------------------------------------------------
   -- Scroll content
   --------------------------------------------------
-  dialog.Content =
+  dialog.PreviewContent =
       CreateFrame(
         "Frame",
         nil,
         dialog.ScrollFrame
       )
 
-  dialog.Content:SetHeight(1)
-  dialog.ScrollFrame:SetScrollChild(dialog.Content)
+  dialog.PreviewContent:SetHeight(1)
+  dialog.ScrollFrame:SetScrollChild(dialog.PreviewContent)
 
   --------------------------------------------------
   -- Keep scroll child width aligned
@@ -508,7 +508,7 @@ local function CreateContent(dialog)
       return
     end
 
-    dialog.Content:SetWidth(math.max(1, width))
+    dialog.PreviewContent:SetWidth(math.max(1, width))
   end
 
   dialog.ScrollFrame:HookScript(
