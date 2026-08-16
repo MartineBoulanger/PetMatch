@@ -1,10 +1,12 @@
-local _, addon = ...
+local _, addon                            = ...
 
-local PetJournalService = {}
+local PetJournalService                   = {}
 
-PetJournalService.Cache = {}
+PetJournalService.Cache                   = {}
 PetJournalService.BestOwnedPetBySpeciesID = {}
-PetJournalService.IndexReady = false
+PetJournalService.IndexReady              = false
+PetJournalService.Initialized             = false
+PetJournalService.ScanScheduled           = false
 
 local function IsBetterPet(
     level,
@@ -174,6 +176,60 @@ end
 function PetJournalService:InvalidateCache()
   self.IndexReady = false
   wipe(self.BestOwnedPetBySpeciesID)
+end
+
+function PetJournalService:ScheduleScan()
+  if self.ScanScheduled then
+    return
+  end
+
+  self.ScanScheduled = true
+
+  C_Timer.After(
+    0,
+    function()
+      self.ScanScheduled = false
+      self:InvalidateCache()
+      self:Scan()
+    end
+  )
+end
+
+function PetJournalService:Initialize()
+  if self.Initialized then
+    return
+  end
+
+  self.Initialized = true
+
+  self.EventFrame =
+      self.EventFrame
+      or CreateFrame("Frame")
+
+  self.EventFrame:RegisterEvent(
+    "PET_JOURNAL_LIST_UPDATE"
+  )
+
+  self.EventFrame:SetScript(
+    "OnEvent",
+    function(_, event)
+      if event
+          ~= "PET_JOURNAL_LIST_UPDATE" then
+        return
+      end
+
+      self:ScheduleScan()
+    end
+  )
+
+  --------------------------------------------------
+  -- Initial scan.
+  --
+  -- This establishes the initial known-pet baseline
+  -- for the Levelling Queue.
+  --------------------------------------------------
+
+  self:ScheduleScan()
 end
 
 function PetJournalService:GetSpeciesID(petGUID)

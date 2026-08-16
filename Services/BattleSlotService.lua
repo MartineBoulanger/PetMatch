@@ -209,11 +209,7 @@ function BattleSlotService:Debug()
   end
 end
 
-function BattleSlotService:ResolveSpecialSlot(
-    specialSlot,
-    slot,
-    usedPetGUIDs
-)
+function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
   if type(specialSlot) ~= "table" then
     return nil, string.format(
       "Invalid special pet slot %d",
@@ -222,21 +218,112 @@ function BattleSlotService:ResolveSpecialSlot(
   end
 
   usedPetGUIDs = usedPetGUIDs or {}
-
   local slotType = specialSlot.type
 
-  -- Een ignored of unowned slot wordt niet aangepast.
+  --------------------------------------------------
+  -- Ignored / unowned
+  --------------------------------------------------
   if slotType == "ignored"
       or slotType == "unowned" then
     return nil
   end
 
-  local pets =
-      addon.Services.PetJournal:GetAll()
+  --------------------------------------------------
+  -- Levelling Queue
+  --------------------------------------------------
+  if slotType == "leveling"
+      or slotType == "levelingQueue" then
+    local queueService = addon.Services.LevellingQueue
+
+    if not queueService then
+      return nil, "The Levelling Queue service is unavailable"
+    end
+
+    local queue = queueService:GetAll()
+
+    if type(queue) ~= "table" or #queue == 0 then
+      return nil, string.format(
+        "The Levelling Queue is empty for slot %d",
+        slot
+      )
+    end
+
+    local minimumLevel =
+        tonumber(
+          specialSlot.minimumLevel
+          or specialSlot.level
+        )
+        or 1
+
+    local maximumLevel =
+        tonumber(
+          specialSlot.maximumLevel
+        )
+        or 24
+
+    local minimumHealth =
+        tonumber(
+          specialSlot.minimumHealth
+        )
+
+    --------------------------------------------------
+    -- Queue order is priority order.
+    --------------------------------------------------
+    for _, petGUID in ipairs(queue) do
+      if not usedPetGUIDs[petGUID] then
+        local pet = addon.Services.PetJournal:GetPet(petGUID)
+
+        if pet and pet.canBattle == true then
+          local level =
+              tonumber(
+                pet.level
+              )
+              or 0
+
+          local correctLevel =
+              level >= minimumLevel
+              and level <= maximumLevel
+
+          local correctHealth = true
+
+          if correctLevel and minimumHealth then
+            local _, maximumHealth =
+                C_PetJournal.GetPetStats(
+                  petGUID
+                )
+
+            correctHealth =
+                (maximumHealth or 0)
+                >= minimumHealth
+          end
+
+          if correctLevel and correctHealth then
+            return petGUID
+          end
+        end
+      end
+    end
+
+    return nil, string.format(
+      "No eligible pet in the Levelling Queue for slot %d",
+      slot
+    )
+  end
+
+  --------------------------------------------------
+  -- Random pet
+  --------------------------------------------------
+  if slotType ~= "random" then
+    return nil, string.format(
+      "Unsupported special slot type '%s'",
+      tostring(slotType)
+    )
+  end
+
+  local pets = addon.Services.PetJournal:GetAll()
 
   if type(pets) ~= "table" then
-    return nil,
-        "The Pet Journal cache is unavailable"
+    return nil, "The Pet Journal cache is unavailable"
   end
 
   local candidates = {}
@@ -246,118 +333,73 @@ function BattleSlotService:ResolveSpecialSlot(
         and type(pet) == "table"
         and pet.canBattle ~= false
         and not usedPetGUIDs[petGUID] then
-      local level = tonumber(pet.level) or 0
+      local level =
+          tonumber(
+            pet.level
+          )
+          or 0
 
-      if slotType == "random" then
-        local requiredPetType =
-            tonumber(specialSlot.petType) or 0
+      local requiredPetType =
+          tonumber(
+            specialSlot.petType
+          )
+          or 0
 
-        local correctFamily =
-            requiredPetType == 0
-            or pet.petType == requiredPetType
+      local correctFamily =
+          requiredPetType == 0
+          or pet.petType
+          == requiredPetType
 
-        if level == 25 and correctFamily then
-          candidates[#candidates + 1] = {
-            petGUID = petGUID,
-            level = level,
-          }
-        end
-      elseif slotType == "leveling"
-          or slotType == "levelingQueue" then
-        local minimumLevel =
-            tonumber(
-              specialSlot.minimumLevel
-              or specialSlot.level
-            ) or 1
+      if level == 25 and correctFamily then
+        candidates[
+        #candidates + 1
+        ] = {
+          petGUID =
+              petGUID,
 
-        local maximumLevel =
-            tonumber(
-              specialSlot.maximumLevel
-            ) or 24
-
-        local correctLevel =
-            level >= minimumLevel
-            and level <= maximumLevel
-
-        local correctHealth = true
-        local minimumHealth =
-            tonumber(specialSlot.minimumHealth)
-
-        if correctLevel and minimumHealth then
-          local _, maximumHealth =
-              C_PetJournal.GetPetStats(
-                petGUID
-              )
-
-          correctHealth =
-              (maximumHealth or 0)
-              >= minimumHealth
-        end
-
-        if correctLevel and correctHealth then
-          candidates[#candidates + 1] = {
-            petGUID = petGUID,
-            level = level,
-          }
-        end
+          level =
+              level,
+        }
       end
     end
   end
 
+  --------------------------------------------------
+  -- No random candidates
+  --------------------------------------------------
   if #candidates == 0 then
-    if slotType == "random" then
-      local petType =
-          tonumber(specialSlot.petType) or 0
-
-      if petType > 0 then
-        return nil, string.format(
-          "No available level 25 pet of family %d for slot %d",
-          petType,
-          slot
+    local petType =
+        tonumber(
+          specialSlot.petType
         )
-      end
+        or 0
 
+    if petType > 0 then
       return nil, string.format(
-        "No available level 25 pet for slot %d",
-        slot
-      )
-    end
-
-    if slotType == "leveling"
-        or slotType == "levelingQueue" then
-      return nil, string.format(
-        "No available leveling pet for slot %d",
+        "No available level 25 pet of family %d for slot %d",
+        petType,
         slot
       )
     end
 
     return nil, string.format(
-      "Unsupported special slot type '%s'",
-      tostring(slotType)
+      "No available level 25 pet for slot %d",
+      slot
     )
   end
 
-  if slotType == "random" then
-    local candidate =
-        candidates[
-        math.random(1, #candidates)
-        ]
+  --------------------------------------------------
+  -- Random candidate
+  --------------------------------------------------
+  local candidate =
+      candidates[
+      math.random(
+        1,
+        #candidates
+      )
+      ]
 
-    return candidate.petGUID
-  end
-
-  table.sort(
-    candidates,
-    function(left, right)
-      if left.level ~= right.level then
-        return left.level < right.level
-      end
-
-      return left.petGUID < right.petGUID
-    end
-  )
-
-  return candidates[1].petGUID
+  return candidate.petGUID
 end
 
 function BattleSlotService:LoadPets(
@@ -424,7 +466,11 @@ function BattleSlotService:LoadPets(
     resolvedPets[slot] = petGUID
 
     if specialSlot
-        and specialSlot.type == "random"
+        and (
+          specialSlot.type == "random"
+          or specialSlot.type == "leveling"
+          or specialSlot.type == "levelingQueue"
+        )
         and petGUID then
       resolvedAbilities[slot] =
           GetFirstAbilityIDs(

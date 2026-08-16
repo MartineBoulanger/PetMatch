@@ -115,6 +115,14 @@ function Blizzard:Initialize()
     end
   )
 
+  if addon.Services.PetJournal then
+    addon.Services.PetJournal:Initialize()
+  end
+
+  if addon.Services.LevellingQueue then
+    addon.Services.LevellingQueue:Initialize()
+  end
+
   if addon.Services.LoadoutMonitor then
     addon.Services.LoadoutMonitor:Initialize()
   end

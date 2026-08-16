@@ -13,6 +13,7 @@ local BREED_SECTION_HEIGHT = 104
 local PET_LIST_SECTION_HEIGHT = 86
 local PET_CARD_SECTION_HEIGHT = 104
 local PET_CARD_VISIBILITY_SECTION_HEIGHT = 104
+local LEVELLING_QUEUE_SECTION_HEIGHT = 96
 
 function OptionsList:Create(parent)
   local frame =
@@ -32,11 +33,12 @@ function OptionsList:Create(parent)
   frame.items = {}
 
   self.ExpandedSections = {
-    duplicateTeams = true,
-    petBreeds = true,
-    petList = true,
-    petCard = true,
-    petCardVisibility = true,
+    duplicateTeams = false,
+    petBreeds = false,
+    petList = false,
+    petCard = false,
+    petCardVisibility = false,
+    levellingQueue = false,
   }
 
   self:RegisterEvents()
@@ -71,6 +73,8 @@ function OptionsList:RegisterEvents()
         self:RefreshPetCardMode()
       elseif key == "petCardVisibilityMode" then
         self:RefreshPetCardVisibilityMode()
+      elseif key == "levellingQueueAutoAddMode" then
+        self:RefreshLevellingQueueAutoAddMode()
       end
     end
   )
@@ -119,6 +123,11 @@ function OptionsList:ClearItems()
   self.PetCardPetListButton = nil
   self.PetCardTeamsButton = nil
   self.PetCardVisibilityBothButton = nil
+
+  -- Levelling Queue Option
+  self.LevellingQueueAccordion = nil
+  self.LevellingQueueAutoAddEnabledButton = nil
+  self.LevellingQueueAutoAddDisabledButton = nil
 end
 
 function OptionsList:GetSections()
@@ -127,18 +136,14 @@ function OptionsList:GetSections()
       key = "duplicateTeams",
       title = "Duplicate Teams",
       contentHeight = DUPLICATE_SECTION_HEIGHT,
-
       build = function(content)
-        self:BuildDuplicateTeamOptions(
-          content
-        )
+        self:BuildDuplicateTeamOptions(content)
       end,
     },
     {
       key = "petBreeds",
       title = "Pet Breeds",
       contentHeight = BREED_SECTION_HEIGHT,
-
       build = function(content)
         self:BuildBreedOptions(content)
       end,
@@ -147,33 +152,32 @@ function OptionsList:GetSections()
       key = "petList",
       title = "Pet List",
       contentHeight = PET_LIST_SECTION_HEIGHT,
-
       build = function(content)
-        self:BuildPetListOptions(
-          content
-        )
+        self:BuildPetListOptions(content)
       end,
     },
     {
       key = "petCard",
       title = "Pet Card",
       contentHeight = PET_CARD_SECTION_HEIGHT,
-
       build = function(content)
-        self:BuildPetCardOptions(
-          content
-        )
+        self:BuildPetCardOptions(content)
       end,
     },
     {
       key = "petCardVisibility",
       title = "Pet Card Visibility",
       contentHeight = PET_CARD_VISIBILITY_SECTION_HEIGHT,
-
       build = function(content)
-        self:BuildPetCardVisibilityOptions(
-          content
-        )
+        self:BuildPetCardVisibilityOptions(content)
+      end,
+    },
+    {
+      key = "levellingQueue",
+      title = "Levelling Queue",
+      contentHeight = LEVELLING_QUEUE_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildLevellingQueueOptions(content)
       end,
     },
   }
@@ -209,7 +213,14 @@ function OptionsList:CreateSection(
             section.key
             ] = isExpanded
 
-            self:UpdateContentHeight()
+            C_Timer.After(
+              0,
+              function()
+                if self.Frame then
+                  self:UpdateContentHeight()
+                end
+              end
+            )
           end,
         }
       )
@@ -260,6 +271,10 @@ function OptionsList:CreateSection(
 
   if section.key == "petCardVisibility" then
     self.PetCardVisibilityAccordion = accordion
+  end
+
+  if section.key == "levellingQueue" then
+    self.LevellingQueueAccordion = accordion
   end
 
   return currentOffset
@@ -721,6 +736,75 @@ function OptionsList:BuildPetCardVisibilityOptions(
   self:RefreshPetCardVisibilityMode()
 end
 
+function OptionsList:BuildLevellingQueueOptions(parent)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose whether newly acquired battle pets below level 25 are automatically added to the Levelling Queue."
+  )
+
+  self.LevellingQueueAutoAddEnabledButton =
+      self:CreateRadioButton(
+        parent,
+        "Automatically add new pets",
+        "levellingQueueAutoAddMode",
+        "enabled",
+        self.RefreshLevellingQueueAutoAddMode
+      )
+
+  self.LevellingQueueAutoAddEnabledButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.LevellingQueueAutoAddDisabledButton =
+      self:CreateRadioButton(
+        parent,
+        "Do not automatically add new pets",
+        "levellingQueueAutoAddMode",
+        "disabled",
+        self.RefreshLevellingQueueAutoAddMode
+      )
+
+  self.LevellingQueueAutoAddDisabledButton:SetPoint(
+    "TOPLEFT",
+    self.LevellingQueueAutoAddEnabledButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshLevellingQueueAutoAddMode()
+end
+
 function OptionsList:RefreshDuplicateMode()
   if not self.SkipButton
       or not self.ReplaceButton
@@ -838,6 +922,25 @@ function OptionsList:RefreshPetCardVisibilityMode()
 
   self.PetCardVisibilityBothButton:SetChecked(
     mode == "both"
+  )
+end
+
+function OptionsList:RefreshLevellingQueueAutoAddMode()
+  if not self.LevellingQueueAutoAddEnabledButton
+      or not self.LevellingQueueAutoAddDisabledButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get("levellingQueueAutoAddMode")
+      or "disabled"
+
+  self.LevellingQueueAutoAddEnabledButton:SetChecked(
+    mode == "enabled"
+  )
+
+  self.LevellingQueueAutoAddDisabledButton:SetChecked(
+    mode == "disabled"
   )
 end
 

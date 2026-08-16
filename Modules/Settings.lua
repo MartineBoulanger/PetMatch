@@ -17,6 +17,7 @@ local DEFAULT_SETTINGS = {
   compactPetListRows = false,
   petCardInteractionMode = "hover",
   petCardVisibilityMode = "both",
+  levellingQueueAutoAddMode = "disabled",
 
   ui = {
     selectedFolderKey = "__ALL__",

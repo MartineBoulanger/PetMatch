@@ -56,215 +56,6 @@ local function HideFontStrings(frame)
   end
 end
 
-local function ShowTooltip(
-    button,
-    title,
-    description
-)
-  GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
-  GameTooltip:SetText(title, 1, 1, 1)
-
-  if description then
-    GameTooltip:AddLine(
-      description,
-      nil,
-      nil,
-      nil,
-      true
-    )
-  end
-
-  GameTooltip:Show()
-end
-
-local function CopyBorderStyle(
-    targetButton,
-    sourceButton
-)
-  if not targetButton
-      or not sourceButton
-      or not sourceButton.Border then
-    return
-  end
-
-  local sourceBorder = sourceButton.Border
-
-  local border =
-      targetButton:CreateTexture(
-        nil,
-        "OVERLAY",
-        nil,
-        7
-      )
-
-  local atlas =
-      sourceBorder.GetAtlas
-      and sourceBorder:GetAtlas()
-
-  if atlas then
-    border:SetAtlas(
-      atlas,
-      false
-    )
-  else
-    local texture =
-        sourceBorder:GetTexture()
-
-    if not texture then
-      return
-    end
-
-    border:SetTexture(texture)
-
-    border:SetTexCoord(
-      sourceBorder:GetTexCoord()
-    )
-  end
-
-  border:ClearAllPoints()
-
-  local buttonWidth = sourceButton:GetWidth()
-  local buttonHeight = sourceButton:GetHeight()
-  local borderWidth = sourceBorder:GetWidth()
-  local borderHeight = sourceBorder:GetHeight()
-
-  if buttonWidth > 0
-      and buttonHeight > 0
-      and borderWidth > 0
-      and borderHeight > 0 then
-    border:SetSize(
-      targetButton:GetWidth() * borderWidth / buttonWidth,
-      targetButton:GetHeight() * borderHeight / buttonHeight
-    )
-
-    border:SetPoint(
-      "CENTER",
-      targetButton,
-      "CENTER"
-    )
-  else
-    border:SetAllPoints(targetButton)
-  end
-
-  border:SetVertexColor(
-    sourceBorder:GetVertexColor()
-  )
-
-  border:SetAlpha(
-    sourceBorder:GetAlpha()
-  )
-
-  border:Show()
-
-  targetButton.Border = border
-end
-
-local function CopyHighlightStyle(
-    targetButton,
-    sourceButton
-)
-  if not targetButton
-      or not sourceButton then
-    return
-  end
-
-  local sourceHighlight =
-      sourceButton:GetHighlightTexture()
-
-  if not sourceHighlight then
-    return
-  end
-
-  local highlight =
-      targetButton:GetHighlightTexture()
-
-  if not highlight then
-    highlight =
-        targetButton:CreateTexture(
-          nil,
-          "HIGHLIGHT"
-        )
-
-    targetButton:SetHighlightTexture(
-      highlight
-    )
-  end
-
-  local atlas =
-      sourceHighlight.GetAtlas
-      and sourceHighlight:GetAtlas()
-
-  if atlas then
-    highlight:SetAtlas(
-      atlas,
-      false
-    )
-  else
-    local texture =
-        sourceHighlight:GetTexture()
-
-    if texture then
-      highlight:SetTexture(texture)
-    end
-
-    highlight:SetTexCoord(
-      sourceHighlight:GetTexCoord()
-    )
-  end
-
-  highlight:ClearAllPoints()
-
-  local sourceButtonWidth =
-      sourceButton:GetWidth()
-
-  local sourceButtonHeight =
-      sourceButton:GetHeight()
-
-  local sourceWidth =
-      sourceHighlight:GetWidth()
-
-  local sourceHeight =
-      sourceHighlight:GetHeight()
-
-  if sourceButtonWidth > 0
-      and sourceButtonHeight > 0
-      and sourceWidth > 0
-      and sourceHeight > 0 then
-    highlight:SetSize(
-      targetButton:GetWidth()
-      * sourceWidth
-      / sourceButtonWidth,
-      targetButton:GetHeight()
-      * sourceHeight
-      / sourceButtonHeight
-    )
-
-    highlight:SetPoint(
-      "CENTER",
-      targetButton,
-      "CENTER"
-    )
-  else
-    highlight:SetAllPoints(
-      targetButton
-    )
-  end
-
-  highlight:SetBlendMode(
-    sourceHighlight:GetBlendMode()
-  )
-
-  highlight:SetVertexColor(
-    sourceHighlight:GetVertexColor()
-  )
-
-  highlight:SetAlpha(
-    sourceHighlight:GetAlpha()
-  )
-
-  highlight:Show()
-end
-
 local function FindHealIconButton()
   local healFrame = FindHealButton()
   return healFrame
@@ -287,6 +78,19 @@ local function GetToolbarButtonSize()
   end
 
   return 32, 32
+end
+
+local function CreateToolbarIconButton(parent, options)
+  options = options or {}
+
+  local width,
+  height = GetToolbarButtonSize()
+
+  options.width = options.width or width
+  options.height = options.height or height
+  options.styleSource = FindHealIconButton()
+
+  return addon.UI.Components.ToolbarIconButton:Create(parent, options)
 end
 
 local function AddBlizzardBorder(button)
@@ -371,78 +175,6 @@ local function AddBlizzardBorder(button)
   button.Border = border
 end
 
-local function CreateIconButton(
-    parent,
-    name,
-    texture,
-    tooltipTitle,
-    tooltipDescription,
-    onClick
-)
-  local button =
-      CreateFrame(
-        "Button",
-        name,
-        parent,
-        "IconButtonTemplate"
-      )
-
-  local width, height = GetToolbarButtonSize()
-
-  button:SetSize(width, height)
-  button:RegisterForClicks("LeftButtonUp")
-
-  if button.Icon then
-    button.Icon:ClearAllPoints()
-    button.Icon:SetAllPoints(button)
-    button.Icon:SetTexture(texture)
-
-    button.Icon:SetTexCoord(
-      0,
-      1,
-      0,
-      1
-    )
-  end
-
-  CopyBorderStyle(
-    button,
-    FindHealIconButton()
-  )
-
-  CopyHighlightStyle(
-    button,
-    FindHealIconButton()
-  )
-
-  AddBlizzardBorder(button)
-
-  button:SetScript(
-    "OnEnter",
-    function(self)
-      ShowTooltip(
-        self,
-        tooltipTitle,
-        tooltipDescription
-      )
-    end
-  )
-
-  button:SetScript(
-    "OnLeave",
-    function()
-      GameTooltip:Hide()
-    end
-  )
-
-  button:SetScript(
-    "OnClick",
-    onClick
-  )
-
-  return button
-end
-
 local function IsSafariHatActive()
   return C_UnitAuras.GetPlayerAuraBySpellID(
     SAFARI_HAT_BUFF_ID
@@ -518,12 +250,7 @@ local function CreateSafariHatButton(
   button.Icon:SetTexture(texture)
   button.Icon:SetTexCoord(0, 1, 0, 1)
 
-  CopyBorderStyle(
-    button,
-    FindHealIconButton()
-  )
-
-  CopyHighlightStyle(
+  addon.UI.Components.ToolbarIconButton:ApplyStyle(
     button,
     FindHealIconButton()
   )
@@ -553,7 +280,7 @@ local function CreateSafariHatButton(
   button:SetScript(
     "OnEnter",
     function(self)
-      ShowTooltip(
+      addon.UI.Components.ToolbarIconButton:ShowTooltip(
         self,
         self.TooltipTitle,
         self.TooltipDescription
@@ -619,32 +346,12 @@ local function CreateBandageButton(
   button.Icon:SetTexture(texture)
   button.Icon:SetTexCoord(0, 1, 0, 1)
 
-  CopyBorderStyle(
-    button,
-    FindHealIconButton()
-  )
-
-  CopyHighlightStyle(
+  addon.UI.Components.ToolbarIconButton:ApplyStyle(
     button,
     FindHealIconButton()
   )
 
   AddBlizzardBorder(button)
-
-  -- self.BandageButton.Count:SetJustifyH(
-  --   "RIGHT"
-  -- )
-
-  -- self.BandageButton.Count:SetTextColor(
-  --   1,
-  --   1,
-  --   1
-  -- )
-
-  -- self.BandageButton.Count:SetShadowOffset(
-  --   1,
-  --   -1
-  -- )
 
   button.Count =
       button:CreateFontString(
@@ -667,7 +374,7 @@ local function CreateBandageButton(
   button:SetScript(
     "OnEnter",
     function(self)
-      ShowTooltip(
+      addon.UI.Components.ToolbarIconButton:ShowTooltip(
         self,
         self.TooltipTitle,
         self.TooltipDescription
@@ -1086,41 +793,53 @@ function PetJournalToolbar:Create()
         GetSafariHatIcon()
       )
 
-  self.ImportButton =
-      CreateIconButton(
+  local importControl =
+      CreateToolbarIconButton(
         PetJournal,
-        "PetMatchImportButton",
-        "Interface\\AddOns\\PetMatch\\Media\\Import",
-        "Import Team(s)",
-        "Import Rematch team or a backup you made with Export.",
-        function()
-          addon.UI.Dialogs.ImportDialog:Show()
-        end
+        {
+          name = "PetMatchImportButton",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\Import",
+          tooltipTitle = "Import Team(s)",
+          tooltipDescription = "Import Rematch team or a backup you made with Export.",
+          onClick = function()
+            addon.UI.Dialogs.ImportDialog:Show()
+          end,
+        }
       )
 
-  self.ExportButton =
-      CreateIconButton(
+  self.ImportButton = importControl:GetFrame()
+
+  local exportControl =
+      CreateToolbarIconButton(
         PetJournal,
-        "PetMatchExportButton",
-        "Interface\\AddOns\\PetMatch\\Media\\Export",
-        "Export Everything",
-        "Export all folders with all teams - good for backup.",
-        function()
-          addon.UI.Dialogs.ExportDialog:ShowAll()
-        end
+        {
+          name = "PetMatchExportButton",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\Export",
+          tooltipTitle = "Export Everything",
+          tooltipDescription = "Export all folders with all teams - good for backup.",
+          onClick = function()
+            addon.UI.Dialogs.ExportDialog:ShowAll()
+          end,
+        }
       )
 
-  self.DismissButton =
-      CreateIconButton(
+  self.ExportButton = exportControl:GetFrame()
+
+  local dismissControl =
+      CreateToolbarIconButton(
         PetJournal,
-        "PetMatchDismissPetButton",
-        "Interface\\AddOns\\PetMatch\\Media\\Dismiss",
-        "Dismiss Pet",
-        "Dismiss the pet that is currently summoned.",
-        function()
-          self:DismissPet()
-        end
+        {
+          name = "PetMatchDismissPetButton",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\Dismiss",
+          tooltipTitle = "Dismiss Pet",
+          tooltipDescription = "Dismiss the pet that is currently summoned.",
+          onClick = function()
+            self:DismissPet()
+          end,
+        }
       )
+
+  self.DismissButton = dismissControl:GetFrame()
 
   self:HideBlizzardButtonText()
   self:PositionButtons()

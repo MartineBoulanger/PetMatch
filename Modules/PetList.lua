@@ -1105,10 +1105,90 @@ local function UpdatePetNameColor(
   end
 end
 
-local function UpdatePetButton(
-    button,
-    elementData
-)
+local function InstallLevellingDrag(button)
+  if not button
+      or button.PetMatchLevellingDragInstalled then
+    return
+  end
+
+  button.PetMatchLevellingDragInstalled =
+      true
+
+  button:RegisterForDrag(
+    "LeftButton"
+  )
+
+  button:HookScript(
+    "OnDragStart",
+    function(control)
+      local petGUID =
+          control.petID
+          or control.petGUID
+
+      if not petGUID then
+        return
+      end
+
+      local queueService =
+          addon.Services.LevellingQueue
+
+      if not queueService then
+        return
+      end
+
+      --------------------------------------------------
+      -- Only allow pets that can actually
+      -- enter the queue.
+      --------------------------------------------------
+
+      if queueService:Contains(
+            petGUID
+          ) then
+        return
+      end
+
+      local allowed =
+          queueService:CanAdd(
+            petGUID
+          )
+
+      if not allowed then
+        return
+      end
+
+      addon.UI.Components.LevellingQueueDrag:
+          Start(
+            petGUID,
+            "petJournal"
+          )
+    end
+  )
+
+  button:HookScript(
+    "OnDragStop",
+    function()
+      C_Timer.After(
+        0,
+        function()
+          local drag = addon.UI.Components.LevellingQueueDrag
+
+          if drag
+              and drag:GetSource()
+              == "petJournal" then
+            drag:Clear()
+
+            if type(ClearCursor)
+                == "function" then
+              ClearCursor()
+            end
+          end
+        end
+      )
+    end
+  )
+end
+
+local function UpdatePetButton(button, elementData)
   if not button then
     return
   end
@@ -1121,6 +1201,9 @@ local function UpdatePetButton(
     ClearPetMatchDisplay(button)
     return
   end
+
+  button.petGUID = petGUID
+  InstallLevellingDrag(button)
 
   local breedLabel
 
@@ -1224,8 +1307,52 @@ local function BuildTagMenuText(
   )
 end
 
-function PetList:InstallTagContextMenu()
-  if self.TagMenuInstalled then
+local function GetQueuePetState(petGUID)
+  if not petGUID then
+    return nil
+  end
+
+  local service = addon.Services and addon.Services.LevellingQueue
+
+  if not service then
+    return nil
+  end
+
+  local petService = addon.Services and addon.Services.PetJournal
+
+  if not petService then
+    return nil
+  end
+
+  local pet = petService:GetPet(petGUID)
+
+  if not pet then
+    return nil
+  end
+
+  local level =
+      tonumber(
+        pet.level
+      )
+
+  local canBattle = pet.canBattle == true
+  local inQueue = service:Contains(petGUID)
+
+  return {
+    pet = pet,
+    level = level,
+    canBattle = canBattle,
+    inQueue = inQueue,
+    canAdd =
+        canBattle
+        and level ~= nil
+        and level < 25
+        and not inQueue,
+  }
+end
+
+function PetList:InstallPetContextMenu()
+  if self.PetMenuInstalled then
     return true
   end
 
@@ -1237,77 +1364,148 @@ function PetList:InstallTagContextMenu()
 
   Menu.ModifyMenu(
     "MENU_PET_COLLECTION_PET",
-
     function(owner, root)
       local petGUID =
-          GetOwnerPetGUID(owner)
-
+          GetOwnerPetGUID(
+            owner
+          )
       if not petGUID then
         return
       end
 
-      local tagService =
-          addon.Services.PetTag
+      --------------------------------------------------
+      -- Pet Tag
+      --------------------------------------------------
+      local tagService = addon.Services.PetTag
 
-      if not tagService then
+      if tagService then
+        root:CreateDivider()
+        local submenu = root:CreateButton("Pet Tag")
+
+        for _, definition in ipairs(
+          tagService:GetDefinitions()
+        ) do
+          local tagID = definition.id
+
+          submenu:CreateRadio(
+            BuildTagMenuText(definition),
+
+            function(id)
+              return tagService:
+              HasTag(petGUID, id)
+            end,
+
+            function(id)
+              tagService:SetTag(petGUID, id)
+              RefreshPetJournal()
+            end,
+
+            tagID
+          )
+        end
+
+        local currentTag = tagService:GetTag(petGUID)
+
+        if currentTag then
+          submenu:CreateDivider()
+          submenu:CreateButton(
+            "Remove Tag",
+            function()
+              tagService:ClearTag(petGUID)
+              RefreshPetJournal()
+            end
+          )
+        end
+      end
+
+      --------------------------------------------------
+      -- Levelling Queue
+      --------------------------------------------------
+      local queueService = addon.Services.LevellingQueue
+
+      if not queueService then
         return
       end
 
-      root:CreateDivider()
+      local state = GetQueuePetState(petGUID)
 
-      local submenu =
-          root:CreateButton(
-            "Pet Tag"
-          )
-
-      for _, definition in ipairs(
-        tagService:GetDefinitions()
-      ) do
-        local tagID =
-            definition.id
-
-        submenu:CreateRadio(
-          BuildTagMenuText(
-            definition
-          ),
-
-          function(id)
-            return tagService:
-            HasTag(
-              petGUID,
-              id
-            )
-          end,
-
-          function(id)
-            tagService:SetTag(
-              petGUID,
-              id
-            )
-
-            RefreshPetJournal()
-          end,
-
-          tagID
-        )
+      if not state then
+        return
       end
 
-      local currentTag =
-          tagService:GetTag(
-            petGUID
-          )
+      --------------------------------------------------
+      -- Already in queue
+      --------------------------------------------------
+      if state.inQueue then
+        local queueMenu = root:CreateButton("Levelling Queue")
+        local index = queueService:GetIndex(petGUID)
+        local count = queueService:GetCount()
 
-      if currentTag then
-        submenu:CreateDivider()
-
-        submenu:CreateButton(
-          "Remove Tag",
-
-          function()
-            tagService:ClearTag(
-              petGUID
+        --------------------------------------------------
+        -- Move Up
+        --------------------------------------------------
+        local moveUp =
+            queueMenu:CreateButton(
+              "Move Up",
+              function()
+                queueService:MoveUp(petGUID)
+              end
             )
 
+        moveUp:SetEnabled(
+          index ~= nil
+          and index > 1
+        )
+
+        --------------------------------------------------
+        -- Move Down
+        --------------------------------------------------
+        local moveDown =
+            queueMenu:CreateButton(
+              "Move Down",
+              function()
+                queueService:
+                    MoveDown(
+                      petGUID
+                    )
+              end
+            )
+        moveDown:SetEnabled(
+          index ~= nil
+          and index < count
+        )
+
+        queueMenu:CreateDivider()
+
+        --------------------------------------------------
+        -- Remove
+        --------------------------------------------------
+        queueMenu:CreateButton(
+          "Remove from Levelling Queue",
+          function()
+            queueService:Remove(petGUID)
+            RefreshPetJournal()
+          end
+        )
+        return
+      end
+
+      --------------------------------------------------
+      -- Not in queue
+      --------------------------------------------------
+      if state.canAdd then
+        root:CreateButton(
+          "Add to Levelling Queue",
+
+          function()
+            local success, errorMessage = queueService:Add(petGUID)
+            if not success then
+              addon.Logger:Warn(
+                errorMessage
+                or "Unable to add pet to the levelling queue."
+              )
+              return
+            end
             RefreshPetJournal()
           end
         )
@@ -1315,7 +1513,7 @@ function PetList:InstallTagContextMenu()
     end
   )
 
-  self.TagMenuInstalled = true
+  self.PetMenuInstalled = true
 
   return true
 end
@@ -1377,7 +1575,7 @@ end
 function PetList:OnAddonLoaded(name)
   if name == "Blizzard_Collections" then
     self:InstallHook()
-    self:InstallTagContextMenu()
+    self:InstallPetContextMenu()
     self:ApplyPetListLayout()
     self:ApplyBreedDisplay()
     return
@@ -1451,6 +1649,10 @@ function PetList:Initialize()
     addon.Events.PET_ADDED_TO_TEAM
   )
 
+  self:RegisterRefreshEvent(
+    addon.Events.LEVELLING_QUEUE_CHANGED
+  )
+
   self.LoaderFrame =
       CreateFrame("Frame")
 
@@ -1469,7 +1671,7 @@ end
 
 function PetList:Enable()
   self:InstallHook()
-  self:InstallTagContextMenu()
+  self:InstallPetContextMenu()
   self:ApplyPetListLayout()
   self:ApplyBreedDisplay()
 end

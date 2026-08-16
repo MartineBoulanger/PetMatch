@@ -272,6 +272,22 @@ function Panels:Create()
   )
 
   --------------------------------------------------
+  -- Levelling Queue
+  --------------------------------------------------
+  self.LevellingQueueFrame =
+      CreateFrame(
+        "Frame",
+        nil,
+        self.ContentFrame
+      )
+
+  self.LevellingQueueFrame:SetAllPoints(
+    self.ContentFrame
+  )
+
+  self.LevellingQueueFrame:Hide()
+
+  --------------------------------------------------
   -- Options
   --------------------------------------------------
   self.OptionsFrame =
@@ -366,6 +382,31 @@ function Panels:Create()
     "BOTTOMRIGHT",
     -3,
     3
+  )
+
+  --------------------------------------------------
+  -- Levelling Queue
+  --------------------------------------------------
+  self.LevellingQueuePanel =
+      addon.UI.Views.LevellingQueuePanel:Create(
+        self.LevellingQueueFrame
+      )
+
+  self.LevellingQueuePanel:SetAllPoints()
+  self.LevellingQueuePanel:SetPoint(
+    "TOPLEFT",
+    self.LevellingQueueFrame,
+    "TOPLEFT",
+    -2,
+    -2
+  )
+
+  self.LevellingQueuePanel:SetPoint(
+    "BOTTOMRIGHT",
+    self.LevellingQueueFrame,
+    "BOTTOMRIGHT",
+    0,
+    0
   )
 
   --------------------------------------------------
@@ -543,6 +584,9 @@ end
 function Panels:CreateTabs(parent)
   self.Tabs = {}
 
+  --------------------------------------------------
+  -- Teams
+  --------------------------------------------------
   local teamsTab =
       CreateFrame(
         "Button",
@@ -566,6 +610,37 @@ function Panels:CreateTabs(parent)
     frame = self.TeamsFrame,
   }
 
+  --------------------------------------------------
+  -- Levelling Queue
+  --------------------------------------------------
+  local levellingTab =
+      CreateFrame(
+        "Button",
+        nil,
+        parent,
+        "PanelTabButtonTemplate"
+      )
+
+  levellingTab:SetText("Levelling")
+  levellingTab:SetHeight(TAB_HEIGHT)
+
+  levellingTab:SetScript(
+    "OnClick",
+    function()
+      self:SelectTab(
+        "levelling"
+      )
+    end
+  )
+
+  self.Tabs.levelling = {
+    button = levellingTab,
+    frame = self.LevellingQueueFrame,
+  }
+
+  --------------------------------------------------
+  -- Options
+  --------------------------------------------------
   local optionsTab =
       CreateFrame(
         "Button",
@@ -577,6 +652,23 @@ function Panels:CreateTabs(parent)
   optionsTab:SetText("Options")
   optionsTab:SetHeight(TAB_HEIGHT)
 
+  optionsTab:SetScript(
+    "OnClick",
+    function()
+      self:SelectTab(
+        "options"
+      )
+    end
+  )
+
+  self.Tabs.options = {
+    button = optionsTab,
+    frame = self.OptionsFrame,
+  }
+
+  --------------------------------------------------
+  -- Position
+  --------------------------------------------------
   optionsTab:SetPoint(
     "BOTTOMRIGHT",
     parent,
@@ -585,7 +677,7 @@ function Panels:CreateTabs(parent)
     -25
   )
 
-  teamsTab:SetPoint(
+  levellingTab:SetPoint(
     "RIGHT",
     optionsTab,
     "LEFT",
@@ -593,25 +685,22 @@ function Panels:CreateTabs(parent)
     0
   )
 
-  optionsTab:SetScript(
-    "OnClick",
-    function()
-      self:SelectTab("options")
-    end
+  teamsTab:SetPoint(
+    "RIGHT",
+    levellingTab,
+    "LEFT",
+    -3,
+    0
   )
 
-  teamsTab:SetFrameLevel(
-    parent:GetFrameLevel() + 20
-  )
+  --------------------------------------------------
+  -- Frame levels
+  --------------------------------------------------
+  local tabLevel = parent:GetFrameLevel() + 20
 
-  optionsTab:SetFrameLevel(
-    parent:GetFrameLevel() + 20
-  )
-
-  self.Tabs.options = {
-    button = optionsTab,
-    frame = self.OptionsFrame,
-  }
+  teamsTab:SetFrameLevel(tabLevel)
+  levellingTab:SetFrameLevel(tabLevel)
+  optionsTab:SetFrameLevel(tabLevel)
 end
 
 function Panels:SelectTab(tabKey)
@@ -620,23 +709,23 @@ function Panels:SelectTab(tabKey)
   end
 
   for key, tab in pairs(self.Tabs) do
-    local selected =
-        key == tabKey
-
+    local selected = key == tabKey
     tab.frame:SetShown(selected)
 
     if selected then
-      PanelTemplates_SelectTab(
-        tab.button
-      )
+      PanelTemplates_SelectTab(tab.button)
     else
-      PanelTemplates_DeselectTab(
-        tab.button
-      )
+      PanelTemplates_DeselectTab(tab.button)
     end
   end
 
   self.SelectedTab = tabKey
+
+  if tabKey == "levelling"
+      and addon.UI.Views.LevellingQueuePanel
+      and addon.UI.Views.LevellingQueuePanel.Refresh then
+    addon.UI.Views.LevellingQueuePanel:Refresh()
+  end
 end
 
 function Panels:Show()

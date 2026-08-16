@@ -12,6 +12,11 @@ local DEFAULT_PROFILE = {
   settings = {},
   folders = {},
   activeTeam = nil,
+  levellingQueue = {
+    pets = {},
+    knownPets = {},
+    initialized = false,
+  },
 }
 
 function Profiles:GetCurrentProfile()
