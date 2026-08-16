@@ -400,8 +400,14 @@ function PetJournalToolbar:SetButtonEnabled(
     return
   end
 
+  local canToggle =
+      not (button:IsProtected()
+        and InCombatLockdown())
+
   if enabled then
-    button:Enable()
+    if canToggle then
+      button:Enable()
+    end
 
     if button.Icon then
       button.Icon:SetDesaturated(false)
@@ -423,7 +429,9 @@ function PetJournalToolbar:SetButtonEnabled(
       button.Border:SetAlpha(1)
     end
   else
-    button:Disable()
+    if canToggle then
+      button:Disable()
+    end
 
     if button.Icon then
       button.Icon:SetDesaturated(true)
@@ -445,6 +453,8 @@ function PetJournalToolbar:SetButtonEnabled(
       button.Border:SetAlpha(0.75)
     end
   end
+
+  return canToggle
 end
 
 function PetJournalToolbar:UpdateSafariHatButton()
@@ -465,10 +475,11 @@ function PetJournalToolbar:UpdateSafariHatButton()
   local safariHatName =
       GetSafariHatName()
 
-  self:SetButtonEnabled(
-    button,
-    hasToy
-  )
+  local stateApplied =
+      self:SetButtonEnabled(
+        button,
+        hasToy
+      )
 
   if isActive then
     button.RemoveOverlay:Show()
@@ -493,7 +504,8 @@ function PetJournalToolbar:UpdateSafariHatButton()
     end
   end
 
-  if InCombatLockdown() then
+  if not stateApplied
+      or InCombatLockdown() then
     self.SafariHatUpdatePending = true
     return
   end
