@@ -45,6 +45,40 @@ local function GetQualityColor(quality)
       color.b or 1
 end
 
+function LevellingQueueRow:IsItemTargeting()
+  local panel = addon.UI.Views.LevellingQueuePanel
+  return panel and panel.PendingItemID ~= nil
+end
+
+local function HandleSpecialPetClick(
+    petGUID
+)
+  if not petGUID then
+    return false
+  end
+
+  if not SpellIsTargeting() then
+    return false
+  end
+
+  local pet =
+      addon.Services.PetJournal:
+      GetPet(
+        petGUID
+      )
+
+  if not pet
+      or pet.canBattle ~= true then
+    return false
+  end
+
+  C_PetJournal.SpellTargetBattlePet(
+    petGUID
+  )
+
+  return true
+end
+
 function LevellingQueueRow:Create(
     parent,
     list
@@ -104,27 +138,6 @@ function LevellingQueueRow:Create(
   instance.Frame = frame
 
   --------------------------------------------------
-  -- Position
-  --------------------------------------------------
-  instance.Position =
-      frame:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontHighlightSmall"
-      )
-
-  instance.Position:SetPoint(
-    "LEFT",
-    frame,
-    "LEFT",
-    6,
-    0
-  )
-
-  instance.Position:SetWidth(20)
-  instance.Position:SetJustifyH("CENTER")
-
-  --------------------------------------------------
   -- Icon
   --------------------------------------------------
   instance.Icon =
@@ -140,9 +153,9 @@ function LevellingQueueRow:Create(
 
   instance.Icon:SetPoint(
     "LEFT",
-    instance.Position,
-    "RIGHT",
-    4,
+    frame,
+    "LEFT",
+    6,
     0
   )
 
@@ -171,14 +184,6 @@ function LevellingQueueRow:Create(
     -4
   )
 
-  instance.Name:SetPoint(
-    "RIGHT",
-    frame,
-    "RIGHT",
-    -42,
-    0
-  )
-
   instance.Name:SetJustifyH("LEFT")
   instance.Name:SetWordWrap(false)
 
@@ -200,15 +205,35 @@ function LevellingQueueRow:Create(
     4
   )
 
-  instance.Level:SetPoint(
+  instance.Level:SetJustifyH("LEFT")
+
+  --------------------------------------------------
+  -- Breed
+  --------------------------------------------------
+  instance.Breed =
+      frame:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  instance.Breed:SetPoint(
     "RIGHT",
     frame,
     "RIGHT",
-    -42,
+    -8,
     0
   )
 
-  instance.Level:SetJustifyH("LEFT")
+  instance.Breed:SetWidth(38)
+  instance.Breed:SetJustifyH("RIGHT")
+
+  instance.Breed:SetTextColor(
+    1,
+    1,
+    1,
+    1
+  )
 
   --------------------------------------------------
   -- Family
@@ -222,8 +247,8 @@ function LevellingQueueRow:Create(
       )
 
   instance.Family:SetSize(
-    ICON_SIZE,
-    ICON_SIZE
+    ICON_SIZE + 4,
+    ICON_SIZE + 4
   )
 
   instance.Family:SetPoint(
@@ -255,7 +280,15 @@ function LevellingQueueRow:Create(
                 control.petGUID
           end,
 
-          "ANCHOR_RIGHT"
+          "ANCHOR_RIGHT",
+          "teams"
+        )
+    addon.UI.Components.PetTooltip:
+        SetClickBlocker(
+          frame,
+          function()
+            return SpellIsTargeting() == true
+          end
         )
   end
 
@@ -286,26 +319,19 @@ function LevellingQueueRow:Create(
     end
   )
 
-  --------------------------------------------------
-  -- Right click
-  --------------------------------------------------
   frame:SetScript(
     "OnClick",
     function(_, button)
-      --------------------------------------------------
-      -- Item targeting
-      --------------------------------------------------
       if button == "LeftButton"
-          and instance.ItemTargeting
-          and instance.PetGUID then
-        addon.UI.Views.LevellingQueuePanel:
-            UsePendingItemOnPet(instance.PetGUID)
-        return
+          and instance.PetGUID
+          and SpellIsTargeting() then
+        if HandleSpecialPetClick(
+              instance.PetGUID
+            ) then
+          return
+        end
       end
 
-      --------------------------------------------------
-      -- Context menu
-      --------------------------------------------------
       if button == "RightButton" then
         instance:OpenContextMenu()
       end
@@ -347,16 +373,19 @@ function LevellingQueueRow:SetPet(item)
   self.Index = item.index
   self.Frame.petGUID = item.petGUID
 
-  self.Position:SetFormattedText(
-    "%d",
-    item.index
-  )
-
   self.Icon:SetTexture(pet.icon)
 
   self.Name:SetText(pet.name or "Unknown Pet")
 
-  local r, g, b = GetQualityColor(pet.quality)
+  local _, _, _, _, quality =
+      C_PetJournal.GetPetStats(
+        item.petGUID
+      )
+
+  local r, g, b =
+      GetQualityColor(
+        quality
+      )
 
   self.Name:SetTextColor(
     r,
@@ -383,6 +412,22 @@ function LevellingQueueRow:SetPet(item)
     1
   )
 
+  local breed =
+      addon.Services.Breed:
+      GetJournalBreed(
+        item.petGUID
+      )
+
+  if breed then
+    self.Breed:SetText(
+      breed
+    )
+    self.Breed:Show()
+  else
+    self.Breed:SetText("")
+    self.Breed:Hide()
+  end
+
   local texture =
       PET_FAMILY_ICONS[
       tonumber(
@@ -408,12 +453,13 @@ function LevellingQueueRow:Clear()
 
   self.Frame.petGUID = nil
 
-  self.Position:SetText("")
   self.Icon:SetTexture(nil)
   self.Name:SetText("")
   self.Level:SetText("")
   self.Family:SetTexture(nil)
   self.Family:Hide()
+  self.Breed:SetText("")
+  self.Breed:Hide()
 
   self.Frame:Hide()
 end

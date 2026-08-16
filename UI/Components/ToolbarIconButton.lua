@@ -211,12 +211,16 @@ function ToolbarIconButton:Create(parent, options)
         ToolbarIconButton
       )
 
+  local template =
+      options.template
+      or "IconButtonTemplate"
+
   local button =
       CreateFrame(
         "Button",
         options.name,
         parent,
-        "IconButtonTemplate"
+        template
       )
 
   button:SetSize(
@@ -229,7 +233,19 @@ function ToolbarIconButton:Create(parent, options)
     or DEFAULT_SIZE
   )
 
-  button:RegisterForClicks("LeftButtonUp")
+  if type(options.registerForClicks)
+      == "table" then
+    button:RegisterForClicks(
+      unpack(
+        options.registerForClicks
+      )
+    )
+  else
+    button:RegisterForClicks(
+      options.registerForClicks
+      or "LeftButtonUp"
+    )
+  end
 
   instance.Frame = button
   instance.ItemID = options.itemID
@@ -237,22 +253,55 @@ function ToolbarIconButton:Create(parent, options)
   --------------------------------------------------
   -- Icon
   --------------------------------------------------
-  if button.Icon then
-    button.Icon:ClearAllPoints()
-    button.Icon:SetAllPoints(button)
-
-    local texture = options.texture
-
-    if not texture and options.itemID then
-      texture = C_Item.GetItemIconByID(options.itemID)
-    end
-
-    if texture then
-      button.Icon:SetTexture(texture)
-    end
-
-    button.Icon:SetTexCoord(0, 1, 0, 1)
+  if not button.Icon then
+    button.Icon =
+        button:CreateTexture(
+          nil,
+          "ARTWORK"
+        )
   end
+
+  button.Icon:ClearAllPoints()
+
+  button.Icon:SetPoint(
+    "TOPLEFT",
+    button,
+    "TOPLEFT",
+    2,
+    -2
+  )
+
+  button.Icon:SetPoint(
+    "BOTTOMRIGHT",
+    button,
+    "BOTTOMRIGHT",
+    -2,
+    2
+  )
+
+  local texture =
+      options.texture
+
+  if not texture
+      and options.itemID then
+    texture =
+        C_Item.GetItemIconByID(
+          options.itemID
+        )
+  end
+
+  if texture then
+    button.Icon:SetTexture(
+      texture
+    )
+  end
+
+  button.Icon:SetTexCoord(
+    0.075,
+    0.925,
+    0.075,
+    0.925
+  )
 
   --------------------------------------------------
   -- Optional source styling
@@ -311,17 +360,20 @@ function ToolbarIconButton:Create(parent, options)
   --------------------------------------------------
   -- Click
   --------------------------------------------------
-  button:SetScript(
-    "OnClick",
-    function()
-      if not button:IsEnabled() then
-        return
+  if options.onClick then
+    button:SetScript(
+      "OnClick",
+      function()
+        if not button:IsEnabled() then
+          return
+        end
+
+        options.onClick(
+          instance
+        )
       end
-      if options.onClick then
-        options.onClick(instance)
-      end
-    end
-  )
+    )
+  end
 
   return instance
 end

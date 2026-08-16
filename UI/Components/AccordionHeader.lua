@@ -225,20 +225,41 @@ function AccordionHeader:Create(
   function button:SetExpanded(expanded)
     self.Expanded = expanded == true
 
-    SetArrowAtlas(
-      self.Arrow,
-      self.Expanded
-    )
-
     if self.Expanded then
+      self.Arrow:Hide()
       self.Accent:Show()
+
+      self:SetBackdropBorderColor(
+        0.25,
+        0.55,
+        1,
+        1
+      )
+
       self.Label:SetTextColor(
         1,
         0.82,
         0
       )
+
+      return
     else
+      self.Arrow:Show()
+
+      SetArrowAtlas(
+        self.Arrow,
+        false
+      )
+
       self.Accent:Hide()
+
+      self:SetBackdropBorderColor(
+        0.35,
+        0.30,
+        0.20,
+        0.85
+      )
+
       self.Label:SetTextColor(
         0.9,
         0.9,
@@ -250,6 +271,8 @@ function AccordionHeader:Create(
   button:SetScript(
     "OnMouseDown",
     function(self)
+      self.Label:ClearAllPoints()
+
       self.Label:SetPoint(
         "LEFT",
         self.Arrow,
@@ -257,17 +280,39 @@ function AccordionHeader:Create(
         6,
         -1
       )
+
+      self.Label:SetPoint(
+        "RIGHT",
+        self,
+        "RIGHT",
+        self.Count:IsShown()
+        and -34
+        or -8,
+        0
+      )
     end
   )
 
   button:SetScript(
     "OnMouseUp",
     function(self)
+      self.Label:ClearAllPoints()
+
       self.Label:SetPoint(
         "LEFT",
         self.Arrow,
         "RIGHT",
-        5,
+        8,
+        0
+      )
+
+      self.Label:SetPoint(
+        "RIGHT",
+        self,
+        "RIGHT",
+        self.Count:IsShown()
+        and -34
+        or -8,
         0
       )
     end

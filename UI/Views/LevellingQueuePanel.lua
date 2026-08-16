@@ -1,12 +1,10 @@
 local _, addon = ...
 
 local LevellingQueuePanel = {}
-LevellingQueuePanel.PendingItemID = nil
-LevellingQueuePanel.PendingItemControl = nil
 
 local TOOLBAR_HEIGHT = 32
 local TOOLBAR_BUTTON_SIZE = 34
-local TOOLBAR_BUTTON_SPACING = 2
+local TOOLBAR_BUTTON_SPACING = 5
 
 local LEVELLING_ITEMS = {
   {
@@ -31,6 +29,16 @@ local LEVELLING_ITEMS = {
   },
 }
 
+local function GetToolbarStyleSource()
+  local healFrame =
+      PetJournal
+      and PetJournal.HealPetSpellFrame
+
+  return healFrame
+      and healFrame.Button
+      or nil
+end
+
 function LevellingQueuePanel:CreateToolbarItems()
   if not self.Toolbar then
     return
@@ -43,22 +51,40 @@ function LevellingQueuePanel:CreateToolbarItems()
   for _, item in ipairs(
     LEVELLING_ITEMS
   ) do
-    local control =
-        addon.UI.Components.ToolbarIconButton:
-        Create(
-          self.Toolbar,
-          {
-            itemID = item.itemID,
-            size = TOOLBAR_BUTTON_SIZE,
-            showCount = true,
-            tooltipTitle = item.name,
-            onClick = function(clickedControl)
-              self:OnToolbarItemClicked(clickedControl)
-            end,
-          }
-        )
+    local styleSource = GetToolbarStyleSource()
+
+    local control = addon.UI.Components.ToolbarIconButton:Create(
+      self.Toolbar,
+      {
+        itemID = item.itemID,
+        size = TOOLBAR_BUTTON_SIZE,
+        showCount = true,
+        tooltipTitle = item.name,
+        styleSource = styleSource,
+        template = "SecureActionButtonTemplate",
+        registerForClicks = {
+          "AnyUp",
+          "AnyDown",
+        },
+      }
+    )
 
     local button = control:GetFrame()
+
+    button:SetAttribute(
+      "useOnKeyDown",
+      false
+    )
+
+    button:SetAttribute(
+      "type",
+      "item"
+    )
+
+    button:SetAttribute(
+      "item",
+      "item:" .. item.itemID
+    )
 
     if previousFrame then
       button:SetPoint(
@@ -338,41 +364,6 @@ function LevellingQueuePanel:HandleExternalDrop()
   return true
 end
 
-function LevellingQueuePanel:OnToolbarItemClicked(control)
-  if not control or not control.ItemID then
-    return
-  end
-
-  if self.PendingItemID == control.ItemID then
-    self:CancelItemTargeting()
-    return
-  end
-
-  self.PendingItemID = control.ItemID
-  self.PendingItemControl = control
-
-  self:RefreshItemTargeting()
-end
-
-function LevellingQueuePanel:IsItemTargeting()
-  return self.PendingItemID ~= nil
-end
-
-function LevellingQueuePanel:RefreshItemTargeting()
-  local list = addon.UI.Views.LevellingQueueList
-
-  if list and list.SetItemTargeting then
-    list:SetItemTargeting(self.PendingItemID ~= nil)
-  end
-end
-
-function LevellingQueuePanel:CancelItemTargeting()
-  self.PendingItemID = nil
-  self.PendingItemControl = nil
-
-  self:RefreshItemTargeting()
-end
-
 function LevellingQueuePanel:RefreshToolbarItems()
   if not self.ToolbarButtons then
     return
@@ -393,48 +384,6 @@ function LevellingQueuePanel:RefreshToolbarItems()
     control:SetCount(count)
     control:SetEnabled(count > 0)
   end
-end
-
-function LevellingQueuePanel:UsePendingItemOnPet(petGUID)
-  local itemID = self.PendingItemID
-
-  if not itemID or not petGUID then
-    return false
-  end
-
-  --------------------------------------------------
-  -- Verify that the pet still exists.
-  --------------------------------------------------
-  local pet = addon.Services.PetJournal:GetPet(petGUID)
-
-  if not pet then
-    self:CancelItemTargeting()
-    return false
-  end
-
-  --------------------------------------------------
-  -- Item use enters battle-pet targeting.
-  -- Target the selected queue pet on the next frame.
-  --------------------------------------------------
-  C_Timer.After(
-    0,
-    function()
-      C_PetJournal.SpellTargetBattlePet(
-        petGUID
-      )
-
-      self:CancelItemTargeting()
-
-      C_Timer.After(
-        0.1,
-        function()
-          self:RefreshToolbarItems()
-        end
-      )
-    end
-  )
-
-  return true
 end
 
 function LevellingQueuePanel:Refresh()
@@ -486,6 +435,21 @@ function LevellingQueuePanel:RegisterEvents()
       self:Refresh()
     end
   )
+
+  --------------------------------------------------
+  -- Pet data changed
+  --------------------------------------------------
+  addon.EventBus:Register(
+    addon.Events.PET_JOURNAL_UPDATED,
+    function()
+      if not self.Frame then
+        return
+      end
+
+      self:Refresh()
+    end
+  )
+
 
   --------------------------------------------------
   -- Blizzard bag events

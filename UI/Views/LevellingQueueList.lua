@@ -353,16 +353,6 @@ function LevellingQueueList:LayoutRows()
   end
 end
 
-function LevellingQueueList:SetItemTargeting(enabled)
-  self.ItemTargeting = enabled == true
-
-  for _, row in ipairs(self.Rows or {}) do
-    if row and row.SetItemTargeting then
-      row:SetItemTargeting(self.ItemTargeting)
-    end
-  end
-end
-
 function LevellingQueueList:Refresh()
   if not self.Frame then
     return
@@ -383,7 +373,6 @@ function LevellingQueueList:Refresh()
 
     if item then
       row:SetPet(item)
-      row:SetItemTargeting(self.ItemTargeting == true)
     else
       row:Clear()
     end

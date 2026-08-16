@@ -385,6 +385,21 @@ function PetTooltip:IsPinned()
   return self.Pinned == true
 end
 
+function PetTooltip:SetClickBlocker(frame, blocker)
+  if not frame then
+    return
+  end
+
+  if blocker ~= nil
+      and type(blocker) ~= "function" then
+    error(
+      "PetTooltip: click blocker must be a function or nil."
+    )
+  end
+
+  frame.__PetMatchTooltipClickBlocker = blocker
+end
+
 function PetTooltip:Attach(
     frame,
     provider,
@@ -467,6 +482,12 @@ function PetTooltip:Attach(
 
     function(control, mouseButton)
       if mouseButton ~= "LeftButton" then
+        return
+      end
+
+      local clickBlocker = control.__PetMatchTooltipClickBlocker
+
+      if type(clickBlocker) == "function" and clickBlocker(control) then
         return
       end
 

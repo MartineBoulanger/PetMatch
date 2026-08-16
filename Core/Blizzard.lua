@@ -26,30 +26,30 @@ local function UpdateLoadoutTitle(team)
   titleText:SetText(title)
 end
 
-function Blizzard:AttachPetLoadoutTooltips()
-  if not PetJournalLoadout then
-    return
-  end
+-- function Blizzard:AttachPetLoadoutTooltips()
+--   if not PetJournalLoadout then
+--     return
+--   end
 
-  local slots = {
-    PetJournalLoadout.Pet1,
-    PetJournalLoadout.Pet2,
-    PetJournalLoadout.Pet3,
-  }
+--   local slots = {
+--     PetJournalLoadout.Pet1,
+--     PetJournalLoadout.Pet2,
+--     PetJournalLoadout.Pet3,
+--   }
 
-  for _, slot in ipairs(slots) do
-    if slot then
-      addon.UI.Components.PetTooltip:Attach(
-        slot,
-        function(control)
-          return "petGUID",
-              control.petID
-              or control.petGUID
-        end
-      )
-    end
-  end
-end
+--   for _, slot in ipairs(slots) do
+--     if slot then
+--       addon.UI.Components.PetTooltip:Attach(
+--         slot,
+--         function(control)
+--           return "petGUID",
+--               control.petID
+--               or control.petGUID
+--         end
+--       )
+--     end
+--   end
+-- end
 
 function Blizzard:Initialize()
   if self.Hooked then

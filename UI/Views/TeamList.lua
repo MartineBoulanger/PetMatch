@@ -24,13 +24,7 @@ function TeamList:Create(parent)
   frame.cards = {}
   frame.items = {}
 
-  local selectedKey = addon.Services.Folder:GetSelectedKey()
-
-  if selectedKey == addon.Services.Folder.ALL then
-    selectedKey = nil
-  end
-
-  self.ExpandedFolderKey = selectedKey
+  self.ExpandedFolderKey = nil
 
   self:RegisterEvents()
   self:Refresh()
@@ -106,13 +100,6 @@ function TeamList:RegisterEvents()
     addon.EventBus:Register(
       addon.Events.FOLDER_SELECTED,
       function()
-        local selectedKey = addon.Services.Folder:GetSelectedKey()
-
-        if selectedKey == addon.Services.Folder.ALL then
-          selectedKey = nil
-        end
-
-        self.ExpandedFolderKey = selectedKey
         self:Refresh()
       end
     )
@@ -134,11 +121,6 @@ function TeamList:RegisterEvents()
     addon.EventBus:Register(
       addon.Events.FOLDER_DELETED,
       function()
-        local selectedKey = addon.Services.Folder:GetSelectedKey()
-        if selectedKey == addon.Services.Folder.ALL then
-          selectedKey = nil
-        end
-        self.ExpandedFolderKey = selectedKey
         self:Refresh()
       end
     )
