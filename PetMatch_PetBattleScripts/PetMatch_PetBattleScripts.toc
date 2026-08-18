@@ -1,5 +1,5 @@
 ## Interface: 120100
-## Version: 1.0.2
+## Version: 1.1.0
 ## Title: PetMatch - Pet Battle Scripts
 ## Notes: Pet Battle Scripts integration for PetMatch
 ## Author: FwenTheHunter

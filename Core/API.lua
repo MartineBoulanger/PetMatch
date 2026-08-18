@@ -3,6 +3,7 @@ local _, addon = ...
 addon.API = addon.API or {}
 
 local API = addon.API
+API.Listeners = API.Listeners or {}
 
 local function GetTeamService()
   return addon.Services
@@ -58,8 +59,7 @@ function API:GetActiveTeam()
 end
 
 function API:GetCurrentTeam()
-  return self:GetActiveTeam()
-      or self:GetSelectedTeam()
+  return self:GetActiveTeam() or self:GetSelectedTeam()
 end
 
 function API:GetScript(teamID)
@@ -112,5 +112,97 @@ function API:SetScript(teamID, script)
 
   return team
 end
+
+function API:RegisterCallback(eventName, callback)
+  if type(eventName) ~= "string"
+      or eventName == "" then
+    return false
+  end
+
+  if type(callback) ~= "function" then
+    return false
+  end
+
+  self.Listeners[eventName] =
+      self.Listeners[eventName]
+      or {}
+
+  table.insert(
+    self.Listeners[eventName],
+    callback
+  )
+
+  return true
+end
+
+function API:UnregisterCallback(eventName, callback)
+  local listeners = self.Listeners[eventName]
+
+  if not listeners then
+    return false
+  end
+
+  for index = #listeners, 1, -1 do
+    if listeners[index] == callback then
+      table.remove(
+        listeners,
+        index
+      )
+    end
+  end
+
+  if #listeners == 0 then
+    self.Listeners[eventName] = nil
+  end
+
+  return true
+end
+
+function API:FireCallback(eventName, ...)
+  local listeners = self.Listeners[eventName]
+
+  if not listeners then
+    return
+  end
+
+  for _, callback in ipairs(
+    listeners
+  ) do
+    callback(...)
+  end
+end
+
+if addon.EventBus and addon.Events then
+  addon.EventBus:Register(
+    addon.Events.TEAM_CREATED,
+    function(team)
+      API:FireCallback(
+        "TEAM_CREATED",
+        team
+      )
+    end
+  )
+
+  addon.EventBus:Register(
+    addon.Events.TEAM_UPDATED,
+    function(team)
+      API:FireCallback(
+        "TEAM_UPDATED",
+        team
+      )
+    end
+  )
+
+  addon.EventBus:Register(
+    addon.Events.TEAM_DELETED,
+    function(team)
+      API:FireCallback(
+        "TEAM_DELETED",
+        team
+      )
+    end
+  )
+end
+
 
 _G.PetMatch = addon

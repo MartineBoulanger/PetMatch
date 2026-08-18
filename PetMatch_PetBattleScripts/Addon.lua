@@ -1,40 +1,44 @@
 local addonName = ...
 
-local PetMatch =
-    _G.PetMatch
+local PetMatch = _G.PetMatch
+local PetBattleScripts = _G.PetBattleScripts
 
-local PetBattleScripts =
-    _G.PetBattleScripts
-
-if not PetMatch
-    or not PetMatch.API
-    or not PetBattleScripts then
+if not PetMatch or not PetMatch.API or not PetBattleScripts then
   return
 end
 
-local Plugin =
-    PetBattleScripts:NewPlugin(
-      "PetMatch",
-      "AceEvent-3.0"
-    )
+local Plugin = PetBattleScripts:NewPlugin("PetMatch", "AceEvent-3.0")
+local ScriptClass = PetBattleScripts:GetClass("Script")
 
-local ScriptClass =
-    PetBattleScripts:GetClass("Script")
-
-local SYNC_INTERVAL = 1
 local syncingFromPetMatch = false
 local syncingToPetMatch = false
 
+--------------------------------------------------
+-- Helpers
+--------------------------------------------------
 local function NormalizeScript(script)
-  script = tostring(script or "")
-  script = script:gsub("\r\n", "\n")
-  script = script:gsub("\r", "\n")
+  script =
+      tostring(
+        script or ""
+      )
+
+  script =
+      script:gsub(
+        "\r\n",
+        "\n"
+      )
+
+  script =
+      script:gsub(
+        "\r",
+        "\n"
+      )
+
   return script
 end
 
 local function IsBlank(script)
-  return NormalizeScript(script):
-  match("^%s*$") ~= nil
+  return NormalizeScript(script):match("^%s*$") ~= nil
 end
 
 local function GetTeamName(team)
@@ -42,8 +46,7 @@ local function GetTeamName(team)
     return "PetMatch team"
   end
 
-  local name =
-      tostring(team.name or "")
+  local name = tostring(team.name or "")
 
   if name == "" then
     return "PetMatch team"
@@ -53,20 +56,15 @@ local function GetTeamName(team)
 end
 
 local function EnsurePluginOrder()
-  local db =
-      PetBattleScripts.db
+  local db = PetBattleScripts.db
 
-  if not db
-      or not db.profile then
+  if not db or not db.profile then
     return
   end
 
-  db.profile.pluginOrders =
-      db.profile.pluginOrders or {}
+  db.profile.pluginOrders = db.profile.pluginOrders or {}
 
-  for _, pluginName in ipairs(
-    db.profile.pluginOrders
-  ) do
+  for _, pluginName in ipairs(db.profile.pluginOrders) do
     if pluginName == "PetMatch" then
       return
     end
@@ -78,44 +76,43 @@ local function EnsurePluginOrder()
   )
 end
 
+--------------------------------------------------
+-- Initialization
+--------------------------------------------------
 function Plugin:OnInitialize()
   self:EnableWithAddon("PetMatch")
 
-  self:SetPluginTitle("PetMatch")
+  self:SetPluginTitle(
+    "PetMatch"
+  )
 
   self:SetPluginNotes(
     "Uses scripts stored on PetMatch teams."
   )
 
   self:SetPluginIcon(
-    [[Interface\Icons\INV_Pet_BattlePetTraining]]
+    [[Interface\Addons\PetMatch_PetBattleScripts\Media\PetMatch_Logo]]
   )
 
   EnsurePluginOrder()
 end
 
+--------------------------------------------------
+-- Plugin metadata
+--------------------------------------------------
 function Plugin:GetCurrentKey()
-  local team =
-      PetMatch.API:GetCurrentTeam()
-
+  local team = PetMatch.API:GetCurrentTeam()
   return team and team.id or nil
 end
 
 function Plugin:GetTitleByKey(teamID)
-  local team =
-      PetMatch.API:GetTeam(teamID)
+  local team = PetMatch.API:GetTeam(teamID)
 
-  return team
-      and GetTeamName(team)
-      or tostring(teamID)
+  return team and GetTeamName(team) or tostring(teamID)
 end
 
-function Plugin:OnTooltipFormatting(
-    tooltip,
-    teamID
-)
-  local team =
-      PetMatch.API:GetTeam(teamID)
+function Plugin:OnTooltipFormatting(tooltip, teamID)
+  local team = PetMatch.API:GetTeam(teamID)
 
   if not team then
     tooltip:AddLine(
@@ -129,8 +126,7 @@ function Plugin:OnTooltipFormatting(
   end
 
   tooltip:AddLine(
-    "PetMatch team: "
-    .. GetTeamName(team),
+    "PetMatch team: " .. GetTeamName(team),
     0.2,
     1,
     0.2
@@ -153,18 +149,21 @@ function Plugin:OnTooltipFormatting(
   end
 end
 
+--------------------------------------------------
+-- PetMatch -> PetBattleScripts
+--------------------------------------------------
 function Plugin:ImportTeamScript(team)
   if not team or team.id == nil then
     return false, "Invalid PetMatch team"
   end
 
   local teamID = team.id
-  local code =
-      NormalizeScript(team.script)
+  local code = NormalizeScript(team.script)
+  local existing = self:GetScript(teamID)
 
-  local existing =
-      self:GetScript(teamID)
-
+  --------------------------------------------------
+  -- Empty PetMatch script
+  --------------------------------------------------
   if IsBlank(code) then
     if existing then
       self:RemoveScript(teamID)
@@ -173,22 +172,27 @@ function Plugin:ImportTeamScript(team)
     return true
   end
 
+  --------------------------------------------------
+  -- Existing PBS script
+  --------------------------------------------------
   if existing then
-    if existing:GetName()
-        ~= GetTeamName(team) then
-      existing:SetName(
-        GetTeamName(team)
-      )
+    local teamName = GetTeamName(team)
+
+    if existing:GetName() ~= teamName then
+      existing:SetName(teamName)
     end
 
-    if NormalizeScript(existing:GetCode())
-        ~= code then
-      return existing:SetCode(code)
+    if NormalizeScript(existing:GetCode()) ~= code then
+      return existing:
+      SetCode(code)
     end
 
     return true
   end
 
+  --------------------------------------------------
+  -- New PBS script
+  --------------------------------------------------
   local script =
       ScriptClass:New(
         {
@@ -199,8 +203,7 @@ function Plugin:ImportTeamScript(team)
         teamID
       )
 
-  local success, errorMessage =
-      script:SetCode(code)
+  local success, errorMessage = script:SetCode(code)
 
   if not success then
     return false, errorMessage
@@ -214,6 +217,59 @@ function Plugin:ImportTeamScript(team)
   return true
 end
 
+function Plugin:ReportImportError(team, errorMessage)
+  if not errorMessage then
+    return
+  end
+
+  geterrorhandler()(
+    "PetMatch script error for " .. GetTeamName(team) .. ": " .. tostring(errorMessage)
+  )
+end
+
+function Plugin:SyncTeamFromPetMatch(team)
+  if syncingToPetMatch then
+    return
+  end
+
+  if not team or team.id == nil then
+    return
+  end
+
+  syncingFromPetMatch = true
+
+  local success, errorMessage = self:ImportTeamScript(team)
+
+  syncingFromPetMatch = false
+
+  if not success then
+    self:ReportImportError(team, errorMessage)
+  end
+end
+
+function Plugin:RemoveTeamFromPetBattleScripts(team)
+  if syncingToPetMatch then
+    return
+  end
+
+  local teamID = type(team) == "table" and team.id or team
+
+  if not teamID then
+    return
+  end
+
+  syncingFromPetMatch = true
+
+  if self:GetScript(teamID) then
+    self:RemoveScript(teamID)
+  end
+
+  syncingFromPetMatch = false
+end
+
+--------------------------------------------------
+-- Full initial sync
+--------------------------------------------------
 function Plugin:SyncFromPetMatch()
   if syncingToPetMatch then
     return
@@ -221,8 +277,7 @@ function Plugin:SyncFromPetMatch()
 
   syncingFromPetMatch = true
 
-  local teams =
-      PetMatch.API:GetTeams()
+  local teams = PetMatch.API:GetTeams()
 
   local existingTeams = {}
 
@@ -232,23 +287,22 @@ function Plugin:SyncFromPetMatch()
     local success, errorMessage =
         self:ImportTeamScript(team)
 
-    if not success
-        and errorMessage then
-      geterrorhandler()(
-        "PetMatch script error for "
-        .. GetTeamName(team)
-        .. ": "
-        .. tostring(errorMessage)
+    if not success then
+      self:ReportImportError(
+        team,
+        errorMessage
       )
     end
   end
 
+  --------------------------------------------------
+  -- Remove stale PBS scripts
+  --------------------------------------------------
   local staleKeys = {}
 
   for teamID in self:IterateScripts() do
     if not existingTeams[teamID] then
-      staleKeys[#staleKeys + 1] =
-          teamID
+      staleKeys[#staleKeys + 1] = teamID
     end
   end
 
@@ -259,6 +313,77 @@ function Plugin:SyncFromPetMatch()
   syncingFromPetMatch = false
 end
 
+--------------------------------------------------
+-- PetBattleScripts -> PetMatch
+--------------------------------------------------
+function Plugin:SyncScriptToPetMatch(teamID)
+  if syncingFromPetMatch then
+    return
+  end
+
+  if not teamID then
+    return
+  end
+
+  local team = PetMatch.API:GetTeam(teamID)
+
+  if not team then
+    return
+  end
+
+  syncingToPetMatch = true
+
+  local script = self:GetScript(teamID)
+  local code = script and NormalizeScript(
+    script:GetCode()
+  ) or ""
+
+  if NormalizeScript(team.script) ~= code then
+    PetMatch.API:
+        SetScript(
+          teamID,
+          code
+        )
+  end
+
+  syncingToPetMatch = false
+end
+
+--------------------------------------------------
+-- PBS event handlers
+--------------------------------------------------
+function Plugin:OnScriptChanged(_, plugin, teamID)
+  if syncingFromPetMatch then
+    return
+  end
+
+  --------------------------------------------------
+  -- Ignore changes from other PBS plugins
+  --------------------------------------------------
+  if plugin
+      and plugin ~= self
+      and plugin ~= "PetMatch" then
+    return
+  end
+
+  if teamID then
+    self:SyncScriptToPetMatch(teamID)
+
+    return
+  end
+
+  --------------------------------------------------
+  -- Compatibility fallback:
+  -- if PBS does not provide a key,
+  -- do one full reverse sync.
+  --------------------------------------------------
+
+  self:SyncToPetMatch()
+end
+
+--------------------------------------------------
+-- Full reverse sync fallback
+--------------------------------------------------
 function Plugin:SyncToPetMatch()
   if syncingFromPetMatch then
     return
@@ -266,39 +391,117 @@ function Plugin:SyncToPetMatch()
 
   syncingToPetMatch = true
 
-  local teams =
-      PetMatch.API:GetTeams()
+  local teams = PetMatch.API:GetTeams()
 
   for teamID, team in pairs(teams) do
-    local script =
-        self:GetScript(teamID)
+    local script = self:GetScript(teamID)
+    local code = script and NormalizeScript(
+      script:GetCode()
+    ) or ""
 
-    local code =
-        script
-        and NormalizeScript(
-          script:GetCode()
-        )
-        or ""
-
-    if NormalizeScript(team.script)
-        ~= code then
-      PetMatch.API:SetScript(
-        teamID,
-        code
-      )
+    if NormalizeScript(team.script) ~= code then
+      PetMatch.API:
+          SetScript(
+            teamID,
+            code
+          )
     end
   end
 
   syncingToPetMatch = false
 end
 
-function Plugin:OnScriptChanged()
-  self:SyncToPetMatch()
+--------------------------------------------------
+-- Public PetMatch API callbacks
+--------------------------------------------------
+function Plugin:OnPetMatchTeamCreated(team)
+  self:SyncTeamFromPetMatch(team)
 end
 
+function Plugin:OnPetMatchTeamUpdated(team)
+  self:SyncTeamFromPetMatch(team)
+end
+
+function Plugin:OnPetMatchTeamDeleted(team)
+  self:RemoveTeamFromPetBattleScripts(team)
+end
+
+function Plugin:RegisterPetMatchCallbacks()
+  if not PetMatch.API.RegisterCallback then
+    return
+  end
+
+  self.petMatchTeamCreatedCallback =
+      function(team)
+        self:OnPetMatchTeamCreated(team)
+      end
+
+  self.petMatchTeamUpdatedCallback =
+      function(team)
+        self:OnPetMatchTeamUpdated(team)
+      end
+
+  self.petMatchTeamDeletedCallback =
+      function(team)
+        self:OnPetMatchTeamDeleted(team)
+      end
+
+  PetMatch.API:RegisterCallback(
+    "TEAM_CREATED",
+    self.petMatchTeamCreatedCallback
+  )
+
+  PetMatch.API:RegisterCallback(
+    "TEAM_UPDATED",
+    self.petMatchTeamUpdatedCallback
+  )
+
+  PetMatch.API:RegisterCallback(
+    "TEAM_DELETED",
+    self.petMatchTeamDeletedCallback
+  )
+end
+
+function Plugin:UnregisterPetMatchCallbacks()
+  if not PetMatch.API.UnregisterCallback then
+    return
+  end
+
+  if self.petMatchTeamCreatedCallback then
+    PetMatch.API:UnregisterCallback(
+      "TEAM_CREATED",
+      self.petMatchTeamCreatedCallback
+    )
+  end
+
+  if self.petMatchTeamUpdatedCallback then
+    PetMatch.API:UnregisterCallback(
+      "TEAM_UPDATED",
+      self.petMatchTeamUpdatedCallback
+    )
+  end
+
+  if self.petMatchTeamDeletedCallback then
+    PetMatch.API:UnregisterCallback(
+      "TEAM_DELETED",
+      self.petMatchTeamDeletedCallback
+    )
+  end
+
+  self.petMatchTeamCreatedCallback = nil
+  self.petMatchTeamUpdatedCallback = nil
+  self.petMatchTeamDeletedCallback = nil
+end
+
+--------------------------------------------------
+-- Enable / Disable
+--------------------------------------------------
 function Plugin:OnEnable()
   EnsurePluginOrder()
 
+  --------------------------------------------------
+  -- PetBattleScripts events
+  --------------------------------------------------
   self:RegisterMessage(
     "PET_BATTLE_SCRIPT_SCRIPT_ADDED",
     "OnScriptChanged"
@@ -314,22 +517,18 @@ function Plugin:OnEnable()
     "OnScriptChanged"
   )
 
-  self:SyncFromPetMatch()
+  --------------------------------------------------
+  -- PetMatch events
+  --------------------------------------------------
+  self:RegisterPetMatchCallbacks()
 
-  self.syncTicker =
-      C_Timer.NewTicker(
-        SYNC_INTERVAL,
-        function()
-          self:SyncFromPetMatch()
-        end
-      )
+  --------------------------------------------------
+  -- One full sync at startup only
+  --------------------------------------------------
+  self:SyncFromPetMatch()
 end
 
 function Plugin:OnDisable()
   self:UnregisterAllMessages()
-
-  if self.syncTicker then
-    self.syncTicker:Cancel()
-    self.syncTicker = nil
-  end
+  self:UnregisterPetMatchCallbacks()
 end
