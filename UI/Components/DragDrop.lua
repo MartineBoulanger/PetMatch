@@ -6,62 +6,62 @@ local DragDrop = {
   FolderTargets = {},
 }
 
-function DragDrop:CreateGhost()
-  if self.Ghost then
-    return self.Ghost
-  end
+-- function DragDrop:CreateGhost()
+--   if self.Ghost then
+--     return self.Ghost
+--   end
 
-  local frame = CreateFrame(
-    "Frame",
-    nil,
-    UIParent,
-    "BackdropTemplate"
-  )
+--   local frame = CreateFrame(
+--     "Frame",
+--     nil,
+--     UIParent,
+--     "BackdropTemplate"
+--   )
 
-  frame:SetSize(180, 32)
-  frame:SetFrameStrata("TOOLTIP")
-  frame:EnableMouse(false)
+--   frame:SetSize(180, 32)
+--   frame:SetFrameStrata("TOOLTIP")
+--   frame:EnableMouse(false)
 
-  frame:SetBackdrop({
-    bgFile = "Interface/Buttons/WHITE8X8",
-    edgeFile = "Interface/Buttons/WHITE8X8",
-    edgeSize = 1,
-  })
+--   frame:SetBackdrop({
+--     bgFile = "Interface/Buttons/WHITE8X8",
+--     edgeFile = "Interface/Buttons/WHITE8X8",
+--     edgeSize = 1,
+--   })
 
-  frame:SetBackdropColor(0.03, 0.03, 0.03, 0.9)
-  frame:SetBackdropBorderColor(0.7, 0.6, 0.3, 1)
+--   frame:SetBackdropColor(0.03, 0.03, 0.03, 0.9)
+--   frame:SetBackdropBorderColor(0.7, 0.6, 0.3, 1)
 
-  frame.Text = frame:CreateFontString(
-    nil,
-    "OVERLAY",
-    "GameFontHighlight"
-  )
+--   frame.Text = frame:CreateFontString(
+--     nil,
+--     "OVERLAY",
+--     "GameFontHighlight"
+--   )
 
-  frame.Text:SetPoint("LEFT", frame, "LEFT", 8, 0)
-  frame.Text:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
-  frame.Text:SetJustifyH("LEFT")
-  frame.Text:SetWordWrap(false)
+--   frame.Text:SetPoint("LEFT", frame, "LEFT", 8, 0)
+--   frame.Text:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
+--   frame.Text:SetJustifyH("LEFT")
+--   frame.Text:SetWordWrap(false)
 
-  frame:SetScript("OnUpdate", function(self)
-    local x, y = GetCursorPosition()
-    local scale = UIParent:GetEffectiveScale()
+--   frame:SetScript("OnUpdate", function(self)
+--     local x, y = GetCursorPosition()
+--     local scale = UIParent:GetEffectiveScale()
 
-    self:ClearAllPoints()
-    self:SetPoint(
-      "BOTTOMLEFT",
-      UIParent,
-      "BOTTOMLEFT",
-      (x / scale) + 14,
-      (y / scale) + 14
-    )
-  end)
+--     self:ClearAllPoints()
+--     self:SetPoint(
+--       "BOTTOMLEFT",
+--       UIParent,
+--       "BOTTOMLEFT",
+--       (x / scale) + 14,
+--       (y / scale) + 14
+--     )
+--   end)
 
-  frame:Hide()
+--   frame:Hide()
 
-  self.Ghost = frame
+--   self.Ghost = frame
 
-  return frame
-end
+--   return frame
+-- end
 
 function DragDrop:StartTeam(team, sourceFrame)
   if not team or not sourceFrame then
@@ -73,13 +73,7 @@ function DragDrop:StartTeam(team, sourceFrame)
 
   sourceFrame:SetAlpha(0.45)
 
-  local ghost = self:CreateGhost()
-
-  ghost.Text:SetText(
-    team.name or "Unnamed Team"
-  )
-
-  ghost:Show()
+  addon.UI.Components.DragCursor:Start()
 
   self:RefreshTargetHighlights()
 end
@@ -143,14 +137,20 @@ function DragDrop:GetHoveredFolderTarget()
   return nil
 end
 
+function DragDrop:GetTeam()
+  return self.DraggedTeam or self.ActiveTeam
+end
+
+function DragDrop:IsTeamDragging()
+  return self:GetTeam() ~= nil
+end
+
 function DragDrop:Reset()
   if self.SourceFrame then
     self.SourceFrame:SetAlpha(1)
   end
 
-  if self.Ghost then
-    self.Ghost:Hide()
-  end
+  addon.UI.Components.DragCursor:Stop()
 
   self:RefreshTargetHighlights()
 

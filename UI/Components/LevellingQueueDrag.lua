@@ -16,6 +16,10 @@ function LevellingQueueDrag:Start(petGUID, source, sourceIndex)
   self.Source = source
   self.SourceIndex = sourceIndex
 
+  if addon.UI.Components.DragCursor then
+    addon.UI.Components.DragCursor:Start()
+  end
+
   return true
 end
 
@@ -39,6 +43,9 @@ function LevellingQueueDrag:Clear()
   self.PetGUID = nil
   self.Source = nil
   self.SourceIndex = nil
+  if addon.UI.Components.DragCursor then
+    addon.UI.Components.DragCursor:Stop()
+  end
 end
 
 addon.UI.Components.LevellingQueueDrag = LevellingQueueDrag

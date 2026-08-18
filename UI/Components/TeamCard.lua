@@ -37,20 +37,50 @@ function TeamCard:Create(parent, team)
   )
 
   frame:RegisterForDrag("LeftButton")
-  frame:SetScript("OnDragStart", function(self)
-    self.WasDragged = true
-    addon.UI.Components.DragDrop:StartTeam(
-      self.Team,
-      self
-    )
-  end)
 
-  frame:SetScript("OnDragStop", function(self)
-    addon.UI.Components.DragDrop:StopTeam()
-    C_Timer.After(0, function()
-      self.WasDragged = false
-    end)
-  end)
+  frame:SetScript(
+    "OnDragStart",
+    function(self)
+      self.WasDragged = true
+
+      local started =
+          addon.UI.Components.DragDrop:StartTeam(
+            self.Team,
+            self
+          )
+
+      if started == false then
+        self.WasDragged = false
+        return
+      end
+
+      local teamList = addon.UI.Views.TeamList
+
+      if teamList then
+        teamList:BeginTeamDrag(self)
+      end
+    end
+  )
+
+  frame:SetScript(
+    "OnDragStop",
+    function(self)
+      local teamList = addon.UI.Views.TeamList
+
+      if teamList then
+        teamList:FinishTeamDrag()
+      end
+
+      addon.UI.Components.DragDrop:StopTeam()
+
+      C_Timer.After(
+        0,
+        function()
+          self.WasDragged = false
+        end
+      )
+    end
+  )
 
   frame:SetSize(CARD_WIDTH, CARD_HEIGHT)
 

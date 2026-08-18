@@ -2,7 +2,6 @@ local _, addon = ...
 
 local FolderService = {}
 
-FolderService.ALL = "__ALL__"
 FolderService.UNSORTED = "__UNSORTED__"
 FolderService.FAVORITES = "__FAVORITES__"
 
@@ -95,10 +94,7 @@ function FolderService:Rename(folderID, name)
   return folder
 end
 
-function FolderService:Delete(
-    folderID,
-    deleteTeams
-)
+function FolderService:Delete(folderID, deleteTeams)
   local folders = self:GetFolders()
   local folder = folders[folderID]
 
@@ -165,6 +161,122 @@ function FolderService:Select(folderKey)
   )
 
   return true
+end
+
+function FolderService:Move(folderID, newIndex)
+  local folder = self:Get(folderID)
+
+  if not folder then
+    return false, "Folder not found"
+  end
+
+  local folders = self:GetSortedFolders()
+
+  local currentIndex
+
+  for index, currentFolder in ipairs(
+    folders
+  ) do
+    if currentFolder.id == folderID then
+      currentIndex = index
+      break
+    end
+  end
+
+  if not currentIndex then
+    return false, "Folder not found"
+  end
+
+  newIndex = tonumber(newIndex)
+
+  if not newIndex then
+    return false, "Invalid folder position"
+  end
+
+  newIndex = math.floor(newIndex)
+
+  newIndex =
+      math.max(
+        1,
+        math.min(
+          #folders,
+          newIndex
+        )
+      )
+
+  if currentIndex == newIndex then
+    return true
+  end
+
+  --------------------------------------------------
+  -- Reorder
+  --------------------------------------------------
+  local movedFolder =
+      table.remove(
+        folders,
+        currentIndex
+      )
+
+  table.insert(
+    folders,
+    newIndex,
+    movedFolder
+  )
+
+  --------------------------------------------------
+  -- Normalize persistent order
+  --------------------------------------------------
+  for index, currentFolder in ipairs(
+    folders
+  ) do
+    currentFolder.order = index
+  end
+
+  movedFolder.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.FOLDER_UPDATED,
+    movedFolder
+  )
+
+  return true
+end
+
+function FolderService:GetIndex(folderID)
+  if not folderID then
+    return nil
+  end
+
+  local folders = self:GetSortedFolders()
+
+  for index, folder in ipairs(folders) do
+    if folder.id == folderID then
+      return index
+    end
+  end
+
+  return nil
+end
+
+function FolderService:MoveUp(folderID)
+  local index = self:GetIndex(folderID)
+
+  if not index or index <= 1 then
+    return false
+  end
+
+  return self:Move(folderID, index - 1)
+end
+
+function FolderService:MoveDown(folderID)
+  local folders = self:GetSortedFolders()
+  local index = self:GetIndex(folderID)
+
+  if not index or index >= #folders then
+    return false
+  end
+
+  return self:Move(folderID, index + 1)
 end
 
 function FolderService:GetSelectedKey()

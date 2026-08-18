@@ -4,38 +4,57 @@ local FolderContextMenu = {}
 
 local function IsVirtualFolder(folderKey)
   return folderKey
-      == addon.Services.Folder.ALL
-      or folderKey
       == addon.Services.Folder.UNSORTED
       or folderKey
       == addon.Services.Folder.FAVORITES
 end
 
-function FolderContextMenu:Show(
-    owner,
-    folderKey
-)
+function FolderContextMenu:Show(owner, folderKey)
   if not owner or not folderKey then
     return
   end
 
-  local folder =
-      addon.Services.Folder:Get(folderKey)
-
-  local isVirtual =
-      IsVirtualFolder(folderKey)
+  local folder = addon.Services.Folder:Get(folderKey)
+  local isVirtual = IsVirtualFolder(folderKey)
 
   MenuUtil.CreateContextMenu(
     owner,
     function(_, rootDescription)
-      local folderName =
-          folder
-          and folder.name
-          or "Folder"
+      local folderName = folder and folder.name or "Folder"
 
-      rootDescription:CreateTitle(
-        folderName
+      rootDescription:CreateTitle(folderName)
+
+      local folderService = addon.Services.Folder
+      local index = folderService:GetIndex(folderKey)
+      local folders = folderService:GetSortedFolders()
+
+      local moveUp =
+          rootDescription:CreateButton(
+            "Move Up",
+            function()
+              folderService:MoveUp(folderKey)
+            end
+          )
+
+      moveUp:SetEnabled(
+        index ~= nil
+        and index > 1
       )
+
+      local moveDown =
+          rootDescription:CreateButton(
+            "Move Down",
+            function()
+              folderService:MoveDown(folderKey)
+            end
+          )
+
+      moveDown:SetEnabled(
+        index ~= nil
+        and index < #folders
+      )
+
+      rootDescription:CreateDivider()
 
       local renameButton =
           rootDescription:CreateButton(

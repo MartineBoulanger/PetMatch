@@ -5,7 +5,7 @@ local LevellingQueueList = {}
 local CONTENT_WIDTH = 230
 local CONTENT_HEIGHT = 535
 
-local ROW_SPACING = 2
+local ROW_SPACING = 1
 
 function LevellingQueueList:Create(parent)
   local frame =
@@ -29,12 +29,12 @@ function LevellingQueueList:Create(parent)
         "OVERLAY"
       )
 
-  self.DropIndicator:SetHeight(2)
+  self.DropIndicator:SetHeight(1)
 
   self.DropIndicator:SetColorTexture(
     1,
     0.82,
-    0.25,
+    0,
     1
   )
 
@@ -47,14 +47,8 @@ function LevellingQueueList:Create(parent)
   return frame
 end
 
-function LevellingQueueList:ShowDropIndicator(
-    targetIndex,
-    insertAfter
-)
-  local row =
-      self.Rows[
-      targetIndex
-      ]
+function LevellingQueueList:ShowDropIndicator(targetIndex, insertAfter)
+  local row = self.Rows[targetIndex]
 
   if not row
       or not row.Frame
@@ -63,11 +57,9 @@ function LevellingQueueList:ShowDropIndicator(
     return
   end
 
-  local frame =
-      row.Frame
+  local frame = row.Frame
 
-  self.DropIndicator:
-      ClearAllPoints()
+  self.DropIndicator:ClearAllPoints()
 
   if insertAfter then
     self.DropIndicator:SetPoint(
@@ -75,7 +67,7 @@ function LevellingQueueList:ShowDropIndicator(
       frame,
       "BOTTOMLEFT",
       0,
-      -1
+      0
     )
 
     self.DropIndicator:SetPoint(
@@ -83,7 +75,7 @@ function LevellingQueueList:ShowDropIndicator(
       frame,
       "BOTTOMRIGHT",
       0,
-      -1
+      0
     )
   else
     self.DropIndicator:SetPoint(
@@ -91,7 +83,7 @@ function LevellingQueueList:ShowDropIndicator(
       frame,
       "TOPLEFT",
       0,
-      1
+      0
     )
 
     self.DropIndicator:SetPoint(
@@ -99,7 +91,7 @@ function LevellingQueueList:ShowDropIndicator(
       frame,
       "TOPRIGHT",
       0,
-      1
+      0
     )
   end
 
@@ -107,30 +99,17 @@ function LevellingQueueList:ShowDropIndicator(
 end
 
 function LevellingQueueList:GetDropPosition()
-  local _,
-  cursorY =
-      GetCursorPosition()
+  local _, cursorY = GetCursorPosition()
+  local scale = UIParent:GetEffectiveScale()
 
-  local scale =
-      UIParent:
-      GetEffectiveScale()
+  cursorY = cursorY / scale
 
-  cursorY =
-      cursorY / scale
+  for index, row in ipairs(self.Rows) do
+    local frame = row.Frame
 
-  for index, row in ipairs(
-    self.Rows
-  ) do
-    local frame =
-        row.Frame
-
-    if frame
-        and frame:IsShown() then
-      local top =
-          frame:GetTop()
-
-      local bottom =
-          frame:GetBottom()
+    if frame and frame:IsShown() then
+      local top = frame:GetTop()
+      local bottom = frame:GetBottom()
 
       if top
           and bottom
@@ -143,11 +122,9 @@ function LevellingQueueList:GetDropPosition()
             )
             / 2
 
-        local insertAfter =
-            cursorY < middle
+        local insertAfter = cursorY < middle
 
-        return index,
-            insertAfter
+        return index, insertAfter
       end
     end
   end
@@ -159,19 +136,13 @@ function LevellingQueueList:BeginRowDrag(row)
   if not row then
     return
   end
-
-  self.DraggedRow =
-      row
-
-  row.Frame:SetAlpha(
-    0.45
-  )
-
+  self.DraggedRow = row
+  row.Frame:SetAlpha(0.35)
+  addon.UI.Components.DragCursor:Start()
   self.Frame:SetScript(
     "OnUpdate",
     function()
-      self:
-          UpdateRowDrag()
+      self:UpdateRowDrag()
     end
   )
 end
@@ -181,23 +152,17 @@ function LevellingQueueList:UpdateRowDrag()
     return
   end
 
-  local targetIndex,
-  insertAfter =
-      self:GetDropPosition()
+  local targetIndex, insertAfter = self:GetDropPosition()
 
   if not targetIndex then
     self.DropTargetIndex = nil
     self.DropInsertAfter = nil
-
     self.DropIndicator:Hide()
     return
   end
 
-  self.DropTargetIndex =
-      targetIndex
-
-  self.DropInsertAfter =
-      insertAfter
+  self.DropTargetIndex = targetIndex
+  self.DropInsertAfter = insertAfter
 
   self:ShowDropIndicator(
     targetIndex,
@@ -211,21 +176,17 @@ function LevellingQueueList:FinishRowDrag(row)
     nil
   )
 
+  addon.UI.Components.DragCursor:Stop()
+
   self.DropIndicator:Hide()
 
-  if row
-      and row.Frame then
+  if row and row.Frame then
     row.Frame:SetAlpha(1)
   end
 
-  local draggedRow =
-      self.DraggedRow
-
-  local targetIndex =
-      self.DropTargetIndex
-
-  local insertAfter =
-      self.DropInsertAfter
+  local draggedRow = self.DraggedRow
+  local targetIndex = self.DropTargetIndex
+  local insertAfter = self.DropInsertAfter
 
   self.DraggedRow = nil
   self.DropTargetIndex = nil
@@ -237,19 +198,16 @@ function LevellingQueueList:FinishRowDrag(row)
     return
   end
 
-  local currentIndex =
-      draggedRow.Index
+  local currentIndex = draggedRow.Index
 
   if not currentIndex then
     return
   end
 
-  local newIndex =
-      targetIndex
+  local newIndex = targetIndex
 
   if insertAfter then
-    newIndex =
-        newIndex + 1
+    newIndex = newIndex + 1
   end
 
   --------------------------------------------------
@@ -258,13 +216,10 @@ function LevellingQueueList:FinishRowDrag(row)
   --------------------------------------------------
 
   if currentIndex < newIndex then
-    newIndex =
-        newIndex - 1
+    newIndex = newIndex - 1
   end
 
-  local count =
-      addon.Services.LevellingQueue:
-      GetCount()
+  local count = addon.Services.LevellingQueue:GetCount()
 
   newIndex =
       math.max(
@@ -295,21 +250,16 @@ function LevellingQueueList:EnsureRows(count)
 end
 
 function LevellingQueueList:LayoutRows()
-  if not self.Frame
-      or not self.Frame.Content then
+  if not self.Frame or not self.Frame.Content then
     return
   end
 
   local currentOffset = 0
 
-  for _, row in ipairs(
-    self.Rows
-  ) do
-    local frame =
-        row.Frame
+  for _, row in ipairs(self.Rows) do
+    local frame = row.Frame
 
-    if frame
-        and frame:IsShown() then
+    if frame and frame:IsShown() then
       frame:ClearAllPoints()
 
       frame:SetPoint(

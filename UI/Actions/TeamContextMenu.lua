@@ -48,17 +48,49 @@ function TeamContextMenu:Show(owner, team)
 
       rootDescription:CreateDivider()
 
+      local teamService = addon.Services.Team
+      local index = teamService:GetIndex(team.id)
+      local teams = teamService:GetTeamsInFolder(team.folderID)
+
+      local moveUp =
+          rootDescription:CreateButton(
+            "Move Up",
+            function()
+              teamService:MoveUp(team.id)
+            end
+          )
+
+      moveUp:SetEnabled(
+        index ~= nil
+        and index > 1
+      )
+
+      local moveDown =
+          rootDescription:CreateButton(
+            "Move Down",
+            function()
+              teamService:MoveDown(team.id)
+            end
+          )
+
+      moveDown:SetEnabled(
+        index ~= nil
+        and index < #teams
+      )
+
+      rootDescription:CreateButton(
+        "Move To Folder",
+        function()
+          addon.UI.Dialogs.MoveTeamDialog:Show(team)
+        end
+      )
+
+      rootDescription:CreateDivider()
+
       rootDescription:CreateButton(
         "Edit Team",
         function()
           addon.UI.Dialogs.EditTeamDialog:Show(team)
-        end
-      )
-
-      rootDescription:CreateButton(
-        "Move Team",
-        function()
-          addon.UI.Dialogs.MoveTeamDialog:Show(team)
         end
       )
 
@@ -68,8 +100,6 @@ function TeamContextMenu:Show(owner, team)
           addon.UI.Dialogs.ExportDialog:Show(team)
         end
       )
-
-      rootDescription:CreateDivider()
 
       rootDescription:CreateButton(
         "Delete Team",

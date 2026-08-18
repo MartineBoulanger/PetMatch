@@ -8,23 +8,21 @@ end
 
 local function SortTeams(teams, sortMode)
   table.sort(teams, function(left, right)
-    if sortMode == "modified" then
-      local leftModified =
-          left.modified or 0
-
-      local rightModified =
-          right.modified or 0
-
+    if sortMode == "manual" then
+      local leftOrder = tonumber(left.order) or math.huge
+      local rightOrder = tonumber(right.order) or math.huge
+      if leftOrder ~= rightOrder then
+        return leftOrder < rightOrder
+      end
+    elseif sortMode == "modified" then
+      local leftModified = left.modified or 0
+      local rightModified = right.modified or 0
       if leftModified ~= rightModified then
         return leftModified > rightModified
       end
     elseif sortMode == "favorites" then
-      local leftFavorite =
-          left.favorite == true
-
-      local rightFavorite =
-          right.favorite == true
-
+      local leftFavorite = left.favorite == true
+      local rightFavorite = right.favorite == true
       if leftFavorite ~= rightFavorite then
         return leftFavorite
       end
@@ -35,10 +33,13 @@ local function SortTeams(teams, sortMode)
   end)
 end
 
+local function GetFolderOrderValue(team)
+  return tonumber(team.order) or 0
+end
+
 function TeamService:GetTeams()
   local profile = GetProfile()
-  if not profile
-      or not profile.teams then
+  if not profile or not profile.teams then
     return {}
   end
   return profile.teams
@@ -46,8 +47,7 @@ end
 
 function TeamService:GetAllTeams()
   local profile = addon.Profiles:GetCurrentProfile()
-  if not profile
-      or not profile.teams then
+  if not profile or not profile.teams then
     return {}
   end
   return profile.teams
@@ -61,11 +61,10 @@ end
 
 function TeamService:Create(name)
   local team = addon.Models.Team:Create(name)
+  local siblings = self:GetTeamsInFolder(team.folderID)
+  team.order = #siblings + 1
   self:GetTeams()[team.id] = team
-  addon.EventBus:Fire(
-    addon.Events.TEAM_CREATED,
-    team
-  )
+  addon.EventBus:Fire(addon.Events.TEAM_CREATED, team)
   return team
 end
 
@@ -89,15 +88,10 @@ function TeamService:GetActive()
   if not profile.activeTeam then
     return nil
   end
-  return self:Get(
-    profile.activeTeam
-  )
+  return self:Get(profile.activeTeam)
 end
 
-function TeamService:AddToFolder(
-    teamID,
-    folderID
-)
+function TeamService:AddToFolder(teamID, folderID)
   local team = self:Get(teamID)
   if not team then
     return false
@@ -107,11 +101,7 @@ function TeamService:AddToFolder(
   return true
 end
 
-function TeamService:SetPet(
-    teamID,
-    slot,
-    petGUID
-)
+function TeamService:SetPet(teamID, slot, petGUID)
   local team = self:Get(teamID)
   if not team then
     return false
@@ -136,11 +126,7 @@ function TeamService:GetPets(teamID)
   return team.pets
 end
 
-function TeamService:AddPet(
-    teamID,
-    slot,
-    petGUID
-)
+function TeamService:AddPet(teamID, slot, petGUID)
   local team = self:Get(teamID)
   if not team then
     return false
@@ -178,8 +164,7 @@ function TeamService:Delete(teamID)
 
   teams[teamID] = nil
 
-  local profile =
-      addon.Profiles:GetCurrentProfile()
+  local profile = addon.Profiles:GetCurrentProfile()
 
   if profile.activeTeam == teamID then
     profile.activeTeam = nil
@@ -218,12 +203,8 @@ function TeamService:CreateFromBattleSlots(name, folderID)
     return nil, "Folder not found"
   end
 
-  local loadout =
-      addon.Services.BattleSlot:GetCurrentLoadout()
-
-  local slots =
-      loadout.pets
-
+  local loadout = addon.Services.BattleSlot:GetCurrentLoadout()
+  local slots = loadout.pets
   local hasPet = false
 
   for slot = 1, 3 do
@@ -247,11 +228,9 @@ function TeamService:CreateFromBattleSlots(name, folderID)
   team.abilities = team.abilities or {}
 
   for slot = 1, 3 do
-    team.pets[slot] =
-        loadout.pets[slot]
+    team.pets[slot] = loadout.pets[slot]
 
-    local abilities =
-        loadout.abilities[slot]
+    local abilities = loadout.abilities[slot]
 
     if abilities then
       team.abilities[slot] = {
@@ -327,10 +306,7 @@ function TeamService:Rename(teamID, name)
   return team
 end
 
-function TeamService:SetNotes(
-    teamID,
-    notes
-)
+function TeamService:SetNotes(teamID, notes)
   local team = self:Get(teamID)
 
   if not team then
@@ -350,10 +326,7 @@ function TeamService:SetNotes(
   return team
 end
 
-function TeamService:SetScript(
-    teamID,
-    script
-)
+function TeamService:SetScript(teamID, script)
   local team = self:Get(teamID)
 
   if not team then
@@ -371,19 +344,14 @@ function TeamService:SetScript(
   return team
 end
 
-function TeamService:ReplacePetsFromBattleSlots(
-    teamID
-)
+function TeamService:ReplacePetsFromBattleSlots(teamID)
   local team = self:Get(teamID)
 
   if not team then
     return nil, "Team not found"
   end
 
-  local loadout =
-      addon.Services.BattleSlot:
-      GetCurrentLoadout()
-
+  local loadout = addon.Services.BattleSlot:GetCurrentLoadout()
   local hasPet = false
 
   for slot = 1, 3 do
@@ -394,19 +362,16 @@ function TeamService:ReplacePetsFromBattleSlots(
   end
 
   if not hasPet then
-    return nil,
-        "The current Battle Pet Slots are empty"
+    return nil, "The current Battle Pet Slots are empty"
   end
 
   team.pets = team.pets or {}
   team.abilities = team.abilities or {}
 
   for slot = 1, 3 do
-    team.pets[slot] =
-        loadout.pets[slot]
+    team.pets[slot] = loadout.pets[slot]
 
-    local abilities =
-        loadout.abilities[slot]
+    local abilities = loadout.abilities[slot]
 
     if abilities then
       team.abilities[slot] = {
@@ -430,16 +395,14 @@ function TeamService:ReplacePetsFromBattleSlots(
 end
 
 function TeamService:Edit(teamID, name, replacePets)
-  local team, errorMessage =
-      self:Rename(teamID, name)
+  local team, errorMessage = self:Rename(teamID, name)
 
   if not team then
     return nil, errorMessage
   end
 
   if replacePets then
-    team, errorMessage =
-        self:ReplacePetsFromBattleSlots(teamID)
+    team, errorMessage = self:ReplacePetsFromBattleSlots(teamID)
 
     if not team then
       return nil, errorMessage
@@ -449,6 +412,14 @@ function TeamService:Edit(teamID, name, replacePets)
   return team
 end
 
+function TeamService:NormalizeFolderOrder(folderID)
+  local teams = self:GetTeamsInFolder(folderID)
+
+  for index, team in ipairs(teams) do
+    team.order = index
+  end
+end
+
 function TeamService:MoveToFolder(teamID, folderID)
   local team = self:Get(teamID)
 
@@ -456,13 +427,23 @@ function TeamService:MoveToFolder(teamID, folderID)
     return nil, "Team not found"
   end
 
-  if folderID
-      and not addon.Services.Folder:Get(folderID) then
+  if folderID and not addon.Services.Folder:Get(folderID) then
     return nil, "Folder not found"
   end
 
+  if team.folderID == folderID then
+    return team
+  end
+
+  local oldFolderID = team.folderID
+
+  local destination = self:GetTeamsInFolder(folderID)
+
   team.folderID = folderID
+  team.order = #destination + 1
   team.modified = time()
+
+  self:NormalizeFolderOrder(oldFolderID)
 
   addon.EventBus:Fire(
     addon.Events.TEAM_UPDATED,
@@ -482,6 +463,11 @@ function TeamService:GetTeamsInFolder(folderID)
   end
 
   table.sort(result, function(left, right)
+    local leftOrder = GetFolderOrderValue(left)
+    local rightOrder = GetFolderOrderValue(right)
+    if leftOrder ~= rightOrder then
+      return leftOrder < rightOrder
+    end
     return string.lower(left.name or "")
         < string.lower(right.name or "")
   end)
@@ -592,6 +578,7 @@ end
 
 function TeamService:SetSortMode(sortMode)
   local validModes = {
+    manual = true,
     name = true,
     modified = true,
     favorites = true,
@@ -1091,6 +1078,122 @@ function TeamService:IsPetInAnyTeam(petGUID)
   end
 
   return false
+end
+
+function TeamService:GetIndex(teamID)
+  local team = self:Get(teamID)
+
+  if not team then
+    return nil
+  end
+
+  local teams = self:GetTeamsInFolder(team.folderID)
+
+  for index, currentTeam in ipairs(teams) do
+    if currentTeam.id == teamID then
+      return index
+    end
+  end
+
+  return nil
+end
+
+function TeamService:Move(teamID, newIndex)
+  local team = self:Get(teamID)
+
+  if not team then
+    return false, "Team not found"
+  end
+
+  local teams = self:GetTeamsInFolder(team.folderID)
+  local currentIndex
+
+  for index, currentTeam in ipairs(teams) do
+    if currentTeam.id == teamID then
+      currentIndex = index
+      break
+    end
+  end
+
+  if not currentIndex then
+    return false
+  end
+
+  newIndex = tonumber(newIndex)
+
+  if not newIndex then
+    return false
+  end
+
+  newIndex =
+      math.max(
+        1,
+        math.min(
+          #teams,
+          math.floor(newIndex)
+        )
+      )
+
+  if newIndex == currentIndex then
+    return true
+  end
+
+  local movedTeam =
+      table.remove(
+        teams,
+        currentIndex
+      )
+
+  table.insert(
+    teams,
+    newIndex,
+    movedTeam
+  )
+
+  for index, currentTeam in ipairs(teams) do
+    currentTeam.order = index
+  end
+
+  movedTeam.modified = time()
+
+  self:SetSortMode("manual")
+
+  addon.EventBus:Fire(
+    addon.Events.TEAM_UPDATED,
+    movedTeam
+  )
+
+  return true
+end
+
+function TeamService:MoveUp(teamID)
+  local index = self:GetIndex(teamID)
+
+  if not index or index <= 1 then
+    return false
+  end
+
+  return self:Move(teamID, index - 1)
+end
+
+function TeamService:MoveDown(teamID)
+  local team = self:Get(teamID)
+
+  if not team then
+    return false
+  end
+
+  local teams = self:GetTeamsInFolder(team.folderID)
+  local index = self:GetIndex(teamID)
+
+  if not index or index >= #teams then
+    return false
+  end
+
+  return self:Move(
+    teamID,
+    index + 1
+  )
 end
 
 addon.Services.Team = TeamService
