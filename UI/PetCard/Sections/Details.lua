@@ -71,9 +71,10 @@ function Details:Create(parent)
   --------------------------------------------------
   instance.Model =
       CreateFrame(
-        "PlayerModel",
+        "ModelScene",
         nil,
-        instance.Frame
+        instance.Frame,
+        "NoCameraControlModelSceneMixinTemplate"
       )
 
   instance.Model:SetSize(
@@ -89,8 +90,19 @@ function Details:Create(parent)
     -2
   )
 
+  instance.Model:SetIsFrameBuffer(
+    true
+  )
+
   instance.Model:SetFrameLevel(
-    instance.Frame:GetFrameLevel() + 1
+    instance.Frame:GetFrameLevel() + 100
+  )
+
+  instance.Model:SetViewInsets(
+    0,
+    0,
+    0,
+    0
   )
 
   instance.Model:EnableMouse(false)
@@ -136,7 +148,8 @@ function Details:SetPet(pet)
   end
 
   self:SetPetModel(
-    pet.displayID
+    pet.displayID,
+    pet.speciesID
   )
 
   self.Stats:SetPet(
@@ -144,37 +157,84 @@ function Details:SetPet(pet)
   )
 end
 
-function Details:SetPetModel(displayID)
+function Details:SetPetModel(displayID, speciesID)
   displayID = tonumber(displayID)
+  speciesID = tonumber(speciesID)
 
-  if not displayID then
-    self.Model:ClearModel()
+  if not self.Model
+      or not displayID
+      or not speciesID then
+    if self.Model then
+      self.Model:ClearScene()
+      self.Model:Hide()
+    end
+
+    return
+  end
+
+  --------------------------------------------------
+  -- Get Blizzard's ModelScene for this species
+  --------------------------------------------------
+  local _, modelSceneID =
+      C_PetJournal.GetPetModelSceneInfoBySpeciesID(speciesID)
+
+  if not modelSceneID then
+    self.Model:ClearScene()
     self.Model:Hide()
     return
   end
 
+  --------------------------------------------------
+  -- Reset previous scene
+  --------------------------------------------------
+  self.Model:ClearScene()
+
+  self.Model:SetViewInsets(
+    0,
+    0,
+    0,
+    0
+  )
+
+  --------------------------------------------------
+  -- Load pet scene
+  --------------------------------------------------
+  self.Model:TransitionToModelSceneID(
+    modelSceneID,
+    CAMERA_TRANSITION_TYPE_IMMEDIATE,
+    CAMERA_MODIFICATION_TYPE_DISCARD,
+    true
+  )
+
+  --------------------------------------------------
+  -- Get Blizzard's pet actor
+  --------------------------------------------------
+  local actor = self.Model:GetActorByTag("pet")
+
+  if not actor then
+    self.Model:Hide()
+    return
+  end
+
+  --------------------------------------------------
+  -- Set requested pet display
+  --------------------------------------------------
+
   local success =
-      pcall(
-        self.Model.SetDisplayInfo,
-        self.Model,
-        displayID
+      actor:SetModelByCreatureDisplayID(
+        displayID,
+        true
       )
 
   if not success then
-    self.Model:ClearModel()
+    self.Model:ClearScene()
     self.Model:Hide()
     return
   end
 
-  if self.Model.SetFacing then
-    self.Model:SetFacing(
-      math.rad(-25)
-    )
-  end
-
-  if self.Model.SetCamDistanceScale then
-    self.Model:SetCamDistanceScale(
-      0.95
+  if actor.SetAnimationBlendOperation then
+    actor:SetAnimationBlendOperation(
+      Enum.ModelBlendOperation.None
     )
   end
 
