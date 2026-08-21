@@ -1,19 +1,22 @@
-local _, addon                            = ...
+local _, addon = ...
 
-local PetJournalService                   = {}
+local PetJournalService = {}
 
-PetJournalService.Cache                   = {}
+PetJournalService.Cache = {}
 PetJournalService.BestOwnedPetBySpeciesID = {}
-PetJournalService.IndexReady              = false
-PetJournalService.Initialized             = false
-PetJournalService.ScanScheduled           = false
+PetJournalService.OwnedPetsBySpeciesID = {}
 
-local function IsBetterPet(
-    level,
-    quality,
-    bestLevel,
-    bestQuality
-)
+PetJournalService.IndexReady = false
+PetJournalService.Initialized = false
+
+PetJournalService.ScanTimer = nil
+
+local SCAN_DELAY = 0.35
+
+--------------------------------------------------
+-- Helpers
+--------------------------------------------------
+local function IsBetterPet(level, quality, bestLevel, bestQuality)
   level = tonumber(level) or 0
   quality = tonumber(quality) or 0
   bestLevel = tonumber(bestLevel) or -1
@@ -26,13 +29,47 @@ local function IsBetterPet(
       )
 end
 
+--------------------------------------------------
+-- Scheduled scan
+--------------------------------------------------
+function PetJournalService:CancelScheduledScan()
+  if not self.ScanTimer then
+    return
+  end
+
+  self.ScanTimer:Cancel()
+  self.ScanTimer = nil
+end
+
+function PetJournalService:ScheduleScan()
+  self:CancelScheduledScan()
+
+  self.IndexReady = false
+
+  self.ScanTimer =
+      C_Timer.NewTimer(
+        SCAN_DELAY,
+
+        function()
+          self.ScanTimer = nil
+
+          self:Scan()
+        end
+      )
+end
+
+--------------------------------------------------
+-- Scan
+--------------------------------------------------
 function PetJournalService:Scan()
+  self:CancelScheduledScan()
+
   wipe(self.Cache)
   wipe(self.BestOwnedPetBySpeciesID)
+  wipe(self.OwnedPetsBySpeciesID)
 
   local bestLevels = {}
   local bestQualities = {}
-
   local numPets = C_PetJournal.GetNumPets()
 
   for index = 1, numPets do
@@ -42,29 +79,38 @@ function PetJournalService:Scan()
     customName,
     level,
     favorite,
-    isRevoked,
+    _isRevoked,
     speciesName,
     icon,
     petType,
-    creatureID,
-    sourceText,
-    description,
-    isHatchable,
-    canBattle,
-    tradable,
-    unique = C_PetJournal.GetPetInfoByIndex(index)
+    _creatureID,
+    _sourceText,
+    _description,
+    _isHatchable,
+    canBattle = C_PetJournal.GetPetInfoByIndex(index)
 
     if isOwned and petGUID and speciesID then
-      local _, _, _, _, quality = C_PetJournal.GetPetStats(petGUID)
+      local quality =
+          select(
+            5,
+            C_PetJournal.GetPetStats(
+              petGUID
+            )
+          )
+
       level = tonumber(level) or 0
       quality = tonumber(quality) or 0
 
+      ------------------------------------------------
+      -- Lightweight cached pet data
+      ------------------------------------------------
       local pet = {
         petGUID = petGUID,
         speciesID = speciesID,
         name = customName or speciesName,
         level = level,
-        favorite = favorite,
+        quality = quality,
+        favorite = favorite == true,
         icon = icon,
         petType = petType,
         canBattle = canBattle == true,
@@ -72,6 +118,21 @@ function PetJournalService:Scan()
 
       self.Cache[petGUID] = pet
 
+      ------------------------------------------------
+      -- Keep all owned instances grouped by species
+      ------------------------------------------------
+      local speciesPets = self.OwnedPetsBySpeciesID[speciesID]
+
+      if not speciesPets then
+        speciesPets = {}
+        self.OwnedPetsBySpeciesID[speciesID] = speciesPets
+      end
+
+      speciesPets[#speciesPets + 1] = petGUID
+
+      ------------------------------------------------
+      -- Best owned pet for this species
+      ------------------------------------------------
       local bestLevel = bestLevels[speciesID]
       local bestQuality = bestQualities[speciesID]
 
@@ -91,6 +152,9 @@ function PetJournalService:Scan()
   )
 end
 
+--------------------------------------------------
+-- Index
+--------------------------------------------------
 function PetJournalService:EnsureIndex()
   if self.IndexReady then
     return
@@ -99,6 +163,15 @@ function PetJournalService:EnsureIndex()
   self:Scan()
 end
 
+function PetJournalService:InvalidateCache()
+  self.IndexReady = false
+  wipe(self.BestOwnedPetBySpeciesID)
+  wipe(self.OwnedPetsBySpeciesID)
+end
+
+--------------------------------------------------
+-- Pet access
+--------------------------------------------------
 function PetJournalService:GetPet(petGUID)
   if type(petGUID) ~= "string" or petGUID == "" then
     return nil
@@ -158,6 +231,7 @@ end
 
 function PetJournalService:GetPetName(petGUID)
   local pet = self:GetPet(petGUID)
+
   return pet and pet.name or nil
 end
 
@@ -173,74 +247,99 @@ function PetJournalService:FindOwnedPetBySpeciesID(speciesID)
   return self.BestOwnedPetBySpeciesID[speciesID]
 end
 
-function PetJournalService:InvalidateCache()
-  self.IndexReady = false
-  wipe(self.BestOwnedPetBySpeciesID)
-end
+function PetJournalService:FindOwnedPetForImport(speciesID, breedID, usedPetGUIDs)
+  speciesID = tonumber(speciesID)
+  breedID = tonumber(breedID)
 
-function PetJournalService:ScheduleScan()
-  if self.ScanScheduled then
-    return
+  if not speciesID then
+    return nil
   end
 
-  self.ScanScheduled = true
+  self:EnsureIndex()
 
-  C_Timer.After(
-    0,
-    function()
-      self.ScanScheduled = false
-      self:InvalidateCache()
-      self:Scan()
-    end
-  )
-end
+  usedPetGUIDs = usedPetGUIDs or {}
 
-function PetJournalService:Initialize()
-  if self.Initialized then
-    return
+  local candidates = self.OwnedPetsBySpeciesID[speciesID]
+
+  if type(candidates) ~= "table" or #candidates == 0 then
+    return nil
   end
 
-  self.Initialized = true
+  local breedService = addon.Services and addon.Services.Breed
+  local bestPetGUID = nil
+  local bestBreedMatch = false
+  local bestLevel = -1
+  local bestQuality = -1
 
-  self.EventFrame =
-      self.EventFrame
-      or CreateFrame("Frame")
+  for _, petGUID in ipairs(candidates) do
+    if not usedPetGUIDs[petGUID] then
+      local pet = self.Cache[petGUID]
 
-  self.EventFrame:RegisterEvent(
-    "PET_JOURNAL_LIST_UPDATE"
-  )
+      if pet then
+        local breedMatch = false
 
-  self.EventFrame:SetScript(
-    "OnEvent",
-    function(_, event)
-      if event
-          ~= "PET_JOURNAL_LIST_UPDATE" then
-        return
+        ------------------------------------------------
+        -- Breed 0 = no breed preference
+        ------------------------------------------------
+
+        if not breedID or breedID == 0 then
+          breedMatch = true
+        elseif breedService
+            and type(breedService.GetJournalBreed) == "function" then
+          local journalBreed =
+              breedService:GetJournalBreed(petGUID)
+
+          breedMatch = journalBreed ~= nil
+              and tonumber(journalBreed) == breedID
+        end
+
+        local level = tonumber(pet.level) or 0
+        local quality = tonumber(pet.quality) or 0
+        local isBetter = false
+
+        ------------------------------------------------
+        -- Requested breed wins first
+        ------------------------------------------------
+
+        if breedMatch ~= bestBreedMatch then
+          isBetter = breedMatch == true
+
+          ------------------------------------------------
+          -- Then highest level
+          ------------------------------------------------
+        elseif level > bestLevel then
+          isBetter = true
+
+          ------------------------------------------------
+          -- Then highest quality
+          ------------------------------------------------
+        elseif level == bestLevel and quality > bestQuality then
+          isBetter = true
+        end
+
+        if isBetter then
+          bestPetGUID = petGUID
+          bestBreedMatch = breedMatch
+          bestLevel = level
+          bestQuality = quality
+        end
       end
-
-      self:ScheduleScan()
     end
-  )
+  end
 
-  --------------------------------------------------
-  -- Initial scan.
-  --
-  -- This establishes the initial known-pet baseline
-  -- for the Levelling Queue.
-  --------------------------------------------------
-
-  self:ScheduleScan()
+  return bestPetGUID
 end
 
 function PetJournalService:GetSpeciesID(petGUID)
   local pet = self:GetPet(petGUID)
+
   return pet and pet.speciesID or nil
 end
 
-function PetJournalService:GetAbilityChoices(
-    speciesID,
-    selectedAbilities
-)
+--------------------------------------------------
+-- Ability choices
+--------------------------------------------------
+function PetJournalService:GetAbilityChoices(speciesID, selectedAbilities)
   speciesID = tonumber(speciesID)
 
   if not speciesID then
@@ -260,14 +359,10 @@ function PetJournalService:GetAbilityChoices(
 
   for slot = 1, 3 do
     local selectedAbilityID =
-        selectedAbilities
-        and selectedAbilities[slot]
+        selectedAbilities and selectedAbilities[slot]
 
-    local firstChoiceID =
-        abilityIDs[slot]
-
-    local secondChoiceID =
-        abilityIDs[slot + 3]
+    local firstChoiceID = abilityIDs[slot]
+    local secondChoiceID = abilityIDs[slot + 3]
 
     if selectedAbilityID
         and selectedAbilityID == secondChoiceID then
@@ -278,6 +373,40 @@ function PetJournalService:GetAbilityChoices(
   end
 
   return choices
+end
+
+--------------------------------------------------
+-- Initialize
+--------------------------------------------------
+function PetJournalService:Initialize()
+  if self.Initialized then
+    return
+  end
+
+  self.Initialized = true
+
+  self.EventFrame =
+      self.EventFrame
+      or CreateFrame(
+        "Frame"
+      )
+
+  self.EventFrame:RegisterEvent(
+    "PET_JOURNAL_LIST_UPDATE"
+  )
+
+  self.EventFrame:SetScript(
+    "OnEvent",
+
+    function(_, event)
+      if event ~= "PET_JOURNAL_LIST_UPDATE" then
+        return
+      end
+      self:ScheduleScan()
+    end
+  )
+
+  self:ScheduleScan()
 end
 
 addon.Services.PetJournal = PetJournalService

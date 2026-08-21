@@ -15,7 +15,14 @@ local Filters = {
 local PET_TYPES = {}
 local PET_SOURCES = {}
 
-local PetCache = {}
+local ItemPool = {}
+
+local ActiveItems = {}
+local BuildItems = {}
+
+local applyFiltersTimer = nil
+
+local APPLY_FILTERS_DELAY = 0.4
 
 local EXPANSIONS = {
   "Classic",
@@ -128,16 +135,31 @@ local TAG_FILTER_OPTIONS = {
 }
 local RAID_MARKER_TEXTURE_FORMAT = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_%d"
 
--- sorting
-local ActiveSort = {
-  type = "blizzard",
-  value = nil,
-}
+local MAX_SORT_LEVELS = 3
+
+local SortLevels = {}
 local SortOptions = {
-  favoritesFirst = false,
+  favoritesFirst = true,
   reverse = false,
 }
-local SORT_OPTIONS = {
+
+local ALL_SORT_OPTIONS = {
+  {
+    key = "name",
+    label = NAME,
+  },
+  {
+    key = "level",
+    label = LEVEL,
+  },
+  {
+    key = "rarity",
+    label = RARITY,
+  },
+  {
+    key = "type",
+    label = TYPE,
+  },
   {
     key = "expansion",
     label = "Expansion",
@@ -164,6 +186,42 @@ local SORT_OPTIONS = {
   },
 }
 
+local function QueueApplyFilters()
+  --------------------------------------------------
+  -- Blizzard kan tijdens het openen van de
+  -- Pet Journal meerdere list updates vlak na
+  -- elkaar sturen.
+  --
+  -- We wachten kort tot die reeks klaar is en
+  -- voeren daarna slechts één volledige rebuild uit.
+  --------------------------------------------------
+
+  if applyFiltersTimer then
+    applyFiltersTimer:Cancel()
+    applyFiltersTimer = nil
+  end
+
+  applyFiltersTimer =
+      C_Timer.NewTimer(
+        APPLY_FILTERS_DELAY,
+
+        function()
+          applyFiltersTimer = nil
+
+          FilterExtension:ApplyFilters()
+        end
+      )
+end
+
+local function CancelQueuedApplyFilters()
+  if not applyFiltersTimer then
+    return
+  end
+
+  applyFiltersTimer:Cancel()
+  applyFiltersTimer = nil
+end
+
 local function InitializeNativeOptions()
   wipe(PET_TYPES)
   wipe(PET_SOURCES)
@@ -181,10 +239,7 @@ local function InitializeNativeOptions()
   end
 end
 
-local function InitializeFilter(
-    filter,
-    options
-)
+local function InitializeFilter(filter, options)
   for _, option in ipairs(options) do
     if filter[option] == nil then
       filter[option] = false
@@ -231,50 +286,26 @@ local function InitializeFilters()
   )
 end
 
-local function SetAll(
-    filter,
-    options,
-    checked
-)
+local function SetAll(filter, options, checked)
   for _, option in ipairs(options) do
     filter[option] = checked == true
   end
 end
 
-local function IsAllChecked(
-    filter,
-    options
-)
-  for _, option in ipairs(options) do
-    if filter[option] ~= true then
-      return false
-    end
-  end
+-- local function ClearCache()
+--   wipe(PetCache)
+-- end
 
-  return true
+local function RefreshSorting()
+  C_PetJournal.SetPetSortParameter(
+    LE_SORT_BY_NAME
+  )
+  CancelQueuedApplyFilters()
+  -- ClearCache()
+  FilterExtension:Refresh()
 end
 
-local function IsNoneChecked(
-    filter,
-    options
-)
-  for _, option in ipairs(options) do
-    if filter[option] == true then
-      return false
-    end
-  end
-
-  return true
-end
-
-local function ClearCache()
-  wipe(PetCache)
-end
-
-local function IsOtherFilterChecked(
-    group,
-    value
-)
+local function IsOtherFilterChecked(group, value)
   return OtherFilters[group] == value
 end
 
@@ -291,22 +322,17 @@ local function ResetOtherFilters()
   OtherFilters.battle = nil
   OtherFilters.team = nil
 
-  ClearCache()
-  FilterExtension:ApplyFilters()
+  RefreshSorting()
 end
 
-local function SetOtherFilter(
-    group,
-    value
-)
+local function SetOtherFilter(group, value)
   if OtherFilters[group] == value then
     OtherFilters[group] = nil
   else
     OtherFilters[group] = value
   end
 
-  ClearCache()
-  FilterExtension:ApplyFilters()
+  RefreshSorting()
 end
 
 local function HasSelection(
@@ -351,8 +377,7 @@ local function Toggle(
   if onChanged then
     onChanged()
   else
-    ClearCache()
-    FilterExtension:ApplyFilters()
+    RefreshSorting()
   end
 end
 
@@ -378,8 +403,7 @@ local function AddCheckAllButtons(
       if onChanged then
         onChanged()
       else
-        ClearCache()
-        FilterExtension:ApplyFilters()
+        RefreshSorting()
       end
 
       return MenuResponse.Refresh
@@ -402,8 +426,7 @@ local function AddCheckAllButtons(
       if onChanged then
         onChanged()
       else
-        ClearCache()
-        FilterExtension:ApplyFilters()
+        RefreshSorting()
       end
 
       return MenuResponse.Refresh
@@ -467,119 +490,96 @@ local function SyncNativeFilters()
   SyncNativePetTypes()
   SyncNativeSources()
 
-  ClearCache()
-  FilterExtension:ApplyFilters()
+  RefreshSorting()
 end
 
-local function GetExtendedPet(
-    petID,
-    speciesID
-)
-  local cacheKey =
-      petID
-      or (
-        "species:"
-        .. tostring(speciesID)
-      )
+-- local function GetExtendedPet(
+--     petID,
+--     speciesID
+-- )
+--   local cacheKey =
+--       petID
+--       or (
+--         "species:"
+--         .. tostring(speciesID)
+--       )
 
-  if PetCache[cacheKey] ~= nil then
-    local cached =
-        PetCache[cacheKey]
+--   if PetCache[cacheKey] ~= nil then
+--     local cached =
+--         PetCache[cacheKey]
 
-    return cached ~= false
-        and cached
-        or nil
-  end
+--     return cached ~= false
+--         and cached
+--         or nil
+--   end
 
-  local service =
-      addon.Services
-      and addon.Services.PetTooltip
+--   local service =
+--       addon.Services
+--       and addon.Services.PetTooltip
 
-  local pet
+--   local pet
 
-  if service then
-    if petID
-        and type(service.CreatePet)
-        == "function" then
-      pet =
-          service:CreatePet(
-            petID
-          )
-    elseif speciesID
-        and type(service.CreateSpeciesPet)
-        == "function" then
-      pet =
-          service:CreateSpeciesPet(
-            speciesID
-          )
-    elseif speciesID
-        and type(service.GetBySpeciesID)
-        == "function" then
-      pet =
-          service:GetBySpeciesID(
-            speciesID
-          )
-    end
-  end
+--   if service then
+--     if petID
+--         and type(service.CreatePet)
+--         == "function" then
+--       pet =
+--           service:CreatePet(
+--             petID
+--           )
+--     elseif speciesID
+--         and type(service.CreateSpeciesPet)
+--         == "function" then
+--       pet =
+--           service:CreateSpeciesPet(
+--             speciesID
+--           )
+--     elseif speciesID
+--         and type(service.GetBySpeciesID)
+--         == "function" then
+--       pet =
+--           service:GetBySpeciesID(
+--             speciesID
+--           )
+--     end
+--   end
 
-  PetCache[cacheKey] =
-      pet or false
+--   PetCache[cacheKey] =
+--       pet or false
 
-  return pet
-end
+--   return pet
+-- end
 
-local function GetExpansionName(
-    petID,
-    speciesID
-)
-  local pet =
-      GetExtendedPet(
-        petID,
-        speciesID
-      )
+local function GetExpansionName(_petID, speciesID)
+  speciesID = tonumber(speciesID)
 
-  if not pet then
+  if not speciesID then
     return nil
   end
 
-  return pet.expansionName or pet.expansion
+  local petExpansion = addon.Data and addon.Data.PetExpansion
+
+  if not petExpansion
+      or type(petExpansion.GetExpansionName) ~= "function" then
+    return nil
+  end
+
+  return petExpansion:GetExpansionName(speciesID)
 end
 
-local function GetBreedName(
-    petID,
-    speciesID
-)
-  if not petID then
+local function GetBreedName(petID, _speciesID)
+  if type(petID) ~= "string" or petID == "" then
     return nil
   end
 
-  local pet =
-      GetExtendedPet(
-        petID,
-        speciesID
-      )
+  local breedService = addon.Services and addon.Services.Breed
 
-  if not pet then
+  if not breedService
+      or type(breedService.GetJournalBreed) ~= "function" then
     return nil
   end
 
-  if pet.breedName then
-    return pet.breedName
-  end
-
-  if pet.breedID
-      and addon.Services
-      and addon.Services.Breed
-      and type(
-        addon.Services.Breed.GetBreedName
-      ) == "function" then
-    return addon.Services.Breed:
-    GetBreedName(
-      pet.breedID
-    )
-  end
-
-  return nil
+  return breedService:GetJournalBreed(petID)
 end
 
 local function GetLevelRangeKey(level)
@@ -1138,10 +1138,7 @@ local function CreatePetFamiliesMenu(
   end
 end
 
-local function CreateSourcesMenu(
-    owner,
-    root
-)
+local function CreateSourcesMenu(owner, root)
   local submenu =
       root:CreateButton(
         SOURCES
@@ -1193,20 +1190,6 @@ local function HasCustomFilter(
     filter,
     options
   )
-end
-
-local function HasCollectedFilter()
-  if type(
-        PetJournalFilterDropdown_GetCollectedFilter
-      ) ~= "function"
-      or type(
-        PetJournalFilterDropdown_GetNotCollectedFilter
-      ) ~= "function" then
-    return false
-  end
-
-  return not PetJournalFilterDropdown_GetCollectedFilter()
-      or not PetJournalFilterDropdown_GetNotCollectedFilter()
 end
 
 local function GetExpansionOrder(
@@ -1291,18 +1274,51 @@ local function IsPetInAnyTeam(
   return false
 end
 
-local function GetSortData(item)
-  local pet =
-      GetExtendedPet(
-        item.petID,
-        item.speciesID
+local function GetSortLevelIndex(sortKey)
+  for index, key in ipairs(SortLevels) do
+    if key == sortKey then
+      return index
+    end
+  end
+
+  return nil
+end
+
+local function IsSortLevelSelected(sortKey)
+  return GetSortLevelIndex(sortKey) ~= nil
+end
+
+local function ToggleSortLevel(sortKey)
+  local index =
+      GetSortLevelIndex(
+        sortKey
       )
 
+  if index then
+    table.remove(
+      SortLevels,
+      index
+    )
+  else
+    if #SortLevels
+        >= MAX_SORT_LEVELS then
+      return
+    end
+
+    SortLevels[
+    #SortLevels + 1
+    ] =
+        sortKey
+  end
+
+  RefreshSorting()
+end
+
+local function PopulateSortData(item)
   local expansionName =
-      pet
-      and (
-        pet.expansionName
-        or pet.expansion
+      GetExpansionName(
+        item.petID,
+        item.speciesID
       )
 
   local breedName =
@@ -1311,56 +1327,39 @@ local function GetSortData(item)
         item.speciesID
       )
 
-  local health,
-  power,
-  speed =
+  local health, power, speed =
       GetPetStatsForSorting(
         item.petID
       )
 
-  local isFavorite = false
+  item.expansionOrder =
+      GetExpansionOrder(
+        expansionName
+      )
 
-  if item.petID then
-    isFavorite =
-        C_PetJournal.PetIsFavorite(
-          item.petID
-        ) == true
-  end
+  item.breedOrder =
+      GetBreedOrder(
+        breedName
+      )
 
-  return {
-    expansionOrder =
-        GetExpansionOrder(
-          expansionName
-        ),
+  item.health = health
+  item.power = power
+  item.speed = speed
 
-    breedOrder =
-        GetBreedOrder(
-          breedName
-        ),
+  item.isFavorite =
+      item.petID ~= nil
+      and C_PetJournal.PetIsFavorite(
+        item.petID
+      ) == true
 
-    health = health,
-    power = power,
-    speed = speed,
-
-    isFavorite = isFavorite,
-
-    isInTeam =
-        IsPetInAnyTeam(
-          item.petID,
-          item.speciesID
-        ),
-
-    name =
-        pet
-        and pet.name
-        or "",
-  }
+  item.isInTeam =
+      IsPetInAnyTeam(
+        item.petID,
+        item.speciesID
+      )
 end
 
-local function CompareValues(
-    a,
-    b
-)
+local function CompareValues(a, b)
   if a == b then
     return 0
   end
@@ -1372,285 +1371,244 @@ local function CompareValues(
   return 1
 end
 
-local function SortItems(items)
-  local customSort =
-      ActiveSort.type == "custom"
-      and ActiveSort.value
-      or nil
-
-  local needsManualSort =
-      customSort ~= nil
-      or SortOptions.favoritesFirst
-      or SortOptions.reverse
-
-  if not needsManualSort then
-    return
+local function CompareSortLevel(sortKey, a, b)
+  if sortKey == "name" then
+    return CompareValues(
+      a.nameLower or "",
+      b.nameLower or ""
+    )
   end
 
+  if sortKey == "level" then
+    return CompareValues(
+      b.level,
+      a.level
+    )
+  end
+
+  if sortKey == "rarity" then
+    return CompareValues(
+      b.rarity,
+      a.rarity
+    )
+  end
+
+  if sortKey == "type" then
+    return CompareValues(
+      a.petType,
+      b.petType
+    )
+  end
+
+  if sortKey == "expansion" then
+    return CompareValues(
+      b.expansionOrder,
+      a.expansionOrder
+    )
+  end
+
+  if sortKey == "breed" then
+    return CompareValues(
+      a.breedOrder,
+      b.breedOrder
+    )
+  end
+
+  if sortKey == "health" then
+    return CompareValues(
+      b.health,
+      a.health
+    )
+  end
+
+  if sortKey == "power" then
+    return CompareValues(
+      b.power,
+      a.power
+    )
+  end
+
+  if sortKey == "speed" then
+    return CompareValues(
+      b.speed,
+      a.speed
+    )
+  end
+
+  if sortKey == "teams" then
+    if a.isInTeam == b.isInTeam then
+      return 0
+    end
+
+    return a.isInTeam
+        and -1
+        or 1
+  end
+
+  return 0
+end
+
+local function SortItems(items)
   for _, item in ipairs(items) do
-    item.sortData =
-        GetSortData(item)
+    PopulateSortData(item)
   end
 
   table.sort(
     items,
 
     function(a, b)
-      local aData = a.sortData
-      local bData = b.sortData
+      ------------------------------------------------
+      -- Collected pets always before uncollected.
+      --
+      -- Reverse Sort does NOT change this.
+      ------------------------------------------------
+      if a.isOwned ~= b.isOwned then
+        return a.isOwned == true
+      end
 
       ------------------------------------------------
-      -- Favorites blijven altijd eerst staan.
-      -- Reverse Sort draait dit niet om.
+      -- Favorites first
       ------------------------------------------------
-
       if SortOptions.favoritesFirst
-          and aData.isFavorite
-          ~= bData.isFavorite then
-        return aData.isFavorite == true
+          and a.isFavorite
+          ~= b.isFavorite then
+        return a.isFavorite == true
       end
 
-      local comparison = 0
-
       ------------------------------------------------
-      -- PetMatch-sorteringen
+      -- Level 1 -> 2 -> 3
       ------------------------------------------------
+      for _, sortKey in ipairs(
+        SortLevels
+      ) do
+        local comparison =
+            CompareSortLevel(
+              sortKey,
+              a,
+              b
+            )
 
-      if customSort == "expansion" then
-        -- Standaard: nieuwste expansion eerst.
-        comparison =
-            CompareValues(
-              bData.expansionOrder,
-              aData.expansionOrder
-            )
-      elseif customSort == "breed" then
-        -- Volgorde zoals BREEDS is gedefinieerd.
-        comparison =
-            CompareValues(
-              aData.breedOrder,
-              bData.breedOrder
-            )
-      elseif customSort == "health" then
-        -- Standaard: hoogste eerst.
-        comparison =
-            CompareValues(
-              bData.health,
-              aData.health
-            )
-      elseif customSort == "power" then
-        comparison =
-            CompareValues(
-              bData.power,
-              aData.power
-            )
-      elseif customSort == "speed" then
-        comparison =
-            CompareValues(
-              bData.speed,
-              aData.speed
-            )
-      elseif customSort == "teams" then
-        if aData.isInTeam
-            ~= bData.isInTeam then
-          comparison =
-              aData.isInTeam
-              and -1
-              or 1
+        if comparison ~= 0 then
+          if SortOptions.reverse then
+            comparison = -comparison
+          end
+
+          return comparison < 0
         end
       end
 
       ------------------------------------------------
-      -- Blizzard-sortering met modifiers
+      -- Name fallback
       ------------------------------------------------
-
-      if not customSort then
-        local sortParameter =
-            ActiveSort.value
-
-        if sortParameter
-            == LE_SORT_BY_NAME then
-          comparison =
-              CompareValues(
-                string.lower(
-                  aData.name or ""
-                ),
-                string.lower(
-                  bData.name or ""
-                )
-              )
-        elseif sortParameter
-            == LE_SORT_BY_LEVEL then
-          comparison =
-              CompareValues(
-                tonumber(b.level) or 0,
-                tonumber(a.level) or 0
-              )
-        elseif sortParameter
-            == LE_SORT_BY_RARITY then
-          comparison =
-              CompareValues(
-                tonumber(b.rarity) or 0,
-                tonumber(a.rarity) or 0
-              )
-        elseif sortParameter
-            == LE_SORT_BY_PETTYPE then
-          comparison =
-              CompareValues(
-                tonumber(a.petType) or 0,
-                tonumber(b.petType) or 0
-              )
-        end
-      end
-
-      ------------------------------------------------
-      -- Secundaire sortering op naam
-      ------------------------------------------------
-
-      if comparison == 0 then
-        comparison =
-            CompareValues(
-              string.lower(
-                aData.name or ""
-              ),
-              string.lower(
-                bData.name or ""
-              )
-            )
-      end
+      local comparison =
+          CompareValues(
+            a.nameLower or "",
+            b.nameLower or ""
+          )
 
       if SortOptions.reverse then
         comparison = -comparison
       end
 
-      return comparison < 0
+      if comparison ~= 0 then
+        return comparison < 0
+      end
+
+      ------------------------------------------------
+      -- Final deterministic fallback
+      ------------------------------------------------
+      return tostring(
+        a.petID
+        or a.speciesID
+        or a.index
+        or ""
+      ) < tostring(
+        b.petID
+        or b.speciesID
+        or b.index
+        or ""
+      )
     end
   )
 end
 
-local function SelectBlizzardSort(
-    sortParameter
-)
-  ActiveSort.type = "blizzard"
-  ActiveSort.value = sortParameter
+local function CreateUnifiedSortMenu(root)
+  local submenu = root:CreateButton(RAID_FRAME_SORT_LABEL)
 
-  C_PetJournal.SetPetSortParameter(
-    sortParameter
-  )
+  for _, option in ipairs(ALL_SORT_OPTIONS) do
+    local sortKey = option.key
+    local sortLabel = option.label
 
-  ClearCache()
-  FilterExtension:ApplyFilters()
-end
+    local button =
+        submenu:CreateCheckbox(
+          sortLabel,
 
-local function SelectCustomSort(
-    sortKey
-)
-  ActiveSort.type = "custom"
-  ActiveSort.value = sortKey
+          function()
+            return IsSortLevelSelected(
+              sortKey
+            )
+          end,
 
-  ClearCache()
-  FilterExtension:ApplyFilters()
-end
+          function()
+            ToggleSortLevel(
+              sortKey
+            )
 
-local function CreateUnifiedSortMenu(
-    root
-)
-  local submenu =
-      root:CreateButton(
-        RAID_FRAME_SORT_LABEL
-      )
-
-  local blizzardSorts = {
-    {
-      label = NAME,
-      value = LE_SORT_BY_NAME,
-    },
-    {
-      label = LEVEL,
-      value = LE_SORT_BY_LEVEL,
-    },
-    {
-      label = RARITY,
-      value = LE_SORT_BY_RARITY,
-    },
-    {
-      label = TYPE,
-      value = LE_SORT_BY_PETTYPE,
-    },
-  }
-
-  for _, option in ipairs(
-    blizzardSorts
-  ) do
-    local sortParameter =
-        option.value
-
-    submenu:CreateRadio(
-      option.label,
-
-      function(parameter)
-        return ActiveSort.type
-            == "blizzard"
-            and ActiveSort.value
-            == parameter
-      end,
-
-      function(parameter)
-        SelectBlizzardSort(
-          parameter
+            return MenuResponse.Refresh
+          end
         )
 
-        return MenuResponse.Refresh
-      end,
+    button:AddInitializer(
+      function(frame)
+        local index =
+            GetSortLevelIndex(
+              sortKey
+            )
 
-      sortParameter
+        ------------------------------------------------
+        -- Dynamic label
+        ------------------------------------------------
+
+        if frame.fontString then
+          frame.fontString:SetText(
+            index
+            and string.format(
+              "%d. %s",
+              index,
+              sortLabel
+            )
+            or sortLabel
+          )
+        end
+
+        ------------------------------------------------
+        -- Disable other options at max 3
+        ------------------------------------------------
+
+        frame:SetEnabled(
+          index ~= nil
+          or #SortLevels
+          < MAX_SORT_LEVELS
+        )
+      end
     )
   end
 
-  for _, option in ipairs(
-    SORT_OPTIONS
-  ) do
-    local sortKey =
-        option.key
-
-    submenu:CreateRadio(
-      option.label,
-
-      function(key)
-        return ActiveSort.type
-            == "custom"
-            and ActiveSort.value
-            == key
-      end,
-
-      function(key)
-        SelectCustomSort(
-          key
-        )
-
-        return MenuResponse.Refresh
-      end,
-
-      sortKey
-    )
-  end
-
+  --------------------------------------------------
+  -- Modifiers
+  --------------------------------------------------
   submenu:CreateDivider()
 
   submenu:CreateCheckbox(
     "Favorites First",
 
     function()
-      return SortOptions.favoritesFirst
-          == true
+      return SortOptions.favoritesFirst == true
     end,
 
     function()
-      SortOptions.favoritesFirst =
-          not SortOptions.favoritesFirst
-
-      ClearCache()
-      FilterExtension:ApplyFilters()
-
+      SortOptions.favoritesFirst = not SortOptions.favoritesFirst
+      RefreshSorting()
       return MenuResponse.Refresh
     end
   )
@@ -1659,83 +1617,85 @@ local function CreateUnifiedSortMenu(
     "Reverse Sort",
 
     function()
-      return SortOptions.reverse
-          == true
+      return SortOptions.reverse == true
     end,
 
     function()
-      SortOptions.reverse =
-          not SortOptions.reverse
-
-      ClearCache()
-      FilterExtension:ApplyFilters()
-
+      SortOptions.reverse = not SortOptions.reverse
+      RefreshSorting()
       return MenuResponse.Refresh
     end
   )
 
+  --------------------------------------------------
+  -- Reset
+  --------------------------------------------------
   submenu:CreateDivider()
 
-  local resetButton =
-      submenu:CreateButton(
-        RESET
-      )
+  local resetButton = submenu:CreateButton(RESET)
 
   resetButton:SetResponder(
     function()
-      -----------------------------------------
-      -- Blizzard sort
-      -----------------------------------------
-
-      ActiveSort.type = "blizzard"
-      ActiveSort.value = LE_SORT_BY_NAME
-
-      C_PetJournal.SetPetSortParameter(
-        LE_SORT_BY_NAME
-      )
-
-      -----------------------------------------
-      -- PetMatch sort options
-      -----------------------------------------
-
-      SortOptions.favoritesFirst = false
+      wipe(SortLevels)
+      SortOptions.favoritesFirst = true
       SortOptions.reverse = false
 
-      -----------------------------------------
-      -- Refresh
-      -----------------------------------------
-
-      ClearCache()
-      FilterExtension:ApplyFilters()
-
+      C_PetJournal.SetPetSortParameter(LE_SORT_BY_NAME)
+      RefreshSorting()
       return MenuResponse.Refresh
     end
   )
 end
 
+local function AcquireItem()
+  local item =
+      table.remove(
+        ItemPool
+      )
+
+  if not item then
+    item = {}
+  end
+
+  return item
+end
+
+local function ReleaseItemList(
+    list
+)
+  for index = 1, #list do
+    local item =
+        list[index]
+
+    wipe(item)
+
+    ItemPool[
+    #ItemPool + 1
+    ] =
+        item
+
+    list[index] = nil
+  end
+end
+
 function FilterExtension:SetupFilterDropdown()
-  if not PetJournal
-      or not PetJournal.FilterDropdown then
+  if not PetJournal or not PetJournal.FilterDropdown then
     return
   end
 
-  local dropdown =
-      PetJournal.FilterDropdown
+  local dropdown = PetJournal.FilterDropdown
 
   dropdown:SetWidth(90)
 
   dropdown:SetIsDefaultCallback(
     function()
-      -- PetMatch gebruikt de eigen filterbalk.
-      -- Daardoor blijft Blizzard's rode resetknop verborgen.
       return true
     end
   )
 
   dropdown:SetDefaultCallback(
     function()
-      FilterExtension:
-          ResetAllFilters()
+      FilterExtension:ResetAllFilters()
     end
   )
 
@@ -1840,10 +1800,6 @@ end
 
 function FilterExtension:GetActiveFilterNames()
   local names = {}
-
-  if HasCollectedFilter() then
-    names[#names + 1] = "Collected"
-  end
 
   if HasCustomFilter(
         Filters.petTypes,
@@ -2138,9 +2094,6 @@ function FilterExtension:UpdateFilterBar(
 end
 
 function FilterExtension:ResetAllFilters()
-  --------------------------------------------------
-  -- PetMatch multi-selectfilters
-  --------------------------------------------------
   SetAll(
     Filters.petTypes,
     PET_TYPES,
@@ -2183,51 +2136,35 @@ function FilterExtension:ResetAllFilters()
     false
   )
 
-  --------------------------------------------------
-  -- Other
-  --------------------------------------------------
-
   OtherFilters.leveling = nil
   OtherFilters.tradable = nil
   OtherFilters.battle = nil
   OtherFilters.team = nil
 
-  --------------------------------------------------
-  -- Sorteermodifiers
-  --------------------------------------------------
-
-  SortOptions.favoritesFirst = false
+  SortOptions.favoritesFirst = true
   SortOptions.reverse = false
 
-  --------------------------------------------------
-  -- Standaardsortering
-  --------------------------------------------------
-
-  ActiveSort.type = "blizzard"
-  ActiveSort.value = LE_SORT_BY_NAME
+  wipe(SortLevels)
 
   C_PetJournal.SetPetSortParameter(
     LE_SORT_BY_NAME
   )
 
-  --------------------------------------------------
-  -- Blizzard-native filters
-  --------------------------------------------------
-
-  -- if C_PetJournal.SetDefaultFilters then
-  --   C_PetJournal.SetDefaultFilters()
-  -- end
-
   SyncNativePetTypes()
   SyncNativeSources()
 
-  ClearCache()
+  RefreshSorting()
+
+  if PetJournal
+      and PetJournal.FilterDropdown
+      and PetJournal.FilterDropdown.GenerateMenu then
+    PetJournal.FilterDropdown:GenerateMenu()
+  end
+
   self:Refresh()
 end
 
 function FilterExtension:Refresh()
-  ClearCache()
-
   if type(PetJournal_UpdatePetList)
       ~= "function" then
     return
@@ -2450,10 +2387,17 @@ function FilterExtension:ApplyFilters()
     return
   end
 
-  local items = {}
+  --------------------------------------------------
+  -- Recycle the previous build buffer.
+  --
+  -- ActiveItems are still owned by the current
+  -- DataProvider, so we do not touch them yet.
+  --------------------------------------------------
 
-  local petCount =
-      C_PetJournal.GetNumPets()
+  ReleaseItemList(BuildItems)
+
+  local items = BuildItems
+  local petCount = C_PetJournal.GetNumPets()
 
   for index = 1, petCount do
     local petID,
@@ -2463,7 +2407,7 @@ function FilterExtension:ApplyFilters()
     level,
     _favorite,
     _isRevoked,
-    _name,
+    name,
     _icon,
     petType,
     _creatureID,
@@ -2471,10 +2415,7 @@ function FilterExtension:ApplyFilters()
     _description,
     _isHatchable,
     canBattle,
-    tradable =
-        C_PetJournal.GetPetInfoByIndex(
-          index
-        )
+    tradable = C_PetJournal.GetPetInfoByIndex(index)
 
     if self:MatchesPet(
           petID,
@@ -2497,39 +2438,65 @@ function FilterExtension:ApplyFilters()
             ) or 0
       end
 
-      items[#items + 1] = {
-        index = index,
-        petID = petID,
-        speciesID = speciesID,
-        isOwned = isOwned == true,
-        level = tonumber(level) or 0,
-        rarity = tonumber(rarity) or 0,
-        petType = tonumber(petType) or 0,
-      }
+      local item = AcquireItem()
+
+      item.index = index
+      item.petID = petID
+      item.speciesID = speciesID
+      item.name = tostring(name or "")
+      item.nameLower = string.lower(item.name)
+      item.isOwned = isOwned == true
+      item.level = tonumber(level) or 0
+      item.rarity = tonumber(rarity) or 0
+      item.petType = tonumber(petType) or 0
+
+      items[#items + 1] = item
     end
   end
 
+  --------------------------------------------------
+  -- Populate extra sort data and sort
+  --------------------------------------------------
   SortItems(items)
 
-  local dataProvider =
-      CreateDataProvider()
+  --------------------------------------------------
+  -- Build a fresh provider using the new buffer
+  --------------------------------------------------
+  local dataProvider = CreateDataProvider()
 
   for _, item in ipairs(items) do
-    dataProvider:Insert({
-      index = item.index,
-      petID = item.petID,
-      speciesID = item.speciesID,
-    })
+    dataProvider:Insert(item)
   end
 
-  PetJournal.ScrollBox:SetDataProvider(
-    dataProvider,
-    ScrollBoxConstants.RetainScrollPosition
-  )
+  --------------------------------------------------
+  -- Install the new provider first.
+  --
+  -- Only after this point is the old provider no
+  -- longer the active one for the ScrollBox.
+  --------------------------------------------------
+  PetJournal.ScrollBox:
+      SetDataProvider(
+        dataProvider,
+        ScrollBoxConstants.RetainScrollPosition
+      )
 
-  self:UpdateFilterBar(
-    #items
-  )
+  --------------------------------------------------
+  -- The old active item buffer can now be recycled
+  --------------------------------------------------
+  ReleaseItemList(ActiveItems)
+
+  --------------------------------------------------
+  -- Swap buffers
+  --
+  -- ActiveItems = what the current provider uses
+  -- BuildItems  = empty buffer for next refresh
+  --------------------------------------------------
+  ActiveItems, BuildItems = BuildItems, ActiveItems
+
+  --------------------------------------------------
+  -- Update filter bar
+  --------------------------------------------------
+  self:UpdateFilterBar(#ActiveItems)
 end
 
 function FilterExtension:HookPetJournal()
@@ -2548,8 +2515,7 @@ function FilterExtension:HookPetJournal()
     "PetJournal_UpdatePetList",
 
     function()
-      FilterExtension:
-          ApplyFilters()
+      QueueApplyFilters()
     end
   )
 end
@@ -2557,39 +2523,29 @@ end
 function FilterExtension:Initialize()
   InitializeFilters()
 
-  ActiveSort.type = "blizzard"
-  ActiveSort.value = C_PetJournal.GetPetSortParameter()
-
-  self.EventFrame =
-      CreateFrame("Frame")
-
-  self.EventFrame:RegisterEvent(
-    "ADDON_LOADED"
+  wipe(SortLevels)
+  C_PetJournal.SetPetSortParameter(
+    LE_SORT_BY_NAME
   )
 
-  self.EventFrame:RegisterEvent(
-    "PET_JOURNAL_LIST_UPDATE"
-  )
+  self.EventFrame = CreateFrame("Frame")
+  self.EventFrame:RegisterEvent("ADDON_LOADED")
+  self.EventFrame:RegisterEvent("PET_JOURNAL_LIST_UPDATE")
 
   self.EventFrame:SetScript(
     "OnEvent",
 
     function(_, event, loadedAddon)
       if event == "ADDON_LOADED" then
-        if loadedAddon
-            == "Blizzard_Collections" then
+        if loadedAddon == "Blizzard_Collections" then
           FilterExtension:SetupFilterDropdown()
           FilterExtension:HookPetJournal()
           FilterExtension:CreateFilterBar()
           FilterExtension:HideBlizzardResetButton()
           SyncNativeFilters()
         end
-      elseif event
-          == "PET_JOURNAL_LIST_UPDATE" then
-        ClearCache()
-
-        FilterExtension:
-            HookPetJournal()
+      elseif event == "PET_JOURNAL_LIST_UPDATE" then
+        FilterExtension:HookPetJournal()
       end
     end
   )
@@ -2599,8 +2555,7 @@ function FilterExtension:Initialize()
   self:CreateFilterBar()
   self:HideBlizzardResetButton()
 
-  if PetJournal
-      and PetJournal.FilterDropdown then
+  if PetJournal and PetJournal.FilterDropdown then
     SyncNativeFilters()
   end
 end

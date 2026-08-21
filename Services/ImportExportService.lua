@@ -472,6 +472,59 @@ local function BuildRematchNotes(notes, script)
   }, "\n")
 end
 
+local function GetSpeciesName(speciesID)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return "Unknown pet"
+  end
+
+  local speciesName =
+      C_PetJournal.GetPetInfoBySpeciesID(
+        speciesID
+      )
+
+  return speciesName or ("Species " .. speciesID)
+end
+
+local function GetRequiredSpeciesCounts(teamData)
+  local counts = {}
+
+  for slot = 1, 3 do
+    local slotData = teamData.slots and teamData.slots[slot]
+
+    if slotData and not slotData.special and slotData.speciesID then
+      local speciesID = tonumber(slotData.speciesID)
+
+      if speciesID then
+        counts[speciesID] = (counts[speciesID] or 0) + 1
+      end
+    end
+  end
+
+  return counts
+end
+
+local function GetResolvedSpeciesCounts(team)
+  local counts = {}
+
+  for slot = 1, 3 do
+    local petGUID = team and team.pets and team.pets[slot]
+
+    if petGUID then
+      local speciesID = addon.Services.PetJournal:GetSpeciesID(petGUID)
+
+      speciesID = tonumber(speciesID)
+
+      if speciesID then
+        counts[speciesID] = (counts[speciesID] or 0) + 1
+      end
+    end
+  end
+
+  return counts
+end
+
 function ImportExportService:NeedsPreview(
     document
 )
@@ -745,10 +798,7 @@ function ImportExportService:GetAbilityIDsFromChoices(
   return selected
 end
 
-function ImportExportService:ImportRematchDocument(
-    document,
-    options
-)
+function ImportExportService:ImportRematchDocument(document, options)
   options = options or {}
 
   local defaultFolderID =
@@ -768,6 +818,7 @@ function ImportExportService:ImportRematchDocument(
     folders = {},
     warnings = {},
     failed = {},
+    missingSpecies = {},
   }
 
   local resolvedPetsBySpeciesID = {}
@@ -823,6 +874,53 @@ function ImportExportService:ImportRematchDocument(
 
       if team then
         result.teams[#result.teams + 1] = team
+
+        if missingSpecies and #missingSpecies > 0 then
+          local requiredCounts = GetRequiredSpeciesCounts(teamData)
+          local resolvedCounts = GetResolvedSpeciesCounts(team)
+
+          local handledSpecies = {}
+
+          for _, speciesID in ipairs(missingSpecies) do
+            speciesID = tonumber(speciesID)
+
+            if speciesID and not handledSpecies[speciesID] then
+              handledSpecies[speciesID] = true
+
+              local required = requiredCounts[speciesID] or 1
+              local assigned = resolvedCounts[speciesID] or 0
+              local petName = GetSpeciesName(speciesID)
+
+              local warning
+
+              if required > 1 then
+                warning =
+                    string.format(
+                      "%s requires %d copies of %s, but only %d could be assigned.",
+                      teamData.name
+                      or "Imported team",
+                      required,
+                      petName,
+                      assigned
+                    )
+              else
+                warning =
+                    string.format(
+                      "%s requires %s, but no owned pet could be assigned.",
+                      teamData.name
+                      or "Imported team",
+                      petName
+                    )
+              end
+
+              result.warnings[#result.warnings + 1] = warning
+
+              addon.Logger:Warn(
+                warning
+              )
+            end
+          end
+        end
       else
         result.failed[#result.failed + 1] = {
           name = teamData.name,
@@ -843,16 +941,12 @@ function ImportExportService:ImportRematchDocument(
   return result
 end
 
-function ImportExportService:ImportRematchDocumentAsync(
-    document,
-    options
-)
+function ImportExportService:ImportRematchDocumentAsync(document, options)
   options = options or {}
 
   local defaultFolderID =
       options.defaultFolderID
-      or addon.Services.Folder:
-      GetSelectedStorageFolderID()
+      or addon.Services.Folder:GetSelectedStorageFolderID()
 
   local conflictMode =
       options.conflictMode
@@ -1004,70 +1098,92 @@ function ImportExportService:ImportRematchDocumentAsync(
       teamData.folderID =
           item.folderID
 
-      local team,
-      errorMessage,
-      missingSpecies =
-          addon.Services.Team:
-          CreateFromImport(
+      local team, errorMessage, missingSpecies =
+          addon.Services.Team:CreateFromImport(
             teamData,
             {
-              conflictMode =
-                  conflictMode,
-
-              resolvedPetsBySpeciesID =
-                  resolvedPetsBySpeciesID,
+              conflictMode = conflictMode,
+              resolvedPetsBySpeciesID = resolvedPetsBySpeciesID,
             }
           )
 
-      if team then
-        result.teams[
-        #result.teams + 1
-        ] =
-            team
-      else
-        result.failed[
-        #result.failed + 1
-        ] = {
-          name =
-              teamData.name,
+      if team and missingSpecies and #missingSpecies > 0 then
+        addon.Logger:Warn(
+          "Imported team is missing one or more required pets."
+        )
 
-          error =
-              errorMessage,
-        }
+        local requiredCounts = GetRequiredSpeciesCounts(teamData)
+        local resolvedCounts = GetResolvedSpeciesCounts(team)
 
-        if errorMessage then
-          result.warnings[
-          #result.warnings + 1
-          ] =
-              errorMessage
+        local handledSpecies = {}
+
+        for _, speciesID in ipairs(missingSpecies) do
+          speciesID = tonumber(speciesID)
+
+          if speciesID and not handledSpecies[speciesID] then
+            handledSpecies[speciesID] = true
+
+            local required = requiredCounts[speciesID] or 1
+            local assigned = resolvedCounts[speciesID] or 0
+            local petName = GetSpeciesName(speciesID)
+
+            local warning
+
+            if required > 1 then
+              warning =
+                  string.format(
+                    "%s requires %d copies of %s, but only %d could be assigned.",
+                    teamData.name
+                    or "Imported team",
+                    required,
+                    petName,
+                    assigned
+                  )
+            else
+              warning =
+                  string.format(
+                    "%s requires %s, but no owned pet could be assigned.",
+                    teamData.name
+                    or "Imported team",
+                    petName
+                  )
+            end
+
+            result.warnings[#result.warnings + 1] = warning
+
+            addon.Logger:Warn(
+              warning
+            )
+          end
         end
       end
 
-      for _, speciesID in ipairs(
-        missingSpecies or {}
-      ) do
-        result.missingSpecies[
-        #result.missingSpecies + 1
-        ] =
-            speciesID
+      if team then
+        result.teams[#result.teams + 1] = team
+      else
+        result.failed[#result.failed + 1] = {
+          name = teamData.name,
+          error = errorMessage,
+        }
+
+        if errorMessage then
+          result.warnings[#result.warnings + 1] = errorMessage
+        end
       end
 
-      index =
-          index + 1
+      for _, speciesID in ipairs(missingSpecies or {}) do
+        result.missingSpecies[#result.missingSpecies + 1] = speciesID
+      end
 
-      processed =
-          processed + 1
+      index = index + 1
+      processed = processed + 1
     end
 
     --------------------------------------------------
     -- Progress
     --------------------------------------------------
 
-    local completed =
-        math.min(
-          index - 1,
-          total
-        )
+    local completed = math.min(index - 1, total)
 
     if onProgress then
       onProgress(

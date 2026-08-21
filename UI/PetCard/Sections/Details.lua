@@ -8,6 +8,8 @@ local SECTION_HEIGHT = 140
 local MODEL_WIDTH = 150
 local MODEL_HEIGHT = 120
 
+local MODEL_HOVER_DELAY = 0.15
+
 local INNER_PADDING = 10
 local COLUMN_SPACING = 6
 
@@ -18,9 +20,6 @@ function Details:Create(parent)
         Details
       )
 
-  --------------------------------------------------
-  -- Section
-  --------------------------------------------------
   instance.Frame =
       CreateFrame(
         "Frame",
@@ -33,9 +32,6 @@ function Details:Create(parent)
     SECTION_HEIGHT
   )
 
-  --------------------------------------------------
-  -- Background
-  --------------------------------------------------
   instance.Frame:SetBackdrop({
     bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
@@ -66,9 +62,6 @@ function Details:Create(parent)
     1
   )
 
-  --------------------------------------------------
-  -- Pet model
-  --------------------------------------------------
   instance.Model =
       CreateFrame(
         "ModelScene",
@@ -90,12 +83,11 @@ function Details:Create(parent)
     -2
   )
 
-  instance.Model:SetIsFrameBuffer(
-    true
-  )
+  instance.Model:SetIsFrameBuffer(true)
 
   instance.Model:SetFrameLevel(
-    instance.Frame:GetFrameLevel() + 100
+    instance.Frame:GetFrameLevel()
+    + 100
   )
 
   instance.Model:SetViewInsets(
@@ -106,19 +98,23 @@ function Details:Create(parent)
   )
 
   instance.Model:EnableMouse(false)
+
   instance.Model:Hide()
 
-  --------------------------------------------------
-  -- Stats
-  --------------------------------------------------
+  instance.ModelTimer = nil
+
+  instance.PendingDisplayID = nil
+  instance.PendingSpeciesID = nil
+
+  instance.CurrentDisplayID = nil
+  instance.CurrentSpeciesID = nil
+
   instance.Stats =
       addon.UI.PetCard.Stats:Create(
         instance.Frame
       )
 
-  instance.StatsFrame =
-      instance.Stats:GetFrame()
-
+  instance.StatsFrame = instance.Stats:GetFrame()
   instance.StatsFrame:ClearAllPoints()
 
   instance.StatsFrame:SetPoint(
@@ -140,20 +136,87 @@ function Details:Create(parent)
   return instance
 end
 
-function Details:SetPet(pet)
-  if not pet then
-    self:SetPetModel(nil)
-    self.Stats:SetPet(nil)
+function Details:CancelModelTimer()
+  if self.ModelTimer then
+    self.ModelTimer:Cancel()
+    self.ModelTimer = nil
+  end
+
+  self.PendingDisplayID = nil
+  self.PendingSpeciesID = nil
+end
+
+function Details:SchedulePetModel(displayID, speciesID)
+  displayID = tonumber(displayID)
+  speciesID = tonumber(speciesID)
+
+  self:CancelModelTimer()
+
+  if not displayID or not speciesID then
+    self:SetPetModel(nil, nil)
+    return
+  end
+
+  if self.CurrentDisplayID == displayID
+      and self.CurrentSpeciesID == speciesID
+      and self.Model:IsShown() then
     return
   end
 
   self:SetPetModel(
-    pet.displayID,
-    pet.speciesID
+    nil,
+    nil
   )
 
-  self.Stats:SetPet(
-    pet
+  self.PendingDisplayID =
+      displayID
+
+  self.PendingSpeciesID = speciesID
+
+  self.ModelTimer =
+      C_Timer.NewTimer(
+        MODEL_HOVER_DELAY,
+
+        function()
+          self.ModelTimer = nil
+
+          if not self.Frame
+              or not self.Frame:IsShown() then
+            self.PendingDisplayID = nil
+            self.PendingSpeciesID = nil
+
+            return
+          end
+
+          if self.PendingDisplayID ~= displayID
+              or self.PendingSpeciesID ~= speciesID then
+            return
+          end
+
+          self.PendingDisplayID = nil
+          self.PendingSpeciesID = nil
+
+          self:SetPetModel(
+            displayID,
+            speciesID
+          )
+        end
+      )
+end
+
+function Details:SetPet(pet)
+  if not pet then
+    self:CancelModelTimer()
+    self:SetPetModel(nil, nil)
+    self.Stats:SetPet(nil)
+    return
+  end
+
+  self.Stats:SetPet(pet)
+
+  self:SchedulePetModel(
+    pet.displayID,
+    pet.speciesID
   )
 end
 
@@ -169,24 +232,25 @@ function Details:SetPetModel(displayID, speciesID)
       self.Model:Hide()
     end
 
+    self.CurrentDisplayID = nil
+    self.CurrentSpeciesID = nil
+
     return
   end
 
-  --------------------------------------------------
-  -- Get Blizzard's ModelScene for this species
-  --------------------------------------------------
   local _, modelSceneID =
       C_PetJournal.GetPetModelSceneInfoBySpeciesID(speciesID)
 
   if not modelSceneID then
     self.Model:ClearScene()
     self.Model:Hide()
+
+    self.CurrentDisplayID = nil
+    self.CurrentSpeciesID = nil
+
     return
   end
 
-  --------------------------------------------------
-  -- Reset previous scene
-  --------------------------------------------------
   self.Model:ClearScene()
 
   self.Model:SetViewInsets(
@@ -196,39 +260,34 @@ function Details:SetPetModel(displayID, speciesID)
     0
   )
 
-  --------------------------------------------------
-  -- Load pet scene
-  --------------------------------------------------
-  self.Model:TransitionToModelSceneID(
-    modelSceneID,
-    CAMERA_TRANSITION_TYPE_IMMEDIATE,
-    CAMERA_MODIFICATION_TYPE_DISCARD,
-    true
-  )
+  self.Model:
+      TransitionToModelSceneID(
+        modelSceneID,
+        CAMERA_TRANSITION_TYPE_IMMEDIATE,
+        CAMERA_MODIFICATION_TYPE_DISCARD,
+        true
+      )
 
-  --------------------------------------------------
-  -- Get Blizzard's pet actor
-  --------------------------------------------------
   local actor = self.Model:GetActorByTag("pet")
 
   if not actor then
     self.Model:Hide()
+
+    self.CurrentDisplayID = nil
+    self.CurrentSpeciesID = nil
+
     return
   end
 
-  --------------------------------------------------
-  -- Set requested pet display
-  --------------------------------------------------
-
-  local success =
-      actor:SetModelByCreatureDisplayID(
-        displayID,
-        true
-      )
+  local success = actor:SetModelByCreatureDisplayID(displayID, true)
 
   if not success then
     self.Model:ClearScene()
     self.Model:Hide()
+
+    self.CurrentDisplayID = nil
+    self.CurrentSpeciesID = nil
+
     return
   end
 
@@ -238,6 +297,8 @@ function Details:SetPetModel(displayID, speciesID)
     )
   end
 
+  self.CurrentDisplayID = displayID
+  self.CurrentSpeciesID = speciesID
   self.Model:Show()
 end
 

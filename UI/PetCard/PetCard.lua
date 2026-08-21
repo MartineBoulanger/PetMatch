@@ -513,10 +513,7 @@ function PetCard:Show()
   self.Frame:Show()
 end
 
-function PetCard:Hide(
-    owner,
-    force
-)
+function PetCard:Hide(owner, force)
   if self.Pinned
       and force ~= true then
     return
@@ -526,6 +523,16 @@ function PetCard:Hide(
       and self.Owner
       and owner ~= self.Owner then
     return
+  end
+
+  self.Pet = nil
+
+  if self.Details then
+    self.Details:SetPet(nil)
+  end
+
+  if self.AbilityGrid then
+    self.AbilityGrid:Clear()
   end
 
   self.Frame:Hide()

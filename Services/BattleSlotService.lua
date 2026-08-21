@@ -1,6 +1,7 @@
 local _, addon = ...
 
 local BattleSlotService = {}
+BattleSlotService.LoadGeneration = 0
 
 local MAX_ABILITY_ATTEMPTS = 6
 local ABILITY_RETRY_DELAY = 0.08
@@ -75,12 +76,11 @@ local function ApplyAbilities(
   end
 end
 
-local function ApplyAbilitiesWithRetry(
-    pets,
-    abilities,
-    attempt
-)
+local function ApplyAbilitiesWithRetry(pets, abilities, attempt, generation)
   attempt = attempt or 1
+  if generation ~= BattleSlotService.LoadGeneration then
+    return
+  end
 
   ApplyAbilities(
     pets,
@@ -89,16 +89,19 @@ local function ApplyAbilitiesWithRetry(
 
   C_Timer.After(
     ABILITY_RETRY_DELAY,
+
     function()
+      if generation ~= BattleSlotService.LoadGeneration then
+        return
+      end
+
       if AbilitiesMatch(abilities) then
-        if type(PetJournal_UpdatePetLoadOut)
-            == "function" then
+        if type(PetJournal_UpdatePetLoadOut) == "function" then
           PetJournal_UpdatePetLoadOut()
         end
 
         if addon.Services.LoadoutMonitor then
-          addon.Services.LoadoutMonitor:
-              Resume()
+          addon.Services.LoadoutMonitor:Resume()
         end
 
         return
@@ -108,15 +111,19 @@ local function ApplyAbilitiesWithRetry(
         ApplyAbilitiesWithRetry(
           pets,
           abilities,
-          attempt + 1
+          attempt + 1,
+          generation
         )
 
         return
       end
 
+      if generation ~= BattleSlotService.LoadGeneration then
+        return
+      end
+
       if addon.Services.LoadoutMonitor then
-        addon.Services.LoadoutMonitor:
-            Resume()
+        addon.Services.LoadoutMonitor:Resume()
       end
 
       addon.Logger:Warn(
@@ -402,11 +409,11 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
   return candidate.petGUID
 end
 
-function BattleSlotService:LoadPets(
-    pets,
-    abilities,
-    specialSlots
-)
+function BattleSlotService:LoadPets(pets, abilities, specialSlots)
+  self.LoadGeneration = self.LoadGeneration + 1
+  local generation = self.LoadGeneration
+
+
   if type(pets) ~= "table" then
     return false, "Invalid pet list"
   end
@@ -465,22 +472,15 @@ function BattleSlotService:LoadPets(
 
     resolvedPets[slot] = petGUID
 
-    if specialSlot
-        and (
+    if not petGUID then
+      resolvedAbilities[slot] = nil
+    elseif specialSlot and (
           specialSlot.type == "random"
           or specialSlot.type == "leveling"
-          or specialSlot.type == "levelingQueue"
-        )
-        and petGUID then
-      resolvedAbilities[slot] =
-          GetFirstAbilityIDs(
-            petGUID
-          )
+          or specialSlot.type == "levelingQueue") then
+      resolvedAbilities[slot] = GetFirstAbilityIDs(petGUID)
     else
-      resolvedAbilities[slot] =
-          abilities
-          and abilities[slot]
-          or {}
+      resolvedAbilities[slot] = abilities and abilities[slot] or {}
     end
 
     if petGUID then
@@ -541,11 +541,17 @@ function BattleSlotService:LoadPets(
 
   C_Timer.After(
     0.08,
+
     function()
+      if generation ~= self.LoadGeneration then
+        return
+      end
+
       ApplyAbilitiesWithRetry(
         resolvedPets,
         resolvedAbilities,
-        1
+        1,
+        generation
       )
     end
   )

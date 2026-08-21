@@ -739,8 +739,6 @@ function TeamService:BuildFromImport(importData, resolvedPetsBySpeciesID)
     return nil, "Invalid import data", {}
   end
 
-  resolvedPetsBySpeciesID = resolvedPetsBySpeciesID or {}
-
   local team = {
     name = addon.Utils:Trim(importData.name or ""),
     pets = {},
@@ -760,6 +758,7 @@ function TeamService:BuildFromImport(importData, resolvedPetsBySpeciesID)
   end
 
   local missingSpecies = {}
+  local usedPetGUIDs = {}
 
   for slot = 1, 3 do
     local slotData = importData.slots and importData.slots[slot]
@@ -779,22 +778,18 @@ function TeamService:BuildFromImport(importData, resolvedPetsBySpeciesID)
         local speciesID = tonumber(slotData.speciesID)
 
         if speciesID then
-          local cachedPet = resolvedPetsBySpeciesID[speciesID]
-          local petGUID
-
-          if cachedPet ~= nil then
-            if cachedPet ~= false then
-              petGUID = cachedPet
-            end
-          else
-            petGUID = addon.Services.PetJournal:FindOwnedPetBySpeciesID(slotData.speciesID)
-            resolvedPetsBySpeciesID[speciesID] = petGUID or false
-          end
+          local petGUID =
+              addon.Services.PetJournal:FindOwnedPetForImport(
+                speciesID,
+                slotData.breedID,
+                usedPetGUIDs
+              )
 
           if petGUID then
             team.pets[slot] = petGUID
+            usedPetGUIDs[petGUID] = true
           else
-            missingSpecies[#missingSpecies + 1] = slotData.speciesID
+            missingSpecies[#missingSpecies + 1] = speciesID
           end
         end
 
