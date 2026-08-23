@@ -21,6 +21,9 @@ local ActiveItems = {}
 local BuildItems = {}
 
 local applyFiltersTimer = nil
+local refreshRequired = false
+local currentFilterBarShown = nil
+local applyFiltersQueued = false
 
 local APPLY_FILTERS_DELAY = 0.4
 
@@ -195,6 +198,9 @@ local function QueueApplyFilters()
   -- We wachten kort tot die reeks klaar is en
   -- voeren daarna slechts één volledige rebuild uit.
   --------------------------------------------------
+  if not refreshRequired then
+    return
+  end
 
   if applyFiltersTimer then
     applyFiltersTimer:Cancel()
@@ -208,6 +214,12 @@ local function QueueApplyFilters()
         function()
           applyFiltersTimer = nil
 
+          if not refreshRequired then
+            return
+          end
+
+          refreshRequired = false
+
           FilterExtension:ApplyFilters()
         end
       )
@@ -220,6 +232,23 @@ local function CancelQueuedApplyFilters()
 
   applyFiltersTimer:Cancel()
   applyFiltersTimer = nil
+end
+
+local function QueueImmediateApplyFilters()
+  if applyFiltersQueued then
+    return
+  end
+
+  applyFiltersQueued = true
+
+  C_Timer.After(
+    0,
+    function()
+      applyFiltersQueued = false
+      CancelQueuedApplyFilters()
+      FilterExtension:ApplyFilters()
+    end
+  )
 end
 
 local function InitializeNativeOptions()
@@ -292,17 +321,18 @@ local function SetAll(filter, options, checked)
   end
 end
 
--- local function ClearCache()
---   wipe(PetCache)
--- end
-
 local function RefreshSorting()
-  C_PetJournal.SetPetSortParameter(
-    LE_SORT_BY_NAME
-  )
   CancelQueuedApplyFilters()
-  -- ClearCache()
-  FilterExtension:Refresh()
+
+  --------------------------------------------------
+  -- PetMatch handles the actual sorting itself.
+  --
+  -- Do not call PetJournal_UpdatePetList here:
+  -- that causes Blizzard to rebuild the list first,
+  -- followed by our custom DataProvider rebuild.
+  --------------------------------------------------
+
+  FilterExtension:ApplyFilters()
 end
 
 local function IsOtherFilterChecked(group, value)
@@ -492,63 +522,6 @@ local function SyncNativeFilters()
 
   RefreshSorting()
 end
-
--- local function GetExtendedPet(
---     petID,
---     speciesID
--- )
---   local cacheKey =
---       petID
---       or (
---         "species:"
---         .. tostring(speciesID)
---       )
-
---   if PetCache[cacheKey] ~= nil then
---     local cached =
---         PetCache[cacheKey]
-
---     return cached ~= false
---         and cached
---         or nil
---   end
-
---   local service =
---       addon.Services
---       and addon.Services.PetTooltip
-
---   local pet
-
---   if service then
---     if petID
---         and type(service.CreatePet)
---         == "function" then
---       pet =
---           service:CreatePet(
---             petID
---           )
---     elseif speciesID
---         and type(service.CreateSpeciesPet)
---         == "function" then
---       pet =
---           service:CreateSpeciesPet(
---             speciesID
---           )
---     elseif speciesID
---         and type(service.GetBySpeciesID)
---         == "function" then
---       pet =
---           service:GetBySpeciesID(
---             speciesID
---           )
---     end
---   end
-
---   PetCache[cacheKey] =
---       pet or false
-
---   return pet
--- end
 
 local function GetExpansionName(_petID, speciesID)
   speciesID = tonumber(speciesID)
@@ -1315,48 +1288,113 @@ local function ToggleSortLevel(sortKey)
 end
 
 local function PopulateSortData(item)
-  local expansionName =
-      GetExpansionName(
-        item.petID,
-        item.speciesID
+  --------------------------------------------------
+  -- Favorites
+  --------------------------------------------------
+  if SortOptions.favoritesFirst then
+    item.isFavorite =
+        item.petID ~= nil
+        and C_PetJournal.PetIsFavorite(
+          item.petID
+        ) == true
+  else
+    item.isFavorite = false
+  end
+
+  --------------------------------------------------
+  -- Expansion
+  --------------------------------------------------
+  if IsSortLevelSelected(
+        "expansion"
+      ) then
+    local expansionName =
+        GetExpansionName(
+          item.petID,
+          item.speciesID
+        )
+
+    item.expansionOrder =
+        GetExpansionOrder(
+          expansionName
+        )
+  else
+    item.expansionOrder = 0
+  end
+
+  --------------------------------------------------
+  -- Breed
+  --------------------------------------------------
+  if IsSortLevelSelected(
+        "breed"
+      ) then
+    local breedName =
+        GetBreedName(
+          item.petID,
+          item.speciesID
+        )
+
+    item.breedOrder =
+        GetBreedOrder(
+          breedName
+        )
+  else
+    item.breedOrder = 0
+  end
+
+  --------------------------------------------------
+  -- Stats
+  --
+  -- Only call GetPetStats when one of these
+  -- sort options actually needs the values.
+  --------------------------------------------------
+  local needsHealth =
+      IsSortLevelSelected(
+        "health"
       )
 
-  local breedName =
-      GetBreedName(
-        item.petID,
-        item.speciesID
+  local needsPower =
+      IsSortLevelSelected(
+        "power"
       )
 
-  local health, power, speed =
-      GetPetStatsForSorting(
-        item.petID
+  local needsSpeed =
+      IsSortLevelSelected(
+        "speed"
       )
 
-  item.expansionOrder =
-      GetExpansionOrder(
-        expansionName
-      )
+  if needsHealth
+      or needsPower
+      or needsSpeed then
+    local health,
+    power,
+    speed =
+        GetPetStatsForSorting(
+          item.petID
+        )
 
-  item.breedOrder =
-      GetBreedOrder(
-        breedName
-      )
+    item.health = health
+    item.power = power
+    item.speed = speed
+  else
+    item.health = 0
+    item.power = 0
+    item.speed = 0
+  end
 
-  item.health = health
-  item.power = power
-  item.speed = speed
-
-  item.isFavorite =
-      item.petID ~= nil
-      and C_PetJournal.PetIsFavorite(
-        item.petID
-      ) == true
-
-  item.isInTeam =
-      IsPetInAnyTeam(
-        item.petID,
-        item.speciesID
-      )
+  --------------------------------------------------
+  -- Team usage
+  --------------------------------------------------
+  if IsSortLevelSelected(
+        "teams"
+      ) then
+    item.isInTeam =
+        IsPetInAnyTeam(
+          item.petID,
+          item.speciesID
+        )
+  else
+    item.isInTeam = false
+  end
 end
 
 local function CompareValues(a, b)
@@ -1678,6 +1716,17 @@ local function ReleaseItemList(
   end
 end
 
+function FilterExtension:RequestRefresh()
+  refreshRequired = true
+
+  if type(PetJournal_UpdatePetList)
+      ~= "function" then
+    return
+  end
+
+  PetJournal_UpdatePetList()
+end
+
 function FilterExtension:SetupFilterDropdown()
   if not PetJournal or not PetJournal.FilterDropdown then
     return
@@ -1859,17 +1908,49 @@ function FilterExtension:GetActiveFilterNames()
   return names
 end
 
-function FilterExtension:LayoutPetList(
-    filterBarShown
-)
+local function GetSortLabel(sortKey)
+  for _, option in ipairs(ALL_SORT_OPTIONS) do
+    if option.key == sortKey then
+      return option.label
+    end
+  end
+
+  return sortKey
+end
+
+function FilterExtension:GetActiveSortNames()
+  local names = {}
+
+  for index, sortKey in ipairs(SortLevels) do
+    names[#names + 1] =
+        string.format(
+          "%d. %s",
+          index,
+          GetSortLabel(sortKey)
+        )
+  end
+
+  if SortOptions.reverse then
+    names[#names + 1] = "Reverse"
+  end
+
+  return names
+end
+
+function FilterExtension:LayoutPetList(filterBarShown)
   if not PetJournal
       or not PetJournal.ScrollBox
       or not PetJournal.LeftInset then
     return
   end
 
-  local scrollBox =
-      PetJournal.ScrollBox
+  if currentFilterBarShown == filterBarShown then
+    return
+  end
+
+  currentFilterBarShown = filterBarShown
+
+  local scrollBox = PetJournal.ScrollBox
 
   scrollBox:ClearAllPoints()
 
@@ -1939,11 +2020,8 @@ function FilterExtension:CreateFilterBar()
   bar:EnableMouse(true)
 
   bar:SetBackdrop({
-    bgFile =
-    "Interface\\Buttons\\WHITE8X8",
-
-    edgeFile =
-    "Interface\\Tooltips\\UI-Tooltip-Border",
+    bgFile = "Interface\\Buttons\\WHITE8X8",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
 
     edgeSize = 10,
 
@@ -2057,19 +2135,17 @@ function FilterExtension:CreateFilterBar()
   self.FilterBar = bar
 end
 
-function FilterExtension:UpdateFilterBar(
-    visiblePetCount
-)
+function FilterExtension:UpdateFilterBar(visiblePetCount)
   self:CreateFilterBar()
 
   if not self.FilterBar then
     return
   end
 
-  local activeFilters =
-      self:GetActiveFilterNames()
+  local activeFilters = self:GetActiveFilterNames()
+  local activeSorts = self:GetActiveSortNames()
 
-  if #activeFilters == 0 then
+  if #activeFilters == 0 and #activeSorts == 0 then
     self.FilterBar:Hide()
     self:LayoutPetList(false)
 
@@ -2081,11 +2157,30 @@ function FilterExtension:UpdateFilterBar(
     tonumber(visiblePetCount) or 0
   )
 
-  self.FilterBar.Filters:SetFormattedText(
-    "Filters: %s",
+  local parts = {}
+
+  if #activeFilters > 0 then
+    parts[#parts + 1] =
+        "Filters: "
+        .. table.concat(
+          activeFilters,
+          ", "
+        )
+  end
+
+  if #activeSorts > 0 then
+    parts[#parts + 1] =
+        "Sort: "
+        .. table.concat(
+          activeSorts,
+          ", "
+        )
+  end
+
+  self.FilterBar.Filters:SetText(
     table.concat(
-      activeFilters,
-      ", "
+      parts,
+      " | "
     )
   )
 
@@ -2165,17 +2260,12 @@ function FilterExtension:ResetAllFilters()
 end
 
 function FilterExtension:Refresh()
-  if type(PetJournal_UpdatePetList)
-      ~= "function" then
-    return
-  end
-
   if not PetJournal
       or not PetJournal.ScrollBox then
     return
   end
 
-  PetJournal_UpdatePetList()
+  self:RequestRefresh()
 end
 
 function FilterExtension:MatchesPet(
@@ -2504,8 +2594,7 @@ function FilterExtension:HookPetJournal()
     return
   end
 
-  if type(PetJournal_UpdatePetList)
-      ~= "function" then
+  if type(PetJournal_UpdatePetList) ~= "function" then
     return
   end
 
@@ -2515,7 +2604,7 @@ function FilterExtension:HookPetJournal()
     "PetJournal_UpdatePetList",
 
     function()
-      QueueApplyFilters()
+      QueueImmediateApplyFilters()
     end
   )
 end
@@ -2546,6 +2635,7 @@ function FilterExtension:Initialize()
         end
       elseif event == "PET_JOURNAL_LIST_UPDATE" then
         FilterExtension:HookPetJournal()
+        QueueApplyFilters()
       end
     end
   )

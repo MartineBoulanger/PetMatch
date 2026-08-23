@@ -10,20 +10,6 @@ local CONTENT_PADDING = 14
 local CONTENT_TOP_SPACING = 0
 local SECTION_SPACING = 8
 
-local function IsPetCardAllowed(source)
-  local mode =
-      addon.Settings:Get(
-        "petCardVisibilityMode"
-      )
-      or "both"
-
-  if mode == "both" then
-    return true
-  end
-
-  return mode == source
-end
-
 function PetCard:Create(parent)
   assert(
     parent,
@@ -206,13 +192,30 @@ end
 -- Pinning
 --------------------------------------------------
 function PetCard:SetPinned(pinned)
-  self.Pinned =
-      pinned == true
+  pinned = pinned == true
+
+  if pinned and not self.Pinned then
+    local frame = self.Frame
+    local left = frame:GetLeft()
+    local top = frame:GetTop()
+
+    if left and top then
+      frame:ClearAllPoints()
+
+      frame:SetPoint(
+        "TOPLEFT",
+        UIParent,
+        "BOTTOMLEFT",
+        left,
+        top
+      )
+    end
+  end
+
+  self.Pinned = pinned
 
   if self.CloseButton then
-    self.CloseButton:SetShown(
-      self.Pinned
-    )
+    self.CloseButton:SetShown(self.Pinned)
   end
 
   self.Frame:EnableMouse(
@@ -223,8 +226,7 @@ function PetCard:SetPinned(pinned)
     self.Pinned
   )
 
-  if self.Header
-      and self.Header.SetInteractive then
+  if self.Header and self.Header.SetInteractive then
     self.Header:SetInteractive(
       self.Pinned
     )
@@ -424,24 +426,22 @@ end
 --------------------------------------------------
 -- Owner / anchor
 --------------------------------------------------
-function PetCard:SetOwner(
-    owner,
-    anchor
-)
+function PetCard:SetOwner(owner, anchor)
   if not owner then
+    return
+  end
+
+  if self.Pinned then
     return
   end
 
   self.Owner = owner
 
-  local frame =
-      self.Frame
+  local frame = self.Frame
 
   frame:ClearAllPoints()
 
-  anchor =
-      anchor
-      or "ANCHOR_RIGHT"
+  anchor = anchor or "ANCHOR_RIGHT"
 
   if anchor == "ANCHOR_LEFT" then
     frame:SetPoint(

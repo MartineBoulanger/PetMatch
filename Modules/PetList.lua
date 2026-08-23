@@ -15,6 +15,7 @@ local STATUS_BREED_SPACING       = 3
 
 local RAID_MARKER_TEXTURE_FORMAT = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_%d"
 local TEAM_ICON_TEXTURE          = "Interface\\Icons\\Tracking_WildPet"
+local LEVELING_ICON_TEXTURE      = "Interface\\Addons\\PetMatch\\Media\\levelingarrow"
 
 local NORMAL_ROW_HEIGHT          = 46
 local COMPACT_ROW_HEIGHT         = 30
@@ -710,6 +711,28 @@ local function GetTagIcon(button)
   return icon
 end
 
+local function GetLevelingIcon(button)
+  local icon =
+      CreateStatusIcon(
+        button,
+        "leveling",
+        "In the Levelling Queue"
+      )
+
+  icon.Texture:SetTexture(
+    LEVELING_ICON_TEXTURE
+  )
+
+  icon.Texture:SetTexCoord(
+    0,
+    1,
+    0,
+    1
+  )
+
+  return icon
+end
+
 local function ClearStatusIcons(button)
   if not button.PetMatchStatusIcons then
     return
@@ -824,6 +847,39 @@ local function UpdateTagIcon(
   icon:Show()
 
   return icon
+end
+
+local function UpdateLevelingIcon(button, petGUID)
+  local icon = GetLevelingIcon(button)
+  local queueService = addon.Services and addon.Services.LevellingQueue
+  local petService = addon.Services and addon.Services.PetJournal
+
+  if not queueService or not petService or not petGUID then
+    icon:Hide()
+    return nil
+  end
+
+  local pet = petService:GetPet(petGUID)
+
+  if not pet then
+    icon:Hide()
+    return nil
+  end
+
+  local level = tonumber(pet.level)
+
+  local showIcon =
+      level ~= nil
+      and level < 25
+      and queueService:Contains(
+        petGUID
+      )
+
+  icon:SetShown(
+    showIcon == true
+  )
+
+  return showIcon and icon or nil
 end
 
 local function GetFavoriteIcon(button)
@@ -1232,6 +1288,12 @@ local function UpdatePetButton(button, elementData)
         petGUID
       )
 
+  local levelingIcon =
+      UpdateLevelingIcon(
+        button,
+        petGUID
+      )
+
   local tagIcon =
       UpdateTagIcon(
         button,
@@ -1247,7 +1309,7 @@ local function UpdatePetButton(button, elementData)
     button,
     breedLabel,
     tagIcon,
-    nil,
+    levelingIcon,
     teamIcon
   )
 

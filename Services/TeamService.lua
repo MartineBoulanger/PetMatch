@@ -281,6 +281,107 @@ function TeamService:Load(teamID)
 
   return true
 end
+-- function TeamService:Load(teamID)
+--   local totalStart =
+--       debugprofilestop()
+
+--   --------------------------------------------------
+--   -- Get team
+--   --------------------------------------------------
+
+--   local stepStart =
+--       debugprofilestop()
+
+--   local team =
+--       self:Get(teamID)
+
+--   print(
+--     string.format(
+--       "[PetMatch] Get team: %.2f ms",
+--       debugprofilestop() - stepStart
+--     )
+--   )
+
+--   if not team then
+--     return false, "Team not found"
+--   end
+
+--   --------------------------------------------------
+--   -- Load battle slots
+--   --------------------------------------------------
+
+--   stepStart =
+--       debugprofilestop()
+
+--   local success, errorMessage =
+--       addon.Services.BattleSlot:
+--       LoadPets(
+--         team.pets,
+--         team.abilities,
+--         team.specialSlots
+--       )
+
+--   print(
+--     string.format(
+--       "[PetMatch] LoadPets: %.2f ms",
+--       debugprofilestop() - stepStart
+--     )
+--   )
+
+--   if not success then
+--     return false, errorMessage
+--   end
+
+--   --------------------------------------------------
+--   -- Set active
+--   --------------------------------------------------
+
+--   stepStart =
+--       debugprofilestop()
+
+--   self:SetActive(
+--     team.id
+--   )
+
+--   print(
+--     string.format(
+--       "[PetMatch] SetActive: %.2f ms",
+--       debugprofilestop() - stepStart
+--     )
+--   )
+
+--   --------------------------------------------------
+--   -- TEAM_LOADED event
+--   --------------------------------------------------
+
+--   stepStart =
+--       debugprofilestop()
+
+--   addon.EventBus:Fire(
+--     addon.Events.TEAM_LOADED,
+--     team
+--   )
+
+--   print(
+--     string.format(
+--       "[PetMatch] TEAM_LOADED event: %.2f ms",
+--       debugprofilestop() - stepStart
+--     )
+--   )
+
+--   --------------------------------------------------
+--   -- Total
+--   --------------------------------------------------
+
+--   print(
+--     string.format(
+--       "[PetMatch] TOTAL TeamService:Load: %.2f ms",
+--       debugprofilestop() - totalStart
+--     )
+--   )
+
+--   return true
+-- end
 
 function TeamService:Rename(teamID, name)
   local team = self:Get(teamID)

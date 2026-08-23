@@ -1,6 +1,8 @@
 local _, addon = ...
 
 local TeamCard = {}
+local TargetNameCache = {}
+local PendingTargetNames = {}
 
 local CARD_WIDTH = 230
 local CARD_HEIGHT = 26
@@ -19,6 +21,126 @@ local function ApplyVisualState(frame)
     frame:SetBackdropBorderColor(0.35, 0.30, 0.20, 0.85)
   end
 end
+
+local function GetTargetName(team)
+  if type(team) ~= "table" or type(team.targetNPCIDs) ~= "table" then
+    return nil
+  end
+
+  local npcID = tonumber(team.targetNPCIDs[1])
+
+  if not npcID then
+    return nil
+  end
+
+  --------------------------------------------------
+  -- Already resolved
+  --------------------------------------------------
+  if TargetNameCache[npcID] then
+    return TargetNameCache[npcID]
+  end
+
+  --------------------------------------------------
+  -- Request tooltip data
+  --------------------------------------------------
+  local hyperlink = string.format("unit:Creature-0-0-0-0-%d-0000000000", npcID)
+  local data = C_TooltipInfo.GetHyperlink(hyperlink)
+
+  if not data then
+    return nil
+  end
+
+  --------------------------------------------------
+  -- Try to resolve immediately
+  --------------------------------------------------
+  for _, line in ipairs(data.lines or {}) do
+    if line.type == Enum.TooltipDataLineType.UnitName
+        and line.leftText and line.leftText ~= "" then
+      TargetNameCache[npcID] = line.leftText
+      return line.leftText
+    end
+  end
+
+  --------------------------------------------------
+  -- Tooltip data is still loading
+  --------------------------------------------------
+  if data.dataInstanceID then
+    PendingTargetNames[data.dataInstanceID] = npcID
+  end
+
+  return nil
+end
+
+local targetLoaderFrame =
+    CreateFrame(
+      "Frame"
+    )
+
+targetLoaderFrame:RegisterEvent(
+  "TOOLTIP_DATA_UPDATE"
+)
+
+targetLoaderFrame:SetScript(
+  "OnEvent",
+
+  function(_, _, dataInstanceID)
+    local npcID =
+        PendingTargetNames[
+        dataInstanceID
+        ]
+
+    if not npcID then
+      return
+    end
+
+    local hyperlink =
+        string.format(
+          "unit:Creature-0-0-0-0-%d-0000000000",
+          npcID
+        )
+
+    local data =
+        C_TooltipInfo.GetHyperlink(
+          hyperlink
+        )
+
+    if not data then
+      return
+    end
+
+    for _, line in ipairs(
+      data.lines or {}
+    ) do
+      if line.type
+          == Enum.TooltipDataLineType.UnitName
+          and line.leftText
+          and line.leftText ~= "" then
+        TargetNameCache[
+        npcID
+        ] =
+            line.leftText
+
+        PendingTargetNames[
+        dataInstanceID
+        ] =
+            nil
+
+        local teamList =
+            addon.UI
+            and addon.UI.Views
+            and addon.UI.Views.TeamList
+
+        if teamList
+            and type(teamList.Refresh)
+            == "function" then
+          teamList:Refresh()
+        end
+
+        return
+      end
+    end
+  end
+)
 
 function TeamCard:Create(parent, team)
   assert(parent, "TeamCard requires a parent frame")
@@ -124,20 +246,63 @@ function TeamCard:Create(parent, team)
   frame.Title = frame:CreateFontString(
     nil,
     "OVERLAY",
-    "GameFontNormal"
+    "GameFontNormalSmall"
   )
 
   frame.Title:ClearAllPoints()
-  frame.Title:SetPoint(
-    "LEFT",
+  -- frame.Title:SetPoint(
+  --   "LEFT",
+  --   frame,
+  --   "LEFT",
+  --   80,
+  --   0
+  -- )
+
+  frame.Title:SetJustifyH("LEFT")
+  frame.Title:SetJustifyV("MIDDLE")
+  frame.Title:SetWordWrap(false)
+  frame.Title:SetNonSpaceWrap(false)
+  frame.Title:SetMaxLines(1)
+
+  frame.Target =
+      frame:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  -- frame.Target:SetPoint(
+  --   "TOPLEFT",
+  --   frame.Title,
+  --   "BOTTOMLEFT",
+  --   0,
+  --   -1
+  -- )
+
+  frame.Target:SetPoint(
+    "RIGHT",
     frame,
-    "LEFT",
-    80,
+    "RIGHT",
+    -48,
     0
   )
 
-  frame.Title:SetJustifyH("LEFT")
-  frame.Title:SetWordWrap(false)
+  frame.Target:SetJustifyH("LEFT")
+  frame.Target:SetJustifyV("MIDDLE")
+
+  frame.Target:SetWordWrap(false)
+  frame.Target:SetNonSpaceWrap(false)
+  frame.Target:SetMaxLines(1)
+
+  frame.Target:SetTextColor(
+    1,
+    1,
+    1,
+    1
+  )
+
+  frame.Target:SetText("")
+  frame.Target:Hide()
 
   frame.MenuButton =
       CreateFrame(
@@ -333,16 +498,124 @@ function TeamCard:Create(parent, team)
 
     local title = newTeam.name or "Unnamed Team"
 
-    if #title > 15 then
-      title = title:sub(1, 15) .. "..."
+    self.Title:SetText(title)
+
+    local targetName = GetTargetName(newTeam)
+
+    self.Title:ClearAllPoints()
+    self.Target:ClearAllPoints()
+
+    --------------------------------------------------
+    -- Target
+    --------------------------------------------------
+    if targetName then
+      self.Target:SetText(
+        targetName
+      )
+
+      self.Target:Show()
+
+      ------------------------------------------------
+      -- Team name
+      ------------------------------------------------
+      self.Title:SetPoint(
+        "TOPLEFT",
+        self,
+        "TOPLEFT",
+        80,
+        -2
+      )
+
+      self.Title:SetPoint(
+        "RIGHT",
+        self,
+        "RIGHT",
+        -48,
+        0
+      )
+
+      ------------------------------------------------
+      -- Target name
+      ------------------------------------------------
+      self.Target:SetPoint(
+        "BOTTOMLEFT",
+        self,
+        "BOTTOMLEFT",
+        80,
+        2
+      )
+
+      self.Target:SetPoint(
+        "RIGHT",
+        self,
+        "RIGHT",
+        -48,
+        0
+      )
+    else
+      self.Target:SetText("")
+      self.Target:Hide()
+
+      ------------------------------------------------
+      -- No target: vertically center team name
+      ------------------------------------------------
+      self.Title:SetPoint(
+        "LEFT",
+        self,
+        "LEFT",
+        80,
+        0
+      )
+
+      self.Title:SetPoint(
+        "RIGHT",
+        self,
+        "RIGHT",
+        -48,
+        0
+      )
     end
 
-    self.Title:SetText(title)
-    self.Title:SetWidth(120)
-    self.Title:SetWordWrap(false)
-    self.Title:SetMaxLines(1)
-    self.Title:SetNonSpaceWrap(false)
+    --------------------------------------------------
+    -- Title positioning
+    --------------------------------------------------
+    if targetName then
+      self.Title:SetPoint(
+        "TOPLEFT",
+        self,
+        "TOPLEFT",
+        80,
+        -3
+      )
 
+      self.Title:SetPoint(
+        "RIGHT",
+        self,
+        "RIGHT",
+        -48,
+        0
+      )
+    else
+      self.Title:SetPoint(
+        "LEFT",
+        self,
+        "LEFT",
+        80,
+        0
+      )
+
+      self.Title:SetPoint(
+        "RIGHT",
+        self,
+        "RIGHT",
+        -48,
+        0
+      )
+    end
+
+    --------------------------------------------------
+    -- Favorite
+    --------------------------------------------------
     if newTeam.favorite then
       self.FavoriteButton.Icon:SetDesaturated(false)
       self.FavoriteButton.Icon:SetVertexColor(
@@ -361,6 +634,9 @@ function TeamCard:Create(parent, team)
       self.FavoriteButton.Icon:SetAlpha(0.45)
     end
 
+    --------------------------------------------------
+    -- Pet slots
+    --------------------------------------------------
     for slotIndex = 1, 3 do
       local petSlot =
           self.PetSlots[slotIndex]
