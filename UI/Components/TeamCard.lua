@@ -250,13 +250,6 @@ function TeamCard:Create(parent, team)
   )
 
   frame.Title:ClearAllPoints()
-  -- frame.Title:SetPoint(
-  --   "LEFT",
-  --   frame,
-  --   "LEFT",
-  --   80,
-  --   0
-  -- )
 
   frame.Title:SetJustifyH("LEFT")
   frame.Title:SetJustifyV("MIDDLE")
@@ -270,14 +263,6 @@ function TeamCard:Create(parent, team)
         "OVERLAY",
         "GameFontHighlightSmall"
       )
-
-  -- frame.Target:SetPoint(
-  --   "TOPLEFT",
-  --   frame.Title,
-  --   "BOTTOMLEFT",
-  --   0,
-  --   -1
-  -- )
 
   frame.Target:SetPoint(
     "RIGHT",
@@ -638,8 +623,7 @@ function TeamCard:Create(parent, team)
     -- Pet slots
     --------------------------------------------------
     for slotIndex = 1, 3 do
-      local petSlot =
-          self.PetSlots[slotIndex]
+      local petSlot = self.PetSlots[slotIndex]
 
       local specialSlot =
           newTeam.specialSlots

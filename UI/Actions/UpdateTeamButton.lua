@@ -67,10 +67,15 @@ function UpdateTeamButton:UpdateSelectedTeam()
     return
   end
 
+  local pendingSpecialSlots =
+      addon.Services.BattleSlot:
+      GetPendingSpecialSlots()
+
   local updatedTeam, errorMessage =
       addon.Services.Team:
       ReplacePetsFromBattleSlots(
-        team.id
+        team.id,
+        pendingSpecialSlots
       )
 
   if not updatedTeam then
@@ -81,12 +86,9 @@ function UpdateTeamButton:UpdateSelectedTeam()
     return
   end
 
-  addon.Services.Team:SetActive(
-    updatedTeam.id
-  )
-
-  addon.Services.LoadoutMonitor:
-      ScheduleCheck()
+  addon.Services.BattleSlot:SetPendingSpecialSlots(updatedTeam.specialSlots)
+  addon.Services.Team:SetActive(updatedTeam.id)
+  addon.Services.LoadoutMonitor:ScheduleCheck()
 
   self:Refresh()
 end
@@ -98,11 +100,22 @@ function UpdateTeamButton:Refresh()
 
   local team = self:GetSelectedTeam()
 
-  local isDirty =
+  local loadoutDirty =
       team ~= nil
       and addon.Services.LoadoutMonitor
       and addon.Services.LoadoutMonitor:
       IsTeamDirty(team.id)
+
+  local specialSlotsDirty =
+      team ~= nil
+      and addon.Services.BattleSlot
+      and addon.Services.BattleSlot:ArePendingSpecialSlotsDifferent(
+        team.specialSlots
+      )
+
+  local isDirty =
+      loadoutDirty
+      or specialSlotsDirty
 
   if isDirty then
     self.Frame:Show()

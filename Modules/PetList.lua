@@ -37,6 +37,338 @@ local PET_RARITY_COLORS          = {
   [6] = ITEM_QUALITY_COLORS[5]
 }
 
+local RANDOM_PET_ICON            = "Interface\\Icons\\INV_Misc_Dice_02"
+
+local LEVELING_PET_ICON          = "Interface\\AddOns\\PetMatch\\Media\\levelingicon"
+
+local PET_FAMILY_ICONS           = {
+  [1]  = "Interface\\Icons\\Pet_Type_Humanoid",
+  [2]  = "Interface\\Icons\\Pet_Type_Dragon",
+  [3]  = "Interface\\Icons\\Pet_Type_Flying",
+  [4]  = "Interface\\Icons\\Pet_Type_Undead",
+  [5]  = "Interface\\Icons\\Pet_Type_Critter",
+  [6]  = "Interface\\Icons\\Pet_Type_Magical",
+  [7]  = "Interface\\Icons\\Pet_Type_Elemental",
+  [8]  = "Interface\\Icons\\Pet_Type_Beast",
+  [9]  = "Interface\\Icons\\Pet_Type_Water",
+  [10] = "Interface\\Icons\\Pet_Type_Mechanical",
+}
+
+local PendingSlotOverlays        = {}
+local BattleSlotTagOverlays      = {}
+
+local function GetPendingSpecialSlotIcon(
+    specialSlot
+)
+  if type(specialSlot) ~= "table" then
+    return nil
+  end
+
+  if specialSlot.type == "leveling"
+      or specialSlot.type == "levelingQueue" then
+    return LEVELING_PET_ICON
+  end
+
+  if specialSlot.type == "random" then
+    local petType =
+        tonumber(
+          specialSlot.petType
+        )
+        or 0
+
+    if petType > 0 then
+      return PET_FAMILY_ICONS[
+      petType
+      ]
+    end
+
+    return RANDOM_PET_ICON
+  end
+
+  return nil
+end
+
+local function GetPendingSlotOverlay(slotIndex)
+  local existing =
+      PendingSlotOverlays[
+      slotIndex
+      ]
+
+  if existing then
+    return existing
+  end
+
+  local slotFrame =
+      _G[
+      "PetJournalLoadoutPet"
+      .. tostring(slotIndex)
+      ]
+
+  if not slotFrame then
+    return nil
+  end
+
+  local overlay =
+      CreateFrame(
+        "Frame",
+        nil,
+        slotFrame
+      )
+
+  overlay:SetSize(
+    20,
+    20
+  )
+
+  overlay:SetPoint(
+    "TOPRIGHT",
+    slotFrame,
+    "TOPRIGHT",
+    -4,
+    -4
+  )
+
+  --------------------------------------------------
+  -- Hide the normal pet behind the special icon
+  --------------------------------------------------
+
+  overlay.Background =
+      overlay:CreateTexture(
+        nil,
+        "BACKGROUND"
+      )
+
+  overlay.Background:SetAllPoints()
+  overlay.Background:SetColorTexture(
+    0.03,
+    0.03,
+    0.03,
+    0.75
+  )
+
+  --------------------------------------------------
+  -- Special-slot icon
+  --------------------------------------------------
+
+  overlay.Icon =
+      overlay:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  overlay.Icon:SetPoint(
+    "TOPLEFT",
+    overlay,
+    "TOPLEFT",
+    2,
+    -2
+  )
+
+  overlay.Icon:SetPoint(
+    "BOTTOMRIGHT",
+    overlay,
+    "BOTTOMRIGHT",
+    -2,
+    2
+  )
+
+  overlay.Icon:SetTexCoord(
+    0.08,
+    0.92,
+    0.08,
+    0.92
+  )
+
+  overlay:Hide()
+
+  PendingSlotOverlays[
+  slotIndex
+  ] = overlay
+
+  return overlay
+end
+
+local function GetBattleSlotTagOverlay(slotIndex)
+  local existing = BattleSlotTagOverlays[slotIndex]
+
+  if existing then
+    return existing
+  end
+
+  local slotFrame = _G["PetJournalLoadoutPet" .. tostring(slotIndex)]
+
+  if not slotFrame then
+    return nil
+  end
+
+  local overlay =
+      CreateFrame(
+        "Frame",
+        nil,
+        slotFrame
+      )
+
+  overlay:SetSize(
+    18,
+    18
+  )
+
+  overlay:SetFrameLevel(
+    slotFrame:GetFrameLevel()
+    + 10
+  )
+
+  overlay.Icon = overlay:CreateTexture(
+    nil,
+    "OVERLAY"
+  )
+
+  overlay.Icon:SetAllPoints()
+
+  overlay.Icon:SetTexCoord(
+    0,
+    1,
+    0,
+    1
+  )
+
+  overlay:Hide()
+
+  BattleSlotTagOverlays[slotIndex] = overlay
+
+  return overlay
+end
+
+local function LayoutBattleSlotBadges(slotIndex)
+  local slotFrame = _G["PetJournalLoadoutPet" .. tostring(slotIndex)]
+
+  if not slotFrame then
+    return
+  end
+
+  local specialOverlay = PendingSlotOverlays[slotIndex]
+  local tagOverlay = BattleSlotTagOverlays[slotIndex]
+  local hasSpecial = specialOverlay and specialOverlay:IsShown()
+  local hasTag = tagOverlay and tagOverlay:IsShown()
+
+  if tagOverlay then
+    tagOverlay:ClearAllPoints()
+
+    tagOverlay:SetPoint(
+      "TOPRIGHT",
+      slotFrame,
+      "TOPRIGHT",
+      -4,
+      -4
+    )
+  end
+
+  if specialOverlay then
+    specialOverlay:ClearAllPoints()
+
+    if hasTag then
+      specialOverlay:SetPoint(
+        "RIGHT",
+        tagOverlay,
+        "LEFT",
+        -2,
+        0
+      )
+    else
+      specialOverlay:SetPoint(
+        "TOPRIGHT",
+        slotFrame,
+        "TOPRIGHT",
+        -4,
+        -4
+      )
+    end
+  end
+end
+
+local function RefreshPendingBattleSlotVisual(
+    slotIndex
+)
+  local battleSlotService =
+      addon.Services.BattleSlot
+
+  if not battleSlotService then
+    return
+  end
+
+  local overlay =
+      GetPendingSlotOverlay(
+        slotIndex
+      )
+
+  if not overlay then
+    return
+  end
+
+  local specialSlot =
+      battleSlotService:
+      GetPendingSpecialSlot(
+        slotIndex
+      )
+
+  if not specialSlot then
+    overlay:Hide()
+    LayoutBattleSlotBadges(slotIndex)
+    return
+  end
+
+  local icon =
+      GetPendingSpecialSlotIcon(
+        specialSlot
+      )
+
+  if not icon then
+    overlay:Hide()
+    LayoutBattleSlotBadges(slotIndex)
+    return
+  end
+
+  overlay.Icon:SetTexture(
+    icon
+  )
+
+  overlay:Show()
+  LayoutBattleSlotBadges(slotIndex)
+end
+
+local function RefreshAllPendingBattleSlotVisuals()
+  for slotIndex = 1, 3 do
+    RefreshPendingBattleSlotVisual(
+      slotIndex
+    )
+  end
+end
+
+local function BuildRandomSpecialSlot(
+    petType
+)
+  petType =
+      tonumber(petType)
+      or 0
+
+  return {
+    type = "random",
+    petType = petType,
+    rawPetTag =
+        "ZR"
+        .. tostring(
+          petType
+        ),
+  }
+end
+
+local function BuildLevelingSpecialSlot()
+  return {
+    type = "leveling",
+    rawPetTag = "ZL",
+  }
+end
+
 local function GetRaidMarkerTexture(tagID)
   tagID = tonumber(tagID)
 
@@ -50,6 +382,56 @@ local function GetRaidMarkerTexture(tagID)
     RAID_MARKER_TEXTURE_FORMAT,
     tagID
   )
+end
+
+local function RefreshBattleSlotTagVisual(slotIndex)
+  local overlay = GetBattleSlotTagOverlay(slotIndex)
+
+  if not overlay then
+    return
+  end
+
+  local battleSlot = addon.Services.BattleSlot
+  local tagService = addon.Services.PetTag
+
+  if not battleSlot or not tagService then
+    overlay:Hide()
+    return
+  end
+
+  local slotInfo = battleSlot:GetSlotLoadout(slotIndex)
+  local petGUID = slotInfo and slotInfo.petGUID
+
+  if not petGUID then
+    overlay:Hide()
+    return
+  end
+
+  local definition = tagService:GetTagDefinition(petGUID)
+
+  if not definition then
+    overlay:Hide()
+    return
+  end
+
+  local texture = GetRaidMarkerTexture(definition.id)
+
+  if not texture then
+    overlay:Hide()
+    return
+  end
+
+  overlay.Icon:SetTexture(
+    texture
+  )
+
+  overlay:Show()
+end
+
+local function RefreshAllBattleSlotTagVisuals()
+  for slotIndex = 1, 3 do
+    RefreshBattleSlotTagVisual(slotIndex)
+  end
 end
 
 local function IsBreedVisible()
@@ -1413,6 +1795,54 @@ local function GetQueuePetState(petGUID)
   }
 end
 
+local function RefreshPendingBattleSlotState(slotIndex)
+  RefreshPendingBattleSlotVisual(slotIndex)
+
+  local updateButton = addon.UI.Actions.UpdateTeamButton
+
+  if updateButton and updateButton.Refresh then
+    updateButton:Refresh()
+  end
+end
+
+local function GetBattleSlotIndexFromOwner(owner)
+  if not owner then
+    return nil
+  end
+
+  local frame = owner
+
+  for _ = 1, 4 do
+    if not frame then
+      break
+    end
+
+    local name =
+        frame.GetName
+        and frame:GetName()
+
+    if name then
+      local slotIndex =
+          name:match(
+            "^PetJournalLoadoutPet([123])$"
+          )
+
+      if slotIndex then
+        return tonumber(
+          slotIndex
+        )
+      end
+    end
+
+    frame =
+        frame.GetParent
+        and frame:GetParent()
+        or nil
+  end
+
+  return nil
+end
+
 function PetList:InstallPetContextMenu()
   if self.PetMenuInstalled then
     return true
@@ -1427,6 +1857,123 @@ function PetList:InstallPetContextMenu()
   Menu.ModifyMenu(
     "MENU_PET_COLLECTION_PET",
     function(owner, root)
+      local battleSlotIndex =
+          GetBattleSlotIndexFromOwner(
+            owner
+          )
+
+      if battleSlotIndex then
+        root:CreateDivider()
+
+        local slotMenu =
+            root:CreateButton(
+              "Set Pet Slot As"
+            )
+
+        slotMenu:CreateButton(
+          "Use Current Pet",
+
+          function()
+            addon.Services.BattleSlot:
+                SetPendingNormalSlot(
+                  battleSlotIndex
+                )
+
+            RefreshPendingBattleSlotState(
+              battleSlotIndex
+            )
+          end
+        )
+
+        slotMenu:CreateDivider()
+
+        local randomMenu =
+            slotMenu:CreateButton(
+              "Random Pet"
+            )
+
+        randomMenu:CreateButton(
+          "Any Pet",
+          function()
+            local success =
+                addon.Services.BattleSlot:
+                SetPendingSpecialSlot(
+                  battleSlotIndex,
+                  BuildRandomSpecialSlot(
+                    0
+                  )
+                )
+
+            if success then
+              RefreshPendingBattleSlotState(
+                battleSlotIndex
+              )
+            end
+          end
+        )
+
+        local families = {
+          { "Humanoid",   1 },
+          { "Dragonkin",  2 },
+          { "Flying",     3 },
+          { "Undead",     4 },
+          { "Critter",    5 },
+          { "Magic",      6 },
+          { "Elemental",  7 },
+          { "Beast",      8 },
+          { "Aquatic",    9 },
+          { "Mechanical", 10 },
+        }
+
+        for _, family in ipairs(
+          families
+        ) do
+          local name =
+              family[1]
+
+          local petType =
+              family[2]
+
+          randomMenu:CreateButton(
+            name,
+            function()
+              local success =
+                  addon.Services.BattleSlot:
+                  SetPendingSpecialSlot(
+                    battleSlotIndex,
+                    BuildRandomSpecialSlot(
+                      petType
+                    )
+                  )
+
+              if success then
+                RefreshPendingBattleSlotState(
+                  battleSlotIndex
+                )
+              end
+            end
+          )
+        end
+
+        slotMenu:CreateButton(
+          "Levelling Pet",
+          function()
+            local success =
+                addon.Services.BattleSlot:
+                SetPendingSpecialSlot(
+                  battleSlotIndex,
+                  BuildLevelingSpecialSlot()
+                )
+
+            if success then
+              RefreshPendingBattleSlotState(
+                battleSlotIndex
+              )
+            end
+          end
+        )
+      end
+
       local petGUID =
           GetOwnerPetGUID(
             owner
@@ -1441,7 +1988,6 @@ function PetList:InstallPetContextMenu()
       local tagService = addon.Services.PetTag
 
       if tagService then
-        root:CreateDivider()
         local submenu = root:CreateButton("Pet Tag")
 
         for _, definition in ipairs(
@@ -1460,6 +2006,7 @@ function PetList:InstallPetContextMenu()
             function(id)
               tagService:SetTag(petGUID, id)
               RefreshPetJournal()
+              RefreshAllBattleSlotTagVisuals()
             end,
 
             tagID
@@ -1475,6 +2022,7 @@ function PetList:InstallPetContextMenu()
             function()
               tagService:ClearTag(petGUID)
               RefreshPetJournal()
+              RefreshAllBattleSlotTagVisuals()
             end
           )
         end
@@ -1692,11 +2240,23 @@ function PetList:Initialize()
     addon.Events.PET_JOURNAL_UPDATED,
 
     function()
-      addon.Services.Breed:
-          ClearCache()
-
+      addon.Services.Breed:ClearCache()
       RefreshPetJournal()
+      RefreshAllBattleSlotTagVisuals()
     end
+  )
+
+  addon.EventBus:Register(
+    addon.Events.TEAM_LOADED,
+
+    function()
+      RefreshAllPendingBattleSlotVisuals()
+      RefreshAllBattleSlotTagVisuals()
+    end
+  )
+
+  self:RegisterRefreshEvent(
+    addon.Events.TEAM_LOADED
   )
 
   self:RegisterRefreshEvent(

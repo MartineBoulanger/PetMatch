@@ -93,12 +93,8 @@ function PetTagService:GetTagDefinition(petGUID)
   return self:GetDefinition(tagID)
 end
 
-function PetTagService:SetTag(
-    petGUID,
-    tagID
-)
-  if type(petGUID) ~= "string"
-      or petGUID == "" then
+function PetTagService:SetTag(petGUID,tagID)
+  if type(petGUID) ~= "string" or petGUID == "" then
     return false, "Invalid pet GUID"
   end
 

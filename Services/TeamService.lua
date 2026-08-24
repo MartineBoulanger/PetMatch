@@ -191,30 +191,38 @@ function TeamService:Delete(teamID)
   return true
 end
 
-function TeamService:CreateFromBattleSlots(name, folderID)
+function TeamService:CreateFromBattleSlots(name, folderID, pendingSpecialSlots)
   name = addon.Utils:Trim(name or "")
 
   if name == "" then
     return nil, "Enter a team name"
   end
 
-  if folderID
-      and not addon.Services.Folder:Get(folderID) then
+  if folderID and not addon.Services.Folder:Get(folderID) then
     return nil, "Folder not found"
   end
 
-  local loadout = addon.Services.BattleSlot:GetCurrentLoadout()
-  local slots = loadout.pets
-  local hasPet = false
+  pendingSpecialSlots =
+      type(pendingSpecialSlots) == "table"
+      and pendingSpecialSlots
+      or {}
+
+  local loadout =
+      addon.Services.BattleSlot:
+      GetCurrentLoadout()
+
+  local hasSlot = false
 
   for slot = 1, 3 do
-    if slots[slot] then
-      hasPet = true
+    local pending = pendingSpecialSlots[slot]
+
+    if loadout.pets[slot] or type(pending) == "table" then
+      hasSlot = true
       break
     end
   end
 
-  if not hasPet then
+  if not hasSlot then
     return nil, "The current Battle Pet Slots are empty"
   end
 
@@ -224,22 +232,45 @@ function TeamService:CreateFromBattleSlots(name, folderID)
     return nil, "Unable to create team"
   end
 
-  team.pets = team.pets or {}
-  team.abilities = team.abilities or {}
+  team.pets = {}
+  team.abilities = {}
+  team.breeds = {}
+  team.specialSlots = {}
 
   for slot = 1, 3 do
-    team.pets[slot] = loadout.pets[slot]
+    local pending = pendingSpecialSlots[slot]
 
-    local abilities = loadout.abilities[slot]
+    ------------------------------------------------
+    -- Special slot
+    ------------------------------------------------
 
-    if abilities then
-      team.abilities[slot] = {
-        [1] = abilities[1],
-        [2] = abilities[2],
-        [3] = abilities[3],
+    if type(pending) == "table" then
+      team.specialSlots[slot] = {
+        type = pending.type,
+        petType = pending.petType,
+        rawPetTag = pending.rawPetTag,
+        level = pending.level,
+        rarity = pending.rarity,
+        minimumLevel = pending.minimumLevel,
+        maximumLevel = pending.maximumLevel,
+        minimumHealth = pending.minimumHealth,
       }
+
+      ------------------------------------------------
+      -- Normal current pet
+      ------------------------------------------------
     else
-      team.abilities[slot] = nil
+      team.pets[slot] = loadout.pets[slot]
+
+      local abilities = loadout.abilities[slot]
+
+      if abilities then
+        team.abilities[slot] = {
+          [1] = abilities[1],
+          [2] = abilities[2],
+          [3] = abilities[3],
+        }
+      end
     end
   end
 
@@ -261,6 +292,11 @@ function TeamService:Load(teamID)
     return false, "Team not found"
   end
 
+  addon.Services.BattleSlot:
+      SetPendingSpecialSlots(
+        team.specialSlots
+      )
+
   local success, errorMessage =
       addon.Services.BattleSlot:LoadPets(
         team.pets,
@@ -281,107 +317,6 @@ function TeamService:Load(teamID)
 
   return true
 end
--- function TeamService:Load(teamID)
---   local totalStart =
---       debugprofilestop()
-
---   --------------------------------------------------
---   -- Get team
---   --------------------------------------------------
-
---   local stepStart =
---       debugprofilestop()
-
---   local team =
---       self:Get(teamID)
-
---   print(
---     string.format(
---       "[PetMatch] Get team: %.2f ms",
---       debugprofilestop() - stepStart
---     )
---   )
-
---   if not team then
---     return false, "Team not found"
---   end
-
---   --------------------------------------------------
---   -- Load battle slots
---   --------------------------------------------------
-
---   stepStart =
---       debugprofilestop()
-
---   local success, errorMessage =
---       addon.Services.BattleSlot:
---       LoadPets(
---         team.pets,
---         team.abilities,
---         team.specialSlots
---       )
-
---   print(
---     string.format(
---       "[PetMatch] LoadPets: %.2f ms",
---       debugprofilestop() - stepStart
---     )
---   )
-
---   if not success then
---     return false, errorMessage
---   end
-
---   --------------------------------------------------
---   -- Set active
---   --------------------------------------------------
-
---   stepStart =
---       debugprofilestop()
-
---   self:SetActive(
---     team.id
---   )
-
---   print(
---     string.format(
---       "[PetMatch] SetActive: %.2f ms",
---       debugprofilestop() - stepStart
---     )
---   )
-
---   --------------------------------------------------
---   -- TEAM_LOADED event
---   --------------------------------------------------
-
---   stepStart =
---       debugprofilestop()
-
---   addon.EventBus:Fire(
---     addon.Events.TEAM_LOADED,
---     team
---   )
-
---   print(
---     string.format(
---       "[PetMatch] TEAM_LOADED event: %.2f ms",
---       debugprofilestop() - stepStart
---     )
---   )
-
---   --------------------------------------------------
---   -- Total
---   --------------------------------------------------
-
---   print(
---     string.format(
---       "[PetMatch] TOTAL TeamService:Load: %.2f ms",
---       debugprofilestop() - totalStart
---     )
---   )
-
---   return true
--- end
 
 function TeamService:Rename(teamID, name)
   local team = self:Get(teamID)
@@ -445,45 +380,87 @@ function TeamService:SetScript(teamID, script)
   return team
 end
 
-function TeamService:ReplacePetsFromBattleSlots(teamID)
+function TeamService:ReplacePetsFromBattleSlots(teamID, pendingSpecialSlots)
   local team = self:Get(teamID)
 
   if not team then
     return nil, "Team not found"
   end
 
-  local loadout = addon.Services.BattleSlot:GetCurrentLoadout()
-  local hasPet = false
+  pendingSpecialSlots =
+      type(pendingSpecialSlots) == "table"
+      and pendingSpecialSlots
+      or {}
+
+  local loadout =
+      addon.Services.BattleSlot:
+      GetCurrentLoadout()
+
+  local newPets = {}
+  local newAbilities = {}
+  local newBreeds = {}
+  local newSpecialSlots = {}
+
+  local hasSlot = false
 
   for slot = 1, 3 do
-    if loadout.pets[slot] then
-      hasPet = true
-      break
-    end
-  end
+    local pending =
+        pendingSpecialSlots[slot]
 
-  if not hasPet then
-    return nil, "The current Battle Pet Slots are empty"
-  end
+    ------------------------------------------------
+    -- Explicit special slot
+    ------------------------------------------------
 
-  team.pets = team.pets or {}
-  team.abilities = team.abilities or {}
-
-  for slot = 1, 3 do
-    team.pets[slot] = loadout.pets[slot]
-
-    local abilities = loadout.abilities[slot]
-
-    if abilities then
-      team.abilities[slot] = {
-        [1] = abilities[1],
-        [2] = abilities[2],
-        [3] = abilities[3],
+    if type(pending) == "table" then
+      newSpecialSlots[slot] = {
+        type = pending.type,
+        petType = pending.petType,
+        rawPetTag = pending.rawPetTag,
+        level = pending.level,
+        rarity = pending.rarity,
+        minimumLevel = pending.minimumLevel,
+        maximumLevel = pending.maximumLevel,
+        minimumHealth = pending.minimumHealth,
       }
+
+      hasSlot = true
+
+      ------------------------------------------------
+      -- Normal current pet
+      ------------------------------------------------
     else
-      team.abilities[slot] = nil
+      local petGUID =
+          loadout.pets[slot]
+
+      if petGUID then
+        newPets[slot] =
+            petGUID
+
+        hasSlot = true
+
+        local abilities =
+            loadout.abilities[slot]
+
+        if abilities then
+          newAbilities[slot] = {
+            [1] = abilities[1],
+            [2] = abilities[2],
+            [3] = abilities[3],
+          }
+        end
+      end
     end
   end
+
+  if not hasSlot then
+    return nil,
+        "The current Battle Pet Slots are empty"
+  end
+
+  team.pets = newPets
+  team.abilities = newAbilities
+  team.breeds = newBreeds
+  team.specialSlots = newSpecialSlots
 
   team.modified = time()
 

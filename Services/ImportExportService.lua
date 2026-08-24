@@ -801,10 +801,11 @@ end
 function ImportExportService:ImportRematchDocument(document, options)
   options = options or {}
 
-  local defaultFolderID =
-      options.defaultFolderID
-      or addon.Services.Folder:
-      GetSelectedStorageFolderID()
+  local defaultFolderID = nil
+
+  if options.defaultFolderSpecified == true then
+    defaultFolderID = options.defaultFolderID
+  end
 
   local conflictMode =
       options.conflictMode
@@ -944,9 +945,11 @@ end
 function ImportExportService:ImportRematchDocumentAsync(document, options)
   options = options or {}
 
-  local defaultFolderID =
-      options.defaultFolderID
-      or addon.Services.Folder:GetSelectedStorageFolderID()
+  local defaultFolderID = nil
+
+  if options.defaultFolderSpecified == true then
+    defaultFolderID = options.defaultFolderID
+  end
 
   local conflictMode =
       options.conflictMode
@@ -985,8 +988,7 @@ function ImportExportService:ImportRematchDocumentAsync(document, options)
   for _, groupData in ipairs(
     document.groups or {}
   ) do
-    local folderID =
-        defaultFolderID
+    local folderID = defaultFolderID
 
     if groupData.name then
       if string.lower(

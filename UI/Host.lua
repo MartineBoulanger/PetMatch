@@ -22,6 +22,10 @@ function Host:Update()
     if addon.UI.Actions.PetJournalToolbar then
       addon.UI.Actions.PetJournalToolbar:Show()
     end
+
+    if addon.UI.Actions.RandomPetsButton then
+      addon.UI.Actions.RandomPetsButton:Show()
+    end
   else
     addon.UI.Manager:Hide()
 
@@ -35,6 +39,10 @@ function Host:Update()
 
     if addon.UI.Actions.PetJournalToolbar then
       addon.UI.Actions.PetJournalToolbar:Hide()
+    end
+
+    if addon.UI.Actions.RandomPetsButton then
+      addon.UI.Actions.RandomPetsButton:Hide()
     end
   end
 end

@@ -38,10 +38,35 @@ function SaveTeamDialog:Save()
     return false
   end
 
-  local folderID = addon.Services.Folder:GetSelectedStorageFolderID()
+  --------------------------------------------------
+  -- Selected folder
+  --------------------------------------------------
+  local teamList = addon.UI.Views.TeamList
+  local folderKey = teamList and teamList.ExpandedFolderKey or nil
+
+  local folderID = nil
+
+  if folderKey
+      and folderKey ~= addon.Services.Folder.ALL
+      and folderKey ~= addon.Services.Folder.FAVORITES
+      and folderKey ~= addon.Services.Folder.UNSORTED then
+    local folder =
+        addon.Services.Folder:Get(
+          folderKey
+        )
+
+    if folder then
+      folderID = folder.id
+    end
+  end
+
+  --------------------------------------------------
+  -- Pending special slots
+  --------------------------------------------------
+  local pendingSpecialSlots = addon.Services.BattleSlot:GetPendingSpecialSlots()
 
   local team, errorMessage =
-      addon.Services.Team:CreateFromBattleSlots(name, folderID)
+      addon.Services.Team:CreateFromBattleSlots(name, folderID, pendingSpecialSlots)
 
   if not team then
     addon.Logger:Warn(errorMessage or "Unable to save team")
@@ -51,6 +76,7 @@ function SaveTeamDialog:Save()
   end
 
   addon.Services.Team:SetActive(team.id)
+  addon.Services.BattleSlot:SetPendingSpecialSlots(team.specialSlots)
 
   return true
 end

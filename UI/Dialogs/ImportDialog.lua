@@ -52,6 +52,21 @@ local function GetSortedFolders()
   return folders
 end
 
+local function GetCurrentTeamListFolderID()
+  local teamList = addon.UI.Views.TeamList
+  local folderKey = teamList and teamList.ExpandedFolderKey or nil
+
+  if not folderKey
+      or folderKey == addon.Services.Folder.FAVORITES
+      or folderKey == addon.Services.Folder.UNSORTED then
+    return nil
+  end
+
+  local folder = addon.Services.Folder:Get(folderKey)
+
+  return folder and folder.id or nil
+end
+
 --------------------------------------------------
 -- Loading
 --------------------------------------------------
@@ -765,7 +780,7 @@ function ImportDialog:Show()
   self.Input:SetText("")
   self:ClearStatus()
 
-  self.SelectedFolderID = addon.Services.Folder:GetSelectedStorageFolderID()
+  self.SelectedFolderID = GetCurrentTeamListFolderID()
 
   self.SaveMode = "new"
 
@@ -1011,9 +1026,8 @@ function ImportDialog:HandlePreparedImport(
         Show(
           prepared.document,
           {
-            defaultFolderID =
-                self.SelectedFolderID,
-
+            defaultFolderSpecified = true,
+            defaultFolderID = self.SelectedFolderID,
             conflictMode =
                 addon.Settings:Get(
                   "duplicateTeamMode"
@@ -1041,9 +1055,8 @@ function ImportDialog:HandlePreparedImport(
       Import(
         value,
         {
-          defaultFolderID =
-              self.SelectedFolderID,
-
+          defaultFolderSpecified = true,
+          defaultFolderID = self.SelectedFolderID,
           conflictMode =
               addon.Settings:Get(
                 "duplicateTeamMode"
