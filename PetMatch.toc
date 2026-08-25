@@ -1,5 +1,5 @@
 ## Interface: 120100
-## Version: 1.16.0
+## Version: 1.16.1
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
@@ -105,6 +105,8 @@ UI/Dialogs/MoveTeamDialog.lua
 UI/Dialogs/SaveTeamDialog.lua
 UI/Dialogs/TeamNotesDialog.lua
 UI/Dialogs/TeamScriptDialog.lua
+UI/Dialogs/ClearLevellingQueueDialog.lua
+UI/Dialogs/FillLevellingQueueDialog.lua
 
 UI/Actions/FolderContextMenu.lua
 UI/Actions/PetJournalToolbar.lua

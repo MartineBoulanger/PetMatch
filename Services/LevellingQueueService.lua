@@ -251,6 +251,44 @@ function LevellingQueueService:Remove(petGUID)
 end
 
 --------------------------------------------------
+-- Clear
+--------------------------------------------------
+function LevellingQueueService:Clear()
+  local data = EnsureData()
+
+  if not data then
+    return 0
+  end
+
+  local queue = data.pets
+  local removed = #queue
+
+  if removed == 0 then
+    return 0
+  end
+
+  --------------------------------------------------
+  -- Report the pets from the back, so every index
+  -- is still valid while the queue drains.
+  --------------------------------------------------
+  for index = removed, 1, -1 do
+    local petGUID = queue[index]
+
+    queue[index] = nil
+
+    addon.EventBus:Fire(
+      addon.Events.LEVELLING_QUEUE_PET_REMOVED,
+      petGUID,
+      index
+    )
+  end
+
+  FireChanged()
+
+  return removed
+end
+
+--------------------------------------------------
 -- Move
 --------------------------------------------------
 function LevellingQueueService:Move(petGUID, targetIndex)
@@ -332,6 +370,219 @@ function LevellingQueueService:MoveDown(petGUID)
     petGUID,
     index + 1
   )
+end
+
+--------------------------------------------------
+-- Fill
+--------------------------------------------------
+local function GetLevellingProgress(pet)
+  local level = tonumber(pet.level) or 0
+  local xp = tonumber(pet.xp) or 0
+  local maxXP = tonumber(pet.maxXP) or 0
+
+  local fraction = 0
+
+  if maxXP > 0 then
+    fraction =
+        math.max(
+          0,
+          math.min(
+            1,
+            xp / maxXP
+          )
+        )
+  end
+
+  return level + fraction
+end
+
+function LevellingQueueService:GetFillCandidates()
+  local petService =
+      addon.Services.PetJournal
+
+  if not petService then
+    return {}
+  end
+
+  petService:EnsureIndex()
+
+  local cache = petService:GetAll()
+
+  if type(cache) ~= "table" then
+    return {}
+  end
+
+  --------------------------------------------------
+  -- Look the queue up once instead of scanning it
+  -- again for every owned pet.
+  --------------------------------------------------
+  local queued = {}
+
+  for _, queuedGUID in ipairs(
+    self:GetAll()
+  ) do
+    queued[queuedGUID] = true
+  end
+
+  local candidates = {}
+
+  for petGUID, cachedPet in pairs(cache) do
+    if type(cachedPet) == "table"
+        and queued[petGUID] ~= true
+        and CanBeLevelled(cachedPet) then
+      --------------------------------------------------
+      -- The cache has no experience, so read the
+      -- full pet for the pets that qualify.
+      --------------------------------------------------
+      local pet = GetPetInfo(petGUID)
+
+      if pet
+          and CanBeLevelled(pet) then
+        candidates[#candidates + 1] = {
+          petGUID = petGUID,
+          pet = pet,
+          progress = GetLevellingProgress(pet),
+          quality = tonumber(cachedPet.quality) or 0,
+          name = pet.name or "",
+        }
+      end
+    end
+  end
+
+  table.sort(
+    candidates,
+
+    function(left, right)
+      if left.progress ~= right.progress then
+        return left.progress > right.progress
+      end
+
+      if left.quality ~= right.quality then
+        return left.quality > right.quality
+      end
+
+      if left.name ~= right.name then
+        return left.name < right.name
+      end
+
+      --------------------------------------------------
+      -- Keeps the order stable for identical pets.
+      --------------------------------------------------
+      return left.petGUID < right.petGUID
+    end
+  )
+
+  return candidates
+end
+
+function LevellingQueueService:HasFillCandidates()
+  local petService =
+      addon.Services.PetJournal
+
+  if not petService then
+    return false
+  end
+
+  local cache = petService:GetAll()
+
+  if type(cache) ~= "table" then
+    return false
+  end
+
+  local queued = {}
+
+  for _, queuedGUID in ipairs(
+    self:GetAll()
+  ) do
+    queued[queuedGUID] = true
+  end
+
+  for petGUID, cachedPet in pairs(cache) do
+    if type(cachedPet) == "table"
+        and queued[petGUID] ~= true
+        and CanBeLevelled(cachedPet) then
+      return true
+    end
+  end
+
+  return false
+end
+
+function LevellingQueueService:Fill(candidates)
+  local data = EnsureData()
+
+  if not data then
+    return 0
+  end
+
+  candidates =
+      type(candidates) == "table"
+      and candidates
+      or self:GetFillCandidates()
+
+  if #candidates == 0 then
+    return 0
+  end
+
+  local queue = data.pets
+  local added = 0
+
+  --------------------------------------------------
+  -- The candidates may be a few seconds old, so
+  -- check them against the queue and the cache
+  -- one more time.
+  --------------------------------------------------
+  local queued = {}
+
+  for _, queuedGUID in ipairs(queue) do
+    queued[queuedGUID] = true
+  end
+
+  local cache =
+      addon.Services.PetJournal
+      and addon.Services.PetJournal:GetAll()
+
+  local function IsStillEligible(candidate)
+    local petGUID = candidate.petGUID
+
+    if not petGUID
+        or queued[petGUID] == true then
+      return false
+    end
+
+    if type(cache) == "table" then
+      return CanBeLevelled(
+        cache[petGUID]
+      )
+    end
+
+    return CanBeLevelled(
+      candidate.pet
+    )
+  end
+
+  for _, candidate in ipairs(candidates) do
+    local petGUID = candidate.petGUID
+
+    if IsStillEligible(candidate) then
+      queued[petGUID] = true
+
+      queue[#queue + 1] = petGUID
+      added = added + 1
+
+      addon.EventBus:Fire(
+        addon.Events.LEVELLING_QUEUE_PET_ADDED,
+        petGUID,
+        #queue
+      )
+    end
+  end
+
+  if added > 0 then
+    FireChanged()
+  end
+
+  return added
 end
 
 --------------------------------------------------

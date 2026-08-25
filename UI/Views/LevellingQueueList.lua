@@ -3,7 +3,7 @@ local _, addon = ...
 local LevellingQueueList = {}
 
 local CONTENT_WIDTH = 230
-local CONTENT_HEIGHT = 535
+local CONTENT_HEIGHT = 515
 
 local ROW_SPACING = 1
 
@@ -12,7 +12,7 @@ function LevellingQueueList:Create(parent)
       addon.UI.Components.ScrollBox:Create(
         parent,
         {
-          width = CONTENT_WIDTH + 5,
+          width = CONTENT_WIDTH + 3,
           height = CONTENT_HEIGHT,
           contentGap = 5,
         }

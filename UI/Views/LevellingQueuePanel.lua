@@ -6,6 +6,22 @@ local TOOLBAR_HEIGHT = 32
 local TOOLBAR_BUTTON_SIZE = 34
 local TOOLBAR_BUTTON_SPACING = 5
 
+local MENU_TEMPLATES = {
+  "WowStyle1FilterDropdownTemplate",
+  "WowStyle1DropdownTemplate",
+}
+
+local MENU_BUTTON_WIDTH = 120
+local MENU_BUTTON_HEIGHT = 22
+local MENU_BUTTON_TEXT = "Queue"
+
+--------------------------------------------------
+-- Bar under the list holding the queue dropdown
+-- and the pet count.
+--------------------------------------------------
+local FOOTER_HEIGHT = 20
+local FOOTER_GAP = 0
+
 local LEVELLING_ITEMS = {
   {
     itemID = 98114,
@@ -28,6 +44,20 @@ local LEVELLING_ITEMS = {
     name = "Marked Flawless Battle-Stone",
   },
 }
+
+local function SetMenuButtonText(dropdown, text)
+  if type(dropdown.SetDefaultText) == "function" then
+    dropdown:SetDefaultText(text)
+    return true
+  end
+
+  if type(dropdown.SetText) == "function" then
+    dropdown:SetText(text)
+    return true
+  end
+
+  return false
+end
 
 local function GetToolbarStyleSource()
   local healFrame =
@@ -110,6 +140,170 @@ function LevellingQueuePanel:CreateToolbarItems()
   end
 end
 
+function LevellingQueuePanel:PopulateMenu(root)
+  local service = addon.Services.LevellingQueue
+
+  root:CreateTitle(
+    "Levelling Queue"
+  )
+
+  --------------------------------------------------
+  -- Fill
+  --------------------------------------------------
+  local fill =
+      root:CreateButton(
+        "Add All Levelling Pets",
+        function()
+          addon.UI.Dialogs.FillLevellingQueueDialog:Show()
+        end
+      )
+
+  fill:SetEnabled(
+    service ~= nil
+    and service:HasFillCandidates()
+  )
+
+  root:CreateDivider()
+
+  --------------------------------------------------
+  -- Clear
+  --------------------------------------------------
+  local clear =
+      root:CreateButton(
+        "Clear Levelling Queue",
+        function()
+          addon.UI.Dialogs.ClearLevellingQueueDialog:Show()
+        end
+      )
+
+  clear:SetEnabled(
+    service ~= nil
+    and service:GetCount() > 0
+  )
+end
+
+function LevellingQueuePanel:CreateMenuButton(parent)
+  local dropdown
+
+  for _, template in ipairs(MENU_TEMPLATES) do
+    local created,
+    frame =
+        pcall(
+          CreateFrame,
+          "DropdownButton",
+          nil,
+          parent,
+          template
+        )
+
+    if created and frame then
+      dropdown = frame
+      break
+    end
+  end
+
+  if not dropdown then
+    addon.Logger:Warn(
+      "Unable to create the levelling queue menu."
+    )
+
+    return nil
+  end
+
+  dropdown:SetHeight(MENU_BUTTON_HEIGHT)
+
+  SetMenuButtonText(
+    dropdown,
+    MENU_BUTTON_TEXT
+  )
+
+  --------------------------------------------------
+  -- The filter template pads itself out to a full
+  -- filter bar, which is wider than this needs, so
+  -- the width is pinned instead.
+  --------------------------------------------------
+  dropdown.resizeToText = false
+
+  dropdown:SetWidth(MENU_BUTTON_WIDTH)
+
+  dropdown:SetupMenu(
+    function(_, rootDescription)
+      self:PopulateMenu(rootDescription)
+    end
+  )
+
+  self.MenuButton = dropdown
+
+  return dropdown
+end
+
+function LevellingQueuePanel:CreateFooter(parent)
+  self.Footer =
+      CreateFrame(
+        "Frame",
+        nil,
+        parent
+      )
+
+  self.Footer:SetHeight(
+    FOOTER_HEIGHT
+  )
+
+  self.Footer:SetPoint(
+    "BOTTOMLEFT",
+    parent,
+    "BOTTOMLEFT",
+    -20,
+    0
+  )
+
+  self.Footer:SetPoint(
+    "BOTTOMRIGHT",
+    parent,
+    "BOTTOMRIGHT",
+    -20,
+    0
+  )
+
+  --------------------------------------------------
+  -- Queue actions
+  --------------------------------------------------
+  local menuButton =
+      self:CreateMenuButton(
+        self.Footer
+      )
+
+  if menuButton then
+    menuButton:SetPoint(
+      "LEFT",
+      self.Footer,
+      "LEFT",
+      3,
+      0
+    )
+  end
+
+  --------------------------------------------------
+  -- Count
+  --------------------------------------------------
+  self.Count =
+      self.Footer:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  self.Count:SetPoint(
+    "RIGHT",
+    self.Footer,
+    "RIGHT",
+    -3,
+    0
+  )
+
+  return self.Footer
+end
+
 function LevellingQueuePanel:Create(parent)
   if self.Frame then
     return self.Frame
@@ -155,27 +349,14 @@ function LevellingQueuePanel:Create(parent)
   self.Toolbar:SetHeight(TOOLBAR_HEIGHT)
 
   --------------------------------------------------
-  -- Count
-  --------------------------------------------------
-  self.Count =
-      self.Toolbar:CreateFontString(
-        nil,
-        "OVERLAY",
-        "GameFontHighlightSmall"
-      )
-
-  self.Count:SetPoint(
-    "RIGHT",
-    self.Toolbar,
-    "RIGHT",
-    -23,
-    0
-  )
-
-  --------------------------------------------------
   -- Leveling items
   --------------------------------------------------
   self:CreateToolbarItems()
+
+  --------------------------------------------------
+  -- Footer
+  --------------------------------------------------
+  self:CreateFooter(frame)
 
   --------------------------------------------------
   -- Background
@@ -225,16 +406,16 @@ function LevellingQueuePanel:Create(parent)
     "TOPLEFT",
     self.Toolbar,
     "BOTTOMLEFT",
-    0,
+    2,
     -3
   )
 
   self.ListBackground:SetPoint(
     "BOTTOMRIGHT",
-    frame,
-    "BOTTOMRIGHT",
-    -20,
-    0
+    self.Footer,
+    "TOPRIGHT",
+    0,
+    FOOTER_GAP
   )
 
   self.ListBackground:SetScript(
