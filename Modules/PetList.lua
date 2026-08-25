@@ -28,6 +28,8 @@ local COMPACT_ICON_LEFT_OFFSET   = -37
 local COMPACT_LEVEL_OVERLAP      = -6
 local COMPACT_NAME_SPACING       = 4
 
+local PET_LIST_TOP_OFFSET        = 4
+
 local PET_RARITY_COLORS          = {
   [1] = ITEM_QUALITY_COLORS[0],
   [2] = ITEM_QUALITY_COLORS[1],
@@ -38,7 +40,6 @@ local PET_RARITY_COLORS          = {
 }
 
 local RANDOM_PET_ICON            = "Interface\\Icons\\INV_Misc_Dice_02"
-
 local LEVELING_PET_ICON          = "Interface\\AddOns\\PetMatch\\Media\\levelingicon"
 
 local PET_FAMILY_ICONS           = {
@@ -467,6 +468,38 @@ local function GetPetJournalScrollBox()
         _G.PetJournal.PetList
         and _G.PetJournal.PetList.ScrollBox
       )
+end
+
+local function MovePetJournalScrollBoxUp()
+  local scrollBox = GetPetJournalScrollBox()
+
+  if not scrollBox then
+    return
+  end
+
+  if scrollBox.PetMatchPositionAdjusted then
+    return
+  end
+
+  local point,
+  relativeTo,
+  relativePoint,
+  offsetX,
+  offsetY = scrollBox:GetPoint(1)
+
+  if point ~= "TOPLEFT" then
+    return
+  end
+
+  scrollBox:SetPoint(
+    "TOPLEFT",
+    relativeTo,
+    relativePoint,
+    offsetX,
+    offsetY + PET_LIST_TOP_OFFSET
+  )
+
+  scrollBox.PetMatchPositionAdjusted = true
 end
 
 local function GetPetIcon(button)
@@ -2174,6 +2207,7 @@ function PetList:ApplyBreedDisplay()
 end
 
 function PetList:ApplyPetListLayout()
+  MovePetJournalScrollBoxUp()
   ApplyScrollBoxRowExtent()
   RefreshPetJournal()
 end
@@ -2230,7 +2264,6 @@ end
 function PetList:Initialize()
   addon.EventBus:Register(
     addon.Events.SETTINGS_CHANGED,
-
     function(key)
       self:OnSettingChanged(key)
     end

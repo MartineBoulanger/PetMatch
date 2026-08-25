@@ -114,9 +114,15 @@ for _, range in ipairs(LEVEL_RANGES) do
       range.key
 end
 
+local TYPE_FILTER_BAR_HEIGHT = 56
+local TYPE_FILTER_BAR_TOP_OFFSET = -32
+
 local FILTER_BAR_HEIGHT = 24
-local PET_LIST_NORMAL_TOP_OFFSET = -36
-local PET_LIST_FILTERED_TOP_OFFSET = -64
+local FILTER_BAR_SPACING = 4
+
+local FILTER_BAR_TOP_OFFSET = TYPE_FILTER_BAR_TOP_OFFSET - TYPE_FILTER_BAR_HEIGHT - FILTER_BAR_SPACING
+local PET_LIST_NORMAL_TOP_OFFSET = FILTER_BAR_TOP_OFFSET
+local PET_LIST_FILTERED_TOP_OFFSET = FILTER_BAR_TOP_OFFSET - FILTER_BAR_HEIGHT + 2
 
 local OtherFilters = {
   leveling = nil,
@@ -1905,6 +1911,29 @@ function FilterExtension:GetActiveFilterNames()
     names[#names + 1] = "Other"
   end
 
+  local typeFilter = addon.Services.PetTypeFilter
+
+  if typeFilter then
+    local mode = typeFilter:GetMode()
+    local selectedTypes = typeFilter:GetSelectedTypes(mode)
+
+    if selectedTypes and next(selectedTypes) ~= nil then
+      local modeLabels = {
+        petType = "Pet Type",
+        strongVs = "Strong Vs",
+        weakVs = "Weak Vs",
+        takesMoreFrom = "Takes More From",
+        takesLessFrom = "Takes Less From",
+      }
+
+      names[#names + 1] = modeLabels[mode] or "Pet Type"
+    end
+
+    if typeFilter:IsLevel25Only() then
+      names[#names + 1] = "Level 25"
+    end
+  end
+
   return names
 end
 
@@ -1973,9 +2002,70 @@ function FilterExtension:LayoutPetList(filterBarShown)
   )
 end
 
-function FilterExtension:CreateFilterBar()
-  if self.FilterBar
+function FilterExtension:CreatePetTypeFilterBar()
+  if self.PetTypeFilterBar
       or not PetJournal
+      or not PetJournal.LeftInset then
+    return
+  end
+
+  local component = addon.UI.Components.PetTypeFilterBar
+
+  if not component then
+    addon.Logger:Warn(
+      "PetTypeFilterBar component is unavailable"
+    )
+    return
+  end
+
+  local bar = component:Create(PetJournal.LeftInset)
+
+  if not bar then
+    return
+  end
+
+  local frame = bar:GetFrame()
+
+  frame:ClearAllPoints()
+
+  frame:SetPoint(
+    "TOPLEFT",
+    PetJournal.LeftInset,
+    "TOPLEFT",
+    2,
+    TYPE_FILTER_BAR_TOP_OFFSET
+  )
+
+  frame:SetPoint(
+    "TOPRIGHT",
+    PetJournal.LeftInset,
+    "TOPRIGHT",
+    -2,
+    TYPE_FILTER_BAR_TOP_OFFSET
+  )
+
+  frame:SetHeight(
+    TYPE_FILTER_BAR_HEIGHT
+  )
+
+  frame:SetFrameStrata(
+    PetJournal.LeftInset:
+    GetFrameStrata()
+  )
+
+  frame:SetFrameLevel(
+    PetJournal.ScrollBox:
+    GetFrameLevel()
+    + 20
+  )
+
+  frame:Show()
+
+  self.PetTypeFilterBar = bar
+end
+
+function FilterExtension:CreateFilterBar()
+  if self.FilterBar or not PetJournal
       or not PetJournal.LeftInset then
     return
   end
@@ -1996,16 +2086,16 @@ function FilterExtension:CreateFilterBar()
     "TOPLEFT",
     PetJournal.LeftInset,
     "TOPLEFT",
-    5,
-    -35
+    3,
+    FILTER_BAR_TOP_OFFSET + 5
   )
 
   bar:SetPoint(
     "TOPRIGHT",
     PetJournal.LeftInset,
     "TOPRIGHT",
-    -5,
-    -35
+    -3,
+    FILTER_BAR_TOP_OFFSET + 5
   )
 
   bar:SetFrameStrata(
@@ -2230,6 +2320,16 @@ function FilterExtension:ResetAllFilters()
     TAG_FILTER_OPTIONS,
     false
   )
+
+  local typeFilter = addon.Services.PetTypeFilter
+
+  if typeFilter then
+    typeFilter:ClearAll()
+  end
+
+  if self.PetTypeFilterBar then
+    self.PetTypeFilterBar:Refresh()
+  end
 
   OtherFilters.leveling = nil
   OtherFilters.tradable = nil
@@ -2472,22 +2572,15 @@ function FilterExtension:MatchesPet(
 end
 
 function FilterExtension:ApplyFilters()
-  if not PetJournal
-      or not PetJournal.ScrollBox then
+  if not PetJournal or not PetJournal.ScrollBox then
     return
   end
-
-  --------------------------------------------------
-  -- Recycle the previous build buffer.
-  --
-  -- ActiveItems are still owned by the current
-  -- DataProvider, so we do not touch them yet.
-  --------------------------------------------------
 
   ReleaseItemList(BuildItems)
 
   local items = BuildItems
   local petCount = C_PetJournal.GetNumPets()
+  local typeFilter = addon.Services.PetTypeFilter
 
   for index = 1, petCount do
     local petID,
@@ -2507,7 +2600,8 @@ function FilterExtension:ApplyFilters()
     canBattle,
     tradable = C_PetJournal.GetPetInfoByIndex(index)
 
-    if self:MatchesPet(
+    local matchesPetMatchFilter =
+        self:MatchesPet(
           petID,
           speciesID,
           isOwned,
@@ -2515,7 +2609,18 @@ function FilterExtension:ApplyFilters()
           petType,
           canBattle == true,
           tradable == true
-        ) then
+        )
+
+    if matchesPetMatchFilter
+        and typeFilter then
+      matchesPetMatchFilter =
+          typeFilter:DoesPetDataMatch(
+            level,
+            petType
+          )
+    end
+
+    if matchesPetMatchFilter then
       local rarity = 0
 
       if petID then
@@ -2629,6 +2734,7 @@ function FilterExtension:Initialize()
         if loadedAddon == "Blizzard_Collections" then
           FilterExtension:SetupFilterDropdown()
           FilterExtension:HookPetJournal()
+          FilterExtension:CreatePetTypeFilterBar()
           FilterExtension:CreateFilterBar()
           FilterExtension:HideBlizzardResetButton()
           SyncNativeFilters()
@@ -2640,8 +2746,21 @@ function FilterExtension:Initialize()
     end
   )
 
+  addon.EventBus:Register(
+    addon.Events.PET_TYPE_FILTER_CHANGED,
+    function()
+      CancelQueuedApplyFilters()
+      FilterExtension:ApplyFilters()
+
+      if FilterExtension.PetTypeFilterBar then
+        FilterExtension.PetTypeFilterBar:Refresh()
+      end
+    end
+  )
+
   self:HookPetJournal()
   self:SetupFilterDropdown()
+  self:CreatePetTypeFilterBar()
   self:CreateFilterBar()
   self:HideBlizzardResetButton()
 
