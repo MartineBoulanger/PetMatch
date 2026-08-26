@@ -11,52 +11,25 @@ local CONTENT_TOP_SPACING = 0
 local SECTION_SPACING = 8
 
 function PetCard:Create(parent)
-  assert(
-    parent,
-    "PetCard requires a parent frame"
-  )
+  assert(parent, "PetCard requires a parent frame")
 
-  local instance =
-      setmetatable(
-        {},
-        PetCard
-      )
+  local instance = setmetatable({}, PetCard)
 
   --------------------------------------------------
   -- Frame
   --------------------------------------------------
-  instance.Frame =
-      CreateFrame(
-        "Frame",
-        nil,
-        parent,
-        "DefaultPanelTemplate"
-      )
-
-  instance.Frame:SetWidth(
-    CARD_WIDTH
-  )
-
-  instance.Frame:SetFrameStrata(
-    "DIALOG"
-  )
-
-  instance.Frame:SetFrameLevel(
-    100
-  )
-
-  instance.Frame:SetClampedToScreen(
-    true
-  )
+  instance.Frame = CreateFrame("Frame", nil, parent, "DefaultPanelTemplate")
+  instance.Frame:SetWidth(CARD_WIDTH)
+  instance.Frame:SetFrameStrata("DIALOG")
+  instance.Frame:SetFrameLevel(100)
+  instance.Frame:SetClampedToScreen(true)
 
   --------------------------------------------------
   -- Blizzard title
   --------------------------------------------------
   if instance.Frame.TitleContainer
       and instance.Frame.TitleContainer.TitleText then
-    instance.Frame.TitleContainer.TitleText:SetText(
-      "Pet Details"
-    )
+    instance.Frame.TitleContainer.TitleText:SetText("Pet Details")
   elseif type(instance.Frame.SetTitle) == "function" then
     instance.Frame:SetTitle("Pet Details")
   end
@@ -64,7 +37,6 @@ function PetCard:Create(parent)
   --------------------------------------------------
   -- Components
   --------------------------------------------------
-
   instance:CreateContent()
   instance:CreateCloseButton()
 
@@ -84,12 +56,7 @@ end
 -- Content
 --------------------------------------------------
 function PetCard:CreateContent()
-  self.Content =
-      CreateFrame(
-        "Frame",
-        nil,
-        self.Frame
-      )
+  self.Content = CreateFrame("Frame", nil, self.Frame)
 
   --------------------------------------------------
   -- Content starts below Blizzard title bar
@@ -99,9 +66,7 @@ function PetCard:CreateContent()
   local titleHeight = 0
 
   if self.Frame.TitleContainer then
-    titleHeight =
-        self.Frame.TitleContainer:GetHeight()
-        or 0
+    titleHeight = self.Frame.TitleContainer:GetHeight() or 0
   end
 
   self.Content:SetPoint(
@@ -128,17 +93,9 @@ end
 -- Close button
 --------------------------------------------------
 function PetCard:CreateCloseButton()
-  local parent =
-      self.Frame.TitleContainer
-      or self.Frame
+  local parent = self.Frame.TitleContainer or self.Frame
 
-  self.CloseButton =
-      CreateFrame(
-        "Button",
-        nil,
-        parent,
-        "UIPanelCloseButton"
-      )
+  self.CloseButton = CreateFrame("Button", nil, parent, "UIPanelCloseButton")
 
   self.CloseButton:SetPoint(
     "TOPRIGHT",
@@ -178,11 +135,8 @@ function PetCard:CreateCloseButton()
 end
 
 function PetCard:SetCloseHandler(handler)
-  if handler ~= nil
-      and type(handler) ~= "function" then
-    error(
-      "PetCard: SetCloseHandler requires a function or nil."
-    )
+  if handler ~= nil and type(handler) ~= "function" then
+    error("PetCard: SetCloseHandler requires a function or nil.")
   end
 
   self.CloseHandler = handler
@@ -227,9 +181,7 @@ function PetCard:SetPinned(pinned)
   )
 
   if self.Header and self.Header.SetInteractive then
-    self.Header:SetInteractive(
-      self.Pinned
-    )
+    self.Header:SetInteractive(self.Pinned)
   end
 end
 
@@ -241,31 +193,38 @@ end
 -- Sections
 --------------------------------------------------
 function PetCard:CreateHeader()
-  self.Header =
-      addon.UI.PetCard.Header:Create(
-        self.Content
-      )
+  self.Header = addon.UI.PetCard.Header:Create(self.Content)
 end
 
 function PetCard:CreateDetails()
-  self.Details =
-      addon.UI.PetCard.Details:Create(
-        self.Content
-      )
+  self.Details = addon.UI.PetCard.Details:Create(self.Content)
 end
 
 function PetCard:CreateAbilityGrid()
-  self.AbilityGrid =
-      addon.UI.PetCard.AbilityGrid:Create(
-        self.Content
-      )
+  self.AbilityGrid = addon.UI.PetCard.AbilityGrid:Create(self.Content)
 end
 
 function PetCard:CreateBreedSection()
-  self.BreedSection =
-      addon.UI.PetCard.BreedSection:Create(
-        self.Content
-      )
+  self.BreedSection = addon.UI.PetCard.BreedSection:Create(self.Content)
+end
+
+--------------------------------------------------
+-- Highlight Abilities
+--------------------------------------------------
+function PetCard:SetHighlightedAbilities(abilityIDs)
+  if not self.AbilityGrid then
+    return
+  end
+
+  self.AbilityGrid:SetHighlightedAbilities(abilityIDs)
+end
+
+function PetCard:ClearHighlightedAbilities()
+  if not self.AbilityGrid then
+    return
+  end
+
+  self.AbilityGrid:ClearHighlights()
 end
 
 --------------------------------------------------
@@ -321,8 +280,7 @@ function PetCard:Layout()
         -- Spacing only BETWEEN visible sections
         --------------------------------------------------
         if hasPreviousSection then
-          local spacing =
-              SECTION_SPACING
+          local spacing = SECTION_SPACING
 
           -- Details and abilities touch each other
           if previousSection == self.Details
@@ -330,9 +288,7 @@ function PetCard:Layout()
             spacing = 0
           end
 
-          offsetY =
-              offsetY
-              + spacing
+          offsetY = offsetY + spacing
         end
 
         --------------------------------------------------
@@ -340,10 +296,8 @@ function PetCard:Layout()
         --------------------------------------------------
         frame:ClearAllPoints()
 
-        if section == self.Details
-            or section == self.AbilityGrid then
-          local offset =
-              CONTENT_PADDING
+        if section == self.Details or section == self.AbilityGrid then
+          local offset = CONTENT_PADDING
 
           frame:SetPoint(
             "TOPLEFT",
@@ -381,12 +335,7 @@ function PetCard:Layout()
         --------------------------------------------------
         -- Add section height
         --------------------------------------------------
-        offsetY =
-            offsetY
-            + math.max(
-              1,
-              frame:GetHeight() or 0
-            )
+        offsetY = offsetY + math.max(1, frame:GetHeight() or 0)
 
         previousSection = section
         hasPreviousSection = true
@@ -468,11 +417,8 @@ function PetCard:SetOwner(owner, anchor)
       -8
     )
   elseif anchor == "ANCHOR_CURSOR" then
-    local scale =
-        UIParent:GetEffectiveScale()
-
-    local x, y =
-        GetCursorPosition()
+    local scale = UIParent:GetEffectiveScale()
+    local x, y = GetCursorPosition()
 
     x = x / scale
     y = y / scale
@@ -514,14 +460,11 @@ function PetCard:Show()
 end
 
 function PetCard:Hide(owner, force)
-  if self.Pinned
-      and force ~= true then
+  if self.Pinned and force ~= true then
     return
   end
 
-  if owner
-      and self.Owner
-      and owner ~= self.Owner then
+  if owner and self.Owner and owner ~= self.Owner then
     return
   end
 
@@ -532,6 +475,7 @@ function PetCard:Hide(owner, force)
   end
 
   if self.AbilityGrid then
+    self.AbilityGrid:ClearHighlights()
     self.AbilityGrid:Clear()
   end
 

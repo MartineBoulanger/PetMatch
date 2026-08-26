@@ -30,8 +30,7 @@ local function GetSpecialSlotIcon(specialSlot)
   end
 
   if specialSlot.type == "random" then
-    local petType =
-        tonumber(specialSlot.petType) or 0
+    local petType = tonumber(specialSlot.petType) or 0
 
     if petType > 0 then
       return PET_FAMILY_ICONS[petType], nil
@@ -46,12 +45,7 @@ end
 function PetSlot:Create(parent)
   assert(parent, "PetSlot requires a parent frame")
 
-  local frame = CreateFrame(
-    "Frame",
-    nil,
-    parent,
-    "BackdropTemplate"
-  )
+  local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
 
   frame.petGUID = nil
   addon.UI.Components.PetTooltip:Attach(
@@ -63,7 +57,17 @@ function PetSlot:Create(parent)
       return "petGUID", control.petGUID
     end,
     "ANCHOR_LEFT",
-    "teams"
+    "teams",
+    function(control)
+      local team = control.Team
+      local slot = control.SlotIndex
+
+      if not team or not slot or type(team.abilities) ~= "table" then
+        return nil
+      end
+
+      return team.abilities[slot]
+    end
   )
 
   frame:SetSize(ICON_SIZE, ICON_SIZE)
@@ -79,7 +83,9 @@ function PetSlot:Create(parent)
 
   local instance = setmetatable({
     Frame = frame,
-    PetGUID = nil
+    PetGUID = nil,
+    Team = nil,
+    SlotIndex = nil,
   }, PetSlot)
 
   instance.Icon = frame:CreateTexture(nil, "ARTWORK")
@@ -98,7 +104,7 @@ function PetSlot:Create(parent)
   return instance
 end
 
-function PetSlot:SetPet(petGUID)
+function PetSlot:SetPet(petGUID, team, slotIndex)
   if not petGUID then
     self:Clear()
     return
@@ -112,7 +118,12 @@ function PetSlot:SetPet(petGUID)
   end
 
   self.PetGUID = petGUID
+  self.Team = team
+  self.SlotIndex = slotIndex
+
   self.Frame.petGUID = petGUID
+  self.Frame.Team = team
+  self.Frame.SlotIndex = slotIndex
 
   self.EmptyIcon:Hide()
 
@@ -157,10 +168,17 @@ end
 
 function PetSlot:Clear()
   self.PetGUID = nil
+  self.Team = nil
+  self.SlotIndex = nil
+
   self.Frame.petGUID = nil
+  self.Frame.Team = nil
+  self.Frame.SlotIndex = nil
+
   self.Icon:SetAtlas(nil)
   self.Icon:SetTexture(nil)
   self.Icon:Hide()
+
   self.EmptyIcon:Show()
 end
 

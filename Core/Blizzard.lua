@@ -26,30 +26,65 @@ local function UpdateLoadoutTitle(team)
   titleText:SetText(title)
 end
 
--- function Blizzard:AttachPetLoadoutTooltips()
---   if not PetJournalLoadout then
---     return
---   end
+local function GetSearchAbilityHighlights(control)
+  if not PetJournal or not PetJournal.searchBox then
+    return nil
+  end
 
---   local slots = {
---     PetJournalLoadout.Pet1,
---     PetJournalLoadout.Pet2,
---     PetJournalLoadout.Pet3,
---   }
+  local searchText = PetJournal.searchBox:GetText()
 
---   for _, slot in ipairs(slots) do
---     if slot then
---       addon.UI.Components.PetTooltip:Attach(
---         slot,
---         function(control)
---           return "petGUID",
---               control.petID
---               or control.petGUID
---         end
---       )
---     end
---   end
--- end
+  searchText = tostring(searchText or "")
+  searchText = string.lower(searchText)
+  searchText = searchText:match("^%s*(.-)%s*$") or ""
+
+  if searchText == "" then
+    return nil
+  end
+
+  --------------------------------------------------
+  -- Determine species
+  --------------------------------------------------
+  local speciesID = tonumber(control.speciesID)
+
+  if not speciesID and type(control.petID) == "string" and control.petID ~= "" then
+    speciesID = select(1, C_PetJournal.GetPetInfoByPetID(control.petID))
+  end
+
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return nil
+  end
+
+  --------------------------------------------------
+  -- Get all six abilities
+  --------------------------------------------------
+  local abilityIDs = {}
+  local abilityLevels = {}
+
+  C_PetJournal.GetPetAbilityList(
+    speciesID,
+    abilityIDs,
+    abilityLevels
+  )
+
+  local matches = nil
+
+  for _, abilityID in ipairs(abilityIDs) do
+    local abilityName = C_PetJournal.GetPetAbilityInfo(abilityID)
+
+    if abilityName then
+      local abilityNameLower = string.lower(abilityName)
+
+      if string.find(abilityNameLower, searchText, 1, true) then
+        matches = matches or {}
+        matches[tonumber(abilityID)] = true
+      end
+    end
+  end
+
+  return matches
+end
 
 function Blizzard:Initialize()
   if self.Hooked then
@@ -91,26 +126,21 @@ function Blizzard:Initialize()
       addon.UI.Components.PetTooltip:Attach(
         button,
         function(control)
-          if type(control.petID) == "string"
-              and control.petID ~= "" then
-            return "petGUID",
-                control.petID
+          if type(control.petID) == "string" and control.petID ~= "" then
+            return "petGUID", control.petID
           end
 
-          local speciesID =
-              tonumber(
-                control.speciesID
-              )
+          local speciesID = tonumber(control.speciesID)
 
           if speciesID then
-            return "speciesID",
-                speciesID
+            return "speciesID", speciesID
           end
 
           return nil
         end,
         "ANCHOR_RIGHT",
-        "petList"
+        "petList",
+        GetSearchAbilityHighlights
       )
     end
   )

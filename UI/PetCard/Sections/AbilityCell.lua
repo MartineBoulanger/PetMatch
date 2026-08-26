@@ -11,6 +11,8 @@ local FAMILY_ICON_SIZE = 50
 local CURSOR_OFFSET_X = 8
 local CURSOR_OFFSET_Y = 8
 
+local DEFAULT_BORDER_COLOR = { 0.32, 0.32, 0.32, 1, }
+
 local PET_FAMILY_ICONS = {
   [1] = "Interface\\Icons\\Pet_Type_Humanoid",
   [2] = "Interface\\Icons\\Pet_Type_Dragon",
@@ -29,11 +31,8 @@ local function PositionTooltipAtCursor(tooltip)
     return
   end
 
-  local scale =
-      UIParent:GetEffectiveScale()
-
-  local cursorX, cursorY =
-      GetCursorPosition()
+  local scale = UIParent:GetEffectiveScale()
+  local cursorX, cursorY = GetCursorPosition()
 
   cursorX = cursorX / scale
   cursorY = cursorY / scale
@@ -50,35 +49,22 @@ local function PositionTooltipAtCursor(tooltip)
 end
 
 local function GetAbilityPetType(abilityID)
-  abilityID =
-      tonumber(
-        abilityID
-      )
+  abilityID = tonumber(abilityID)
 
   if not abilityID then
     return nil
   end
 
   if not C_PetJournal
-      or type(
-        C_PetJournal.GetPetAbilityInfo
-      ) ~= "function" then
+      or type(C_PetJournal.GetPetAbilityInfo) ~= "function" then
     return nil
   end
 
-  local _, _, petType =
-      C_PetJournal.GetPetAbilityInfo(
-        abilityID
-      )
+  local _, _, petType = C_PetJournal.GetPetAbilityInfo(abilityID)
 
-  petType =
-      tonumber(
-        petType
-      )
+  petType = tonumber(petType)
 
-  if not petType
-      or petType < 1
-      or petType > 10 then
+  if not petType or petType < 1 or petType > 10 then
     return nil
   end
 
@@ -86,49 +72,29 @@ local function GetAbilityPetType(abilityID)
 end
 
 function AbilityCell:Create(parent)
-  local self =
-      setmetatable(
-        {},
-        AbilityCell
-      )
+  local self = setmetatable({}, AbilityCell)
+  self.Highlighted = false
 
   --------------------------------------------------
   -- Cell frame
   --------------------------------------------------
-  self.Frame =
-      CreateFrame(
-        "Frame",
-        nil,
-        parent
-      )
+  self.Frame = CreateFrame("Frame", nil, parent)
 
   self.Frame:EnableMouse(true)
 
   --------------------------------------------------
   -- Blizzard Pet Journal slot background
   --------------------------------------------------
-  self.Background =
-      self.Frame:CreateTexture(
-        nil,
-        "BACKGROUND"
-      )
+  self.Background = self.Frame:CreateTexture(nil, "BACKGROUND")
 
   self.Background:SetAllPoints()
 
-  self.Background:SetAtlas(
-    "PetJournal-PetCard-BG"
-  )
+  self.Background:SetAtlas("PetJournal-PetCard-BG")
 
   --------------------------------------------------
   -- Border
   --------------------------------------------------
-  self.Border =
-      CreateFrame(
-        "Frame",
-        nil,
-        self.Frame,
-        "BackdropTemplate"
-      )
+  self.Border = CreateFrame("Frame", nil, self.Frame, "BackdropTemplate")
 
   self.Border:SetAllPoints()
 
@@ -144,33 +110,22 @@ function AbilityCell:Create(parent)
   })
 
   self.Border:SetBackdropBorderColor(
-    0.32,
-    0.32,
-    0.32,
-    1
+    DEFAULT_BORDER_COLOR[1],
+    DEFAULT_BORDER_COLOR[2],
+    DEFAULT_BORDER_COLOR[3],
+    DEFAULT_BORDER_COLOR[4]
   )
 
-  self.Border:SetFrameLevel(
-    self.Frame:GetFrameLevel() + 2
-  )
+  self.Border:SetFrameLevel(self.Frame:GetFrameLevel() + 2)
 
   self.Border:EnableMouse(false)
 
   --------------------------------------------------
   -- Family background
   --------------------------------------------------
-  self.FamilyBackground =
-      self.Frame:CreateTexture(
-        nil,
-        "BACKGROUND",
-        nil,
-        1
-      )
+  self.FamilyBackground = self.Frame:CreateTexture(nil, "BACKGROUND", nil, 1)
 
-  self.FamilyBackground:SetSize(
-    FAMILY_ICON_SIZE,
-    FAMILY_ICON_SIZE
-  )
+  self.FamilyBackground:SetSize(FAMILY_ICON_SIZE, FAMILY_ICON_SIZE)
 
   self.FamilyBackground:SetPoint(
     "RIGHT",
@@ -180,23 +135,14 @@ function AbilityCell:Create(parent)
     0
   )
 
-  self.FamilyBackground:SetAlpha(
-    0.46
-  )
+  self.FamilyBackground:SetAlpha(0.46)
 
   --------------------------------------------------
   -- Ability icon
   --------------------------------------------------
-  self.Icon =
-      self.Frame:CreateTexture(
-        nil,
-        "ARTWORK"
-      )
+  self.Icon = self.Frame:CreateTexture(nil, "ARTWORK")
 
-  self.Icon:SetSize(
-    ICON_SIZE,
-    ICON_SIZE
-  )
+  self.Icon:SetSize(ICON_SIZE, ICON_SIZE)
 
   self.Icon:SetPoint(
     "LEFT",
@@ -214,14 +160,89 @@ function AbilityCell:Create(parent)
   )
 
   --------------------------------------------------
-  -- Ability name
+  -- Ability icon border
   --------------------------------------------------
-  self.Name =
-      self.Frame:CreateFontString(
+  self.IconBorderFrame = CreateFrame("Frame", nil, self.Frame)
+
+  self.IconBorderFrame:SetSize(
+    ICON_SIZE + 4,
+    ICON_SIZE + 4
+  )
+
+  self.IconBorderFrame:SetPoint(
+    "CENTER",
+    self.Icon,
+    "CENTER",
+    0,
+    0
+  )
+
+  self.IconBorderFrame:SetFrameLevel(
+    self.Frame:GetFrameLevel() + 20
+  )
+
+  self.IconBorderFrame:EnableMouse(false)
+
+  --------------------------------------------------
+  -- Normal icon border
+  --------------------------------------------------
+  self.NormalBorderFrame = CreateFrame("Frame", nil, self.Frame, "BackdropTemplate")
+
+  self.NormalBorderFrame:SetSize(
+    ICON_SIZE + 4,
+    ICON_SIZE + 4
+  )
+
+  self.NormalBorderFrame:SetPoint(
+    "CENTER",
+    self.Icon,
+    "CENTER",
+    0,
+    0
+  )
+
+  self.NormalBorderFrame:SetBackdrop({
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    edgeSize = 8,
+  })
+
+  self.NormalBorderFrame:SetBackdropBorderColor(
+    0.35,
+    0.35,
+    0.35,
+    1
+  )
+
+  self.NormalBorderFrame:SetFrameLevel(
+    self.Frame:GetFrameLevel() + 10
+  )
+
+  self.NormalBorderFrame:EnableMouse(false)
+
+  --------------------------------------------------
+  -- Selected / highlighted border
+  --------------------------------------------------
+  self.HighlightBorder =
+      self.IconBorderFrame:CreateTexture(
         nil,
         "OVERLAY",
-        "GameTooltipText"
+        nil,
+        1
       )
+
+  self.HighlightBorder:SetAllPoints()
+
+  self.HighlightBorder:SetTexture(
+    "Interface\\Buttons\\UI-Quickslot-Depress"
+  )
+
+  self.HighlightBorder:SetBlendMode("ADD")
+  self.HighlightBorder:Hide()
+
+  --------------------------------------------------
+  -- Ability name
+  --------------------------------------------------
+  self.Name = self.Frame:CreateFontString(nil, "OVERLAY", "GameTooltipText")
 
   self.Name:SetPoint(
     "LEFT",
@@ -239,21 +260,11 @@ function AbilityCell:Create(parent)
     0
   )
 
-  self.Name:SetJustifyH(
-    "LEFT"
-  )
+  self.Name:SetJustifyH("LEFT")
+  self.Name:SetJustifyV("MIDDLE")
 
-  self.Name:SetJustifyV(
-    "MIDDLE"
-  )
-
-  self.Name:SetWordWrap(
-    true
-  )
-
-  self.Name:SetNonSpaceWrap(
-    false
-  )
+  self.Name:SetWordWrap(true)
+  self.Name:SetNonSpaceWrap(false)
 
   --------------------------------------------------
   -- Tooltip
@@ -298,21 +309,11 @@ function AbilityCell:SetAbility(ability)
   -- Ability family
   --------------------------------------------------
   local abilityID = ability.abilityID or ability.id
-
-  local petType =
-      GetAbilityPetType(
-        abilityID
-      )
-
-  local familyTexture =
-      petType
-      and PET_FAMILY_ICONS[petType]
+  local petType = GetAbilityPetType(abilityID)
+  local familyTexture = petType and PET_FAMILY_ICONS[petType]
 
   if familyTexture then
-    self.FamilyBackground:SetTexture(
-      familyTexture
-    )
-
+    self.FamilyBackground:SetTexture(familyTexture)
     self.FamilyBackground:Show()
   else
     self.FamilyBackground:SetTexture(nil)
@@ -322,32 +323,34 @@ function AbilityCell:SetAbility(ability)
   self.Frame:Show()
 end
 
+function AbilityCell:SetHighlighted(highlighted)
+  self.Highlighted = highlighted == true
+
+  if self.NormalIconBorder then
+    self.NormalIconBorder:SetShown(not self.Highlighted)
+  end
+
+  if self.HighlightBorder then
+    self.HighlightBorder:SetShown(self.Highlighted)
+  end
+end
+
 function AbilityCell:ShowTooltip()
-  local ability =
-      self.Ability
+  local ability = self.Ability
 
   if not ability then
     return
   end
 
-  local abilityID =
-      tonumber(
-        ability.abilityID
-        or ability.id
-      )
+  local abilityID = tonumber(ability.abilityID or ability.id)
 
   if not abilityID then
     return
   end
 
-  local speciesID =
-      tonumber(
-        ability.speciesID
-        or (
-          ability.pet
-          and ability.pet.speciesID
-        )
-      )
+  local speciesID = tonumber(ability.speciesID
+    or (ability.pet and ability.pet.speciesID)
+  )
 
   local petGUID =
       ability.petGUID
@@ -360,9 +363,7 @@ function AbilityCell:ShowTooltip()
         )
       )
 
-  if type(
-        _G.PetJournal_ShowAbilityTooltip
-      ) ~= "function" then
+  if type(_G.PetJournal_ShowAbilityTooltip) ~= "function" then
     return
   end
 
@@ -374,47 +375,33 @@ function AbilityCell:ShowTooltip()
     ability.additionalText
   )
 
-  local tooltip =
-      _G.PetJournalPrimaryAbilityTooltip
+  local tooltip = _G.PetJournalPrimaryAbilityTooltip
 
   if not tooltip then
     return
   end
 
-  tooltip:SetFrameStrata(
-    "TOOLTIP"
-  )
+  tooltip:SetFrameStrata("TOOLTIP")
 
-  local cardFrame =
-      self.Frame:GetParent()
+  local cardFrame = self.Frame:GetParent()
 
-  while cardFrame
-    and cardFrame:GetParent() do
+  while cardFrame and cardFrame:GetParent() do
     if cardFrame:GetWidth() == 360 then
       break
     end
 
-    cardFrame =
-        cardFrame:GetParent()
+    cardFrame = cardFrame:GetParent()
   end
 
   local minimumLevel = 200
 
   if cardFrame then
-    minimumLevel =
-        math.max(
-          minimumLevel,
-          cardFrame:GetFrameLevel() + 50
-        )
+    minimumLevel = math.max(minimumLevel, cardFrame:GetFrameLevel() + 50)
   end
 
-  tooltip:SetFrameLevel(
-    minimumLevel
-  )
+  tooltip:SetFrameLevel(minimumLevel)
 
-  PositionTooltipAtCursor(
-    tooltip
-  )
+  PositionTooltipAtCursor(tooltip)
 
   tooltip.anchoredTo = self.Frame
 
@@ -422,15 +409,13 @@ function AbilityCell:ShowTooltip()
 end
 
 function AbilityCell:HideTooltip()
-  local tooltip =
-      _G.PetJournalPrimaryAbilityTooltip
+  local tooltip = _G.PetJournalPrimaryAbilityTooltip
 
   if not tooltip then
     return
   end
 
-  if tooltip.anchoredTo
-      and tooltip.anchoredTo ~= self.Frame then
+  if tooltip.anchoredTo and tooltip.anchoredTo ~= self.Frame then
     return
   end
 
@@ -442,6 +427,8 @@ function AbilityCell:Clear()
   self:HideTooltip()
 
   self.Ability = nil
+
+  self:SetHighlighted(false)
 
   self.Icon:SetTexture(nil)
   self.Name:SetText("")
@@ -468,13 +455,9 @@ function AbilityCell:SetHeight(height)
 end
 
 function AbilityCell:SetEnabled(enabled)
-  self.Enabled =
-      enabled ~= false
+  self.Enabled = enabled ~= false
 
-  local alpha =
-      self.Enabled
-      and 1
-      or 0.4
+  local alpha = self.Enabled and 1 or 0.4
 
   self.Icon:SetAlpha(alpha)
   self.Name:SetAlpha(alpha)

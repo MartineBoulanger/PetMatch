@@ -7,6 +7,7 @@ PetTooltip.Pinned = false
 PetTooltip.PinnedType = nil
 PetTooltip.PinnedValue = nil
 PetTooltip.PinnedOwner = nil
+PetTooltip.PinnedHighlightedAbilities = nil
 
 local VALID_MODES = {
   hover = true,
@@ -20,10 +21,7 @@ local VALID_SOURCES = {
 }
 
 local function GetInteractionMode()
-  local mode =
-      addon.Settings:Get(
-        "petCardInteractionMode"
-      )
+  local mode = addon.Settings:Get("petCardInteractionMode")
 
   if not VALID_MODES[mode] then
     return "hover"
@@ -33,26 +31,17 @@ local function GetInteractionMode()
 end
 
 local function AllowsHover()
-  local mode =
-      GetInteractionMode()
-
-  return mode == "hover"
-      or mode == "both"
+  local mode = GetInteractionMode()
+  return mode == "hover" or mode == "both"
 end
 
 local function AllowsClick()
-  local mode =
-      GetInteractionMode()
-
-  return mode == "click"
-      or mode == "both"
+  local mode = GetInteractionMode()
+  return mode == "click" or mode == "both"
 end
 
 local function GetVisibilityMode()
-  local mode =
-      addon.Settings:Get(
-        "petCardVisibilityMode"
-      )
+  local mode = addon.Settings:Get("petCardVisibilityMode")
 
   if mode ~= "petList"
       and mode ~= "teams"
@@ -82,14 +71,10 @@ local function GetPetCard()
     return Card
   end
 
-  local component =
-      addon.UI.PetCard
-      and addon.UI.PetCard.Card
+  local component = addon.UI.PetCard and addon.UI.PetCard.Card
 
   if not component then
-    error(
-      "PetMatch: PetCard component is not loaded."
-    )
+    error("PetMatch: PetCard component is not loaded.")
   end
 
   Card = component:Create(UIParent)
@@ -103,17 +88,12 @@ local function GetPetCard()
   return Card
 end
 
-local function ResolveProviderValue(
-    provider,
-    control
-)
+local function ResolveProviderValue(provider, control)
   if type(provider) ~= "function" then
     return nil, nil
   end
 
-  local first, second =
-      provider(control)
-
+  local first, second = provider(control)
   local valueType
   local value
 
@@ -137,24 +117,33 @@ local function ResolveProviderValue(
   return valueType, value
 end
 
-local function CreatePet(
-    valueType,
-    value
-)
+local function ResolveHighlightedAbilities(provider, control)
+  if type(provider) ~= "function" then
+    return nil
+  end
+
+  local abilityIDs = provider(control)
+
+  if type(abilityIDs) ~= "table" then
+    return nil
+  end
+
+  return abilityIDs
+end
+
+local function CreatePet(valueType, value)
   if value == nil then
     return nil
   end
 
-  local service =
-      addon.Services.PetTooltip
+  local service = addon.Services.PetTooltip
 
   if not service then
     return nil
   end
 
   if valueType == "petGUID" then
-    if type(value) ~= "string"
-        or value == "" then
+    if type(value) ~= "string" or value == "" then
       return nil
     end
 
@@ -170,9 +159,7 @@ local function CreatePet(
       return nil
     end
 
-    return service:GetBySpeciesID(
-      value
-    )
+    return service:GetBySpeciesID(value)
   end
 
   if valueType == "pet" then
@@ -192,93 +179,56 @@ local function CreatePet(
   return nil
 end
 
-local function ValuesMatch(
-    firstType,
-    firstValue,
-    secondType,
-    secondValue
-)
+local function ValuesMatch(firstType, firstValue, secondType, secondValue)
   if firstType ~= secondType then
     return false
   end
 
   if firstType == "pet" then
-    local firstGUID =
-        firstValue
-        and firstValue.petGUID
-
-    local secondGUID =
-        secondValue
-        and secondValue.petGUID
+    local firstGUID = firstValue and firstValue.petGUID
+    local secondGUID = secondValue and secondValue.petGUID
 
     if firstGUID or secondGUID then
       return firstGUID == secondGUID
     end
 
-    local firstSpeciesID =
-        firstValue
-        and firstValue.speciesID
+    local firstSpeciesID = firstValue and firstValue.speciesID
+    local secondSpeciesID = secondValue and secondValue.speciesID
 
-    local secondSpeciesID =
-        secondValue
-        and secondValue.speciesID
-
-    return firstSpeciesID
-        == secondSpeciesID
+    return firstSpeciesID == secondSpeciesID
   end
 
   return firstValue == secondValue
 end
 
-function PetTooltip:Show(
-    owner,
-    pet,
-    anchor,
-    pinned
-)
+function PetTooltip:Show(owner, pet, anchor, pinned, highlightedAbilities)
   if not owner or not pet then
     return
   end
 
   local card = GetPetCard()
 
-  card:SetOwner(
-    owner,
-    anchor or "ANCHOR_RIGHT"
-  )
-
+  card:SetOwner(owner, anchor or "ANCHOR_RIGHT")
   card:SetPet(pet)
 
-  card:SetPinned(
-    pinned == true
-  )
+  if type(highlightedAbilities) == "table" then
+    card:SetHighlightedAbilities(highlightedAbilities)
+  else
+    card:ClearHighlightedAbilities()
+  end
 
+  card:SetPinned(pinned == true)
   card:Show()
 end
 
-function PetTooltip:ShowValue(
-    owner,
-    valueType,
-    value,
-    anchor,
-    pinned
-)
-  local pet =
-      CreatePet(
-        valueType,
-        value
-      )
+function PetTooltip:ShowValue(owner, valueType, value, anchor, pinned, highlightedAbilities)
+  local pet = CreatePet(valueType, value)
 
   if not pet then
     return false
   end
 
-  self:Show(
-    owner,
-    pet,
-    anchor,
-    pinned
-  )
+  self:Show(owner, pet, anchor, pinned, highlightedAbilities)
 
   return true
 end
@@ -295,11 +245,7 @@ function PetTooltip:Hide(owner)
   Card:Hide(owner)
 end
 
-function PetTooltip:ShowByPetGUID(
-    owner,
-    petGUID,
-    anchor
-)
+function PetTooltip:ShowByPetGUID(owner, petGUID, anchor)
   self:ShowValue(
     owner,
     "petGUID",
@@ -309,15 +255,8 @@ function PetTooltip:ShowByPetGUID(
   )
 end
 
-function PetTooltip:Pin(
-    owner,
-    valueType,
-    value,
-    anchor
-)
-  if not owner
-      or not valueType
-      or value == nil then
+function PetTooltip:Pin(owner, valueType, value, anchor, highlightedAbilities)
+  if not owner or not valueType or value == nil then
     return false
   end
 
@@ -327,7 +266,8 @@ function PetTooltip:Pin(
         valueType,
         value,
         anchor,
-        true
+        true,
+        highlightedAbilities
       )
 
   if not shown then
@@ -338,6 +278,7 @@ function PetTooltip:Pin(
   self.PinnedType = valueType
   self.PinnedValue = value
   self.PinnedOwner = owner
+  self.PinnedHighlightedAbilities = highlightedAbilities
 
   return true
 end
@@ -347,6 +288,7 @@ function PetTooltip:Unpin()
   self.PinnedType = nil
   self.PinnedValue = nil
   self.PinnedOwner = nil
+  self.PinnedHighlightedAbilities = nil
 
   if not Card then
     return
@@ -356,12 +298,7 @@ function PetTooltip:Unpin()
   Card:Hide()
 end
 
-function PetTooltip:TogglePin(
-    owner,
-    valueType,
-    value,
-    anchor
-)
+function PetTooltip:TogglePin(owner, valueType, value, anchor, highlightedAbilities)
   if self.Pinned
       and ValuesMatch(
         self.PinnedType,
@@ -377,7 +314,8 @@ function PetTooltip:TogglePin(
     owner,
     valueType,
     value,
-    anchor
+    anchor,
+    highlightedAbilities
   )
 end
 
@@ -390,35 +328,26 @@ function PetTooltip:SetClickBlocker(frame, blocker)
     return
   end
 
-  if blocker ~= nil
-      and type(blocker) ~= "function" then
-    error(
-      "PetTooltip: click blocker must be a function or nil."
-    )
+  if blocker ~= nil and type(blocker) ~= "function" then
+    error("PetTooltip: click blocker must be a function or nil.")
   end
 
   frame.__PetMatchTooltipClickBlocker = blocker
 end
 
-function PetTooltip:Attach(
-    frame,
-    provider,
-    anchor,
-    source
-)
+function PetTooltip:Attach(frame, provider, anchor, source, highlightProvider)
   if not frame then
     return
   end
 
   if type(provider) ~= "function" then
-    error(
-      "PetTooltip: Attach requires a provider function."
-    )
+    error("PetTooltip: Attach requires a provider function.")
   end
 
   frame.__PetMatchTooltipProvider = provider
   frame.__PetMatchTooltipAnchor = anchor or "ANCHOR_RIGHT"
   frame.__PetMatchTooltipSource = source
+  frame.__PetMatchTooltipHighlightProvider = highlightProvider
 
   if frame.__PetMatchTooltipAttached then
     return
@@ -438,31 +367,26 @@ function PetTooltip:Attach(
         return
       end
 
-      -- Een gepinde card wordt niet door hover vervangen.
       if PetTooltip:IsPinned() then
         return
       end
 
-      local currentProvider =
-          control.__PetMatchTooltipProvider
+      local currentProvider = control.__PetMatchTooltipProvider
+      local valueType, value = ResolveProviderValue(currentProvider, control)
 
-      local valueType, value =
-          ResolveProviderValue(
-            currentProvider,
-            control
-          )
-
-      if not valueType
-          or value == nil then
+      if not valueType or value == nil then
         return
       end
+
+      local highlightedAbilities = ResolveHighlightedAbilities(control.__PetMatchTooltipHighlightProvider, control)
 
       PetTooltip:ShowValue(
         control,
         valueType,
         value,
         control.__PetMatchTooltipAnchor,
-        false
+        false,
+        highlightedAbilities
       )
     end
   )
@@ -500,23 +424,20 @@ function PetTooltip:Attach(
       end
 
       local currentProvider = control.__PetMatchTooltipProvider
+      local valueType, value = ResolveProviderValue(currentProvider, control)
 
-      local valueType, value =
-          ResolveProviderValue(
-            currentProvider,
-            control
-          )
-
-      if not valueType
-          or value == nil then
+      if not valueType or value == nil then
         return
       end
+
+      local highlightedAbilities = ResolveHighlightedAbilities(control.__PetMatchTooltipHighlightProvider, control)
 
       PetTooltip:TogglePin(
         control,
         valueType,
         value,
-        control.__PetMatchTooltipAnchor
+        control.__PetMatchTooltipAnchor,
+        highlightedAbilities
       )
     end
   )
@@ -531,7 +452,6 @@ end
 
 addon.EventBus:Register(
   addon.Events.SETTINGS_CHANGED,
-
   function(key)
     PetTooltip:OnSettingChanged(
       key

@@ -637,7 +637,9 @@ function TeamCard:Create(parent, team)
         petSlot:SetPet(
           newTeam.pets
           and newTeam.pets[slotIndex]
-          or nil
+          or nil,
+          newTeam,
+          slotIndex
         )
       end
     end
