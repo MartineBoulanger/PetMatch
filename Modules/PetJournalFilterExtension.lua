@@ -19,6 +19,7 @@ local ItemPool = {}
 
 local ActiveItems = {}
 local BuildItems = {}
+local LastNativeSearchText = nil
 
 local applyFiltersTimer = nil
 local refreshRequired = false
@@ -108,6 +109,64 @@ local LEVEL_RANGES = {
   },
 }
 
+local EXPANSION_SEARCH_IDS = {
+  classic = 0,
+  vanilla = 0,
+
+  tbc = 1,
+  burningcrusade = 1,
+
+  wotlk = 2,
+  wrath = 2,
+  wrathofthelichking = 2,
+
+  cataclysm = 3,
+  cata = 3,
+
+  mop = 4,
+  mistsofpandaria = 4,
+
+  wod = 5,
+  warlordsofdraenor = 5,
+
+  legion = 6,
+
+  bfa = 7,
+  battleforazeroth = 7,
+
+  shadowlands = 8,
+  sl = 8,
+
+  dragonflight = 9,
+  df = 9,
+
+  thewarwithin = 10,
+  tww = 10,
+
+  midnight = 11,
+  mid = 11
+}
+
+local PET_TYPE_SEARCH_NAMES = {
+  [1] = "humanoid",
+  [2] = "dragonkin",
+  [3] = "flying",
+  [4] = "undead",
+  [5] = "critter",
+  [6] = "magic",
+  [7] = "elemental",
+  [8] = "beast",
+  [9] = "aquatic",
+  [10] = "mechanical",
+}
+
+local PET_TYPE_SEARCH_ALIASES = {
+  dragon = "dragonkin",
+  magical = "magic",
+  water = "aquatic",
+  mech = "mechanical",
+}
+
 local LEVEL_RANGE_KEYS = {}
 for _, range in ipairs(LEVEL_RANGES) do
   LEVEL_RANGE_KEYS[#LEVEL_RANGE_KEYS + 1] =
@@ -129,6 +188,7 @@ local OtherFilters = {
   tradable = nil,
   battle = nil,
   team = nil,
+  duplicates = nil
 }
 
 local TAG_FILTER_OPTIONS = {
@@ -195,6 +255,29 @@ local ALL_SORT_OPTIONS = {
   },
 }
 
+local AdvancedSearch = {
+  rawText = "",
+  nativeText = "",
+  filters = {},
+}
+
+local ADVANCED_SEARCH_FIELDS = {
+  level = "number",
+  health = "number",
+  power = "number",
+  speed = "number",
+
+  rarity = "text",
+  breed = "text",
+  type = "text",
+  expansion = "text",
+
+  favorite = "boolean",
+  canbattle = "boolean",
+  tradable = "boolean",
+  owned = "boolean",
+}
+
 local function QueueApplyFilters()
   --------------------------------------------------
   -- Blizzard kan tijdens het openen van de
@@ -255,6 +338,456 @@ local function QueueImmediateApplyFilters()
       FilterExtension:ApplyFilters()
     end
   )
+end
+
+local function TokenizeSearch(text)
+  local tokens = {}
+
+  text = tostring(text or "")
+
+  local index = 1
+  local length = #text
+
+  while index <= length do
+    ------------------------------------------------
+    -- Skip whitespace
+    ------------------------------------------------
+    while index <= length and text:sub(index, index):match("%s") do
+      index = index + 1
+    end
+
+    if index > length then
+      break
+    end
+
+    local startIndex = index
+    local inQuotes = false
+
+    while index <= length do
+      local char = text:sub(index, index)
+
+      if char == '"' then
+        inQuotes = not inQuotes
+      elseif char:match("%s") and not inQuotes then
+        break
+      end
+
+      index = index + 1
+    end
+
+    local token = text:sub(startIndex, index - 1)
+
+    if token ~= "" then
+      tokens[#tokens + 1] = token
+    end
+  end
+
+  return tokens
+end
+
+local function NormalizeExpansionSearch(value)
+  value = string.lower(tostring(value or ""))
+
+  --------------------------------------------------
+  -- Remove spaces, apostrophes and dashes
+  --------------------------------------------------
+  value = value:gsub("[%s'%-]", "")
+
+  return value
+end
+
+local function Unquote(value)
+  value = tostring(value or "")
+
+  if #value >= 2 and value:sub(1, 1) == '"' and value:sub(-1) == '"' then
+    value = value:sub(2, -2)
+  end
+
+  return value
+end
+
+local function NormalizePetTypeSearch(value)
+  value = string.lower(tostring(value or ""))
+  return PET_TYPE_SEARCH_ALIASES[value] or value
+end
+
+local function GetSearchRarityName(rarity)
+  local name = RARITY_NAMES[tonumber(rarity)]
+
+  if not name then
+    return nil
+  end
+
+  return string.lower(name)
+end
+
+local function ParseBoolean(value)
+  value = string.lower(tostring(value or ""))
+
+  if value == "true" or value == "yes" or value == "1" then
+    return true
+  end
+
+  if value == "false" or value == "no" or value == "0" then
+    return false
+  end
+
+  return nil
+end
+
+local function ParseAdvancedToken(token)
+  local field
+  local value
+  local operator
+
+  field, value = token:match("^([%a_]+)>=(.+)$")
+  if field then
+    operator = ">="
+  end
+
+  if not field then
+    field, value = token:match("^([%a_]+)<=(.+)$")
+    if field then
+      operator = "<="
+    end
+  end
+
+  if not field then
+    field, value = token:match("^([%a_]+)>(.+)$")
+    if field then
+      operator = ">"
+    end
+  end
+
+  if not field then
+    field, value = token:match("^([%a_]+)<(.+)$")
+    if field then
+      operator = "<"
+    end
+  end
+
+  if not field then
+    field, value = token:match("^([%a_]+)=(.+)$")
+    if field then
+      operator = "="
+    end
+  end
+
+  if not field then
+    return nil
+  end
+
+  field = string.lower(field)
+  value = Unquote(value)
+
+  local fieldType = ADVANCED_SEARCH_FIELDS[field]
+
+  if not fieldType then
+    return nil
+  end
+
+  --------------------------------------------------
+  -- Numeric
+  --------------------------------------------------
+  if fieldType == "number" then
+    local number = tonumber(value)
+
+    if number == nil then
+      return nil
+    end
+
+    return {
+      field = field,
+      type = fieldType,
+      operator = operator,
+      value = number,
+    }
+  end
+
+  --------------------------------------------------
+  -- Boolean
+  --------------------------------------------------
+  if fieldType == "boolean" then
+    if operator ~= "=" then
+      return nil
+    end
+
+    local boolean = ParseBoolean(value)
+
+    if boolean == nil then
+      return nil
+    end
+
+    return {
+      field = field,
+      type = fieldType,
+      operator = operator,
+      value = boolean,
+    }
+  end
+
+  --------------------------------------------------
+  -- Text
+  --------------------------------------------------
+  if fieldType == "text" then
+    if operator ~= "=" then
+      return nil
+    end
+
+    value = string.lower(tostring(value or ""))
+
+    if value == "" then
+      return nil
+    end
+
+    return {
+      field = field,
+      type = fieldType,
+      operator = operator,
+      value = value,
+    }
+  end
+
+  return nil
+end
+
+local function ParseAdvancedSearch(text)
+  text = tostring(text or "")
+
+  local nativeTerms = {}
+  local filters = {}
+
+  local tokens = TokenizeSearch(text)
+
+  for _, token in ipairs(tokens) do
+    local filter = ParseAdvancedToken(token)
+
+    if filter then
+      filters[#filters + 1] = filter
+    else
+      nativeTerms[#nativeTerms + 1] = token
+    end
+  end
+
+  return {
+    rawText = text,
+    nativeText = table.concat(nativeTerms, " "),
+    filters = filters,
+  }
+end
+
+local function CompareSearchValue(actual, operator, expected)
+  actual = tonumber(actual)
+  expected = tonumber(expected)
+
+  if actual == nil or expected == nil then
+    return false
+  end
+
+  if operator == "=" then
+    return actual == expected
+  elseif operator == ">" then
+    return actual > expected
+  elseif operator == "<" then
+    return actual < expected
+  elseif operator == ">=" then
+    return actual >= expected
+  elseif operator == "<=" then
+    return actual <= expected
+  end
+
+  return false
+end
+
+local function MatchesAdvancedSearch(
+    petID,
+    speciesID,
+    isOwned,
+    level,
+    petType,
+    favorite,
+    canBattle,
+    tradable
+)
+  local filters = AdvancedSearch.filters
+
+  if type(filters) ~= "table"
+      or #filters == 0 then
+    return true
+  end
+
+  --------------------------------------------------
+  -- Lazy stats
+  --------------------------------------------------
+
+  local statsLoaded = false
+
+  local health = nil
+  local power = nil
+  local speed = nil
+  local rarity = nil
+
+  local function EnsureStats()
+    if statsLoaded then
+      return
+    end
+
+    statsLoaded = true
+
+    if not petID then
+      return
+    end
+
+    local currentHealth,
+    _maxHealth,
+    currentPower,
+    currentSpeed,
+    currentRarity =
+        C_PetJournal.GetPetStats(
+          petID
+        )
+
+    health =
+        tonumber(currentHealth)
+
+    power =
+        tonumber(currentPower)
+
+    speed =
+        tonumber(currentSpeed)
+
+    rarity =
+        tonumber(currentRarity)
+  end
+
+  --------------------------------------------------
+  -- Filters
+  --------------------------------------------------
+
+  for _, filter in ipairs(filters) do
+    local field = filter.field
+
+    ----------------------------------------------
+    -- Numeric
+    ----------------------------------------------
+    if field == "level" then
+      if not CompareSearchValue(
+            level,
+            filter.operator,
+            filter.value
+          ) then
+        return false
+      end
+    elseif field == "health" then
+      EnsureStats()
+
+      if not CompareSearchValue(
+            health,
+            filter.operator,
+            filter.value
+          ) then
+        return false
+      end
+    elseif field == "power" then
+      EnsureStats()
+
+      if not CompareSearchValue(
+            power,
+            filter.operator,
+            filter.value
+          ) then
+        return false
+      end
+    elseif field == "speed" then
+      EnsureStats()
+
+      if not CompareSearchValue(
+            speed,
+            filter.operator,
+            filter.value
+          ) then
+        return false
+      end
+
+      ----------------------------------------------
+      -- Rarity
+      ----------------------------------------------
+    elseif field == "rarity" then
+      EnsureStats()
+      local actual = GetSearchRarityName(rarity)
+
+      if actual ~= filter.value then
+        return false
+      end
+
+      ----------------------------------------------
+      -- Breed
+      ----------------------------------------------
+    elseif field == "breed" then
+      local breed = GetBreedName(petID, speciesID)
+
+      breed = breed and string.lower(breed)
+
+      if breed ~= filter.value then
+        return false
+      end
+
+      ----------------------------------------------
+      -- Pet type
+      ----------------------------------------------
+    elseif field == "type" then
+      local actual = PET_TYPE_SEARCH_NAMES[tonumber(petType)]
+      local expected = NormalizePetTypeSearch(filter.value)
+
+      if actual ~= expected then
+        return false
+      end
+
+      ----------------------------------------------
+      -- Expansion
+      ----------------------------------------------
+    elseif field == "expansion" then
+      local expansionService = addon.Data and addon.Data.PetExpansion
+
+      if not expansionService then
+        return false
+      end
+
+      local searchValue = NormalizeExpansionSearch(filter.value)
+      local expectedExpansionID = EXPANSION_SEARCH_IDS[searchValue]
+
+      if expectedExpansionID == nil then
+        return false
+      end
+
+      local actualExpansionID = expansionService:GetExpansionID(speciesID)
+
+      if actualExpansionID ~= expectedExpansionID then
+        return false
+      end
+      ----------------------------------------------
+      -- Booleans
+      ----------------------------------------------
+    elseif field == "favorite" then
+      if (favorite == true) ~= filter.value then
+        return false
+      end
+    elseif field == "canbattle" then
+      if (canBattle == true) ~= filter.value then
+        return false
+      end
+    elseif field == "tradable" then
+      if (tradable == true) ~= filter.value then
+        return false
+      end
+    elseif field == "owned" then
+      if (isOwned == true) ~= filter.value then
+        return false
+      end
+    end
+  end
+
+  return true
 end
 
 local function InitializeNativeOptions()
@@ -329,15 +862,6 @@ end
 
 local function RefreshSorting()
   CancelQueuedApplyFilters()
-
-  --------------------------------------------------
-  -- PetMatch handles the actual sorting itself.
-  --
-  -- Do not call PetJournal_UpdatePetList here:
-  -- that causes Blizzard to rebuild the list first,
-  -- followed by our custom DataProvider rebuild.
-  --------------------------------------------------
-
   FilterExtension:ApplyFilters()
 end
 
@@ -350,6 +874,7 @@ local function HasOtherFilters()
       or OtherFilters.tradable ~= nil
       or OtherFilters.battle ~= nil
       or OtherFilters.team ~= nil
+      or OtherFilters.duplicates ~= nil
 end
 
 local function ResetOtherFilters()
@@ -357,6 +882,7 @@ local function ResetOtherFilters()
   OtherFilters.tradable = nil
   OtherFilters.battle = nil
   OtherFilters.team = nil
+  OtherFilters.duplicates = nil
 
   RefreshSorting()
 end
@@ -642,6 +1168,26 @@ local function GetPetTagFilterValue(
   return tagID or "none"
 end
 
+local function HasDuplicatePet(speciesID)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return false
+  end
+
+  local petJournalService = addon.Services and addon.Services.PetJournal
+
+  if not petJournalService then
+    return false
+  end
+
+  petJournalService:EnsureIndex()
+
+  local pets = petJournalService.OwnedPetsBySpeciesID[speciesID]
+
+  return type(pets) == "table" and #pets > 1
+end
+
 local function CreateExpansionMenu(
     owner,
     root
@@ -863,19 +1409,12 @@ local function CreateTagMenu(
   )
 end
 
-local function CreateOtherMenu(
-    owner,
-    root
-)
-  local submenu =
-      root:CreateButton(
-        "Other"
-      )
+local function CreateOtherMenu(owner, root)
+  local submenu = root:CreateButton("Other")
 
   --------------------------------------------------
   -- Leveling
   --------------------------------------------------
-
   submenu:CreateCheckbox(
     "Leveling",
 
@@ -921,7 +1460,6 @@ local function CreateOtherMenu(
   --------------------------------------------------
   -- Tradable
   --------------------------------------------------
-
   submenu:CreateCheckbox(
     "Tradable",
 
@@ -967,7 +1505,6 @@ local function CreateOtherMenu(
   --------------------------------------------------
   -- Battle
   --------------------------------------------------
-
   submenu:CreateCheckbox(
     "Can Battle",
 
@@ -1013,7 +1550,6 @@ local function CreateOtherMenu(
   --------------------------------------------------
   -- Teams
   --------------------------------------------------
-
   submenu:CreateCheckbox(
     "In A Team",
 
@@ -1048,6 +1584,47 @@ local function CreateOtherMenu(
       SetOtherFilter(
         "team",
         "notInTeam"
+      )
+
+      return MenuResponse.Refresh
+    end
+  )
+
+  submenu:CreateDivider()
+
+  --------------------------------------------------
+  -- Duplicates
+  --------------------------------------------------
+  submenu:CreateCheckbox(
+    "Duplicates",
+    function()
+      return IsOtherFilterChecked(
+        "duplicates",
+        "duplicates"
+      )
+    end,
+    function()
+      SetOtherFilter(
+        "duplicates",
+        "duplicates"
+      )
+
+      return MenuResponse.Refresh
+    end
+  )
+
+  submenu:CreateCheckbox(
+    "No Duplicates",
+    function()
+      return IsOtherFilterChecked(
+        "duplicates",
+        "noDuplicates"
+      )
+    end,
+    function()
+      SetOtherFilter(
+        "duplicates",
+        "noDuplicates"
       )
 
       return MenuResponse.Refresh
@@ -1658,6 +2235,24 @@ local function CreateUnifiedSortMenu(root)
   )
 
   submenu:CreateCheckbox(
+    "Can Battle",
+    function()
+      return IsOtherFilterChecked(
+        "battle",
+        "canBattle"
+      )
+    end,
+    function()
+      SetOtherFilter(
+        "battle",
+        "canBattle"
+      )
+
+      return MenuResponse.Refresh
+    end
+  )
+
+  submenu:CreateCheckbox(
     "Reverse Sort",
 
     function()
@@ -1909,6 +2504,12 @@ function FilterExtension:GetActiveFilterNames()
 
   if HasOtherFilters() then
     names[#names + 1] = "Other"
+  end
+
+  if AdvancedSearch
+      and type(AdvancedSearch.filters) == "table"
+      and #AdvancedSearch.filters > 0 then
+    names[#names + 1] = "Search"
   end
 
   local typeFilter = addon.Services.PetTypeFilter
@@ -2374,6 +2975,7 @@ function FilterExtension:MatchesPet(
     isOwned,
     level,
     petType,
+    favorite,
     canBattle,
     tradable
 )
@@ -2521,7 +3123,6 @@ function FilterExtension:MatchesPet(
   --------------------------------------------------
   -- Other: Tradable
   --------------------------------------------------
-
   if OtherFilters.tradable == "tradable"
       and tradable ~= true then
     return false
@@ -2535,7 +3136,6 @@ function FilterExtension:MatchesPet(
   --------------------------------------------------
   -- Other: Can Battle
   --------------------------------------------------
-
   if OtherFilters.battle == "canBattle"
       and canBattle ~= true then
     return false
@@ -2549,7 +3149,6 @@ function FilterExtension:MatchesPet(
   --------------------------------------------------
   -- Other: Team
   --------------------------------------------------
-
   if OtherFilters.team ~= nil then
     local isInTeam =
         IsPetInAnyTeam(
@@ -2567,6 +3166,42 @@ function FilterExtension:MatchesPet(
       return false
     end
   end
+
+  --------------------------------------------------
+  -- Other: Duplicates
+  --------------------------------------------------
+  if OtherFilters.duplicates ~= nil then
+    local hasDuplicate = isOwned == true and HasDuplicatePet(speciesID)
+
+    if OtherFilters.duplicates == "duplicates" then
+      if not hasDuplicate then
+        return false
+      end
+    end
+
+    if OtherFilters.duplicates == "noDuplicates" then
+      if not isOwned or hasDuplicate then
+        return false
+      end
+    end
+  end
+
+  --------------------------------------------------
+  -- Advanced search
+  --------------------------------------------------
+  if not MatchesAdvancedSearch(
+        petID,
+        speciesID,
+        isOwned,
+        level,
+        petType,
+        favorite,
+        canBattle,
+        tradable
+      ) then
+    return false
+  end
+
 
   return true
 end
@@ -2588,7 +3223,7 @@ function FilterExtension:ApplyFilters()
     isOwned,
     _customName,
     level,
-    _favorite,
+    favorite,
     _isRevoked,
     name,
     _icon,
@@ -2607,6 +3242,7 @@ function FilterExtension:ApplyFilters()
           isOwned,
           level,
           petType,
+          favorite == true,
           canBattle == true,
           tradable == true
         )
@@ -2714,13 +3350,50 @@ function FilterExtension:HookPetJournal()
   )
 end
 
+function FilterExtension:HookSearchBox()
+  if self.SearchHooked then
+    return
+  end
+
+  if not PetJournal or not PetJournal.searchBox then
+    return
+  end
+
+  self.SearchHooked = true
+
+  local searchBox = PetJournal.searchBox
+
+  searchBox:SetScript(
+    "OnTextChanged",
+    function(self)
+      SearchBoxTemplate_OnTextChanged(self)
+
+      local text = self:GetText() or ""
+      local parsed = ParseAdvancedSearch(text)
+
+      AdvancedSearch = parsed
+
+      local nativeText = parsed.nativeText or ""
+
+      if nativeText ~= LastNativeSearchText then
+        LastNativeSearchText = nativeText
+        C_PetJournal.SetSearchFilter(nativeText)
+      else
+        --------------------------------------------------
+        -- Native Blizzard search did not change.
+        -- Only our advanced filters changed.
+        --------------------------------------------------
+        QueueImmediateApplyFilters()
+      end
+    end
+  )
+end
+
 function FilterExtension:Initialize()
   InitializeFilters()
 
   wipe(SortLevels)
-  C_PetJournal.SetPetSortParameter(
-    LE_SORT_BY_NAME
-  )
+  C_PetJournal.SetPetSortParameter(LE_SORT_BY_NAME)
 
   self.EventFrame = CreateFrame("Frame")
   self.EventFrame:RegisterEvent("ADDON_LOADED")
@@ -2734,6 +3407,7 @@ function FilterExtension:Initialize()
         if loadedAddon == "Blizzard_Collections" then
           FilterExtension:SetupFilterDropdown()
           FilterExtension:HookPetJournal()
+          FilterExtension:HookSearchBox()
           FilterExtension:CreatePetTypeFilterBar()
           FilterExtension:CreateFilterBar()
           FilterExtension:HideBlizzardResetButton()
@@ -2741,6 +3415,7 @@ function FilterExtension:Initialize()
         end
       elseif event == "PET_JOURNAL_LIST_UPDATE" then
         FilterExtension:HookPetJournal()
+        FilterExtension:HookSearchBox()
         QueueApplyFilters()
       end
     end
@@ -2760,6 +3435,7 @@ function FilterExtension:Initialize()
 
   self:HookPetJournal()
   self:SetupFilterDropdown()
+  self:HookSearchBox()
   self:CreatePetTypeFilterBar()
   self:CreateFilterBar()
   self:HideBlizzardResetButton()
