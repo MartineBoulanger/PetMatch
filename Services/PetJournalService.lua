@@ -93,9 +93,7 @@ function PetJournalService:Scan()
       local quality =
           select(
             5,
-            C_PetJournal.GetPetStats(
-              petGUID
-            )
+            C_PetJournal.GetPetStats(petGUID)
           )
 
       level = tonumber(level) or 0
@@ -200,6 +198,14 @@ function PetJournalService:GetPet(petGUID)
     return nil
   end
 
+  local quality =
+      select(
+        5,
+        C_PetJournal.GetPetStats(petGUID)
+      )
+
+  quality = tonumber(quality) or 0
+
   return {
     guid = petGUID,
     petGUID = petGUID,
@@ -214,6 +220,7 @@ function PetJournalService:GetPet(petGUID)
     favorite = favorite == true,
     icon = icon,
     petType = petType,
+    quality = quality,
     creatureID = creatureID,
     sourceText = sourceText,
     description = description,
@@ -285,12 +292,11 @@ function PetJournalService:FindOwnedPetForImport(speciesID, breedID, usedPetGUID
         if not breedID or breedID == 0 then
           breedMatch = true
         elseif breedService
-            and type(breedService.GetJournalBreed) == "function" then
-          local journalBreed =
-              breedService:GetJournalBreed(petGUID)
+            and type(breedService.GetJournalBreedID) == "function" then
+          local journalBreedID = breedService:GetJournalBreedID(petGUID)
 
-          breedMatch = journalBreed ~= nil
-              and tonumber(journalBreed) == breedID
+          breedMatch = journalBreedID ~= nil
+              and tonumber(journalBreedID) == breedID
         end
 
         local level = tonumber(pet.level) or 0

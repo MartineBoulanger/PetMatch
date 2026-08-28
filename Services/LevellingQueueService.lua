@@ -373,6 +373,110 @@ function LevellingQueueService:MoveDown(petGUID)
 end
 
 --------------------------------------------------
+-- Sort
+--------------------------------------------------
+function LevellingQueueService:Sort(sortMode)
+  local queue = self:GetAll()
+
+  if #queue < 2 then
+    return false
+  end
+
+  sortMode = sortMode or "levelHigh"
+
+  --------------------------------------------------
+  -- Cache pet information before sorting.
+  --
+  -- table.sort can call the comparator many times,
+  -- so don't repeatedly query the Pet Journal.
+  --------------------------------------------------
+  local pets = {}
+  local originalIndex = {}
+
+  for index, petGUID in ipairs(queue) do
+    pets[petGUID] = GetPetInfo(petGUID)
+    originalIndex[petGUID] = index
+  end
+
+  local function GetValue(petGUID, field)
+    local pet = pets[petGUID]
+
+    if not pet then
+      return 0
+    end
+
+    return tonumber(pet[field]) or 0
+  end
+
+  table.sort(
+    queue,
+    function(leftGUID, rightGUID)
+      local leftValue
+      local rightValue
+
+      ------------------------------------------------
+      -- Level
+      ------------------------------------------------
+      if sortMode == "levelHigh" then
+        leftValue = GetValue(leftGUID, "level")
+        rightValue = GetValue(rightGUID, "level")
+
+        if leftValue ~= rightValue then
+          return leftValue > rightValue
+        end
+      elseif sortMode == "levelLow" then
+        leftValue = GetValue(leftGUID, "level")
+        rightValue = GetValue(rightGUID, "level")
+
+        if leftValue ~= rightValue then
+          return leftValue < rightValue
+        end
+
+        ------------------------------------------------
+        -- Rarity
+        ------------------------------------------------
+      elseif sortMode == "rarityHigh" then
+        leftValue = GetValue(leftGUID, "quality")
+        rightValue = GetValue(rightGUID, "quality")
+
+        if leftValue ~= rightValue then
+          return leftValue > rightValue
+        end
+      elseif sortMode == "rarityLow" then
+        leftValue = GetValue(leftGUID, "quality")
+        rightValue = GetValue(rightGUID, "quality")
+
+        if leftValue ~= rightValue then
+          return leftValue < rightValue
+        end
+
+        ------------------------------------------------
+        -- Pet type
+        ------------------------------------------------
+      elseif sortMode == "petType" then
+        leftValue = GetValue(leftGUID, "petType")
+        rightValue = GetValue(rightGUID, "petType")
+
+        if leftValue ~= rightValue then
+          return leftValue < rightValue
+        end
+      end
+
+      ------------------------------------------------
+      -- Keep the existing relative order whenever
+      -- the selected sort value is equal.
+      ------------------------------------------------
+      return
+          (originalIndex[leftGUID] or 0) < (originalIndex[rightGUID] or 0)
+    end
+  )
+
+  FireChanged()
+
+  return true
+end
+
+--------------------------------------------------
 -- Fill
 --------------------------------------------------
 local function GetLevellingProgress(pet)

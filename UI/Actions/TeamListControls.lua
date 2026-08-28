@@ -8,6 +8,14 @@ local SORT_LABELS = {
   favorites = "Favorites",
 }
 
+local SORT_BUTTON_WIDTH = 67
+local SORT_BUTTON_HEIGHT = 20
+
+local MENU_TEMPLATES = {
+  "WowStyle1FilterDropdownTemplate",
+  "WowStyle1DropdownTemplate",
+}
+
 function TeamListControls:Create(parent)
   local frame =
       addon.UI.Base.Panel:Create(
@@ -30,16 +38,16 @@ function TeamListControls:Create(parent)
       )
 
   self.SearchInput:SetSize(
-    185,
-    26
+    170,
+    30
   )
 
   self.SearchInput:SetPoint(
     "TOPLEFT",
     frame,
     "TOPLEFT",
-    15,
-    -10
+    10,
+    -8
   )
 
   self.SearchInput:SetAutoFocus(false)
@@ -111,115 +119,68 @@ function TeamListControls:Create(parent)
     "favorites",
   }
 
-  self.SortButton =
-      CreateFrame(
-        "Button",
-        nil,
-        frame
-      )
+  local dropdown
 
-  self.SortButton:SetSize(
-    28,
-    28
-  )
+  for _, template in ipairs(MENU_TEMPLATES) do
+    local created,
+    button =
+        pcall(
+          CreateFrame,
+          "DropdownButton",
+          nil,
+          frame,
+          template
+        )
 
-  self.SortButton:SetPoint(
-    "LEFT",
-    self.SearchInput,
-    "RIGHT",
-    5,
-    0
-  )
+    if created and button then
+      dropdown = button
+      break
+    end
+  end
 
-  self.SortButton.Icon =
-      self.SortButton:CreateTexture(
-        nil,
-        "ARTWORK"
-      )
+  if dropdown then
+    dropdown:SetHeight(
+      SORT_BUTTON_HEIGHT
+    )
 
-  self.SortButton.Icon:SetSize(
-    26,
-    26
-  )
+    dropdown:SetText("Sort")
 
-  self.SortButton.Icon:SetPoint(
-    "CENTER"
-  )
+    dropdown.resizeToText = false
 
-  self.SortButton.Icon:SetAtlas(
-    "charactercreate-icon-customize-body-selected"
-  )
+    dropdown:SetWidth(
+      SORT_BUTTON_WIDTH
+    )
 
-  self.SortButton:SetScript(
-    "OnClick",
-    function(button)
-      MenuUtil.CreateContextMenu(
-        button,
-        function(ownerRegion, rootDescription)
-          rootDescription:CreateTitle(
-            "Sort Teams"
+    dropdown:SetPoint(
+      "LEFT",
+      self.SearchInput,
+      "RIGHT",
+      6,
+      -1
+    )
+
+    dropdown:SetupMenu(
+      function(_, rootDescription)
+        rootDescription:CreateTitle("Sort Teams")
+
+        for _, sortMode in ipairs(sortModes) do
+          rootDescription:CreateRadio(
+            SORT_LABELS[sortMode],
+
+            function()
+              return addon.Services.Team:GetSortMode() == sortMode
+            end,
+
+            function()
+              addon.Services.Team:SetSortMode(sortMode)
+            end
           )
-
-          local currentSortMode =
-              addon.Services.Team:GetSortMode()
-
-          for _, sortMode in ipairs(sortModes) do
-            rootDescription:CreateRadio(
-              SORT_LABELS[sortMode],
-              function()
-                return currentSortMode
-                    == sortMode
-              end,
-              function()
-                addon.Services.Team:SetSortMode(
-                  sortMode
-                )
-              end
-            )
-          end
         end
-      )
-    end
-  )
+      end
+    )
 
-  self.SortButton:SetScript(
-    "OnEnter",
-    function(button)
-      button.Icon:SetAlpha(1)
-
-      GameTooltip:SetOwner(
-        button,
-        "ANCHOR_RIGHT"
-      )
-
-      local sortMode =
-          addon.Services.Team:GetSortMode()
-
-      GameTooltip:SetText(
-        "Sort Teams"
-      )
-
-      GameTooltip:AddLine(
-        SORT_LABELS[sortMode]
-        or "Unknown",
-        1,
-        1,
-        1
-      )
-
-      GameTooltip:Show()
-    end
-  )
-
-  self.SortButton:SetScript(
-    "OnLeave",
-    function(button)
-      button.Icon:SetAlpha(0.75)
-      GameTooltip:Hide()
-    end
-  )
-
-  self.SortButton.Icon:SetAlpha(0.75)
+    self.SortButton = dropdown
+  end
 
   return frame
 end

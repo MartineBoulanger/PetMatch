@@ -15,6 +15,9 @@ local MENU_BUTTON_WIDTH = 120
 local MENU_BUTTON_HEIGHT = 22
 local MENU_BUTTON_TEXT = "Queue"
 
+local SORT_BUTTON_WIDTH = 55
+local SORT_BUTTON_HEIGHT = 22
+
 --------------------------------------------------
 -- Bar under the list holding the queue dropdown
 -- and the pet count.
@@ -60,13 +63,18 @@ local function SetMenuButtonText(dropdown, text)
 end
 
 local function GetToolbarStyleSource()
-  local healFrame =
-      PetJournal
-      and PetJournal.HealPetSpellFrame
+  local healFrame = PetJournal and PetJournal.HealPetSpellFrame
+  return healFrame and healFrame.Button or nil
+end
 
-  return healFrame
-      and healFrame.Button
-      or nil
+function LevellingQueuePanel:SortQueue(sortMode)
+  local service = addon.Services.LevellingQueue
+
+  if not service then
+    return
+  end
+
+  service:Sort(sortMode)
 end
 
 function LevellingQueuePanel:CreateToolbarItems()
@@ -150,17 +158,42 @@ function LevellingQueuePanel:PopulateMenu(root)
   --------------------------------------------------
   -- Fill
   --------------------------------------------------
-  local fill =
+  local fill = root:CreateButton(
+    "Add All Levelling Pets",
+    function()
+      addon.UI.Dialogs.FillLevellingQueueDialog:Show()
+    end
+  )
+
+  fill:SetEnabled(
+    service ~= nil and service:HasFillCandidates()
+  )
+
+  root:CreateDivider()
+
+  --------------------------------------------------
+  -- Import
+  --------------------------------------------------
+  root:CreateButton(
+    "Import Queue",
+    function()
+      addon.UI.Dialogs.ImportLevellingQueueDialog:Show()
+    end
+  )
+
+  --------------------------------------------------
+  -- Export
+  --------------------------------------------------
+  local export =
       root:CreateButton(
-        "Add All Levelling Pets",
+        "Export Queue",
         function()
-          addon.UI.Dialogs.FillLevellingQueueDialog:Show()
+          addon.UI.Dialogs.ExportLevellingQueueDialog:Show()
         end
       )
 
-  fill:SetEnabled(
-    service ~= nil
-    and service:HasFillCandidates()
+  export:SetEnabled(
+    service ~= nil and service:GetCount() > 0
   )
 
   root:CreateDivider()
@@ -177,17 +210,15 @@ function LevellingQueuePanel:PopulateMenu(root)
       )
 
   clear:SetEnabled(
-    service ~= nil
-    and service:GetCount() > 0
+    service ~= nil and service:GetCount() > 0
   )
 end
 
-function LevellingQueuePanel:CreateMenuButton(parent)
+function LevellingQueuePanel:CreateMenuButton(parent, text, width, height, populateMenu)
   local dropdown
 
   for _, template in ipairs(MENU_TEMPLATES) do
-    local created,
-    frame =
+    local created, frame =
         pcall(
           CreateFrame,
           "DropdownButton",
@@ -204,17 +235,17 @@ function LevellingQueuePanel:CreateMenuButton(parent)
 
   if not dropdown then
     addon.Logger:Warn(
-      "Unable to create the levelling queue menu."
+      "Unable to create menu button."
     )
 
     return nil
   end
 
-  dropdown:SetHeight(MENU_BUTTON_HEIGHT)
+  dropdown:SetHeight(height or MENU_BUTTON_HEIGHT)
 
   SetMenuButtonText(
     dropdown,
-    MENU_BUTTON_TEXT
+    text or MENU_BUTTON_TEXT
   )
 
   --------------------------------------------------
@@ -224,17 +255,102 @@ function LevellingQueuePanel:CreateMenuButton(parent)
   --------------------------------------------------
   dropdown.resizeToText = false
 
-  dropdown:SetWidth(MENU_BUTTON_WIDTH)
+  dropdown:SetWidth(width or MENU_BUTTON_WIDTH)
 
   dropdown:SetupMenu(
     function(_, rootDescription)
-      self:PopulateMenu(rootDescription)
+      if type(populateMenu) == "function" then
+        populateMenu(rootDescription)
+      else
+        self:PopulateMenu(rootDescription)
+      end
     end
   )
 
-  self.MenuButton = dropdown
-
   return dropdown
+end
+
+function LevellingQueuePanel:PopulateSortMenu(root)
+  root:CreateTitle("Sort Levelling Queue")
+
+  --------------------------------------------------
+  -- Level
+  --------------------------------------------------
+  root:CreateButton(
+    "Highest Level First",
+    function()
+      self:SortQueue("levelHigh")
+    end
+  )
+
+  root:CreateButton(
+    "Lowest Level First",
+    function()
+      self:SortQueue("levelLow")
+    end
+  )
+
+  root:CreateDivider()
+
+  --------------------------------------------------
+  -- Rarity
+  --------------------------------------------------
+  root:CreateButton(
+    "Highest Rarity First",
+    function()
+      self:SortQueue("rarityHigh")
+    end
+  )
+
+  root:CreateButton(
+    "Lowest Rarity First",
+    function()
+      self:SortQueue("rarityLow")
+    end
+  )
+
+  root:CreateDivider()
+
+  --------------------------------------------------
+  -- Pet type
+  --------------------------------------------------
+  root:CreateButton(
+    "Pet Type",
+    function()
+      self:SortQueue("petType")
+    end
+  )
+end
+
+function LevellingQueuePanel:CreateSortButton()
+  if not self.Toolbar then
+    return
+  end
+
+  local button =
+      self:CreateMenuButton(
+        self.Toolbar,
+        "Sort",
+        SORT_BUTTON_WIDTH,
+        SORT_BUTTON_HEIGHT,
+        function(rootDescription)
+          self:PopulateSortMenu(rootDescription)
+        end
+      )
+
+  if not button then
+    return
+  end
+
+  button:SetPoint(
+    "RIGHT",
+    self.Toolbar,
+    "RIGHT",
+    -5,
+    -8
+  )
+
+  self.SortButton = button
 end
 
 function LevellingQueuePanel:CreateFooter(parent)
@@ -270,7 +386,13 @@ function LevellingQueuePanel:CreateFooter(parent)
   --------------------------------------------------
   local menuButton =
       self:CreateMenuButton(
-        self.Footer
+        self.Footer,
+        "Queue",
+        MENU_BUTTON_WIDTH,
+        MENU_BUTTON_HEIGHT,
+        function(rootDescription)
+          self:PopulateMenu(rootDescription)
+        end
       )
 
   if menuButton then
@@ -281,6 +403,7 @@ function LevellingQueuePanel:CreateFooter(parent)
       3,
       0
     )
+    self.MenuButton = menuButton
   end
 
   --------------------------------------------------
@@ -352,6 +475,11 @@ function LevellingQueuePanel:Create(parent)
   -- Leveling items
   --------------------------------------------------
   self:CreateToolbarItems()
+
+  --------------------------------------------------
+  -- Sort
+  --------------------------------------------------
+  self:CreateSortButton()
 
   --------------------------------------------------
   -- Footer

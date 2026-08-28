@@ -3,6 +3,7 @@ local _, addon = ...
 local ImportExportService = {}
 
 local PM_VERSION = "PM1"
+local PM_QUEUE_VERSION = "PMQ1"
 local BASE32_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUV"
 local MAX_IMPORT_BYTES = 250000
 
@@ -199,6 +200,31 @@ local function Split(value, separator)
   return result
 end
 
+local function GetOwnedPetsForSpecies(speciesID)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return {}
+  end
+
+  local petService = addon.Services and addon.Services.PetJournal
+
+  if not petService then
+    return {}
+  end
+
+  petService:EnsureIndex()
+
+  local pets = petService.OwnedPetsBySpeciesID
+      and petService.OwnedPetsBySpeciesID[speciesID]
+
+  if type(pets) ~= "table" then
+    return {}
+  end
+
+  return pets
+end
+
 local function GetAbilityChoices(
     speciesID,
     selectedAbilities
@@ -258,6 +284,116 @@ local function GetSpeciesID(petGUID)
       )
 
   return pet and pet.speciesID or nil
+end
+
+local function GetPetBreedID(petGUID)
+  if type(petGUID) ~= "string" or petGUID == "" then
+    return 0
+  end
+
+  local breedService = addon.Services and addon.Services.Breed
+
+  if not breedService
+      or type(breedService.GetJournalBreedID) ~= "function" then
+    return 0
+  end
+
+  return tonumber(breedService:GetJournalBreedID(petGUID)) or 0
+end
+
+local function ScoreLevellingQueueCandidate(pet, entry, breedID)
+  local score = 0
+
+  --------------------------------------------------
+  -- Breed is the strongest preference.
+  --------------------------------------------------
+  if tonumber(entry.breedID)
+      and tonumber(entry.breedID) > 0
+      and tonumber(breedID) == tonumber(entry.breedID) then
+    score = score + 100
+  end
+
+  --------------------------------------------------
+  -- Prefer the same rarity.
+  --------------------------------------------------
+  if tonumber(entry.rarity)
+      and tonumber(pet.quality) == tonumber(entry.rarity) then
+    score = score + 10
+  end
+
+  --------------------------------------------------
+  -- Prefer the same level.
+  --------------------------------------------------
+  if tonumber(entry.level)
+      and tonumber(pet.level) == tonumber(entry.level) then
+    score = score + 1
+  end
+
+  return score
+end
+
+local function ResolveLevellingQueuePet(entry, unavailablePets, queueService)
+  local speciesID = tonumber(entry.speciesID)
+
+  if not speciesID then
+    return nil
+  end
+
+  local petService = addon.Services and addon.Services.PetJournal
+
+  if not petService then
+    return nil
+  end
+
+  local pets = GetOwnedPetsForSpecies(speciesID)
+
+  if #pets == 0 then
+    return nil
+  end
+
+  local bestGUID = nil
+  local bestPet = nil
+  local bestScore = nil
+
+  for _, petGUID in ipairs(pets) do
+    --------------------------------------------------
+    -- Only the concrete GUID is excluded.
+    --
+    -- Another pet of the exact same species,
+    -- breed, rarity and level is allowed.
+    --------------------------------------------------
+    if unavailablePets[petGUID] ~= true then
+      local pet = petService:GetPet(petGUID)
+
+      if pet then
+        local canAdd = queueService:CanAdd(petGUID)
+        local breedID = GetPetBreedID(petGUID)
+        local score = ScoreLevellingQueueCandidate(pet, entry, breedID)
+
+        if canAdd then
+          local breedID = GetPetBreedID(petGUID)
+          local score = ScoreLevellingQueueCandidate(pet, entry, breedID)
+
+          if bestScore == nil or score > bestScore then
+            bestGUID = petGUID
+            bestPet = pet
+            bestScore = score
+          end
+        end
+      end
+    end
+  end
+
+  if not bestGUID then
+    return nil
+  end
+
+  --------------------------------------------------
+  -- This exact instance may not be used again.
+  --------------------------------------------------
+  unavailablePets[bestGUID] = true
+
+  return bestGUID, bestPet
 end
 
 local function IsBlank(value)
@@ -525,6 +661,40 @@ local function GetResolvedSpeciesCounts(team)
   return counts
 end
 
+local function FindRematchCore(service, fields)
+  if type(fields) ~= "table" then
+    return nil
+  end
+
+  for pet1Index = 3, #fields - 2 do
+    local petTag1 = fields[pet1Index]
+    local petTag2 = fields[pet1Index + 1]
+    local petTag3 = fields[pet1Index + 2]
+
+    if petTag1 ~= "" and petTag2 ~= "" and petTag3 ~= "" then
+      local slot1 = service:DecodeRematchPetTag(petTag1)
+      local slot2 = service:DecodeRematchPetTag(petTag2)
+      local slot3 = service:DecodeRematchPetTag(petTag3)
+
+      if slot1 and slot2 and slot3 then
+        local targetIndex = pet1Index - 1
+        local nameEndIndex = targetIndex - 1
+
+        if nameEndIndex >= 1 then
+          return {
+            nameEndIndex = nameEndIndex,
+            targetIndex = targetIndex,
+            pet1Index = pet1Index,
+            afterPetsIndex = pet1Index + 3,
+          }
+        end
+      end
+    end
+  end
+
+  return nil
+end
+
 function ImportExportService:NeedsPreview(
     document
 )
@@ -559,40 +729,6 @@ function ImportExportService:NeedsPreview(
   return hasFolderHeader
       or groupCount > 1
       or teamCount > 1
-end
-
-local function FindRematchCore(service, fields)
-  if type(fields) ~= "table" then
-    return nil
-  end
-
-  for pet1Index = 3, #fields - 2 do
-    local petTag1 = fields[pet1Index]
-    local petTag2 = fields[pet1Index + 1]
-    local petTag3 = fields[pet1Index + 2]
-
-    if petTag1 ~= "" and petTag2 ~= "" and petTag3 ~= "" then
-      local slot1 = service:DecodeRematchPetTag(petTag1)
-      local slot2 = service:DecodeRematchPetTag(petTag2)
-      local slot3 = service:DecodeRematchPetTag(petTag3)
-
-      if slot1 and slot2 and slot3 then
-        local targetIndex = pet1Index - 1
-        local nameEndIndex = targetIndex - 1
-
-        if nameEndIndex >= 1 then
-          return {
-            nameEndIndex = nameEndIndex,
-            targetIndex = targetIndex,
-            pet1Index = pet1Index,
-            afterPetsIndex = pet1Index + 3,
-          }
-        end
-      end
-    end
-  end
-
-  return nil
 end
 
 function ImportExportService:IsRematchTeam(text)
@@ -2190,6 +2326,337 @@ function ImportExportService:ExportFolder(
   end
 
   return table.concat(lines, "\n")
+end
+
+function ImportExportService:ExportLevellingQueue()
+  local queueService = addon.Services and addon.Services.LevellingQueue
+
+  if not queueService then
+    return nil, "Levelling queue service is not available."
+  end
+
+  local petService = addon.Services and addon.Services.PetJournal
+
+  if not petService then
+    return nil, "Pet Journal service is not available."
+  end
+
+  local queue = queueService:GetAll()
+
+  if type(queue) ~= "table" or #queue == 0 then
+    return nil, "The levelling queue is empty."
+  end
+
+  local lines = { PM_QUEUE_VERSION }
+
+  for _, petGUID in ipairs(queue) do
+    local pet = petService:GetPet(petGUID)
+
+    if not pet then
+      return nil, "A pet in the levelling queue could not be found."
+    end
+
+    local speciesID = tonumber(pet.speciesID)
+
+    if not speciesID then
+      return nil, "A pet in the levelling queue has no species ID."
+    end
+
+    local breedID = GetPetBreedID(petGUID)
+    local level = tonumber(pet.level) or 0
+    local rarity = tonumber(pet.quality) or 0
+    local petType = tonumber(pet.petType) or 0
+
+    lines[#lines + 1] =
+        string.format(
+          "species=%d;breed=%d;level=%d;rarity=%d;type=%d",
+          speciesID,
+          tonumber(breedID) or 0,
+          level,
+          rarity,
+          petType
+        )
+  end
+
+  return table.concat(
+    lines,
+    "\n"
+  )
+end
+
+function ImportExportService:ParseLevellingQueue(value)
+  value = NormalizeNewlines(tostring(value or ""))
+
+  value = Trim(value)
+
+  if value == "" then
+    return nil, "Paste a levelling queue."
+  end
+
+  if #value > MAX_IMPORT_BYTES then
+    return nil, "The import is too large."
+  end
+
+  local lines = {}
+
+  for line in value:gmatch("[^\n]+") do
+    line = Trim(line)
+    if line ~= "" then
+      lines[#lines + 1] = line
+    end
+  end
+
+  if #lines == 0 or lines[1] ~= PM_QUEUE_VERSION then
+    return nil, "Not a PetMatch levelling queue."
+  end
+
+  local result = {
+    format = "petmatchQueue",
+    version = PM_QUEUE_VERSION,
+    pets = {},
+    warnings = {},
+  }
+
+  for index = 2, #lines do
+    local line = lines[index]
+
+    local speciesText,
+    breedText,
+    levelText,
+    rarityText,
+    typeText =
+        line:match(
+          "^species=(%d+);breed=(%d+);level=(%d+);rarity=(%d+);type=(%d+)$"
+        )
+
+    local speciesID = tonumber(speciesText)
+
+    if speciesID then
+      result.pets[#result.pets + 1] = {
+        speciesID = speciesID,
+        breedID = tonumber(breedText) or 0,
+        level = tonumber(levelText) or 0,
+        rarity = tonumber(rarityText) or 0,
+        petType = tonumber(typeText) or 0,
+        sourceIndex = index - 1,
+      }
+    else
+      result.warnings[#result.warnings + 1] =
+          string.format("Queue entry %d could not be read.", index - 1)
+    end
+  end
+
+  if #result.pets == 0 then
+    return nil, "The levelling queue contains no valid pets."
+  end
+
+  return result
+end
+
+function ImportExportService:PrepareLevellingQueueImport(value)
+  local document, errorMessage = self:ParseLevellingQueue(value)
+
+  if not document then
+    return nil, errorMessage
+  end
+
+  local queueService = addon.Services
+      and addon.Services.LevellingQueue
+
+  if not queueService then
+    return nil, "Levelling queue service is not available."
+  end
+
+  local unavailablePets = {}
+
+  for _, petGUID in ipairs(queueService:GetAll()) do
+    unavailablePets[petGUID] = true
+  end
+
+  local result = {
+    document = document,
+    pets = {},
+    total = #document.pets,
+    addable = 0,
+    unavailable = 0,
+    invalid = 0,
+    warnings = document.warnings or {},
+  }
+
+  for _, entry in ipairs(document.pets) do
+    local petGUID, pet = ResolveLevellingQueuePet(entry, unavailablePets, queueService)
+
+    --------------------------------------------------
+    -- No unused instance of this species exists.
+    --------------------------------------------------
+
+    if not petGUID then
+      result.pets[#result.pets + 1] = {
+        entry = entry,
+        status = "unavailable",
+      }
+
+      result.unavailable = result.unavailable + 1
+    else
+      ------------------------------------------------
+      -- Let the queue service perform the final
+      -- validation.
+      ------------------------------------------------
+      local allowed, reason = queueService:CanAdd(petGUID)
+
+      if allowed then
+        result.pets[#result.pets + 1] = {
+          entry = entry,
+          petGUID = petGUID,
+          pet = pet,
+          status = "add",
+          sourceIndex = entry.sourceIndex,
+        }
+
+        result.addable = result.addable + 1
+      else
+        result.pets[#result.pets + 1] = {
+          entry = entry,
+          petGUID = petGUID,
+          pet = pet,
+          status = "invalid",
+          reason = reason,
+          sourceIndex = entry.sourceIndex,
+        }
+
+        result.invalid = result.invalid + 1
+      end
+    end
+  end
+
+  return result
+end
+
+function ImportExportService:SortLevellingQueueImport(preview, sortMode)
+  if type(preview) ~= "table" or type(preview.pets) ~= "table" then
+    return false
+  end
+
+  sortMode = sortMode or "original"
+
+  if sortMode == "original" then
+    table.sort(
+      preview.pets,
+      function(left, right)
+        return
+            (left.entry.sourceIndex or 0) < (right.entry.sourceIndex or 0)
+      end
+    )
+
+    return true
+  end
+
+  local function GetPetValue(item, field)
+    local pet = item.pet
+
+    if not pet then
+      return 0
+    end
+
+    return tonumber(pet[field]) or 0
+  end
+
+  table.sort(
+    preview.pets,
+    function(left, right)
+      ------------------------------------------------
+      -- Keep unavailable/invalid entries after the
+      -- actual importable pets.
+      ------------------------------------------------
+      local leftAdd = left.status == "add"
+      local rightAdd = right.status == "add"
+
+      if leftAdd ~= rightAdd then
+        return leftAdd
+      end
+
+      ------------------------------------------------
+      -- Rarity
+      ------------------------------------------------
+      if sortMode == "rarityHigh" then
+        local leftValue = GetPetValue(left, "quality")
+        local rightValue = GetPetValue(right, "quality")
+
+        if leftValue ~= rightValue then
+          return leftValue > rightValue
+        end
+      elseif sortMode == "rarityLow" then
+        local leftValue = GetPetValue(left, "quality")
+        local rightValue = GetPetValue(right, "quality")
+
+        if leftValue ~= rightValue then
+          return leftValue < rightValue
+        end
+
+        ------------------------------------------------
+        -- Level
+        ------------------------------------------------
+      elseif sortMode == "levelHigh" then
+        local leftValue = GetPetValue(left, "level")
+        local rightValue = GetPetValue(right, "level")
+
+        if leftValue ~= rightValue then
+          return leftValue > rightValue
+        end
+      elseif sortMode == "levelLow" then
+        local leftValue = GetPetValue(left, "level")
+        local rightValue = GetPetValue(right, "level")
+
+        if leftValue ~= rightValue then
+          return leftValue < rightValue
+        end
+
+        ------------------------------------------------
+        -- Pet type
+        ------------------------------------------------
+      elseif sortMode == "petType" then
+        local leftValue = GetPetValue(left, "petType")
+        local rightValue = GetPetValue(right, "petType")
+
+        if leftValue ~= rightValue then
+          return leftValue < rightValue
+        end
+      end
+
+      ------------------------------------------------
+      -- Stable fallback.
+      ------------------------------------------------
+      return (left.entry.sourceIndex or 0) < (right.entry.sourceIndex or 0)
+    end
+  )
+
+  return true
+end
+
+function ImportExportService:ImportLevellingQueue(preview)
+  if type(preview) ~= "table" or type(preview.pets) ~= "table" then
+    return 0, "Invalid levelling queue import."
+  end
+
+  local queueService = addon.Services and addon.Services.LevellingQueue
+
+  if not queueService then
+    return 0, "Levelling queue service is not available."
+  end
+
+  local added = 0
+
+  for _, item in ipairs(preview.pets) do
+    if item.status == "add" and item.petGUID then
+      local success = queueService:Add(item.petGUID)
+
+      if success then
+        added = added + 1
+      end
+    end
+  end
+
+  return added
 end
 
 addon.Services.ImportExport = ImportExportService

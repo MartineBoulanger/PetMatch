@@ -25,6 +25,11 @@ local BREED_NAMES = {
   [12] = "H/B",
 }
 
+local BREED_IDS = {}
+for breedID, breedName in pairs(BREED_NAMES) do
+  BREED_IDS[breedName] = breedID
+end
+
 local function IsInvalidBreed(breed)
   if breed == nil then
     return true
@@ -37,6 +42,24 @@ local function IsInvalidBreed(breed)
   end
 
   return string.sub(breed, 1, 3) == "ERR"
+end
+
+function BreedService:GetBreedID(breedName)
+  if type(breedName) ~= "string" or breedName == "" then
+    return nil
+  end
+
+  return BREED_IDS[breedName]
+end
+
+function BreedService:GetJournalBreedID(petGUID)
+  local breedName = self:GetJournalBreed(petGUID)
+
+  if not breedName then
+    return nil
+  end
+
+  return self:GetBreedID(breedName)
 end
 
 function BreedService:GetBreedName(breedID)
@@ -102,8 +125,7 @@ function BreedService:IsAvailable()
 end
 
 function BreedService:GetJournalBreed(petGUID)
-  if type(petGUID) ~= "string"
-      or petGUID == "" then
+  if type(petGUID) ~= "string" or petGUID == "" then
     return nil
   end
 
@@ -120,8 +142,7 @@ function BreedService:GetJournalBreed(petGUID)
     petGUID
   )
 
-  if not success
-      or IsInvalidBreed(breed) then
+  if not success or IsInvalidBreed(breed) then
     self.Cache[petGUID] = false
     return nil
   end
@@ -137,9 +158,7 @@ function BreedService:ClearCache()
   wipe(self.Cache)
 end
 
-function BreedService:SetJournalNameDisplayEnabled(
-    enabled
-)
+function BreedService:SetJournalNameDisplayEnabled(enabled)
   if not self:IsAvailable() then
     return false
   end
@@ -148,11 +167,8 @@ function BreedService:SetJournalNameDisplayEnabled(
     return false
   end
 
-  _G.BPBID_Options.Names =
-      _G.BPBID_Options.Names or {}
-
-  _G.BPBID_Options.Names.HSFUpdate =
-      enabled == true
+  _G.BPBID_Options.Names = _G.BPBID_Options.Names or {}
+  _G.BPBID_Options.Names.HSFUpdate = enabled == true
 
   return true
 end

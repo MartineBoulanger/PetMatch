@@ -103,6 +103,66 @@ commands.listpets = function()
   )
 end
 
+commands.queue = function()
+  -- local export,
+  -- errorMessage =
+  --     addon.Services.ImportExport:
+  --     ExportLevellingQueue()
+
+  -- if export then
+  --   print(export)
+  -- else
+  --   print(
+  --     "PetMatch:",
+  --     errorMessage
+  --   )
+  -- end
+  local importText = [[
+  PMQ1
+  species=1125;breed=3;level=7;rarity=4;type=7
+  species=1125;breed=3;level=18;rarity=4;type=7
+  species=1125;breed=3;level=1;rarity=4;type=7
+  ]]
+
+  local preview,
+  errorMessage =
+      addon.Services.ImportExport:
+      PrepareLevellingQueueImport(
+        importText
+      )
+
+  if not preview then
+    print(
+      "Import error:",
+      errorMessage
+    )
+    return
+  end
+
+  print(
+    "Total:",
+    preview.total,
+    "Addable:",
+    preview.addable,
+    "Unavailable:",
+    preview.unavailable,
+    "Invalid:",
+    preview.invalid
+  )
+
+  for index, item in ipairs(
+    preview.pets
+  ) do
+    print(
+      index,
+      item.status,
+      item.petGUID or "nil",
+      item.pet and item.pet.level or "nil",
+      item.pet and item.pet.quality or "nil"
+    )
+  end
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"
