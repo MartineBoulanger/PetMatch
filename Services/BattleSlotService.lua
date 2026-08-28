@@ -587,7 +587,6 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
   self.LoadGeneration = self.LoadGeneration + 1
   local generation = self.LoadGeneration
 
-
   if type(pets) ~= "table" then
     return false, "Invalid pet list"
   end
@@ -595,31 +594,56 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
   specialSlots = specialSlots or {}
 
   if C_PetBattles.IsInBattle() then
-    return false,
-        "Cannot load a team during a pet battle"
+    return false, "Cannot load a team during a pet battle"
   end
 
   if InCombatLockdown() then
-    return false,
-        "Cannot load a team during combat"
+    return false, "Cannot load a team during combat"
   end
 
+  --------------------------------------------------
+  -- Preflight: validate all battle pet slots
+  -- before changing anything
+  --------------------------------------------------
+  for slot = 1, 3 do
+    local _, _, _, _, locked = C_PetJournal.GetPetLoadOutInfo(slot)
+
+    if locked then
+      return false, string.format(
+        "Battle pet slot %d is locked",
+        slot
+      )
+    end
+  end
+
+  --------------------------------------------------
+  -- Resolve loadout
+  --------------------------------------------------
   local changedSlots = 0
   local resolvedPets = {}
   local usedPetGUIDs = {}
   local resolvedAbilities = {}
 
+  --------------------------------------------------
+  -- Reserve normal team pets so special slots
+  -- cannot resolve to the same pet
+  --------------------------------------------------
   for slot = 1, 3 do
-    if not specialSlots[slot]
-        and pets[slot] then
+    if not specialSlots[slot] and pets[slot] then
       usedPetGUIDs[pets[slot]] = true
     end
   end
 
+  --------------------------------------------------
+  -- Suspend loadout monitoring while we apply team
+  --------------------------------------------------
   if addon.Services.LoadoutMonitor then
     addon.Services.LoadoutMonitor:Suspend()
   end
 
+  --------------------------------------------------
+  -- Resolve and load pets
+  --------------------------------------------------
   for slot = 1, 3 do
     local specialSlot = specialSlots[slot]
     local petGUID
@@ -646,24 +670,32 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
 
     resolvedPets[slot] = petGUID
 
+    ------------------------------------------------
+    -- Resolve abilities
+    ------------------------------------------------
     if not petGUID then
       resolvedAbilities[slot] = nil
-    elseif specialSlot and (
+    elseif specialSlot
+        and (
           specialSlot.type == "random"
           or specialSlot.type == "leveling"
-          or specialSlot.type == "levelingQueue") then
+          or specialSlot.type == "levelingQueue"
+        ) then
       resolvedAbilities[slot] = GetFirstAbilityIDs(petGUID)
     else
-      resolvedAbilities[slot] = abilities and abilities[slot] or {}
+      resolvedAbilities[slot] =
+          abilities
+          and abilities[slot]
+          or {}
     end
 
+    ------------------------------------------------
+    -- Validate and apply pet
+    ------------------------------------------------
     if petGUID then
       usedPetGUIDs[petGUID] = true
 
-      local pet =
-          addon.Services.PetJournal:GetPet(
-            petGUID
-          )
+      local pet = addon.Services.PetJournal:GetPet(petGUID)
 
       if not pet then
         if addon.Services.LoadoutMonitor then
@@ -672,20 +704,6 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
 
         return false, string.format(
           "Pet in slot %d is unavailable",
-          slot
-        )
-      end
-
-      local _, _, _, _, locked =
-          C_PetJournal.GetPetLoadOutInfo(slot)
-
-      if locked then
-        if addon.Services.LoadoutMonitor then
-          addon.Services.LoadoutMonitor:Resume()
-        end
-
-        return false, string.format(
-          "Battle pet slot %d is locked",
           slot
         )
       end
@@ -699,23 +717,29 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
     end
   end
 
+  --------------------------------------------------
+  -- Nothing loaded
+  --------------------------------------------------
   if changedSlots == 0 then
     if addon.Services.LoadoutMonitor then
       addon.Services.LoadoutMonitor:Resume()
     end
 
-    return false,
-        "The team contains no pets"
+    return false, "The team contains no pets"
   end
 
-  if type(PetJournal_UpdatePetLoadOut)
-      == "function" then
+  --------------------------------------------------
+  -- Refresh Blizzard loadout UI
+  --------------------------------------------------
+  if type(PetJournal_UpdatePetLoadOut) == "function" then
     PetJournal_UpdatePetLoadOut()
   end
 
+  --------------------------------------------------
+  -- Apply abilities after pets have settled
+  --------------------------------------------------
   C_Timer.After(
     0.08,
-
     function()
       if generation ~= self.LoadGeneration then
         return

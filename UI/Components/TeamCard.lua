@@ -54,10 +54,13 @@ local function GetTargetName(team)
   -- Try to resolve immediately
   --------------------------------------------------
   for _, line in ipairs(data.lines or {}) do
-    if line.type == Enum.TooltipDataLineType.UnitName
-        and line.leftText and line.leftText ~= "" then
-      TargetNameCache[npcID] = line.leftText
-      return line.leftText
+    if line.type == Enum.TooltipDataLineType.UnitName then
+      local leftText = line.leftText
+
+      if leftText and not issecretvalue(leftText) then
+        TargetNameCache[npcID] = leftText
+        return leftText
+      end
     end
   end
 
@@ -111,32 +114,27 @@ targetLoaderFrame:SetScript(
     for _, line in ipairs(
       data.lines or {}
     ) do
-      if line.type
-          == Enum.TooltipDataLineType.UnitName
-          and line.leftText
-          and line.leftText ~= "" then
-        TargetNameCache[
-        npcID
-        ] =
-            line.leftText
+      if line.type == Enum.TooltipDataLineType.UnitName then
+        local leftText = line.leftText
 
-        PendingTargetNames[
-        dataInstanceID
-        ] =
-            nil
-
-        local teamList =
-            addon.UI
-            and addon.UI.Views
-            and addon.UI.Views.TeamList
-
-        if teamList
-            and type(teamList.Refresh)
-            == "function" then
-          teamList:Refresh()
+        if leftText and issecretvalue(leftText) then
+          PendingTargetNames[dataInstanceID] = nil
+          return
         end
 
-        return
+        if leftText then
+          TargetNameCache[npcID] = leftText
+
+          PendingTargetNames[dataInstanceID] = nil
+
+          local teamList = addon.UI and addon.UI.Views and addon.UI.Views.TeamList
+
+          if teamList and type(teamList.Refresh) == "function" then
+            teamList:Refresh()
+          end
+
+          return
+        end
       end
     end
   end

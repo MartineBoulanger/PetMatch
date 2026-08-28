@@ -561,36 +561,55 @@ function ImportExportService:NeedsPreview(
       or teamCount > 1
 end
 
+local function FindRematchCore(service, fields)
+  if type(fields) ~= "table" then
+    return nil
+  end
+
+  for pet1Index = 3, #fields - 2 do
+    local petTag1 = fields[pet1Index]
+    local petTag2 = fields[pet1Index + 1]
+    local petTag3 = fields[pet1Index + 2]
+
+    if petTag1 ~= "" and petTag2 ~= "" and petTag3 ~= "" then
+      local slot1 = service:DecodeRematchPetTag(petTag1)
+      local slot2 = service:DecodeRematchPetTag(petTag2)
+      local slot3 = service:DecodeRematchPetTag(petTag3)
+
+      if slot1 and slot2 and slot3 then
+        local targetIndex = pet1Index - 1
+        local nameEndIndex = targetIndex - 1
+
+        if nameEndIndex >= 1 then
+          return {
+            nameEndIndex = nameEndIndex,
+            targetIndex = targetIndex,
+            pet1Index = pet1Index,
+            afterPetsIndex = pet1Index + 3,
+          }
+        end
+      end
+    end
+  end
+
+  return nil
+end
+
 function ImportExportService:IsRematchTeam(text)
   if type(text) ~= "string" then
     return false
   end
 
-  local teamName,
-  targetTag,
-  petTag1,
-  petTag2,
-  petTag3,
-  optionsTag = text:match(
-    "^([^:\r\n]+):" ..
-    "([^:\r\n]*):" ..
-    "([^:\r\n]+):" ..
-    "([^:\r\n]+):" ..
-    "([^:\r\n]+):" ..
-    "([^:\r\n]*):"
-  )
+  local firstLine = text:match("([^\r\n]+)")
 
-  if not teamName then
+  if not firstLine then
     return false
   end
 
-  local slot1 = self:DecodeRematchPetTag(petTag1)
-  local slot2 = self:DecodeRematchPetTag(petTag2)
-  local slot3 = self:DecodeRematchPetTag(petTag3)
+  local fields = SplitPreservingEmpty(firstLine, ":")
+  local core = FindRematchCore(self, fields)
 
-  return slot1 ~= nil
-      and slot2 ~= nil
-      and slot3 ~= nil
+  return core ~= nil
 end
 
 function ImportExportService:ExportTeam(team)
@@ -1333,16 +1352,45 @@ function ImportExportService:ParseRematchTeam(line)
     return nil, "Incomplete Rematch team string"
   end
 
-  local name = Trim(fields[1])
+  --------------------------------------------------
+  -- Locate Rematch core
+  --------------------------------------------------
+  local core = FindRematchCore(self, fields)
+
+  if not core then
+    return nil, "Unable to locate Rematch pet slots"
+  end
+
+  --------------------------------------------------
+  -- Team name
+  --
+  -- Everything before the target field belongs
+  -- to the team name. This allows ':' in names.
+  --------------------------------------------------
+  local nameParts = {}
+
+  for index = 1, core.nameEndIndex do
+    nameParts[#nameParts + 1] = fields[index]
+  end
+
+  local name = Trim(table.concat(nameParts, ":"))
 
   if name == "" then
     return nil, "Rematch team has no name"
   end
 
+  --------------------------------------------------
+  -- Target
+  --------------------------------------------------
+  local targetTag = fields[core.targetIndex] or ""
+
+  --------------------------------------------------
+  -- Result
+  --------------------------------------------------
   local result = {
     format = "rematch",
     name = name,
-    npcIDs = ParseNPCIDs(fields[2]),
+    npcIDs = ParseNPCIDs(targetTag),
     slots = {},
     preferences = nil,
     notes = "",
@@ -1350,14 +1398,15 @@ function ImportExportService:ParseRematchTeam(line)
     warnings = {},
   }
 
+  --------------------------------------------------
+  -- Pets
+  --------------------------------------------------
   for slot = 1, 3 do
-    local token = fields[slot + 2]
+    local token = fields[core.pet1Index + slot - 1]
 
     if token and token ~= "" then
-      local slotData, errorMessage =
-          self:DecodeRematchPetTag(
-            token
-          )
+      local slotData,
+      errorMessage = self:DecodeRematchPetTag(token)
 
       if slotData then
         result.slots[slot] = slotData
@@ -1367,7 +1416,10 @@ function ImportExportService:ParseRematchTeam(line)
     end
   end
 
-  local index = 6
+  --------------------------------------------------
+  -- Preferences / notes / script
+  --------------------------------------------------
+  local index = core.afterPetsIndex
 
   while index <= #fields do
     local marker = fields[index]
@@ -1386,18 +1438,11 @@ function ImportExportService:ParseRematchTeam(line)
       local noteParts = {}
 
       for noteIndex = index + 1, #fields do
-        noteParts[#noteParts + 1] =
-            fields[noteIndex]
+        noteParts[#noteParts + 1] = fields[noteIndex]
       end
 
-      local noteText =
-          table.concat(
-            noteParts,
-            ":"
-          )
-
-      local notes, script =
-          SplitNotesAndScript(noteText)
+      local noteText = table.concat(noteParts, ":")
+      local notes, script = SplitNotesAndScript(noteText)
 
       result.notes = notes
       result.script = script

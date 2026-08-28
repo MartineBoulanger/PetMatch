@@ -3346,6 +3346,7 @@ function FilterExtension:HookPetJournal()
 
     function()
       QueueImmediateApplyFilters()
+      FilterExtension:ApplyFilters()
     end
   )
 end
