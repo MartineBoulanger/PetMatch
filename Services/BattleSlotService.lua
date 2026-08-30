@@ -718,6 +718,19 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
   end
 
   --------------------------------------------------
+  -- Auto dismiss summoned pet
+  --------------------------------------------------
+  if changedSlots > 0
+      and resolvedPets[1]
+      and addon.UI
+      and addon.UI.Actions
+      and addon.UI.Actions.PetJournalToolbar
+      and addon.UI.Actions.PetJournalToolbar.AutoDismissPet then
+    addon.UI.Actions.PetJournalToolbar:
+        AutoDismissPet(resolvedPets[1], 1, generation)
+  end
+
+  --------------------------------------------------
   -- Nothing loaded
   --------------------------------------------------
   if changedSlots == 0 then

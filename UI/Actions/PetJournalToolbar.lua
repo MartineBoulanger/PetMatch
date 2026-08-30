@@ -569,6 +569,91 @@ function PetJournalToolbar:UpdateDismissButton()
   )
 end
 
+function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation)
+  local mode =
+      addon.Settings:Get("summonedPetMode")
+      or "keep"
+
+  if mode ~= "dismiss" then
+    return
+  end
+
+  if not expectedPetGUID or expectedPetGUID == "" then
+    return
+  end
+
+  --------------------------------------------------
+  -- Stop if another team has been loaded meanwhile
+  --------------------------------------------------
+  if generation
+      and addon.Services.BattleSlot
+      and addon.Services.BattleSlot.LoadGeneration
+      ~= generation then
+    return
+  end
+
+  attempt = attempt or 1
+
+  local summonedPetGUID = C_PetJournal.GetSummonedPetGUID()
+
+  --------------------------------------------------
+  -- Correct pet is now actually summoned
+  --------------------------------------------------
+  if summonedPetGUID == expectedPetGUID then
+    local function FinalDismiss(attempt)
+      local currentSummonedPetGUID = C_PetJournal.GetSummonedPetGUID()
+
+      if currentSummonedPetGUID ~= expectedPetGUID then
+        return
+      end
+
+      C_PetJournal.DismissSummonedPet(
+        currentSummonedPetGUID
+      )
+
+      self:UpdateDismissButton()
+
+      if attempt >= 3 then
+        return
+      end
+
+      C_Timer.After(
+        0.25,
+        function()
+          FinalDismiss(attempt + 1)
+        end
+      )
+    end
+
+    C_Timer.After(
+      0.3,
+      function()
+        FinalDismiss(1)
+      end
+    )
+
+    return
+  end
+
+  --------------------------------------------------
+  -- Give Blizzard up to 3 seconds
+  --------------------------------------------------
+  if attempt >= 30 then
+    return
+  end
+
+  C_Timer.After(
+    0.1,
+    function()
+      self:AutoDismissPet(
+        expectedPetGUID,
+        attempt + 1,
+        generation
+      )
+    end
+  )
+end
+
 function PetJournalToolbar:DismissPet()
   local summonedPetGUID = C_PetJournal.GetSummonedPetGUID()
 

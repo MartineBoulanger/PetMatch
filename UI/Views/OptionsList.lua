@@ -14,6 +14,7 @@ local PET_LIST_SECTION_HEIGHT = 86
 local PET_CARD_SECTION_HEIGHT = 104
 local PET_CARD_VISIBILITY_SECTION_HEIGHT = 104
 local LEVELLING_QUEUE_SECTION_HEIGHT = 96
+local SUMMONED_PET_SECTION_HEIGHT = 86
 
 function OptionsList:Create(parent)
   local frame =
@@ -39,6 +40,7 @@ function OptionsList:Create(parent)
     petCard = false,
     petCardVisibility = false,
     levellingQueue = false,
+    summonedPet = false,
   }
 
   self:RegisterEvents()
@@ -75,6 +77,8 @@ function OptionsList:RegisterEvents()
         self:RefreshPetCardVisibilityMode()
       elseif key == "levellingQueueAutoAddMode" then
         self:RefreshLevellingQueueAutoAddMode()
+      elseif key == "summonedPetMode" then
+        self:RefreshSummonedPetMode()
       end
     end
   )
@@ -128,6 +132,11 @@ function OptionsList:ClearItems()
   self.LevellingQueueAccordion = nil
   self.LevellingQueueAutoAddEnabledButton = nil
   self.LevellingQueueAutoAddDisabledButton = nil
+
+  -- Summoned Pet Option
+  self.SummonedPetAccordion = nil
+  self.AutoDismissPetButton = nil
+  self.KeepSummonedPetButton = nil
 end
 
 function OptionsList:GetSections()
@@ -180,17 +189,20 @@ function OptionsList:GetSections()
         self:BuildLevellingQueueOptions(content)
       end,
     },
+    {
+      key = "summonedPet",
+      title = "Summoned Pet",
+      contentHeight = SUMMONED_PET_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildSummonedPetOptions(content)
+      end,
+    },
   }
 end
 
-function OptionsList:CreateSection(
-    section,
-    currentOffset
-)
+function OptionsList:CreateSection(section, currentOffset)
   local expanded =
-      self.ExpandedSections[
-      section.key
-      ] == true
+      self.ExpandedSections[section.key] == true
 
   local accordion =
       addon.UI.Components.Accordion:Create(
@@ -199,12 +211,8 @@ function OptionsList:CreateSection(
           title = section.title,
           width = CONTENT_WIDTH,
           expanded = expanded,
-
-          contentHeight =
-              section.contentHeight,
-
+          contentHeight = section.contentHeight,
           contentPadding = 8,
-
           onToggle = function(
               control,
               isExpanded
@@ -277,6 +285,10 @@ function OptionsList:CreateSection(
     self.LevellingQueueAccordion = accordion
   end
 
+  if section.key == "summonedPet" then
+    self.SummonedPetAccordion = accordion
+  end
+
   return currentOffset
       + accordion:GetHeight()
       + SECTION_SPACING
@@ -315,9 +327,7 @@ function OptionsList:CreateRadioButton(
   return button
 end
 
-function OptionsList:BuildDuplicateTeamOptions(
-    parent
-)
+function OptionsList:BuildDuplicateTeamOptions(parent)
   local description =
       parent:CreateFontString(
         nil,
@@ -489,9 +499,7 @@ function OptionsList:BuildBreedOptions(parent)
   self:RefreshBreedMode()
 end
 
-function OptionsList:BuildPetListOptions(
-    parent
-)
+function OptionsList:BuildPetListOptions(parent)
   local description =
       parent:CreateFontString(
         nil,
@@ -560,9 +568,7 @@ function OptionsList:BuildPetListOptions(
   self:RefreshPetListMode()
 end
 
-function OptionsList:BuildPetCardOptions(
-    parent
-)
+function OptionsList:BuildPetCardOptions(parent)
   local description =
       parent:CreateFontString(
         nil,
@@ -648,9 +654,7 @@ function OptionsList:BuildPetCardOptions(
   self:RefreshPetCardMode()
 end
 
-function OptionsList:BuildPetCardVisibilityOptions(
-    parent
-)
+function OptionsList:BuildPetCardVisibilityOptions(parent)
   local description =
       parent:CreateFontString(
         nil,
@@ -805,6 +809,75 @@ function OptionsList:BuildLevellingQueueOptions(parent)
   self:RefreshLevellingQueueAutoAddMode()
 end
 
+function OptionsList:BuildSummonedPetOptions(parent)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose what happens to your currently summoned pet."
+  )
+
+  self.AutoDismissPetButton =
+      self:CreateRadioButton(
+        parent,
+        "Auto Dismiss Pet",
+        "summonedPetMode",
+        "dismiss",
+        self.RefreshSummonedPetMode
+      )
+
+  self.AutoDismissPetButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.KeepSummonedPetButton =
+      self:CreateRadioButton(
+        parent,
+        "Keep Summoned Pet",
+        "summonedPetMode",
+        "keep",
+        self.RefreshSummonedPetMode
+      )
+
+  self.KeepSummonedPetButton:SetPoint(
+    "TOPLEFT",
+    self.AutoDismissPetButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshSummonedPetMode()
+end
+
 function OptionsList:RefreshDuplicateMode()
   if not self.SkipButton
       or not self.ReplaceButton
@@ -813,9 +886,7 @@ function OptionsList:RefreshDuplicateMode()
   end
 
   local mode =
-      addon.Settings:Get(
-        "duplicateTeamMode"
-      )
+      addon.Settings:Get("duplicateTeamMode")
 
   self.SkipButton:SetChecked(
     mode == "skip"
@@ -836,9 +907,7 @@ function OptionsList:RefreshBreedMode()
   end
 
   local mode =
-      addon.Settings:Get(
-        "petListBreedPosition"
-      )
+      addon.Settings:Get("petListBreedPosition")
 
   self.RightBreedButton:SetChecked(
     mode == "right"
@@ -860,9 +929,7 @@ function OptionsList:RefreshPetListMode()
   end
 
   local compact =
-      addon.Settings:Get(
-        "compactPetListRows"
-      ) == true
+      addon.Settings:Get("compactPetListRows") == true
 
   self.NormalRowsButton:SetChecked(
     not compact
@@ -881,9 +948,7 @@ function OptionsList:RefreshPetCardMode()
   end
 
   local mode =
-      addon.Settings:Get(
-        "petCardInteractionMode"
-      )
+      addon.Settings:Get("petCardInteractionMode")
       or "hover"
 
   self.PetCardHoverButton:SetChecked(
@@ -907,9 +972,7 @@ function OptionsList:RefreshPetCardVisibilityMode()
   end
 
   local mode =
-      addon.Settings:Get(
-        "petCardVisibilityMode"
-      )
+      addon.Settings:Get("petCardVisibilityMode")
       or "both"
 
   self.PetCardPetListButton:SetChecked(
@@ -941,6 +1004,25 @@ function OptionsList:RefreshLevellingQueueAutoAddMode()
 
   self.LevellingQueueAutoAddDisabledButton:SetChecked(
     mode == "disabled"
+  )
+end
+
+function OptionsList:RefreshSummonedPetMode()
+  if not self.AutoDismissPetButton
+      or not self.KeepSummonedPetButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get("summonedPetMode")
+      or "keep"
+
+  self.AutoDismissPetButton:SetChecked(
+    mode == "dismiss"
+  )
+
+  self.KeepSummonedPetButton:SetChecked(
+    mode == "keep"
   )
 end
 
@@ -1004,11 +1086,8 @@ function OptionsList:Refresh()
 
   self:ClearItems()
 
-  local sections =
-      self:GetSections()
-
-  local currentOffset =
-      CONTENT_PADDING
+  local sections = self:GetSections()
+  local currentOffset = CONTENT_PADDING
 
   for _, section in ipairs(sections) do
     currentOffset =
