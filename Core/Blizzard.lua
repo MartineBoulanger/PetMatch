@@ -86,6 +86,18 @@ local function GetSearchAbilityHighlights(control)
   return matches
 end
 
+local function UpdatePetMatchLayering()
+  local panels =
+      addon.UI
+      and addon.UI.Views
+      and addon.UI.Views.Panels
+
+  if panels
+      and type(panels.UpdateLayering) == "function" then
+    panels:UpdateLayering()
+  end
+end
+
 function Blizzard:Initialize()
   if self.Hooked then
     return
@@ -110,6 +122,30 @@ function Blizzard:Initialize()
     "OnHide",
     function()
       addon.UI.Host:Update()
+    end
+  )
+
+  --------------------------------------------------
+  -- Blizzard panel changes
+  --------------------------------------------------
+  hooksecurefunc(
+    "ShowUIPanel",
+    function()
+      UpdatePetMatchLayering()
+    end
+  )
+
+  hooksecurefunc(
+    "HideUIPanel",
+    function()
+      UpdatePetMatchLayering()
+    end
+  )
+
+  hooksecurefunc(
+    "UpdateUIPanelPositions",
+    function()
+      UpdatePetMatchLayering()
     end
   )
 

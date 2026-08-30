@@ -30,6 +30,81 @@ local function GetPetJournalCloseButton()
   return _G.CollectionsJournalCloseButton
 end
 
+function Panels:BringToFront()
+  if not self.Frame then
+    return
+  end
+
+  self.Frame:SetFrameStrata("HIGH")
+  self.Frame:SetFrameLevel(100)
+
+  if self.CloseButton then
+    self.CloseButton:SetFrameStrata(
+      self.Frame:GetFrameStrata()
+    )
+
+    self.CloseButton:SetFrameLevel(
+      self.Frame:GetFrameLevel() + 1000
+    )
+  end
+end
+
+function Panels:SendBehindCenterPanel()
+  if not self.Frame then
+    return
+  end
+
+  self.Frame:SetFrameStrata("LOW")
+  self.Frame:SetFrameLevel(1)
+
+  if self.CloseButton then
+    self.CloseButton:SetFrameStrata(
+      self.Frame:GetFrameStrata()
+    )
+
+    self.CloseButton:SetFrameLevel(
+      self.Frame:GetFrameLevel() + 100
+    )
+  end
+end
+
+function Panels:HookCenterFrame(centerFrame)
+  if not centerFrame then
+    return
+  end
+
+  if centerFrame.__PetMatchLayerHooked then
+    return
+  end
+
+  centerFrame.__PetMatchLayerHooked = true
+
+  centerFrame:HookScript(
+    "OnMouseDown",
+    function()
+      self:SendBehindCenterPanel()
+    end
+  )
+end
+
+function Panels:UpdateLayering()
+  if not self.Frame then
+    return
+  end
+
+  local centerFrame =
+      GetUIPanel
+      and GetUIPanel("center")
+      or nil
+
+  if centerFrame then
+    self:HookCenterFrame(centerFrame)
+    self:SendBehindCenterPanel()
+  else
+    self:BringToFront()
+  end
+end
+
 function Panels:MoveCloseButton()
   if not self.Frame then
     return
@@ -88,11 +163,11 @@ function Panels:MoveCloseButton()
   )
 
   closeButton:SetFrameStrata(
-    "DIALOG"
+    self.Frame:GetFrameStrata()
   )
 
   closeButton:SetFrameLevel(
-    1000
+    self.Frame:GetFrameLevel() + 1000
   )
 
   closeButton:Show()
@@ -165,6 +240,23 @@ function Panels:RestoreCloseButton()
   closeButton:Show()
 end
 
+function Panels:UpdatePosition()
+  if not self.Frame
+      or not PetJournal then
+    return
+  end
+
+  self.Frame:ClearAllPoints()
+
+  self.Frame:SetPoint(
+    "TOPLEFT",
+    PetJournal,
+    "TOPRIGHT",
+    -6,
+    0
+  )
+end
+
 function Panels:Create()
   if self.Frame then
     return self.Frame
@@ -179,25 +271,29 @@ function Panels:Create()
       CreateFrame(
         "Frame",
         "PetMatchPanels",
-        PetJournal,
+        UIParent,
         "DefaultPanelTemplate"
       )
 
+  frame:SetFrameStrata("HIGH")
+  self.NormalFrameStrata = frame:GetFrameStrata()
+
   frame:EnableMouse(true)
+
+  frame:HookScript(
+    "OnMouseDown",
+    function()
+      self:BringToFront()
+    end
+  )
 
   frame:SetSize(
     PANEL_WIDTH,
     PANEL_HEIGHT
   )
 
-  frame:ClearAllPoints()
-  frame:SetPoint(
-    "TOPLEFT",
-    PetJournal,
-    "TOPRIGHT",
-    -6,
-    0
-  )
+  self.Frame = frame
+  self:UpdatePosition()
 
   --------------------------------------------------
   -- Blizzard title
@@ -212,8 +308,6 @@ function Panels:Create()
       "PetMatch"
     )
   end
-
-  self.Frame = frame
 
   --------------------------------------------------
   -- Existing content frame
@@ -738,6 +832,7 @@ function Panels:Show()
 
   frame:Show()
   self:MoveCloseButton()
+  self:UpdateLayering()
 end
 
 function Panels:Hide()
