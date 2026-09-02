@@ -73,7 +73,10 @@ function OptionsList:RegisterEvents()
         self:RefreshPetListMode()
       elseif key == "petCardInteractionMode" then
         self:RefreshPetCardMode()
-      elseif key == "petCardVisibilityMode" then
+        -- elseif key == "petCardVisibilityMode" then
+      elseif key == "petCardPetListEnabled"
+          or key == "petCardTeamsEnabled"
+          or key == "petCardLevellingQueueEnabled" then
         self:RefreshPetCardVisibilityMode()
       elseif key == "levellingQueueAutoAddMode" then
         self:RefreshLevellingQueueAutoAddMode()
@@ -124,9 +127,9 @@ function OptionsList:ClearItems()
 
   -- Pet Card Visibility Option
   self.PetCardVisibilityAccordion = nil
-  self.PetCardPetListButton = nil
-  self.PetCardTeamsButton = nil
-  self.PetCardVisibilityBothButton = nil
+  self.PetCardPetListCheckbox = nil
+  self.PetCardTeamsCheckbox = nil
+  self.PetCardLevellingQueueCheckbox = nil
 
   -- Levelling Queue Option
   self.LevellingQueueAccordion = nil
@@ -316,6 +319,51 @@ function OptionsList:CreateRadioButton(
       addon.Settings:Set(
         settingKey,
         mode
+      )
+
+      if refreshCallback then
+        refreshCallback(self)
+      end
+    end
+  )
+
+  return button
+end
+
+function OptionsList:CreateCheckbox(
+    parent,
+    label,
+    settingKey,
+    refreshCallback
+)
+  local button =
+      CreateFrame(
+        "CheckButton",
+        nil,
+        parent,
+        "UICheckButtonTemplate"
+      )
+
+  button:SetSize(24, 24)
+
+  button.text:SetText(
+    label
+  )
+
+  button.text:SetPoint(
+    "LEFT",
+    button,
+    "LEFT",
+    28,
+    0
+  )
+
+  button:SetScript(
+    "OnClick",
+    function()
+      addon.Settings:Set(
+        settingKey,
+        button:GetChecked() == true
       )
 
       if refreshCallback then
@@ -683,58 +731,55 @@ function OptionsList:BuildPetCardVisibilityOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose where the Pet Card is available."
+    "Choose where the Pet Card will be visible."
   )
 
-  self.PetCardPetListButton =
-      self:CreateRadioButton(
+  self.PetCardPetListCheckbox =
+      self:CreateCheckbox(
         parent,
-        "Pet Journal list only",
-        "petCardVisibilityMode",
-        "petList",
-        self.RefreshPetCardVisibilityMode
+        "Pet Journal list",
+        "petCardPetListEnabled",
+        self.RefreshPetCardVisibility
       )
 
-  self.PetCardPetListButton:SetPoint(
+  self.PetCardPetListCheckbox:SetPoint(
     "TOPLEFT",
     description,
     "BOTTOMLEFT",
     0,
-    -7
+    -5
   )
 
-  self.PetCardTeamsButton =
-      self:CreateRadioButton(
+  self.PetCardTeamsCheckbox =
+      self:CreateCheckbox(
         parent,
-        "Team pets only",
-        "petCardVisibilityMode",
-        "teams",
-        self.RefreshPetCardVisibilityMode
+        "Team pets",
+        "petCardTeamsEnabled",
+        self.RefreshPetCardVisibility
       )
 
-  self.PetCardTeamsButton:SetPoint(
+  self.PetCardTeamsCheckbox:SetPoint(
     "TOPLEFT",
-    self.PetCardPetListButton,
+    self.PetCardPetListCheckbox,
     "BOTTOMLEFT",
     0,
-    -2
+    4
   )
 
-  self.PetCardVisibilityBothButton =
-      self:CreateRadioButton(
+  self.PetCardLevellingQueueCheckbox =
+      self:CreateCheckbox(
         parent,
-        "Pet Journal list and team pets",
-        "petCardVisibilityMode",
-        "both",
-        self.RefreshPetCardVisibilityMode
+        "Levelling Queue pets",
+        "petCardLevellingQueueEnabled",
+        self.RefreshPetCardVisibility
       )
 
-  self.PetCardVisibilityBothButton:SetPoint(
+  self.PetCardLevellingQueueCheckbox:SetPoint(
     "TOPLEFT",
-    self.PetCardTeamsButton,
+    self.PetCardTeamsCheckbox,
     "BOTTOMLEFT",
     0,
-    -2
+    4
   )
 
   self:RefreshPetCardVisibilityMode()
@@ -965,27 +1010,29 @@ function OptionsList:RefreshPetCardMode()
 end
 
 function OptionsList:RefreshPetCardVisibilityMode()
-  if not self.PetCardPetListButton
-      or not self.PetCardTeamsButton
-      or not self.PetCardVisibilityBothButton then
-    return
+  if self.PetCardPetListCheckbox then
+    self.PetCardPetListCheckbox:SetChecked(
+      addon.Settings:Get(
+        "petCardPetListEnabled"
+      ) ~= false
+    )
   end
 
-  local mode =
-      addon.Settings:Get("petCardVisibilityMode")
-      or "both"
+  if self.PetCardTeamsCheckbox then
+    self.PetCardTeamsCheckbox:SetChecked(
+      addon.Settings:Get(
+        "petCardTeamsEnabled"
+      ) ~= false
+    )
+  end
 
-  self.PetCardPetListButton:SetChecked(
-    mode == "petList"
-  )
-
-  self.PetCardTeamsButton:SetChecked(
-    mode == "teams"
-  )
-
-  self.PetCardVisibilityBothButton:SetChecked(
-    mode == "both"
-  )
+  if self.PetCardLevellingQueueCheckbox then
+    self.PetCardLevellingQueueCheckbox:SetChecked(
+      addon.Settings:Get(
+        "petCardLevellingQueueEnabled"
+      ) ~= false
+    )
+  end
 end
 
 function OptionsList:RefreshLevellingQueueAutoAddMode()

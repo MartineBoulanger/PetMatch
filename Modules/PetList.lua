@@ -1838,6 +1838,64 @@ local function RefreshPendingBattleSlotState(slotIndex)
   end
 end
 
+local function HandleLevellingQueueDrop(slotIndex)
+  local drag =
+      addon.UI
+      and addon.UI.Components
+      and addon.UI.Components.LevellingQueueDrag
+
+  if not drag
+      or not drag:IsDragging()
+      or drag:GetSource() ~= "levellingQueue" then
+    return false
+  end
+
+  local petGUID = drag:GetPetGUID()
+
+  if not petGUID then
+    return false
+  end
+
+  --------------------------------------------------
+  -- Replace special slot with a physical pet
+  --------------------------------------------------
+  addon.Services.BattleSlot:SetPendingNormalSlot(slotIndex)
+
+  --------------------------------------------------
+  -- Load pet into Blizzard battle slot
+  --------------------------------------------------
+  local success = addon.Services.BattleSlot:
+  SetSlot(
+    slotIndex,
+    petGUID
+  )
+
+  if not success then
+    return false
+  end
+
+  if type(PetJournal_UpdatePetLoadOut) == "function" then
+    PetJournal_UpdatePetLoadOut()
+  end
+
+  --------------------------------------------------
+  -- Refresh PetMatch slot state
+  --------------------------------------------------
+  RefreshPendingBattleSlotState(slotIndex)
+
+  drag:Clear()
+
+  if type(ClearCursor) == "function" then
+    ClearCursor()
+  end
+
+  return true
+end
+
+function PetList:HandleLevellingQueueDrop(slotIndex)
+  return HandleLevellingQueueDrop(slotIndex)
+end
+
 local function GetBattleSlotIndexFromOwner(owner)
   if not owner then
     return nil
@@ -2179,6 +2237,34 @@ function PetList:InstallHook()
         button,
         elementData
       )
+    end
+  )
+
+  hooksecurefunc(
+    C_PetJournal,
+    "SetPetLoadOutInfo",
+    function(slot, petGUID)
+      if slot ~= 1 then
+        return
+      end
+
+      if addon.Services.BattleSlot
+          and addon.Services.BattleSlot.IsLoadingTeam then
+        return
+      end
+
+      local toolbar =
+          addon.UI
+          and addon.UI.Actions
+          and addon.UI.Actions.PetJournalToolbar
+
+      if toolbar
+          and toolbar.HandleManualSlotChange then
+        toolbar:HandleManualSlotChange(
+          slot,
+          petGUID
+        )
+      end
     end
   )
 

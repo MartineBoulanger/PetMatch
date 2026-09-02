@@ -3,8 +3,8 @@ local _, addon = ...
 local LevellingQueueRow = {}
 LevellingQueueRow.__index = LevellingQueueRow
 
-local ROW_HEIGHT = 42
-local ICON_SIZE = 32
+local ROW_HEIGHT = 48
+local ICON_SIZE = 36
 
 local PET_RARITY_COLORS = {
   [1] = ITEM_QUALITY_COLORS[0],
@@ -79,10 +79,7 @@ local function HandleSpecialPetClick(
   return true
 end
 
-function LevellingQueueRow:Create(
-    parent,
-    list
-)
+function LevellingQueueRow:Create(parent, list)
   local instance =
       setmetatable(
         {},
@@ -95,8 +92,7 @@ function LevellingQueueRow:Create(
       CreateFrame(
         "Button",
         nil,
-        parent,
-        "BackdropTemplate"
+        parent
       )
 
   frame:SetHeight(
@@ -112,27 +108,101 @@ function LevellingQueueRow:Create(
     "LeftButton"
   )
 
-  frame:SetBackdrop({
-    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
-    edgeFile = "Interface\\Buttons\\WHITE8X8",
+  --------------------------------------------------
+  -- Blizzard-style row background
+  --------------------------------------------------
+  instance.Background =
+      frame:CreateTexture(
+        nil,
+        "BACKGROUND"
+      )
 
-    tile = true,
-    tileSize = 64,
-    edgeSize = 1,
-  })
-
-  frame:SetBackdropColor(
-    0.18,
-    0.18,
-    0.18,
-    0.90
+  instance.Background:SetAllPoints(
+    frame
   )
 
-  frame:SetBackdropBorderColor(
-    0.35,
-    0.30,
-    0.20,
-    0.90
+  instance.Background:SetColorTexture(
+    0.02,
+    0.02,
+    0.02,
+    0.58
+  )
+
+  --------------------------------------------------
+  -- Row border
+  --------------------------------------------------
+  instance.RowBorder =
+      CreateFrame(
+        "Frame",
+        nil,
+        frame,
+        "BackdropTemplate"
+      )
+
+  instance.RowBorder:SetAllPoints(
+    frame
+  )
+
+  instance.RowBorder:SetBackdrop({
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+
+    edgeSize = 8,
+
+    insets = {
+      left = 2,
+      right = 2,
+      top = 2,
+      bottom = 2,
+    },
+  })
+
+  instance.RowBorder:SetBackdropBorderColor(
+    0.32,
+    0.32,
+    0.32,
+    0.9
+  )
+
+  instance.RowBorder:SetFrameLevel(
+    frame:GetFrameLevel() + 1
+  )
+
+  --------------------------------------------------
+  -- Blizzard-style hover highlight
+  --------------------------------------------------
+  instance.Highlight =
+      frame:CreateTexture(
+        nil,
+        "HIGHLIGHT"
+      )
+
+  instance.Highlight:SetAtlas(
+    "PetList-ButtonHighlight",
+    true
+  )
+
+  instance.Highlight:SetPoint(
+    "TOPLEFT",
+    frame,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  instance.Highlight:SetPoint(
+    "BOTTOMRIGHT",
+    frame,
+    "BOTTOMRIGHT",
+    0,
+    0
+  )
+
+  instance.Highlight:SetBlendMode(
+    "BLEND"
+  )
+
+  frame:SetHighlightTexture(
+    instance.Highlight
   )
 
   instance.Frame = frame
@@ -167,6 +237,42 @@ function LevellingQueueRow:Create(
   )
 
   --------------------------------------------------
+  -- Blizzard pet icon border
+  --------------------------------------------------
+  instance.IconBorder =
+      frame:CreateTexture(
+        nil,
+        "OVERLAY"
+      )
+
+  instance.IconBorder:SetTexture(
+    651080
+  )
+
+  instance.IconBorder:SetPoint(
+    "TOPLEFT",
+    instance.Icon,
+    "TOPLEFT",
+    -3,
+    3
+  )
+
+  instance.IconBorder:SetPoint(
+    "BOTTOMRIGHT",
+    instance.Icon,
+    "BOTTOMRIGHT",
+    3,
+    -3
+  )
+
+  instance.IconBorder:SetVertexColor(
+    0.35,
+    0.35,
+    0.35,
+    1
+  )
+
+  --------------------------------------------------
   -- Name
   --------------------------------------------------
   instance.Name =
@@ -181,7 +287,7 @@ function LevellingQueueRow:Create(
     instance.Icon,
     "TOPRIGHT",
     8,
-    -4
+    0
   )
 
   instance.Name:SetJustifyH("LEFT")
@@ -202,10 +308,114 @@ function LevellingQueueRow:Create(
     instance.Icon,
     "BOTTOMRIGHT",
     8,
-    4
+    11
   )
 
   instance.Level:SetJustifyH("LEFT")
+
+  --------------------------------------------------
+  -- Experience
+  --------------------------------------------------
+  instance.XPBar =
+      CreateFrame(
+        "StatusBar",
+        nil,
+        frame
+      )
+
+  instance.XPBar:SetSize(
+    130,
+    8
+  )
+
+  instance.XPBar:SetPoint(
+    "BOTTOMLEFT",
+    instance.Icon,
+    "BOTTOMRIGHT",
+    8,
+    0
+  )
+
+  instance.XPBar:SetFrameLevel(
+    frame:GetFrameLevel() + 5
+  )
+
+
+  instance.XPBar:SetStatusBarTexture(
+    "Interface\\TargetingFrame\\UI-TargetingFrame-BarFill"
+  )
+
+  instance.XPBar:SetStatusBarColor(0, 0.55, 0.75, 1)
+
+  instance.XPBar:SetMinMaxValues(
+    0,
+    1
+  )
+
+  instance.XPBar:SetValue(0)
+
+  instance.XPBarBackground =
+      instance.XPBar:CreateTexture(
+        nil,
+        "BACKGROUND"
+      )
+
+  instance.XPBarBackground:SetAllPoints(
+    instance.XPBar
+  )
+
+  instance.XPBarBackground:SetColorTexture(
+    0.26,
+    0.26,
+    0.26,
+    0.7
+  )
+
+  instance.XPBarBorder =
+      instance.XPBar:CreateTexture(
+        nil,
+        "OVERLAY"
+      )
+
+  instance.XPBarBorder:SetTexture(
+    "Interface\\Tooltips\\UI-StatusBar-Border"
+  )
+
+  instance.XPBarBorder:SetPoint(
+    "TOPLEFT",
+    instance.XPBar,
+    "TOPLEFT",
+    -2,
+    2
+  )
+
+  instance.XPBarBorder:SetPoint(
+    "BOTTOMRIGHT",
+    instance.XPBar,
+    "BOTTOMRIGHT",
+    2,
+    -2
+  )
+
+  --------------------------------------------------
+  -- Experience text
+  --------------------------------------------------
+  instance.XPText =
+      instance.XPBar:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  instance.XPText:SetPoint(
+    "CENTER",
+    instance.XPBar,
+    "CENTER",
+    0,
+    0
+  )
+
+  instance.XPText:SetJustifyH("CENTER")
 
   --------------------------------------------------
   -- Breed
@@ -281,7 +491,7 @@ function LevellingQueueRow:Create(
           end,
 
           "ANCHOR_RIGHT",
-          "teams"
+          "queue"
         )
     addon.UI.Components.PetTooltip:
         SetClickBlocker(
@@ -291,33 +501,6 @@ function LevellingQueueRow:Create(
           end
         )
   end
-
-  --------------------------------------------------
-  -- Hover
-  --------------------------------------------------
-  frame:SetScript(
-    "OnEnter",
-    function()
-      frame:SetBackdropColor(
-        0.28,
-        0.28,
-        0.28,
-        0.95
-      )
-    end
-  )
-
-  frame:SetScript(
-    "OnLeave",
-    function()
-      frame:SetBackdropColor(
-        0.18,
-        0.18,
-        0.18,
-        0.90
-      )
-    end
-  )
 
   frame:SetScript(
     "OnClick",
@@ -394,11 +577,60 @@ function LevellingQueueRow:SetPet(item)
     1
   )
 
-  local level =
-      tonumber(
-        pet.level
+  if self.IconBorder then
+    self.IconBorder:SetVertexColor(
+      r,
+      g,
+      b,
+      1
+    )
+  end
+
+  local level = tonumber(pet.level) or 0
+  local xp = tonumber(pet.xp) or 0
+  local maxXP = tonumber(pet.maxXP) or 0
+
+  if maxXP > 0 and level < 25 then
+    self.XPBar:SetMinMaxValues(
+      0,
+      maxXP
+    )
+
+    self.XPBar:SetValue(
+      math.min(
+        xp,
+        maxXP
       )
-      or 0
+    )
+
+    local percentage = 0
+
+    if maxXP > 0 then
+      percentage =
+          math.floor(
+            (xp / maxXP) * 100
+            + 0.5
+          )
+    end
+
+    self.XPText:SetFormattedText(
+      "%d/%d (%d%%)",
+      xp,
+      maxXP,
+      percentage
+    )
+
+    self.XPBar:Show()
+  else
+    self.XPBar:SetMinMaxValues(
+      0,
+      1
+    )
+
+    self.XPBar:SetValue(0)
+    self.XPText:SetText("")
+    self.XPBar:Hide()
+  end
 
   self.Level:SetFormattedText(
     "Level %d",
@@ -406,17 +638,13 @@ function LevellingQueueRow:SetPet(item)
   )
 
   self.Level:SetTextColor(
-    r,
-    g,
-    b,
+    1,
+    1,
+    1,
     1
   )
 
-  local breed =
-      addon.Services.Breed:
-      GetJournalBreed(
-        item.petGUID
-      )
+  local breed = addon.Services.Breed:GetJournalBreed(item.petGUID)
 
   if breed then
     self.Breed:SetText(
@@ -458,6 +686,9 @@ function LevellingQueueRow:Clear()
   self.Level:SetText("")
   self.Family:SetTexture(nil)
   self.Family:Hide()
+  self.XPBar:SetValue(0)
+  self.XPText:SetText("")
+  self.XPBar:Hide()
   self.Breed:SetText("")
   self.Breed:Hide()
 
@@ -484,7 +715,6 @@ function LevellingQueueRow:SetItemTargeting(enabled)
   end
 end
 
--- context menu - liefst aparte file
 function LevellingQueueRow:OpenContextMenu()
   if not self.PetGUID then
     return

@@ -672,6 +672,21 @@ function PetJournalToolbar:DismissPet()
   )
 end
 
+function PetJournalToolbar:HandleManualSlotChange(slot, petGUID)
+  if slot ~= 1 then
+    return
+  end
+
+  if not petGUID or petGUID == "" then
+    return
+  end
+
+  self:AutoDismissPet(
+    petGUID,
+    1
+  )
+end
+
 function PetJournalToolbar:UpdateBandageButton()
   if not self.BandageButton then
     return

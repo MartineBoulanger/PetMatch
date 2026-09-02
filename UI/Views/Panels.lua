@@ -178,18 +178,20 @@ function Panels:MoveCloseButton()
     closeButton:SetScript(
       "OnClick",
       function()
-        if self.Frame then
-          self.Frame:Hide()
-        end
+        self:Hide()
 
         if CollectionsJournal then
-          CollectionsJournal:Hide()
+          HideUIPanel(
+            CollectionsJournal
+          )
         elseif PetJournal then
           local parent =
               PetJournal:GetParent()
 
           if parent then
-            parent:Hide()
+            HideUIPanel(
+              parent
+            )
           else
             PetJournal:Hide()
           end

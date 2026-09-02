@@ -3,6 +3,7 @@ local _, addon = ...
 local BattleSlotService = {}
 BattleSlotService.LoadGeneration = 0
 BattleSlotService.PendingSpecialSlots = {}
+BattleSlotService.IsLoadingTeam = false
 
 local MAX_ABILITY_ATTEMPTS = 6
 local ABILITY_RETRY_DELAY = 0.08
@@ -641,6 +642,8 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
     addon.Services.LoadoutMonitor:Suspend()
   end
 
+  self.IsLoadingTeam = true
+
   --------------------------------------------------
   -- Resolve and load pets
   --------------------------------------------------
@@ -716,6 +719,8 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
       changedSlots = changedSlots + 1
     end
   end
+
+  self.IsLoadingTeam = false
 
   --------------------------------------------------
   -- Auto dismiss summoned pet

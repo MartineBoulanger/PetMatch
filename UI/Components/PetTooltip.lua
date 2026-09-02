@@ -18,6 +18,7 @@ local VALID_MODES = {
 local VALID_SOURCES = {
   petList = true,
   teams = true,
+  queue = true,
 }
 
 local function GetInteractionMode()
@@ -40,30 +41,30 @@ local function AllowsClick()
   return mode == "click" or mode == "both"
 end
 
-local function GetVisibilityMode()
-  local mode = addon.Settings:Get("petCardVisibilityMode")
-
-  if mode ~= "petList"
-      and mode ~= "teams"
-      and mode ~= "both" then
-    return "both"
-  end
-
-  return mode
-end
-
 local function AllowsSource(source)
   if not VALID_SOURCES[source] then
     return true
   end
 
-  local mode = GetVisibilityMode()
-
-  if mode == "both" then
-    return true
+  if source == "petList" then
+    return addon.Settings:Get(
+      "petCardPetListEnabled"
+    ) ~= false
   end
 
-  return mode == source
+  if source == "teams" then
+    return addon.Settings:Get(
+      "petCardTeamsEnabled"
+    ) ~= false
+  end
+
+  if source == "queue" then
+    return addon.Settings:Get(
+      "petCardLevellingQueueEnabled"
+    ) ~= false
+  end
+
+  return true
 end
 
 local function GetPetCard()

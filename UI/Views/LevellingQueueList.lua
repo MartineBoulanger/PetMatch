@@ -170,6 +170,52 @@ function LevellingQueueList:UpdateRowDrag()
   )
 end
 
+local function GetBattleSlotUnderMouse()
+  if type(GetMouseFoci) ~= "function" then
+    return nil
+  end
+
+  local mouseFoci = GetMouseFoci()
+
+  if type(mouseFoci) ~= "table" then
+    return nil
+  end
+
+  for _, focus in ipairs(mouseFoci) do
+    local frame = focus
+
+    for _ = 1, 8 do
+      if not frame then
+        break
+      end
+
+      local name =
+          frame.GetName
+          and frame:GetName()
+
+      if name then
+        local slotIndex =
+            name:match(
+              "^PetJournalLoadoutPet([123])$"
+            )
+
+        if slotIndex then
+          return tonumber(
+            slotIndex
+          )
+        end
+      end
+
+      frame =
+          frame.GetParent
+          and frame:GetParent()
+          or nil
+    end
+  end
+
+  return nil
+end
+
 function LevellingQueueList:FinishRowDrag(row)
   self.Frame:SetScript(
     "OnUpdate",
@@ -192,9 +238,31 @@ function LevellingQueueList:FinishRowDrag(row)
   self.DropTargetIndex = nil
   self.DropInsertAfter = nil
 
-  if not draggedRow
-      or not draggedRow.PetGUID
-      or not targetIndex then
+  if not draggedRow or not draggedRow.PetGUID then
+    return
+  end
+
+  --------------------------------------------------
+  -- Drop onto Blizzard battle pet slot
+  --------------------------------------------------
+  local battleSlotIndex = GetBattleSlotUnderMouse()
+
+  if battleSlotIndex then
+    local petList = addon.ModuleManager and addon.ModuleManager.PetList
+
+    if petList
+        and petList.HandleLevellingQueueDrop
+        and petList:HandleLevellingQueueDrop(
+          battleSlotIndex
+        ) then
+      return
+    end
+  end
+
+  --------------------------------------------------
+  -- Reorder inside Levelling Queue
+  --------------------------------------------------
+  if not targetIndex then
     return
   end
 
@@ -214,7 +282,6 @@ function LevellingQueueList:FinishRowDrag(row)
   -- Removing the dragged entry shifts indices
   -- below it by one.
   --------------------------------------------------
-
   if currentIndex < newIndex then
     newIndex = newIndex - 1
   end
