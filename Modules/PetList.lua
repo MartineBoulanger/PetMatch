@@ -651,6 +651,11 @@ local function SaveOriginalRowLayout(button)
         SaveRegionLayout(
           GetPetLevelText(button)
         ),
+
+    subName =
+        SaveRegionLayout(
+          button.subName
+        ),
   }
 end
 
@@ -729,6 +734,17 @@ local function RestoreNormalRow(button)
   if iconBorder and icon then
     iconBorder:ClearAllPoints()
     iconBorder:SetAllPoints(icon)
+  end
+
+  RestoreRegionLayout(
+    button.subName,
+    layout.subName
+  )
+
+  if button.subName then
+    button.subName:SetFontObject(
+      "GameFontHighlightSmall"
+    )
   end
 
   RestoreNameAnchors(button)
@@ -1727,6 +1743,48 @@ local function UpdatePetButton(button, elementData)
     levelingIcon,
     teamIcon
   )
+
+  if UsesCompactRows()
+      and button.subName
+      and button.subName:IsShown() then
+    button.name:SetPoint(
+      "TOP",
+      button,
+      "TOP",
+      0,
+      -2
+    )
+
+    button.name:SetPoint(
+      "BOTTOM",
+      button,
+      "CENTER",
+      0,
+      0
+    )
+
+    button.subName:ClearAllPoints()
+
+    button.subName:SetPoint(
+      "TOPLEFT",
+      button.name,
+      "BOTTOMLEFT",
+      0,
+      0
+    )
+
+    button.subName:SetPoint(
+      "RIGHT",
+      button.name,
+      "RIGHT",
+      0,
+      0
+    )
+
+    button.subName:SetFontObject(
+      "GameFontHighlightSmall"
+    )
+  end
 
   PositionFavoriteIcon(button)
 
