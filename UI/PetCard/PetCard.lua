@@ -208,6 +208,26 @@ function PetCard:CreateBreedSection()
   self.BreedSection = addon.UI.PetCard.BreedSection:Create(self.Content)
 end
 
+local function AddAbilityIDs(target, abilityIDs)
+  if type(abilityIDs) ~= "table" then
+    return
+  end
+
+  for key, value in pairs(abilityIDs) do
+    local abilityID
+
+    if type(key) == "number" and value == true then
+      abilityID = key
+    else
+      abilityID = tonumber(value)
+    end
+
+    if abilityID then
+      target[abilityID] = true
+    end
+  end
+end
+
 --------------------------------------------------
 -- Highlight Abilities
 --------------------------------------------------
@@ -216,7 +236,45 @@ function PetCard:SetHighlightedAbilities(abilityIDs)
     return
   end
 
-  self.AbilityGrid:SetHighlightedAbilities(abilityIDs)
+  local highlightedAbilities = {}
+
+  --------------------------------------------------
+  -- Existing highlights
+  -- e.g. ability search
+  --------------------------------------------------
+  AddAbilityIDs(
+    highlightedAbilities,
+    abilityIDs
+  )
+
+  --------------------------------------------------
+  -- Strong Vs / Weak Vs highlights
+  --------------------------------------------------
+  local pet = self.Pet
+
+  local typeFilter =
+      addon.Services
+      and addon.Services.PetTypeFilter
+
+  if pet
+      and pet.speciesID
+      and typeFilter
+      and type(
+        typeFilter.GetMatchedAbilities
+      ) == "function" then
+    local matchedAbilities =
+        typeFilter:GetMatchedAbilities(
+          pet.speciesID,
+          pet.level
+        )
+
+    AddAbilityIDs(
+      highlightedAbilities,
+      matchedAbilities
+    )
+  end
+
+  self.AbilityGrid:SetHighlightedAbilities(highlightedAbilities)
 end
 
 function PetCard:ClearHighlightedAbilities()
@@ -224,7 +282,7 @@ function PetCard:ClearHighlightedAbilities()
     return
   end
 
-  self.AbilityGrid:ClearHighlights()
+  self:SetHighlightedAbilities(nil)
 end
 
 --------------------------------------------------
@@ -241,6 +299,9 @@ function PetCard:SetPet(pet)
   self.Header:SetPet(pet)
   self.Details:SetPet(pet)
   self.AbilityGrid:SetPet(pet)
+
+  self:SetHighlightedAbilities(nil)
+
   self.BreedSection:SetPet(pet)
 
   self:Layout()

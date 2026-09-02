@@ -2514,6 +2514,13 @@ function FilterExtension:GetActiveFilterNames()
 
   local typeFilter = addon.Services.PetTypeFilter
 
+  if typeFilter
+      and type(
+        typeFilter.ClearMatchedAbilities
+      ) == "function" then
+    typeFilter:ClearMatchedAbilities()
+  end
+
   if typeFilter then
     local mode = typeFilter:GetMode()
     local selectedTypes = typeFilter:GetSelectedTypes(mode)
@@ -3252,7 +3259,8 @@ function FilterExtension:ApplyFilters()
       matchesPetMatchFilter =
           typeFilter:DoesPetDataMatch(
             level,
-            petType
+            petType,
+            speciesID
           )
     end
 

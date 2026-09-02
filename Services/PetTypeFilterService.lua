@@ -124,7 +124,6 @@ PetTypeFilterService.SelectedTypes = {
 --------------------------------------------------
 -- Helpers
 --------------------------------------------------
-
 local function IsValidMode(mode)
   return VALID_MODES[mode] == true
 end
@@ -133,6 +132,58 @@ local function IsValidPetType(petType)
   petType = tonumber(petType)
   return petType and petType >= 1 and petType <= 10
 end
+
+local function GetAbilityData(speciesID, level)
+  speciesID = tonumber(speciesID)
+  level = tonumber(level) or 0
+
+  if not speciesID then
+    return {}, {}
+  end
+
+  local abilityIDs = {}
+  local abilityLevels = {}
+
+  C_PetJournal.GetPetAbilityList(
+    speciesID,
+    abilityIDs,
+    abilityLevels
+  )
+
+  local abilityTypes = {}
+  local abilitiesByType = {}
+
+  for index, abilityID in ipairs(abilityIDs) do
+    local requiredLevel =
+        tonumber(
+          abilityLevels[index]
+        ) or 1
+
+    local abilityAvailable =
+        level == 0 or level >= requiredLevel
+
+    if abilityAvailable then
+      local _, _, abilityType =
+          C_PetJournal.GetPetAbilityInfo(
+            abilityID
+          )
+
+      abilityType = tonumber(abilityType)
+
+      if IsValidPetType(abilityType) then
+        abilityTypes[abilityType] = true
+
+        abilitiesByType[abilityType] =
+            abilitiesByType[abilityType] or {}
+
+        abilitiesByType[abilityType][abilityID] = true
+      end
+    end
+  end
+
+  return abilityTypes, abilitiesByType
+end
+
 --------------------------------------------------
 -- Mode
 --------------------------------------------------
@@ -293,7 +344,7 @@ function PetTypeFilterService:HasAnyActiveFilter()
   end
 
   return false
-end                                                                                                                                                                     
+end
 
 --------------------------------------------------
 -- Matchup
@@ -319,20 +370,14 @@ function PetTypeFilterService:DoesPetMatch(pet)
   --------------------------------------------------
   -- Level 25
   --------------------------------------------------
-  if self:IsLevel25Only() and tonumber(pet.level) ~= 25 then
+  if self:IsLevel25Only()
+      and tonumber(pet.level) ~= 25 then
     return false
   end
 
   --------------------------------------------------
-  -- Active mode
+  -- Pet type
   --------------------------------------------------
-  local mode = self:GetMode()
-  local selectedTypes = self:GetSelectedTypes(mode)
-
-  if not selectedTypes or next(selectedTypes) == nil then
-    return true
-  end
-
   local petType = tonumber(pet.petType)
 
   if not IsValidPetType(petType) then
@@ -340,14 +385,21 @@ function PetTypeFilterService:DoesPetMatch(pet)
   end
 
   --------------------------------------------------
-  -- Direct pet type
+  -- Direct pet type filter
   --------------------------------------------------
-  if mode == "petType" then
-    return selectedTypes[petType] == true
+  local petTypeFilter =
+      self:GetSelectedTypes(
+        "petType"
+      )
+
+  if petTypeFilter
+      and next(petTypeFilter) ~= nil
+      and petTypeFilter[petType] ~= true then
+    return false
   end
 
   --------------------------------------------------
-  -- Matchup-based filtering
+  -- Matchup data
   --------------------------------------------------
   local matchup = self:GetMatchup(petType)
 
@@ -355,82 +407,315 @@ function PetTypeFilterService:DoesPetMatch(pet)
     return false
   end
 
-  local targetType
+  --------------------------------------------------
+  -- Strong Vs
+  --------------------------------------------------
+  local strongVs =
+      self:GetSelectedTypes(
+        "strongVs"
+      )
 
-  if mode == "strongVs" then
-    targetType = matchup.strongVs
-  elseif mode == "weakVs" then
-    targetType = matchup.weakVs
-  elseif mode == "takesMoreFrom" then
-    targetType = matchup.takesMoreFrom
-  elseif mode == "takesLessFrom" then
-    targetType = matchup.takesLessFrom
-  end
-
-  if not targetType then
+  if strongVs
+      and next(strongVs) ~= nil
+      and strongVs[
+      matchup.strongVs
+      ] ~= true then
     return false
   end
 
-  return selectedTypes[targetType] == true
+  --------------------------------------------------
+  -- Weak Vs
+  --------------------------------------------------
+  local weakVs =
+      self:GetSelectedTypes(
+        "weakVs"
+      )
+
+  if weakVs
+      and next(weakVs) ~= nil
+      and weakVs[
+      matchup.weakVs
+      ] ~= true then
+    return false
+  end
+
+  --------------------------------------------------
+  -- Takes More From
+  --------------------------------------------------
+  local takesMoreFrom =
+      self:GetSelectedTypes(
+        "takesMoreFrom"
+      )
+
+  if takesMoreFrom
+      and next(takesMoreFrom) ~= nil
+      and takesMoreFrom[
+      matchup.takesMoreFrom
+      ] ~= true then
+    return false
+  end
+
+  --------------------------------------------------
+  -- Takes Less From
+  --------------------------------------------------
+  local takesLessFrom =
+      self:GetSelectedTypes(
+        "takesLessFrom"
+      )
+
+  if takesLessFrom
+      and next(takesLessFrom) ~= nil
+      and takesLessFrom[
+      matchup.takesLessFrom
+      ] ~= true then
+    return false
+  end
+
+  return true
 end
 
-function PetTypeFilterService:DoesPetDataMatch(level, petType)
+function PetTypeFilterService:DoesPetDataMatch(level, petType, speciesID)
   --------------------------------------------------
   -- Level 25
   --------------------------------------------------
-  if self:IsLevel25Only() and tonumber(level) ~= 25 then
+  if self:IsLevel25Only()
+      and tonumber(level) ~= 25 then
     return false
   end
 
   --------------------------------------------------
-  -- Active mode
+  -- Pet type
   --------------------------------------------------
-  local mode = self:GetMode()
-  local selectedTypes = self:GetSelectedTypes(mode)
-
-  if not selectedTypes or next(selectedTypes) == nil then
-    return true
-  end
-
   petType = tonumber(petType)
 
   if not IsValidPetType(petType) then
     return false
   end
 
+  local abilityTypes, abilitiesByType =
+      GetAbilityData(
+        speciesID,
+        level
+      )
+
+
   --------------------------------------------------
-  -- Direct pet type
+  -- Direct pet type filter
   --------------------------------------------------
-  if mode == "petType" then
-    return selectedTypes[petType] == true
+  local petTypeFilter =
+      self:GetSelectedTypes(
+        "petType"
+      )
+
+  if petTypeFilter
+      and next(petTypeFilter) ~= nil
+      and petTypeFilter[petType] ~= true then
+    return false
   end
 
   --------------------------------------------------
-  -- Matchup
+  -- Matchup data
   --------------------------------------------------
-  local matchup = MATCHUPS[petType]
+  local matchup = self:GetMatchup(petType)
 
   if not matchup then
     return false
   end
 
-  local targetType
+  --------------------------------------------------
+  -- Strong Vs
+  --------------------------------------------------
+  local strongVs =
+      self:GetSelectedTypes(
+        "strongVs"
+      )
 
-  if mode == "strongVs" then
-    targetType = matchup.strongVs
-  elseif mode == "weakVs" then
-    targetType = matchup.weakVs
-  elseif mode == "takesMoreFrom" then
-    targetType = matchup.takesMoreFrom
-  elseif mode == "takesLessFrom" then
-    targetType = matchup.takesLessFrom
+  if strongVs and next(strongVs) ~= nil then
+    local matchesStrongVs = false
+
+    for abilityType in pairs(abilityTypes) do
+      local abilityMatchup =
+          self:GetMatchup(
+            abilityType
+          )
+
+      if abilityMatchup
+          and strongVs[abilityMatchup.strongVs] == true then
+        matchesStrongVs = true
+      end
+    end
+
+    if not matchesStrongVs then
+      return false
+    end
   end
 
-  if not targetType then
+  --------------------------------------------------
+  -- Weak Vs
+  --------------------------------------------------
+  local weakVs =
+      self:GetSelectedTypes(
+        "weakVs"
+      )
+
+  if weakVs and next(weakVs) ~= nil then
+    local matchesWeakVs = false
+
+    for abilityType in pairs(abilityTypes) do
+      local abilityMatchup =
+          self:GetMatchup(
+            abilityType
+          )
+
+      if abilityMatchup
+          and weakVs[abilityMatchup.weakVs] == true then
+        matchesWeakVs = true
+      end
+    end
+
+    if not matchesWeakVs then
+      return false
+    end
+  end
+
+  --------------------------------------------------
+  -- Takes More From
+  --------------------------------------------------
+  local takesMoreFrom =
+      self:GetSelectedTypes(
+        "takesMoreFrom"
+      )
+
+  if takesMoreFrom
+      and next(takesMoreFrom) ~= nil
+      and takesMoreFrom[
+      matchup.takesMoreFrom
+      ] ~= true then
     return false
   end
 
-  return selectedTypes[targetType] == true
+  --------------------------------------------------
+  -- Takes Less From
+  --------------------------------------------------
+  local takesLessFrom =
+      self:GetSelectedTypes(
+        "takesLessFrom"
+      )
+
+  if takesLessFrom
+      and next(takesLessFrom) ~= nil
+      and takesLessFrom[
+      matchup.takesLessFrom
+      ] ~= true then
+    return false
+  end
+
+  return true
+end
+
+function PetTypeFilterService:GetMatchedAbilities(
+    speciesID,
+    level
+)
+  speciesID = tonumber(speciesID)
+  level = tonumber(level) or 0
+
+  if not speciesID then
+    return {}
+  end
+
+  local abilityTypes,
+  abilitiesByType =
+      GetAbilityData(
+        speciesID,
+        level
+      )
+
+  local matchedAbilities = {}
+
+  --------------------------------------------------
+  -- Strong Vs
+  --------------------------------------------------
+
+  local strongVs =
+      self:GetSelectedTypes(
+        "strongVs"
+      )
+
+  if strongVs
+      and next(strongVs) ~= nil then
+    for abilityType in pairs(
+      abilityTypes
+    ) do
+      local matchup =
+          self:GetMatchup(
+            abilityType
+          )
+
+      if matchup
+          and strongVs[
+          matchup.strongVs
+          ] == true then
+        local abilities =
+            abilitiesByType[
+            abilityType
+            ]
+
+        if abilities then
+          for abilityID in pairs(
+            abilities
+          ) do
+            matchedAbilities[
+            abilityID
+            ] = true
+          end
+        end
+      end
+    end
+  end
+
+  --------------------------------------------------
+  -- Weak Vs
+  --------------------------------------------------
+
+  local weakVs =
+      self:GetSelectedTypes(
+        "weakVs"
+      )
+
+  if weakVs
+      and next(weakVs) ~= nil then
+    for abilityType in pairs(
+      abilityTypes
+    ) do
+      local matchup =
+          self:GetMatchup(
+            abilityType
+          )
+
+      if matchup
+          and weakVs[
+          matchup.weakVs
+          ] == true then
+        local abilities =
+            abilitiesByType[
+            abilityType
+            ]
+
+        if abilities then
+          for abilityID in pairs(
+            abilities
+          ) do
+            matchedAbilities[
+            abilityID
+            ] = true
+          end
+        end
+      end
+    end
+  end
+
+  return matchedAbilities
 end
 
 --------------------------------------------------
