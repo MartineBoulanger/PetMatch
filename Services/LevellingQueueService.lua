@@ -134,6 +134,23 @@ function LevellingQueueService:RemoveCompletedPets()
 
   if changed then
     FireChanged()
+
+    C_Timer.After(
+      0,
+      function()
+        local battleSlotService =
+            addon.Services
+            and addon.Services.BattleSlot
+
+        if battleSlotService
+            and type(
+              battleSlotService.RefreshLevellingSlots
+            ) == "function" then
+          battleSlotService:
+              RefreshLevellingSlots()
+        end
+      end
+    )
   end
 
   return changed

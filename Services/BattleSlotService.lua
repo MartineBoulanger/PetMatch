@@ -584,6 +584,85 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
   return candidate.petGUID
 end
 
+function BattleSlotService:RefreshLevellingSlots()
+  if C_PetBattles.IsInBattle()
+      or InCombatLockdown() then
+    return false
+  end
+
+  local usedPetGUIDs = {}
+  local changed = false
+
+  for slot = 1, 3 do
+    local specialSlot =
+        self.PendingSpecialSlots[slot]
+
+    local isLevellingSlot =
+        type(specialSlot) == "table"
+        and (
+          specialSlot.type == "leveling"
+          or specialSlot.type == "levelingQueue"
+        )
+
+    if not isLevellingSlot then
+      local petGUID =
+          self:GetSlot(slot)
+
+      if petGUID then
+        usedPetGUIDs[petGUID] = true
+      end
+    end
+  end
+
+  --------------------------------------------------
+  -- Resolve levelling slots again from the queue.
+  --------------------------------------------------
+  for slot = 1, 3 do
+    local specialSlot =
+        self.PendingSpecialSlots[slot]
+
+    local isLevellingSlot =
+        type(specialSlot) == "table"
+        and (
+          specialSlot.type == "leveling"
+          or specialSlot.type == "levelingQueue"
+        )
+
+    if isLevellingSlot then
+      local petGUID =
+          self:ResolveSpecialSlot(
+            specialSlot,
+            slot,
+            usedPetGUIDs
+          )
+
+      if petGUID then
+        local currentPetGUID =
+            self:GetSlot(slot)
+
+        if currentPetGUID ~= petGUID then
+          C_PetJournal.SetPetLoadOutInfo(
+            slot,
+            petGUID
+          )
+
+          changed = true
+        end
+
+        usedPetGUIDs[petGUID] = true
+      end
+    end
+  end
+
+  if changed
+      and type(PetJournal_UpdatePetLoadOut)
+      == "function" then
+    PetJournal_UpdatePetLoadOut()
+  end
+
+  return changed
+end
+
 function BattleSlotService:LoadPets(pets, abilities, specialSlots)
   self.LoadGeneration = self.LoadGeneration + 1
   local generation = self.LoadGeneration
