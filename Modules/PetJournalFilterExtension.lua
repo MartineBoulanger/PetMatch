@@ -179,9 +179,18 @@ local TYPE_FILTER_BAR_TOP_OFFSET = -32
 local FILTER_BAR_HEIGHT = 24
 local FILTER_BAR_SPACING = 4
 
-local FILTER_BAR_TOP_OFFSET = TYPE_FILTER_BAR_TOP_OFFSET - TYPE_FILTER_BAR_HEIGHT - FILTER_BAR_SPACING
-local PET_LIST_NORMAL_TOP_OFFSET = FILTER_BAR_TOP_OFFSET
-local PET_LIST_FILTERED_TOP_OFFSET = FILTER_BAR_TOP_OFFSET - FILTER_BAR_HEIGHT + 2
+local FILTER_BAR_TOP_OFFSET =
+    TYPE_FILTER_BAR_TOP_OFFSET
+    - TYPE_FILTER_BAR_HEIGHT
+    - FILTER_BAR_SPACING
+
+local PET_LIST_NORMAL_TOP_OFFSET =
+    FILTER_BAR_TOP_OFFSET
+
+local PET_LIST_FILTERED_TOP_OFFSET =
+    FILTER_BAR_TOP_OFFSET
+    - FILTER_BAR_HEIGHT
+    + 2
 
 local OtherFilters = {
   leveling = nil,
@@ -1647,10 +1656,7 @@ local function CreateOtherMenu(owner, root)
   )
 end
 
-local function CreatePetFamiliesMenu(
-    owner,
-    root
-)
+local function CreatePetFamiliesMenu(owner, root)
   local submenu =
       root:CreateButton(
         PET_FAMILIES
@@ -1687,6 +1693,105 @@ local function CreatePetFamiliesMenu(
           currentPetType,
           SyncNativePetTypes
         )
+
+        return MenuResponse.Refresh
+      end
+    )
+  end
+end
+
+local function RefreshPetTypeFilters()
+  CancelQueuedApplyFilters()
+
+  FilterExtension:ApplyFilters()
+
+  if FilterExtension.PetTypeFilterBar then
+    FilterExtension.PetTypeFilterBar:Refresh()
+  end
+end
+
+local function CreatePetMatchupMenu(root, label, mode)
+  local typeFilter = addon.Services
+      and addon.Services.PetTypeFilter
+
+  if not typeFilter then
+    return
+  end
+
+  local submenu =
+      root:CreateButton(label)
+
+  --------------------------------------------------
+  -- Check All
+  --------------------------------------------------
+  local checkAllButton =
+      submenu:CreateButton(
+        CHECK_ALL
+      )
+
+  checkAllButton:SetResponder(
+    function()
+      for petType = 1, 10 do
+        typeFilter:SetTypeSelected(
+          petType,
+          true,
+          mode
+        )
+      end
+
+      RefreshPetTypeFilters()
+
+      return MenuResponse.Refresh
+    end
+  )
+
+  --------------------------------------------------
+  -- Uncheck All
+  --------------------------------------------------
+  local uncheckAllButton =
+      submenu:CreateButton(
+        UNCHECK_ALL
+      )
+
+  uncheckAllButton:SetResponder(
+    function()
+      typeFilter:ClearMode(
+        mode
+      )
+
+      RefreshPetTypeFilters()
+
+      return MenuResponse.Refresh
+    end
+  )
+
+  --------------------------------------------------
+  -- Pet Families
+  --------------------------------------------------
+  for petType = 1, 10 do
+    local currentPetType = petType
+
+    submenu:CreateCheckbox(
+      _G[
+      "BATTLE_PET_NAME_"
+      .. currentPetType
+      ],
+
+      function()
+        return typeFilter:
+        IsTypeSelected(
+          currentPetType,
+          mode
+        )
+      end,
+
+      function()
+        typeFilter:ToggleType(
+          currentPetType,
+          mode
+        )
+
+        RefreshPetTypeFilters()
 
         return MenuResponse.Refresh
       end
@@ -2328,6 +2433,36 @@ function FilterExtension:RequestRefresh()
   PetJournal_UpdatePetList()
 end
 
+local function GetPetTypeFilterDisplayMode()
+  local mode =
+      addon.Settings:Get("petTypeFilterDisplayMode")
+      or "both"
+
+  if mode ~= "both"
+      and mode ~= "menu"
+      and mode ~= "bar" then
+    return "both"
+  end
+
+  return mode
+end
+
+local function ShowsPetTypeFilterBar()
+  return GetPetTypeFilterDisplayMode() ~= "menu"
+end
+
+local function ShowsPetTypeFilterMenus()
+  return GetPetTypeFilterDisplayMode() ~= "bar"
+end
+
+local function GetPetTypeFilterLayoutOffset()
+  if ShowsPetTypeFilterBar() then
+    return 0
+  end
+
+  return TYPE_FILTER_BAR_HEIGHT + FILTER_BAR_SPACING - 2
+end
+
 function FilterExtension:SetupFilterDropdown()
   if not PetJournal or not PetJournal.FilterDropdown then
     return
@@ -2381,6 +2516,32 @@ function FilterExtension:SetupFilterDropdown()
         _dropdown,
         root
       )
+
+      if ShowsPetTypeFilterMenus() then
+        CreatePetMatchupMenu(
+          root,
+          "Strong Vs",
+          "strongVs"
+        )
+
+        CreatePetMatchupMenu(
+          root,
+          "Weak Vs",
+          "weakVs"
+        )
+
+        CreatePetMatchupMenu(
+          root,
+          "Takes More From",
+          "takesMoreFrom"
+        )
+
+        CreatePetMatchupMenu(
+          root,
+          "Takes Less From",
+          "takesLessFrom"
+        )
+      end
 
       CreateSourcesMenu(
         _dropdown,
@@ -2512,35 +2673,81 @@ function FilterExtension:GetActiveFilterNames()
     names[#names + 1] = "Search"
   end
 
-  local typeFilter = addon.Services.PetTypeFilter
-
-  if typeFilter
-      and type(
-        typeFilter.ClearMatchedAbilities
-      ) == "function" then
-    typeFilter:ClearMatchedAbilities()
-  end
+  local typeFilter = addon.Services and addon.Services.PetTypeFilter
 
   if typeFilter then
-    local mode = typeFilter:GetMode()
-    local selectedTypes = typeFilter:GetSelectedTypes(mode)
-
-    if selectedTypes and next(selectedTypes) ~= nil then
-      local modeLabels = {
-        petType = "Pet Type",
-        strongVs = "Strong Vs",
-        weakVs = "Weak Vs",
-        takesMoreFrom = "Takes More From",
-        takesLessFrom = "Takes Less From",
-      }
-
-      names[#names + 1] = modeLabels[mode] or "Pet Type"
+    --------------------------------------------------
+    -- Pet Families
+    --
+    -- The filter bar uses PetTypeFilterService,
+    -- while the Filter menu uses Filters.petTypes.
+    -- Show Pet Families only once.
+    --------------------------------------------------
+    if typeFilter:
+        HasSelectedTypes(
+          "petType"
+        )
+        and not HasCustomFilter(
+          Filters.petTypes,
+          PET_TYPES
+        ) then
+      names[#names + 1] =
+      "Pet Families"
     end
 
+    --------------------------------------------------
+    -- Strong Vs
+    --------------------------------------------------
+    if typeFilter:
+        HasSelectedTypes(
+          "strongVs"
+        ) then
+      names[#names + 1] =
+      "Strong Vs"
+    end
+
+    --------------------------------------------------
+    -- Weak Vs
+    --------------------------------------------------
+    if typeFilter:
+        HasSelectedTypes(
+          "weakVs"
+        ) then
+      names[#names + 1] =
+      "Weak Vs"
+    end
+
+    --------------------------------------------------
+    -- Takes More From
+    --------------------------------------------------
+    if typeFilter:
+        HasSelectedTypes(
+          "takesMoreFrom"
+        ) then
+      names[#names + 1] =
+      "Takes More From"
+    end
+
+    --------------------------------------------------
+    -- Takes Less From
+    --------------------------------------------------
+    if typeFilter:
+        HasSelectedTypes(
+          "takesLessFrom"
+        ) then
+      names[#names + 1] =
+      "Takes Less From"
+    end
+
+    --------------------------------------------------
+    -- Level 25
+    --------------------------------------------------
     if typeFilter:IsLevel25Only() then
-      names[#names + 1] = "Level 25"
+      names[#names + 1] =
+      "Level 25"
     end
   end
+
 
   return names
 end
@@ -2581,24 +2788,25 @@ function FilterExtension:LayoutPetList(filterBarShown)
     return
   end
 
-  if currentFilterBarShown == filterBarShown then
-    return
-  end
-
   currentFilterBarShown = filterBarShown
 
   local scrollBox = PetJournal.ScrollBox
 
   scrollBox:ClearAllPoints()
 
+  local layoutOffset = GetPetTypeFilterLayoutOffset()
+
   scrollBox:SetPoint(
     "TOPLEFT",
     PetJournal.LeftInset,
     "TOPLEFT",
     3,
-    filterBarShown
-    and PET_LIST_FILTERED_TOP_OFFSET
-    or PET_LIST_NORMAL_TOP_OFFSET
+    (
+      currentFilterBarShown
+      and PET_LIST_FILTERED_TOP_OFFSET
+      or PET_LIST_NORMAL_TOP_OFFSET
+    )
+    + layoutOffset
   )
 
   scrollBox:SetPoint(
@@ -2667,7 +2875,11 @@ function FilterExtension:CreatePetTypeFilterBar()
     + 20
   )
 
-  frame:Show()
+  if ShowsPetTypeFilterBar() then
+    frame:Show()
+  else
+    frame:Hide()
+  end
 
   self.PetTypeFilterBar = bar
 end
@@ -2690,12 +2902,16 @@ function FilterExtension:CreateFilterBar()
     FILTER_BAR_HEIGHT
   )
 
+  local layoutOffset = GetPetTypeFilterLayoutOffset()
+
   bar:SetPoint(
     "TOPLEFT",
     PetJournal.LeftInset,
     "TOPLEFT",
     3,
-    FILTER_BAR_TOP_OFFSET + 5
+    FILTER_BAR_TOP_OFFSET
+    + layoutOffset
+    + 5
   )
 
   bar:SetPoint(
@@ -2703,7 +2919,9 @@ function FilterExtension:CreateFilterBar()
     PetJournal.LeftInset,
     "TOPRIGHT",
     -3,
-    FILTER_BAR_TOP_OFFSET + 5
+    FILTER_BAR_TOP_OFFSET
+    + layoutOffset
+    + 5
   )
 
   bar:SetFrameStrata(
@@ -2884,6 +3102,65 @@ function FilterExtension:UpdateFilterBar(visiblePetCount)
 
   self.FilterBar:Show()
   self:LayoutPetList(true)
+end
+
+function FilterExtension:RefreshFilterBar()
+  self:UpdateFilterBar(
+    #ActiveItems
+  )
+end
+
+function FilterExtension:UpdatePetTypeFilterDisplay()
+  self:CreatePetTypeFilterBar()
+
+  if self.PetTypeFilterBar then
+    local frame =
+        self.PetTypeFilterBar:GetFrame()
+
+    if ShowsPetTypeFilterBar() then
+      frame:Show()
+    else
+      frame:Hide()
+    end
+  end
+
+  if self.FilterBar then
+    local layoutOffset = GetPetTypeFilterLayoutOffset()
+
+    self.FilterBar:
+        ClearAllPoints()
+
+    self.FilterBar:SetPoint(
+      "TOPLEFT",
+      PetJournal.LeftInset,
+      "TOPLEFT",
+      3,
+      FILTER_BAR_TOP_OFFSET
+      + layoutOffset
+      + 5
+    )
+
+    self.FilterBar:SetPoint(
+      "TOPRIGHT",
+      PetJournal.LeftInset,
+      "TOPRIGHT",
+      -3,
+      FILTER_BAR_TOP_OFFSET
+      + layoutOffset
+      + 5
+    )
+  end
+
+  self:LayoutPetList(
+    self.FilterBar
+    and self.FilterBar:IsShown()
+  )
+
+  if PetJournal
+      and PetJournal.FilterDropdown
+      and PetJournal.FilterDropdown.GenerateMenu then
+    PetJournal.FilterDropdown:GenerateMenu()
+  end
 end
 
 function FilterExtension:ResetAllFilters()
@@ -3439,6 +3716,17 @@ function FilterExtension:Initialize()
       if FilterExtension.PetTypeFilterBar then
         FilterExtension.PetTypeFilterBar:Refresh()
       end
+    end
+  )
+
+  addon.EventBus:Register(
+    addon.Events.SETTINGS_CHANGED,
+    function(key)
+      if key ~= "petTypeFilterDisplayMode" then
+        return
+      end
+
+      FilterExtension:UpdatePetTypeFilterDisplay()
     end
   )
 

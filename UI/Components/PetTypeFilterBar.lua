@@ -48,7 +48,7 @@ local PET_TYPE_NAMES = {
 local FILTER_MODES = {
   {
     key = "petType",
-    label = "Pet Type",
+    label = "Pet Families",
   },
   {
     key = "strongVs",
@@ -84,7 +84,7 @@ local function GetModeLabel(mode)
     end
   end
 
-  return "Pet Type"
+  return "Pet Families"
 end
 
 --------------------------------------------------

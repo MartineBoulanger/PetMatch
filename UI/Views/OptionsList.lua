@@ -15,6 +15,7 @@ local PET_CARD_SECTION_HEIGHT = 104
 local PET_CARD_VISIBILITY_SECTION_HEIGHT = 104
 local LEVELLING_QUEUE_SECTION_HEIGHT = 96
 local SUMMONED_PET_SECTION_HEIGHT = 86
+local PET_TYPE_FILTER_SECTION_HEIGHT = 104
 
 function OptionsList:Create(parent)
   local frame =
@@ -73,7 +74,6 @@ function OptionsList:RegisterEvents()
         self:RefreshPetListMode()
       elseif key == "petCardInteractionMode" then
         self:RefreshPetCardMode()
-        -- elseif key == "petCardVisibilityMode" then
       elseif key == "petCardPetListEnabled"
           or key == "petCardTeamsEnabled"
           or key == "petCardLevellingQueueEnabled" then
@@ -82,6 +82,8 @@ function OptionsList:RegisterEvents()
         self:RefreshLevellingQueueAutoAddMode()
       elseif key == "summonedPetMode" then
         self:RefreshSummonedPetMode()
+      elseif key == "petTypeFilterDisplayMode" then
+        self:RefreshPetTypeFilterMode()
       end
     end
   )
@@ -140,6 +142,12 @@ function OptionsList:ClearItems()
   self.SummonedPetAccordion = nil
   self.AutoDismissPetButton = nil
   self.KeepSummonedPetButton = nil
+
+  -- Pet Type Filter Option
+  self.PetTypeFilterAccordion = nil
+  self.PetTypeFilterBothButton = nil
+  self.PetTypeFilterMenuButton = nil
+  self.PetTypeFilterBarButton = nil
 end
 
 function OptionsList:GetSections()
@@ -198,6 +206,14 @@ function OptionsList:GetSections()
       contentHeight = SUMMONED_PET_SECTION_HEIGHT,
       build = function(content)
         self:BuildSummonedPetOptions(content)
+      end,
+    },
+    {
+      key = "petTypeFilters",
+      title = "Pet Type Filters",
+      contentHeight = PET_TYPE_FILTER_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildPetTypeFilterOptions(content)
       end,
     },
   }
@@ -923,6 +939,92 @@ function OptionsList:BuildSummonedPetOptions(parent)
   self:RefreshSummonedPetMode()
 end
 
+function OptionsList:BuildPetTypeFilterOptions(parent)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose where the pet type matchup filters are shown."
+  )
+
+  self.PetTypeFilterBothButton =
+      self:CreateRadioButton(
+        parent,
+        "Filter Bar and Filter Menu",
+        "petTypeFilterDisplayMode",
+        "both",
+        self.RefreshPetTypeFilterMode
+      )
+
+  self.PetTypeFilterBothButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.PetTypeFilterMenuButton =
+      self:CreateRadioButton(
+        parent,
+        "Filter Menu Only",
+        "petTypeFilterDisplayMode",
+        "menu",
+        self.RefreshPetTypeFilterMode
+      )
+
+  self.PetTypeFilterMenuButton:SetPoint(
+    "TOPLEFT",
+    self.PetTypeFilterBothButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.PetTypeFilterBarButton =
+      self:CreateRadioButton(
+        parent,
+        "Filter Bar Only",
+        "petTypeFilterDisplayMode",
+        "bar",
+        self.RefreshPetTypeFilterMode
+      )
+
+  self.PetTypeFilterBarButton:SetPoint(
+    "TOPLEFT",
+    self.PetTypeFilterMenuButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshPetTypeFilterMode()
+end
+
 function OptionsList:RefreshDuplicateMode()
   if not self.SkipButton
       or not self.ReplaceButton
@@ -1071,6 +1173,22 @@ function OptionsList:RefreshSummonedPetMode()
   self.KeepSummonedPetButton:SetChecked(
     mode == "keep"
   )
+end
+
+function OptionsList:RefreshPetTypeFilterMode()
+  if not self.PetTypeFilterBothButton
+      or not self.PetTypeFilterMenuButton
+      or not self.PetTypeFilterBarButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get("petTypeFilterDisplayMode")
+      or "both"
+
+  self.PetTypeFilterBothButton:SetChecked(mode == "both")
+  self.PetTypeFilterMenuButton:SetChecked(mode == "menu")
+  self.PetTypeFilterBarButton:SetChecked(mode == "bar")
 end
 
 function OptionsList:UpdateContentHeight()

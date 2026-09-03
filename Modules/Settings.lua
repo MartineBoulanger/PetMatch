@@ -16,8 +16,11 @@ local DEFAULT_SETTINGS = {
   petListBreedPosition = "right",
   compactPetListRows = false,
   petCardInteractionMode = "hover",
-  petCardVisibilityMode = "both",
+  petCardPetListEnabled = true,
+  petCardTeamsEnabled = true,
+  petCardLevellingQueueEnabled = true,
   levellingQueueAutoAddMode = "disabled",
+  petTypeFilterDisplayMode = "both",
 
   ui = {
     selectedFolderKey = "__ALL__",
