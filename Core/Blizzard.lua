@@ -216,8 +216,26 @@ function Blizzard:IsCollectionsLoaded()
   return PetJournal ~= nil
 end
 
-local frame = CreateFrame("Frame")
+local petBattleFrame = CreateFrame("Frame")
+petBattleFrame:RegisterEvent("PET_BATTLE_OPENING_START")
+petBattleFrame:RegisterEvent("PET_BATTLE_FINAL_ROUND")
+petBattleFrame:RegisterEvent("PET_BATTLE_CLOSE")
+petBattleFrame:SetScript(
+  "OnEvent",
+  function(_, event, ...)
+    if event
+        == "PET_BATTLE_OPENING_START" then
+      addon.Services.TeamStatistics:StartBattle();
+    elseif event
+        == "PET_BATTLE_FINAL_ROUND" then
+      addon.Services.TeamStatistics:SetBattleResult(...);
+    elseif event == "PET_BATTLE_CLOSE" then
+      addon.Services.TeamStatistics:EndBattle();
+    end
+  end
+)
 
+local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:SetScript(
   "OnEvent",

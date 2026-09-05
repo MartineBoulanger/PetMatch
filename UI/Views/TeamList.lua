@@ -190,6 +190,17 @@ function TeamList:RegisterEvents()
       end
     )
   end
+
+  addon.EventBus:Register(
+    addon.Events.SETTINGS_CHANGED,
+    function(key)
+      if key ~= "teamCardHeightMode" then
+        return
+      end
+
+      self:Refresh()
+    end
+  )
 end
 
 function TeamList:ClearItems()

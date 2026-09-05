@@ -5,7 +5,10 @@ local TargetNameCache = {}
 local PendingTargetNames = {}
 
 local CARD_WIDTH = 230
-local CARD_HEIGHT = 26
+
+local CARD_HEIGHT_NORMAL = 26
+local CARD_HEIGHT_LARGE = 34
+
 local SLOT_SPACING = 0
 local SLOT_START_X = 1
 
@@ -20,6 +23,24 @@ local function ApplyVisualState(frame)
     frame:SetBackdropColor(0.04, 0.04, 0.04, 0.70)
     frame:SetBackdropBorderColor(0.35, 0.30, 0.20, 0.85)
   end
+end
+
+local function GetCardHeight()
+  local mode =
+      addon.Settings:Get("teamCardHeightMode")
+      or "normal"
+
+  if mode == "large" then
+    return CARD_HEIGHT_LARGE
+  end
+
+  return CARD_HEIGHT_NORMAL
+end
+
+local function IsLargeCard()
+  return addon.Settings:Get(
+    "teamCardHeightMode"
+  ) == "large"
 end
 
 local function GetTargetName(team)
@@ -202,7 +223,7 @@ function TeamCard:Create(parent, team)
     end
   )
 
-  frame:SetSize(CARD_WIDTH, CARD_HEIGHT)
+  frame:SetSize(CARD_WIDTH, GetCardHeight())
 
   frame:SetBackdrop({
     bgFile = "Interface\\Buttons\\WHITE8X8",
@@ -228,13 +249,29 @@ function TeamCard:Create(parent, team)
     local petSlot = addon.UI.Components.PetSlot:Create(frame)
     local petSlotFrame = petSlot:GetFrame()
 
+    if IsLargeCard() then
+      petSlotFrame:SetHeight(
+        CARD_HEIGHT_LARGE - 2
+      )
+      petSlotFrame:SetWidth(
+        26
+      )
+    else
+      petSlotFrame:SetHeight(
+        CARD_HEIGHT_NORMAL - 2
+      )
+    end
+
     petSlotFrame:SetPoint(
       "LEFT",
       frame,
       "LEFT",
       SLOT_START_X
       + ((slotIndex - 1)
-        * (petSlotFrame:GetWidth() + SLOT_SPACING)),
+        * (
+          petSlotFrame:GetWidth()
+          + SLOT_SPACING
+        )),
       0
     )
 
@@ -247,13 +284,20 @@ function TeamCard:Create(parent, team)
     "GameFontNormalSmall"
   )
 
+  if IsLargeCard() then
+    frame.Title:SetWordWrap(true)
+    frame.Title:SetNonSpaceWrap(false)
+    frame.Title:SetMaxLines(2)
+  else
+    frame.Title:SetWordWrap(false)
+    frame.Title:SetNonSpaceWrap(false)
+    frame.Title:SetMaxLines(1)
+  end
+
   frame.Title:ClearAllPoints()
 
   frame.Title:SetJustifyH("LEFT")
   frame.Title:SetJustifyV("MIDDLE")
-  frame.Title:SetWordWrap(false)
-  frame.Title:SetNonSpaceWrap(false)
-  frame.Title:SetMaxLines(1)
 
   frame.Target =
       frame:CreateFontString(
@@ -261,14 +305,6 @@ function TeamCard:Create(parent, team)
         "OVERLAY",
         "GameFontHighlightSmall"
       )
-
-  frame.Target:SetPoint(
-    "RIGHT",
-    frame,
-    "RIGHT",
-    -48,
-    0
-  )
 
   frame.Target:SetJustifyH("LEFT")
   frame.Target:SetJustifyV("MIDDLE")
@@ -488,26 +524,41 @@ function TeamCard:Create(parent, team)
     self.Title:ClearAllPoints()
     self.Target:ClearAllPoints()
 
-    --------------------------------------------------
-    -- Target
-    --------------------------------------------------
     if targetName then
+      --------------------------------------------------
+      -- With target:
+      -- same layout for Normal and Large
+      --------------------------------------------------
+      self.Title:SetWordWrap(false)
+      self.Title:SetNonSpaceWrap(false)
+      self.Title:SetMaxLines(1)
+
       self.Target:SetText(
         targetName
       )
 
       self.Target:Show()
 
-      ------------------------------------------------
-      -- Team name
-      ------------------------------------------------
-      self.Title:SetPoint(
-        "TOPLEFT",
-        self,
-        "TOPLEFT",
-        80,
-        -2
-      )
+      self.Title:ClearAllPoints()
+      self.Target:ClearAllPoints()
+
+      if IsLargeCard() then
+        self.Title:SetPoint(
+          "BOTTOMLEFT",
+          self,
+          "LEFT",
+          86,
+          3
+        )
+      else
+        self.Title:SetPoint(
+          "TOPLEFT",
+          self,
+          "TOPLEFT",
+          80,
+          -2
+        )
+      end
 
       self.Title:SetPoint(
         "RIGHT",
@@ -517,16 +568,23 @@ function TeamCard:Create(parent, team)
         0
       )
 
-      ------------------------------------------------
-      -- Target name
-      ------------------------------------------------
-      self.Target:SetPoint(
-        "BOTTOMLEFT",
-        self,
-        "BOTTOMLEFT",
-        80,
-        2
-      )
+      if IsLargeCard() then
+        self.Target:SetPoint(
+          "TOPLEFT",
+          self.Title,
+          "BOTTOMLEFT",
+          0,
+          -5
+        )
+      else
+        self.Target:SetPoint(
+          "TOPLEFT",
+          self.Title,
+          "BOTTOMLEFT",
+          0,
+          -2
+        )
+      end
 
       self.Target:SetPoint(
         "RIGHT",
@@ -536,56 +594,34 @@ function TeamCard:Create(parent, team)
         0
       )
     else
+      --------------------------------------------------
+      -- No target:
+      -- allow team name to wrap to 2 lines
+      --------------------------------------------------
       self.Target:SetText("")
       self.Target:Hide()
 
-      ------------------------------------------------
-      -- No target: vertically center team name
-      ------------------------------------------------
-      self.Title:SetPoint(
-        "LEFT",
-        self,
-        "LEFT",
-        80,
-        0
-      )
+      self.Title:SetWordWrap(true)
+      self.Title:SetNonSpaceWrap(false)
+      self.Title:SetMaxLines(2)
 
-      self.Title:SetPoint(
-        "RIGHT",
-        self,
-        "RIGHT",
-        -48,
-        0
-      )
-    end
-
-    --------------------------------------------------
-    -- Title positioning
-    --------------------------------------------------
-    if targetName then
-      self.Title:SetPoint(
-        "TOPLEFT",
-        self,
-        "TOPLEFT",
-        80,
-        -3
-      )
-
-      self.Title:SetPoint(
-        "RIGHT",
-        self,
-        "RIGHT",
-        -48,
-        0
-      )
-    else
-      self.Title:SetPoint(
-        "LEFT",
-        self,
-        "LEFT",
-        80,
-        0
-      )
+      if IsLargeCard() then
+        self.Title:SetPoint(
+          "LEFT",
+          self,
+          "LEFT",
+          86,
+          0
+        )
+      else
+        self.Title:SetPoint(
+          "LEFT",
+          self,
+          "LEFT",
+          80,
+          0
+        )
+      end
 
       self.Title:SetPoint(
         "RIGHT",

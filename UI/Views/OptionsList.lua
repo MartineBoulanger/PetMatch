@@ -16,6 +16,7 @@ local PET_CARD_VISIBILITY_SECTION_HEIGHT = 104
 local LEVELLING_QUEUE_SECTION_HEIGHT = 96
 local SUMMONED_PET_SECTION_HEIGHT = 86
 local PET_TYPE_FILTER_SECTION_HEIGHT = 104
+local TEAM_CARD_SECTION_HEIGHT = 86
 
 function OptionsList:Create(parent)
   local frame =
@@ -72,6 +73,8 @@ function OptionsList:RegisterEvents()
         self:RefreshBreedMode()
       elseif key == "compactPetListRows" then
         self:RefreshPetListMode()
+      elseif key == "teamCardHeightMode" then
+        self:RefreshTeamCardHeightMode()
       elseif key == "petCardInteractionMode" then
         self:RefreshPetCardMode()
       elseif key == "petCardPetListEnabled"
@@ -120,6 +123,11 @@ function OptionsList:ClearItems()
   self.PetListAccordion = nil
   self.NormalRowsButton = nil
   self.CompactRowsButton = nil
+
+  -- Team Card Option
+  self.TeamCardAccordion = nil
+  self.TeamCardNormalHeightButton = nil
+  self.TeamCardLargeHeightButton = nil
 
   -- Pet Card Option
   self.PetCardAccordion = nil
@@ -174,6 +182,14 @@ function OptionsList:GetSections()
       contentHeight = PET_LIST_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetListOptions(content)
+      end,
+    },
+    {
+      key = "teamCards",
+      title = "Team Cards",
+      contentHeight = TEAM_CARD_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildTeamCardOptions(content)
       end,
     },
     {
@@ -632,6 +648,75 @@ function OptionsList:BuildPetListOptions(parent)
   self:RefreshPetListMode()
 end
 
+function OptionsList:BuildTeamCardOptions(parent)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose the height used for team cards."
+  )
+
+  self.TeamCardNormalHeightButton =
+      self:CreateRadioButton(
+        parent,
+        "Normal height",
+        "teamCardHeightMode",
+        "normal",
+        self.RefreshTeamCardHeightMode
+      )
+
+  self.TeamCardNormalHeightButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.TeamCardLargeHeightButton =
+      self:CreateRadioButton(
+        parent,
+        "Large height",
+        "teamCardHeightMode",
+        "large",
+        self.RefreshTeamCardHeightMode
+      )
+
+  self.TeamCardLargeHeightButton:SetPoint(
+    "TOPLEFT",
+    self.TeamCardNormalHeightButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshTeamCardHeightMode()
+end
+
 function OptionsList:BuildPetCardOptions(parent)
   local description =
       parent:CreateFontString(
@@ -1085,6 +1170,29 @@ function OptionsList:RefreshPetListMode()
   self.CompactRowsButton:SetChecked(
     compact
   )
+end
+
+function OptionsList:RefreshTeamCardHeightMode()
+  if not self.TeamCardNormalHeightButton
+      or not self.TeamCardLargeHeightButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get(
+        "teamCardHeightMode"
+      )
+      or "normal"
+
+  self.TeamCardNormalHeightButton:
+      SetChecked(
+        mode == "normal"
+      )
+
+  self.TeamCardLargeHeightButton:
+      SetChecked(
+        mode == "large"
+      )
 end
 
 function OptionsList:RefreshPetCardMode()

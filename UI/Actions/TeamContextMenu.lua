@@ -46,6 +46,14 @@ function TeamContextMenu:Show(owner, team)
         end
       )
 
+      if addon.UI.Actions.TeamStatisticsMenu then
+        addon.UI.Actions.TeamStatisticsMenu:
+            Show(
+              rootDescription,
+              team
+            )
+      end
+
       rootDescription:CreateDivider()
 
       local teamService = addon.Services.Team

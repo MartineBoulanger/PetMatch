@@ -3,7 +3,9 @@ local _, addon = ...
 local PetSlot = {}
 PetSlot.__index = PetSlot
 
-local ICON_SIZE = 24
+local ICON_WIDTH = 24
+local ICON_HEIGHT = 24
+
 local RANDOM_PET_ICON = "Interface\\Icons\\INV_Misc_Dice_02"
 local LEVELING_PET_ICON = "Interface\\AddOns\\PetMatch\\Media\\levelingicon"
 local PET_FAMILY_ICONS = {
@@ -70,7 +72,10 @@ function PetSlot:Create(parent)
     end
   )
 
-  frame:SetSize(ICON_SIZE, ICON_SIZE)
+  frame:SetSize(
+    ICON_WIDTH,
+    ICON_HEIGHT
+  )
 
   frame:SetBackdrop({
     bgFile = "Interface/Buttons/WHITE8X8",
@@ -89,13 +94,11 @@ function PetSlot:Create(parent)
   }, PetSlot)
 
   instance.Icon = frame:CreateTexture(nil, "ARTWORK")
-  instance.Icon:SetSize(ICON_SIZE, ICON_SIZE)
-  instance.Icon:SetPoint("TOP", frame, "TOP", 0, 0)
+  instance.Icon:SetAllPoints(frame)
   instance.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
   instance.EmptyIcon = frame:CreateTexture(nil, "ARTWORK")
-  instance.EmptyIcon:SetSize(ICON_SIZE, ICON_SIZE)
-  instance.EmptyIcon:SetPoint("CENTER", instance.Icon)
+  instance.EmptyIcon:SetAllPoints(frame)
   instance.EmptyIcon:SetTexture("Interface/PaperDoll/UI-Backpack-EmptySlot")
   instance.EmptyIcon:SetVertexColor(0.45, 0.45, 0.45, 0.55)
 
@@ -164,6 +167,32 @@ function PetSlot:SetSpecialSlot(specialSlot)
     self.Icon:Hide()
     self.EmptyIcon:Show()
   end
+end
+
+function PetSlot:SetHeight(height)
+  height = tonumber(height)
+
+  if not height
+      or height <= 0 then
+    return
+  end
+
+  self.Frame:SetHeight(
+    height
+  )
+end
+
+function PetSlot:SetSize(width, height)
+  width = tonumber(width)
+      or self.Frame:GetWidth()
+
+  height = tonumber(height)
+      or self.Frame:GetHeight()
+
+  self.Frame:SetSize(
+    width,
+    height
+  )
 end
 
 function PetSlot:Clear()

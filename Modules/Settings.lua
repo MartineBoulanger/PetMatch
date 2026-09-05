@@ -15,6 +15,7 @@ local DEFAULT_SETTINGS = {
   showPetListBreed = true,
   petListBreedPosition = "right",
   compactPetListRows = false,
+  teamCardHeightMode = "normal",
   petCardInteractionMode = "hover",
   petCardPetListEnabled = true,
   petCardTeamsEnabled = true,

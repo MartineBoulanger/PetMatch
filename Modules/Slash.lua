@@ -163,6 +163,50 @@ commands.queue = function()
   end
 end
 
+commands.rating = function()
+  local team = addon.Services.Team:GetSelected()
+
+  if not team then
+    print("PetMatch: no team selected")
+    return
+  end
+
+  local stats = addon.Services.TeamStatistics:EnsureStats(team)
+
+  stats.pvp.wins = 2
+  stats.pvp.losses = 1
+  stats.pvp.draws = 1
+
+  print(
+    "PetMatch: test stats added to "
+    .. tostring(team.name)
+  )
+end
+
+commands.battletest = function()
+  local team =
+      addon.Services.Team:GetActive()
+
+  if not team then
+    print(
+      "[PetMatch]: no active team."
+    )
+
+    return
+  end
+
+  addon.Services.TeamStatistics:
+      RecordResult(
+        team,
+        "pvp",
+        "draw"
+      )
+
+  print(
+    "[PetMatch]: test draw added."
+  )
+end
+
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"
