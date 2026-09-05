@@ -17,6 +17,7 @@ local LEVELLING_QUEUE_SECTION_HEIGHT = 96
 local SUMMONED_PET_SECTION_HEIGHT = 86
 local PET_TYPE_FILTER_SECTION_HEIGHT = 104
 local TEAM_CARD_SECTION_HEIGHT = 86
+local PVE_BATTLE_SECTION_HEIGHT = 86
 
 function OptionsList:Create(parent)
   local frame =
@@ -39,10 +40,13 @@ function OptionsList:Create(parent)
     duplicateTeams = false,
     petBreeds = false,
     petList = false,
+    teamCards = false,
     petCard = false,
     petCardVisibility = false,
     levellingQueue = false,
     summonedPet = false,
+    petTypeFilters = false,
+    petBattles = false,
   }
 
   self:RegisterEvents()
@@ -87,6 +91,9 @@ function OptionsList:RegisterEvents()
         self:RefreshSummonedPetMode()
       elseif key == "petTypeFilterDisplayMode" then
         self:RefreshPetTypeFilterMode()
+      elseif key == "autoOpenNotesOnPvEBattle"
+          or key == "autoOpenPetJournalAfterBattle" then
+        self:RefreshPetBattlesMode()
       end
     end
   )
@@ -157,6 +164,11 @@ function OptionsList:ClearItems()
   self.PetTypeFilterBothButton = nil
   self.PetTypeFilterMenuButton = nil
   self.PetTypeFilterBarButton = nil
+
+  -- Pet Battles Option
+  self.PetBattlesAccordion = nil
+  self.AutoOpenPvENotesCheckbox = nil
+  self.AutoOpenPetJournalCheckbox = nil
 end
 
 function OptionsList:GetSections()
@@ -231,6 +243,14 @@ function OptionsList:GetSections()
       contentHeight = PET_TYPE_FILTER_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetTypeFilterOptions(content)
+      end,
+    },
+    {
+      key = "petBattles",
+      title = "Pet Battles",
+      contentHeight = PVE_BATTLE_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildPetBattlesOptions(content)
       end,
     },
   }
@@ -309,6 +329,10 @@ function OptionsList:CreateSection(section, currentOffset)
     self.PetListAccordion = accordion
   end
 
+  if section.key == "teamCards" then
+    self.TeamCardAccordion = accordion
+  end
+
   if section.key == "petCard" then
     self.PetCardAccordion = accordion
   end
@@ -324,6 +348,15 @@ function OptionsList:CreateSection(section, currentOffset)
   if section.key == "summonedPet" then
     self.SummonedPetAccordion = accordion
   end
+
+  if section.key == "petTypeFilters" then
+    self.PetTypeFilterAccordion = accordion
+  end
+
+  if section.key == "petBattles" then
+    self.PetBattlesAccordion = accordion
+  end
+
 
   return currentOffset
       + accordion:GetHeight()
@@ -1128,6 +1161,73 @@ function OptionsList:BuildPetTypeFilterOptions(parent)
   self:RefreshPetTypeFilterMode()
 end
 
+function OptionsList:BuildPetBattlesOptions(parent)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose what happens when entering or leaving a pet battle."
+  )
+
+  self.AutoOpenPvENotesCheckbox =
+      self:CreateCheckbox(
+        parent,
+        "Open Team Notes in PvE Battle",
+        "autoOpenNotesOnPvEBattle",
+        self.RefreshPetBattlesMode
+      )
+
+  self.AutoOpenPvENotesCheckbox:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -5
+  )
+
+  self.AutoOpenPetJournalCheckbox =
+      self:CreateCheckbox(
+        parent,
+        "Open Pet Journal After Battle",
+        "autoOpenPetJournalAfterBattle",
+        self.RefreshPetBattlesMode
+      )
+
+  self.AutoOpenPetJournalCheckbox:SetPoint(
+    "TOPLEFT",
+    self.AutoOpenPvENotesCheckbox,
+    "BOTTOMLEFT",
+    0,
+    4
+  )
+
+  self:RefreshPetBattlesMode()
+end
+
 function OptionsList:RefreshDuplicateMode()
   if not self.SkipButton
       or not self.ReplaceButton
@@ -1320,6 +1420,24 @@ function OptionsList:RefreshPetTypeFilterMode()
   self.PetTypeFilterBothButton:SetChecked(mode == "both")
   self.PetTypeFilterMenuButton:SetChecked(mode == "menu")
   self.PetTypeFilterBarButton:SetChecked(mode == "bar")
+end
+
+function OptionsList:RefreshPetBattlesMode()
+  if self.AutoOpenPvENotesCheckbox then
+    self.AutoOpenPvENotesCheckbox:SetChecked(
+      addon.Settings:Get(
+        "autoOpenNotesOnPvEBattle"
+      ) == true
+    )
+  end
+
+  if self.AutoOpenPetJournalCheckbox then
+    self.AutoOpenPetJournalCheckbox:SetChecked(
+      addon.Settings:Get(
+        "autoOpenPetJournalAfterBattle"
+      ) ~= false
+    )
+  end
 end
 
 function OptionsList:UpdateContentHeight()

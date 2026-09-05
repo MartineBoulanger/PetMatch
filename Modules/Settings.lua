@@ -24,6 +24,8 @@ local DEFAULT_SETTINGS = {
   petTypeFilterDisplayMode = "both",
   summonedPetMode = "keep",
   restorePreviousSummonedPet = false,
+  autoOpenNotesOnPvEBattle = false,
+  autoOpenPetJournalAfterBattle = true,
 
   ui = {
     selectedFolderKey = "__ALL__",

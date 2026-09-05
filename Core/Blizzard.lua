@@ -98,6 +98,82 @@ local function UpdatePetMatchLayering()
   end
 end
 
+local function AutoOpenPvENotes()
+  local enabled =
+      addon.Settings:Get("autoOpenNotesOnPvEBattle")
+
+  if not enabled then
+    return
+  end
+
+  --------------------------------------------------
+  -- Only PvE battles
+  --------------------------------------------------
+
+  if C_PetBattles.IsPlayerNPC(
+        Enum.BattlePetOwner.Enemy) ~= true then
+    return
+  end
+
+  local teamService = addon.Services.Team
+
+  if not teamService then
+    return
+  end
+
+  local team = teamService:GetActive()
+
+  if not team then
+    return
+  end
+
+  local notes =
+      addon.Utils:Trim(team.notes or "")
+
+  if notes == "" then
+    return
+  end
+
+  if not addon.UI
+      or not addon.UI.Dialogs
+      or not addon.UI.Dialogs.TeamNotesDialog then
+    return
+  end
+
+  addon.UI.Dialogs.TeamNotesDialog:Show(team)
+end
+
+local function AutoOpenPetJournalAfterBattle()
+  local enabled =
+      addon.Settings:Get("autoOpenPetJournalAfterBattle")
+
+  if enabled == false then
+    return
+  end
+
+  C_Timer.After(
+    0.5,
+    function()
+      if not CollectionsJournal then
+        return
+      end
+
+      if not PetJournal then
+        return
+      end
+
+      ShowUIPanel(CollectionsJournal)
+
+      if CollectionsJournal_SetTab then
+        CollectionsJournal_SetTab(
+          CollectionsJournal,
+          2
+        )
+      end
+    end
+  )
+end
+
 function Blizzard:Initialize()
   if self.Hooked then
     return
@@ -225,12 +301,14 @@ petBattleFrame:SetScript(
   function(_, event, ...)
     if event
         == "PET_BATTLE_OPENING_START" then
-      addon.Services.TeamStatistics:StartBattle();
+      addon.Services.TeamStatistics:StartBattle()
+      AutoOpenPvENotes()
     elseif event
         == "PET_BATTLE_FINAL_ROUND" then
-      addon.Services.TeamStatistics:SetBattleResult(...);
+      addon.Services.TeamStatistics:SetBattleResult(...)
     elseif event == "PET_BATTLE_CLOSE" then
-      addon.Services.TeamStatistics:EndBattle();
+      addon.Services.TeamStatistics:EndBattle()
+      AutoOpenPetJournalAfterBattle()
     end
   end
 )
