@@ -721,6 +721,8 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
     addon.Services.LoadoutMonitor:Suspend()
   end
 
+  local previousSummonedPetGUID = C_PetJournal.GetSummonedPetGUID()
+
   self.IsLoadingTeam = true
 
   --------------------------------------------------
@@ -811,7 +813,7 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
       and addon.UI.Actions.PetJournalToolbar
       and addon.UI.Actions.PetJournalToolbar.AutoDismissPet then
     addon.UI.Actions.PetJournalToolbar:
-        AutoDismissPet(resolvedPets[1], 1, generation)
+        AutoDismissPet(resolvedPets[1], 1, generation, previousSummonedPetGUID)
   end
 
   --------------------------------------------------

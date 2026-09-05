@@ -22,6 +22,8 @@ local DEFAULT_SETTINGS = {
   petCardLevellingQueueEnabled = true,
   levellingQueueAutoAddMode = "disabled",
   petTypeFilterDisplayMode = "both",
+  summonedPetMode = "keep",
+  restorePreviousSummonedPet = false,
 
   ui = {
     selectedFolderKey = "__ALL__",

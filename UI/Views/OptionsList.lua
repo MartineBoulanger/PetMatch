@@ -150,6 +150,7 @@ function OptionsList:ClearItems()
   self.SummonedPetAccordion = nil
   self.AutoDismissPetButton = nil
   self.KeepSummonedPetButton = nil
+  self.RestorePreviousPetButton = nil
 
   -- Pet Type Filter Option
   self.PetTypeFilterAccordion = nil
@@ -1021,6 +1022,23 @@ function OptionsList:BuildSummonedPetOptions(parent)
     -2
   )
 
+  self.RestorePreviousPetButton =
+      self:CreateRadioButton(
+        parent,
+        "Restore Previous Summoned Pet",
+        "summonedPetMode",
+        "restore",
+        self.RefreshSummonedPetMode
+      )
+
+  self.RestorePreviousPetButton:SetPoint(
+    "TOPLEFT",
+    self.KeepSummonedPetButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
   self:RefreshSummonedPetMode()
 end
 
@@ -1266,7 +1284,8 @@ end
 
 function OptionsList:RefreshSummonedPetMode()
   if not self.AutoDismissPetButton
-      or not self.KeepSummonedPetButton then
+      or not self.KeepSummonedPetButton
+      or not self.RestorePreviousPetButton then
     return
   end
 
@@ -1280,6 +1299,10 @@ function OptionsList:RefreshSummonedPetMode()
 
   self.KeepSummonedPetButton:SetChecked(
     mode == "keep"
+  )
+
+  self.RestorePreviousPetButton:SetChecked(
+    mode == "restore"
   )
 end
 

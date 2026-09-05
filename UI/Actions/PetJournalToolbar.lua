@@ -569,12 +569,78 @@ function PetJournalToolbar:UpdateDismissButton()
   )
 end
 
-function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation)
+local function FinalDismiss(attempt, expectedPetGUID, previousSummonedPetGUID)
+  if PetJournalToolbar.RestorePending then
+    return
+  end
+
+  local currentSummonedPetGUID =
+      C_PetJournal.GetSummonedPetGUID()
+
+  if currentSummonedPetGUID ~= expectedPetGUID then
+    return
+  end
+
+  C_PetJournal.DismissSummonedPet(
+    currentSummonedPetGUID
+  )
+
+  PetJournalToolbar:UpdateDismissButton()
+
+  --------------------------------------------------
+  -- Restore previous pet
+  --------------------------------------------------
   local mode =
       addon.Settings:Get("summonedPetMode")
       or "keep"
 
-  if mode ~= "dismiss" then
+  if mode == "restore"
+      and previousSummonedPetGUID
+      and previousSummonedPetGUID ~= expectedPetGUID then
+    PetJournalToolbar.RestorePending = true
+    C_Timer.After(
+      1.5,
+      function()
+        local currentPetGUID =
+            C_PetJournal.GetSummonedPetGUID()
+
+        if not currentPetGUID then
+          C_PetJournal.SummonPetByGUID(
+            previousSummonedPetGUID
+          )
+        end
+
+        PetJournalToolbar.RestorePending = false
+      end
+    )
+  end
+
+  --------------------------------------------------
+  -- Retry dismiss
+  --------------------------------------------------
+  if attempt >= 3 then
+    return
+  end
+
+  C_Timer.After(
+    0.25,
+    function()
+      FinalDismiss(
+        attempt + 1,
+        expectedPetGUID,
+        previousSummonedPetGUID
+      )
+    end
+  )
+end
+
+function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation, previousSummonedPetGUID)
+  local mode =
+      addon.Settings:Get("summonedPetMode")
+      or "keep"
+
+  if mode ~= "dismiss"
+      and mode ~= "restore" then
     return
   end
 
@@ -600,35 +666,14 @@ function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation)
   -- Correct pet is now actually summoned
   --------------------------------------------------
   if summonedPetGUID == expectedPetGUID then
-    local function FinalDismiss(attempt)
-      local currentSummonedPetGUID = C_PetJournal.GetSummonedPetGUID()
-
-      if currentSummonedPetGUID ~= expectedPetGUID then
-        return
-      end
-
-      C_PetJournal.DismissSummonedPet(
-        currentSummonedPetGUID
-      )
-
-      self:UpdateDismissButton()
-
-      if attempt >= 3 then
-        return
-      end
-
-      C_Timer.After(
-        0.25,
-        function()
-          FinalDismiss(attempt + 1)
-        end
-      )
-    end
-
     C_Timer.After(
       0.3,
       function()
-        FinalDismiss(1)
+        FinalDismiss(
+          1,
+          expectedPetGUID,
+          previousSummonedPetGUID
+        )
       end
     )
 
@@ -648,7 +693,8 @@ function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation)
       self:AutoDismissPet(
         expectedPetGUID,
         attempt + 1,
-        generation
+        generation,
+        previousSummonedPetGUID
       )
     end
   )
