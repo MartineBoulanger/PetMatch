@@ -663,6 +663,149 @@ function BattleSlotService:RefreshLevellingSlots()
   return changed
 end
 
+local function ResolveHealthyDuplicate(savedPetGUID, slot, usedPetGUIDs)
+  if not savedPetGUID then
+    return nil
+  end
+
+  --------------------------------------------------
+  -- Saved team pet determines the species
+  --------------------------------------------------
+
+  local savedPet =
+      addon.Services.PetJournal:
+      GetPet(savedPetGUID)
+
+  if not savedPet
+      or not savedPet.speciesID then
+    return savedPetGUID
+  end
+
+  local speciesID =
+      savedPet.speciesID
+
+  --------------------------------------------------
+  -- Prefer the currently loaded pet when it is
+  -- already a duplicate of the saved team pet.
+  --------------------------------------------------
+
+  local currentPetGUID =
+      C_PetJournal.GetPetLoadOutInfo(
+        slot
+      )
+
+  local currentPet
+
+  if currentPetGUID then
+    currentPet =
+        addon.Services.PetJournal:
+        GetPet(currentPetGUID)
+  end
+
+  local currentIsSameSpecies =
+      currentPet
+      and currentPet.speciesID
+      == speciesID
+
+  --------------------------------------------------
+  -- Do not keep a pet that is reserved for another
+  -- normal team slot.
+  --
+  -- The saved pet for this slot is allowed because
+  -- it is also present in usedPetGUIDs.
+  --------------------------------------------------
+
+  local currentIsAvailable =
+      currentPetGUID == savedPetGUID
+      or not usedPetGUIDs[
+      currentPetGUID
+      ]
+
+  local petGUID
+
+  if currentIsSameSpecies
+      and currentIsAvailable then
+    petGUID = currentPetGUID
+  else
+    petGUID = savedPetGUID
+  end
+
+  --------------------------------------------------
+  -- Check health of the pet we would keep
+  --------------------------------------------------
+  local health,
+  maxHealth =
+      C_PetJournal.GetPetStats(petGUID)
+
+  health = tonumber(health) or 0
+  maxHealth = tonumber(maxHealth) or 0
+
+  if maxHealth <= 0 then
+    return petGUID
+  end
+
+  --------------------------------------------------
+  -- 50% health or higher:
+  -- keep the current pet.
+  --------------------------------------------------
+  if health / maxHealth >= 0.5 then
+    return petGUID
+  end
+
+  --------------------------------------------------
+  -- Below 50%:
+  -- find a full-health duplicate.
+  --------------------------------------------------
+  local pets =
+      addon.Services.PetJournal:
+      GetAll()
+
+  if type(pets) ~= "table" then
+    return petGUID
+  end
+
+  for candidateGUID, candidate
+  in pairs(pets) do
+    local candidateIsAvailable =
+        candidateGUID == savedPetGUID
+        or not usedPetGUIDs[candidateGUID]
+
+    if candidateGUID ~= petGUID
+        and candidateIsAvailable
+        and type(candidate) == "table"
+        and candidate.speciesID == speciesID
+        and candidate.canBattle ~= false then
+      local candidateHealth,
+      candidateMaxHealth =
+          C_PetJournal.GetPetStats(
+            candidateGUID
+          )
+
+      candidateHealth =
+          tonumber(
+            candidateHealth
+          ) or 0
+
+      candidateMaxHealth =
+          tonumber(
+            candidateMaxHealth
+          ) or 0
+
+      if candidateMaxHealth > 0 and candidateHealth
+          == candidateMaxHealth then
+        return candidateGUID
+      end
+    end
+  end
+
+  --------------------------------------------------
+  -- No full-health duplicate remains.
+  --
+  -- Keep whichever duplicate is already loaded.
+  --------------------------------------------------
+  return petGUID
+end
+
 function BattleSlotService:LoadPets(pets, abilities, specialSlots)
   self.LoadGeneration = self.LoadGeneration + 1
   local generation = self.LoadGeneration
@@ -749,8 +892,14 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
         return false, resolveError
       end
     else
-      petGUID = pets[slot]
+      petGUID =
+          ResolveHealthyDuplicate(
+            pets[slot],
+            slot,
+            usedPetGUIDs
+          )
     end
+
 
     resolvedPets[slot] = petGUID
 
