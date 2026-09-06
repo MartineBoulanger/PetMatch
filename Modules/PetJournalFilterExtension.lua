@@ -2463,6 +2463,18 @@ local function GetPetTypeFilterLayoutOffset()
   return TYPE_FILTER_BAR_HEIGHT + FILTER_BAR_SPACING - 2
 end
 
+local function GetStatusBarClearMode()
+  local mode =
+      addon.Settings:Get("statusBarClearMode")
+      or "all"
+
+  if mode ~= "all" and mode ~= "filters" then
+    return "all"
+  end
+
+  return mode
+end
+
 function FilterExtension:SetupFilterDropdown()
   if not PetJournal or not PetJournal.FilterDropdown then
     return
@@ -3036,7 +3048,12 @@ function FilterExtension:CreateFilterBar()
     "OnClick",
     function(button)
       button:GetParent():Hide()
-      FilterExtension:ResetAllFilters()
+      local mode = GetStatusBarClearMode()
+      if mode == "filters" then
+        FilterExtension:ResetFiltersOnly()
+      else
+        FilterExtension:ResetAllFilters()
+      end
     end
   )
 
@@ -3058,8 +3075,13 @@ function FilterExtension:UpdateFilterBar(visiblePetCount)
     return
   end
 
+  local mode = GetStatusBarClearMode()
   local activeFilters = self:GetActiveFilterNames()
-  local activeSorts = self:GetActiveSortNames()
+  local activeSorts = {}
+
+  if mode == "all" then
+    activeSorts = self:GetActiveSortNames()
+  end
 
   if #activeFilters == 0 and #activeSorts == 0 then
     self.FilterBar:Hide()
@@ -3160,6 +3182,79 @@ function FilterExtension:UpdatePetTypeFilterDisplay()
       and PetJournal.FilterDropdown
       and PetJournal.FilterDropdown.GenerateMenu then
     PetJournal.FilterDropdown:GenerateMenu()
+  end
+end
+
+function FilterExtension:ResetFiltersOnly()
+  SetAll(
+    Filters.petTypes,
+    PET_TYPES,
+    false
+  )
+
+  SetAll(
+    Filters.sources,
+    PET_SOURCES,
+    false
+  )
+
+  SetAll(
+    Filters.expansions,
+    EXPANSIONS,
+    false
+  )
+
+  SetAll(
+    Filters.rarities,
+    RARITIES,
+    false
+  )
+
+  SetAll(
+    Filters.levels,
+    LEVEL_RANGE_KEYS,
+    false
+  )
+
+  SetAll(
+    Filters.breeds,
+    BREEDS,
+    false
+  )
+
+  SetAll(
+    Filters.tags,
+    TAG_FILTER_OPTIONS,
+    false
+  )
+
+  local typeFilter =
+      addon.Services.PetTypeFilter
+
+  if typeFilter then
+    typeFilter:ClearAll()
+  end
+
+  if self.PetTypeFilterBar then
+    self.PetTypeFilterBar:Refresh()
+  end
+
+  OtherFilters.leveling = nil
+  OtherFilters.tradable = nil
+  OtherFilters.battle = nil
+  OtherFilters.team = nil
+  OtherFilters.duplicates = nil
+
+  SyncNativePetTypes()
+  SyncNativeSources()
+
+  RefreshSorting()
+
+  if PetJournal
+      and PetJournal.FilterDropdown
+      and PetJournal.FilterDropdown.GenerateMenu then
+    PetJournal.FilterDropdown:
+        GenerateMenu()
   end
 end
 
@@ -3722,11 +3817,11 @@ function FilterExtension:Initialize()
   addon.EventBus:Register(
     addon.Events.SETTINGS_CHANGED,
     function(key)
-      if key ~= "petTypeFilterDisplayMode" then
-        return
+      if key == "petTypeFilterDisplayMode" then
+        FilterExtension:UpdatePetTypeFilterDisplay()
+      elseif key == "statusBarClearMode" then
+        FilterExtension:RefreshFilterBar()
       end
-
-      FilterExtension:UpdatePetTypeFilterDisplay()
     end
   )
 

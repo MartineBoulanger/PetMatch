@@ -4,11 +4,17 @@ addon.Settings = addon.Settings or {}
 local Settings = {}
 
 local DEFAULT_SETTINGS = {
-  theme = "Dark",
+  -- options for each profile
   scale = 1,
   debug = false,
-  showTooltips = true,
-  animations = true,
+
+  ui = {
+    theme = "Dark",
+    petCardBackground = "Marble",
+    selectedFolderKey = "__UNSORTED__",
+    selectedTeamID = nil,
+    teamSortMode = "name",
+  },
 
   -- options panel list options
   duplicateTeamMode = "replace",
@@ -26,13 +32,7 @@ local DEFAULT_SETTINGS = {
   restorePreviousSummonedPet = false,
   autoOpenNotesOnPvEBattle = false,
   autoOpenPetJournalAfterBattle = true,
-
-  ui = {
-    selectedFolderKey = "__ALL__",
-    selectedTeamID = nil,
-    teamSortMode = "name",
-    teamCardMode = "comfortable",
-  },
+  statusBarClearMode = "all",
 }
 
 local function ApplyDefaults(defaults, target)

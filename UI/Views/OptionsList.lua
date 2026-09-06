@@ -14,8 +14,9 @@ local PET_LIST_SECTION_HEIGHT = 86
 local PET_CARD_SECTION_HEIGHT = 104
 local PET_CARD_VISIBILITY_SECTION_HEIGHT = 104
 local LEVELLING_QUEUE_SECTION_HEIGHT = 96
-local SUMMONED_PET_SECTION_HEIGHT = 86
+local SUMMONED_PET_SECTION_HEIGHT = 104
 local PET_TYPE_FILTER_SECTION_HEIGHT = 104
+local STATUS_BAR_SECTION_HEIGHT = 86
 local TEAM_CARD_SECTION_HEIGHT = 86
 local PVE_BATTLE_SECTION_HEIGHT = 86
 
@@ -46,6 +47,7 @@ function OptionsList:Create(parent)
     levellingQueue = false,
     summonedPet = false,
     petTypeFilters = false,
+    statusBar = false,
     petBattles = false,
   }
 
@@ -91,6 +93,8 @@ function OptionsList:RegisterEvents()
         self:RefreshSummonedPetMode()
       elseif key == "petTypeFilterDisplayMode" then
         self:RefreshPetTypeFilterMode()
+      elseif key == "statusBarClearMode" then
+        self:RefreshStatusBarMode()
       elseif key == "autoOpenNotesOnPvEBattle"
           or key == "autoOpenPetJournalAfterBattle" then
         self:RefreshPetBattlesMode()
@@ -164,6 +168,11 @@ function OptionsList:ClearItems()
   self.PetTypeFilterBothButton = nil
   self.PetTypeFilterMenuButton = nil
   self.PetTypeFilterBarButton = nil
+
+  -- Status Bar Option
+  self.StatusBarAccordion = nil
+  self.StatusBarAllButton = nil
+  self.StatusBarFiltersButton = nil
 
   -- Pet Battles Option
   self.PetBattlesAccordion = nil
@@ -243,6 +252,14 @@ function OptionsList:GetSections()
       contentHeight = PET_TYPE_FILTER_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetTypeFilterOptions(content)
+      end,
+    },
+    {
+      key = "statusBar",
+      title = "Status Bar",
+      contentHeight = STATUS_BAR_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildStatusBarOptions(content)
       end,
     },
     {
@@ -351,6 +368,10 @@ function OptionsList:CreateSection(section, currentOffset)
 
   if section.key == "petTypeFilters" then
     self.PetTypeFilterAccordion = accordion
+  end
+
+  if section.key == "statusBar" then
+    self.StatusBarAccordion = accordion
   end
 
   if section.key == "petBattles" then
@@ -1161,6 +1182,75 @@ function OptionsList:BuildPetTypeFilterOptions(parent)
   self:RefreshPetTypeFilterMode()
 end
 
+function OptionsList:BuildStatusBarOptions(parent)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose what the status bar shows and clears."
+  )
+
+  self.StatusBarAllButton =
+      self:CreateRadioButton(
+        parent,
+        "Filters and sorting",
+        "statusBarClearMode",
+        "all",
+        self.RefreshStatusBarMode
+      )
+
+  self.StatusBarAllButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.StatusBarFiltersButton =
+      self:CreateRadioButton(
+        parent,
+        "Filters only",
+        "statusBarClearMode",
+        "filters",
+        self.RefreshStatusBarMode
+      )
+
+  self.StatusBarFiltersButton:SetPoint(
+    "TOPLEFT",
+    self.StatusBarAllButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshStatusBarMode()
+end
+
 function OptionsList:BuildPetBattlesOptions(parent)
   local description =
       parent:CreateFontString(
@@ -1420,6 +1510,25 @@ function OptionsList:RefreshPetTypeFilterMode()
   self.PetTypeFilterBothButton:SetChecked(mode == "both")
   self.PetTypeFilterMenuButton:SetChecked(mode == "menu")
   self.PetTypeFilterBarButton:SetChecked(mode == "bar")
+end
+
+function OptionsList:RefreshStatusBarMode()
+  if not self.StatusBarAllButton
+      or not self.StatusBarFiltersButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get("statusBarClearMode")
+      or "all"
+
+  self.StatusBarAllButton:SetChecked(
+    mode == "all"
+  )
+
+  self.StatusBarFiltersButton:SetChecked(
+    mode == "filters"
+  )
 end
 
 function OptionsList:RefreshPetBattlesMode()
