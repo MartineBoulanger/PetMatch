@@ -413,8 +413,7 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
   --------------------------------------------------
   -- Levelling Queue
   --------------------------------------------------
-  if slotType == "leveling"
-      or slotType == "levelingQueue" then
+  if slotType == "leveling" or slotType == "levelingQueue" then
     local queueService = addon.Services.LevellingQueue
 
     if not queueService then
@@ -422,13 +421,6 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
     end
 
     local queue = queueService:GetAll()
-
-    if type(queue) ~= "table" or #queue == 0 then
-      return nil, string.format(
-        "The Levelling Queue is empty for slot %d",
-        slot
-      )
-    end
 
     local minimumLevel =
         tonumber(
@@ -448,48 +440,73 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
           specialSlot.minimumHealth
         )
 
-    --------------------------------------------------
+    ------------------------------------------------
     -- Queue order is priority order.
-    --------------------------------------------------
-    for _, petGUID in ipairs(queue) do
-      if not usedPetGUIDs[petGUID] then
-        local pet = addon.Services.PetJournal:GetPet(petGUID)
+    ------------------------------------------------
+    if type(queue) == "table" then
+      for _, petGUID in ipairs(queue) do
+        if not usedPetGUIDs[petGUID] then
+          local pet = addon.Services.PetJournal:GetPet(petGUID)
 
-        if pet and pet.canBattle == true then
-          local level =
-              tonumber(
-                pet.level
-              )
-              or 0
+          if pet and pet.canBattle == true then
+            local level = tonumber(pet.level) or 0
 
-          local correctLevel =
-              level >= minimumLevel
-              and level <= maximumLevel
+            local correctLevel =
+                level >= minimumLevel
+                and level <= maximumLevel
 
-          local correctHealth = true
+            local correctHealth = true
 
-          if correctLevel and minimumHealth then
-            local _, maximumHealth =
-                C_PetJournal.GetPetStats(
-                  petGUID
-                )
+            if correctLevel and minimumHealth then
+              local _, maximumHealth =
+                  C_PetJournal.GetPetStats(petGUID)
 
-            correctHealth =
-                (maximumHealth or 0)
-                >= minimumHealth
-          end
+              correctHealth = (maximumHealth or 0) >= minimumHealth
+            end
 
-          if correctLevel and correctHealth then
-            return petGUID
+            if correctLevel and correctHealth then
+              return petGUID
+            end
           end
         end
       end
     end
 
-    return nil, string.format(
-      "No eligible pet in the Levelling Queue for slot %d",
-      slot
-    )
+    ------------------------------------------------
+    -- No eligible queue pet.
+    --
+    -- Fall back to a random unused level 25 pet.
+    ------------------------------------------------
+    local pets = addon.Services.PetJournal:GetAll()
+
+    if type(pets) ~= "table" then
+      return nil, "The Pet Journal cache is unavailable"
+    end
+
+    local candidates = {}
+
+    for petGUID, pet in pairs(pets) do
+      if petGUID
+          and type(pet) == "table"
+          and pet.canBattle == true
+          and not usedPetGUIDs[petGUID]
+          and tonumber(pet.level) == 25 then
+        candidates[
+        #candidates + 1
+        ] = petGUID
+      end
+    end
+
+    if #candidates == 0 then
+      return nil, string.format(
+        "No available level 25 pet for levelling slot %d",
+        slot
+      )
+    end
+
+    return candidates[
+    math.random(1, #candidates)
+    ]
   end
 
   --------------------------------------------------
@@ -663,7 +680,7 @@ function BattleSlotService:RefreshLevellingSlots()
   return changed
 end
 
-local function ResolveHealthyDuplicate(savedPetGUID, slot, usedPetGUIDs)
+local function ResolveHealthyDuplicate(savedPetGUID, slot, usedPetGUIDs, preserveCurrentDuplicate)
   if not savedPetGUID then
     return nil
   end
@@ -723,7 +740,8 @@ local function ResolveHealthyDuplicate(savedPetGUID, slot, usedPetGUIDs)
 
   local petGUID
 
-  if currentIsSameSpecies
+  if preserveCurrentDuplicate
+      and currentIsSameSpecies
       and currentIsAvailable then
     petGUID = currentPetGUID
   else
@@ -806,7 +824,7 @@ local function ResolveHealthyDuplicate(savedPetGUID, slot, usedPetGUIDs)
   return petGUID
 end
 
-function BattleSlotService:LoadPets(pets, abilities, specialSlots)
+function BattleSlotService:LoadPets(pets, abilities, specialSlots, preserveCurrentDuplicates)
   self.LoadGeneration = self.LoadGeneration + 1
   local generation = self.LoadGeneration
 
@@ -896,7 +914,8 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots)
           ResolveHealthyDuplicate(
             pets[slot],
             slot,
-            usedPetGUIDs
+            usedPetGUIDs,
+            preserveCurrentDuplicates
           )
     end
 

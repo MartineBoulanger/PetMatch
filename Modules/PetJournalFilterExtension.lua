@@ -3315,6 +3315,7 @@ function FilterExtension:ResetAllFilters()
   OtherFilters.tradable = nil
   OtherFilters.battle = nil
   OtherFilters.team = nil
+  OtherFilters.duplicates = nil
 
   SortOptions.favoritesFirst = true
   SortOptions.reverse = false

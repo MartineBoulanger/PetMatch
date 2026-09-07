@@ -57,6 +57,46 @@ local PET_FAMILY_ICONS           = {
 
 local PendingSlotOverlays        = {}
 local BattleSlotTagOverlays      = {}
+local BattleSlotBreedLabels      = {}
+
+local function GetBattleSlotBreedLabel(slotIndex)
+  local existing = BattleSlotBreedLabels[slotIndex]
+
+  if existing then
+    return existing
+  end
+
+  local slotFrame =
+      _G["PetJournalLoadoutPet"
+      .. tostring(slotIndex)]
+
+  if not slotFrame then
+    return nil
+  end
+
+  local label =
+      slotFrame:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlight"
+      )
+
+  label:SetPoint(
+    "TOP",
+    slotFrame.icon or slotFrame.Icon or slotFrame,
+    "BOTTOM",
+    0,
+    -10
+  )
+
+  label:SetJustifyH("CENTER")
+  label:SetText("")
+  label:Hide()
+
+  BattleSlotBreedLabels[slotIndex] = label
+
+  return label
+end
 
 local function GetPendingSpecialSlotIcon(
     specialSlot
@@ -435,10 +475,66 @@ local function RefreshAllBattleSlotTagVisuals()
   end
 end
 
+local function RefreshBattleSlotBreedVisual(slotIndex)
+  local label =
+      GetBattleSlotBreedLabel(slotIndex)
+
+  if not label then
+    return
+  end
+
+  if addon.Settings:Get(
+        "petListBreedPosition"
+      ) == "hidden" then
+    label:SetText("")
+    label:Hide()
+    return
+  end
+
+  local battleSlot = addon.Services.BattleSlot
+  local breedService = addon.Services.Breed
+
+  if not battleSlot or not breedService then
+    label:SetText("")
+    label:Hide()
+    return
+  end
+
+  local slotInfo =
+      battleSlot:GetSlotLoadout(slotIndex)
+
+  local petGUID =
+      slotInfo and slotInfo.petGUID
+
+  if not petGUID then
+    label:SetText("")
+    label:Hide()
+    return
+  end
+
+  local breed =
+      breedService:GetJournalBreed(petGUID)
+
+  if not breed then
+    label:SetText("")
+    label:Hide()
+    return
+  end
+
+  label:SetText(breed)
+  label:Show()
+end
+
+local function RefreshAllBattleSlotBreedVisuals()
+  for slotIndex = 1, 3 do
+    RefreshBattleSlotBreedVisual(slotIndex)
+  end
+end
+
 local function IsBreedVisible()
   return addon.Settings:Get(
-    "showPetListBreed"
-  ) ~= false
+    "petListBreedPosition"
+  ) ~= "hidden"
 end
 
 local function GetBreedPosition()
@@ -2156,6 +2252,7 @@ function PetList:InstallPetContextMenu()
               tagService:SetTag(petGUID, id)
               RefreshPetJournal()
               RefreshAllBattleSlotTagVisuals()
+              RefreshAllBattleSlotBreedVisuals()
             end,
 
             tagID
@@ -2172,6 +2269,7 @@ function PetList:InstallPetContextMenu()
               tagService:ClearTag(petGUID)
               RefreshPetJournal()
               RefreshAllBattleSlotTagVisuals()
+              RefreshAllBattleSlotBreedVisuals()
             end
           )
         end
@@ -2383,8 +2481,7 @@ function PetList:OnSettingChanged(key)
     return
   end
 
-  if key ~= "showPetListBreed"
-      and key ~= "petListBreedPosition" then
+  if key ~= "petListBreedPosition" then
     return
   end
 
@@ -2410,6 +2507,10 @@ function PetList:Initialize()
     addon.Events.SETTINGS_CHANGED,
     function(key)
       self:OnSettingChanged(key)
+
+      if key == "petListBreedPosition" then
+        RefreshAllBattleSlotBreedVisuals()
+      end
     end
   )
 
@@ -2420,6 +2521,7 @@ function PetList:Initialize()
       addon.Services.Breed:ClearCache()
       RefreshPetJournal()
       RefreshAllBattleSlotTagVisuals()
+      RefreshAllBattleSlotBreedVisuals()
     end
   )
 
@@ -2429,6 +2531,20 @@ function PetList:Initialize()
     function()
       RefreshAllPendingBattleSlotVisuals()
       RefreshAllBattleSlotTagVisuals()
+      RefreshAllBattleSlotBreedVisuals()
+    end
+  )
+
+  hooksecurefunc(
+    C_PetJournal,
+    "SetPetLoadOutInfo",
+    function()
+      C_Timer.After(
+        0,
+        function()
+          RefreshAllBattleSlotBreedVisuals()
+        end
+      )
     end
   )
 

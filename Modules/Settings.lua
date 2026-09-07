@@ -18,7 +18,6 @@ local DEFAULT_SETTINGS = {
 
   -- options panel list options
   duplicateTeamMode = "replace",
-  showPetListBreed = true,
   petListBreedPosition = "right",
   compactPetListRows = false,
   teamCardHeightMode = "normal",

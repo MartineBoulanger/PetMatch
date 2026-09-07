@@ -644,13 +644,28 @@ function LevellingQueueRow:SetPet(item)
     1
   )
 
-  local breed = addon.Services.Breed:GetJournalBreed(item.petGUID)
+  local showBreed =
+      addon.Settings:Get(
+        "petListBreedPosition"
+      ) ~= "hidden"
 
-  if breed then
-    self.Breed:SetText(
-      breed
-    )
-    self.Breed:Show()
+  if showBreed then
+    local breed =
+        addon.Services.Breed:
+        GetJournalBreed(
+          item.petGUID
+        )
+
+    if breed then
+      self.Breed:SetText(
+        breed
+      )
+
+      self.Breed:Show()
+    else
+      self.Breed:SetText("")
+      self.Breed:Hide()
+    end
   else
     self.Breed:SetText("")
     self.Breed:Hide()

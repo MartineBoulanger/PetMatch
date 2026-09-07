@@ -292,6 +292,10 @@ function TeamService:Load(teamID)
     return false, "Team not found"
   end
 
+  local profile = GetProfile()
+
+  local preserveCurrentDuplicates = profile.activeTeam == teamID
+
   addon.Services.BattleSlot:
       SetPendingSpecialSlots(
         team.specialSlots
@@ -301,7 +305,8 @@ function TeamService:Load(teamID)
       addon.Services.BattleSlot:LoadPets(
         team.pets,
         team.abilities,
-        team.specialSlots
+        team.specialSlots,
+        preserveCurrentDuplicates
       )
 
   if not success then

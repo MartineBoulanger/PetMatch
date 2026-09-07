@@ -70,74 +70,84 @@ function PetJournalService:Scan()
 
   local bestLevels = {}
   local bestQualities = {}
-  local numPets = C_PetJournal.GetNumPets()
+  local ownedPetGUIDs = C_PetJournal.GetOwnedPetIDs()
 
-  for index = 1, numPets do
-    local petGUID,
-    speciesID,
-    isOwned,
-    customName,
-    level,
-    favorite,
-    _isRevoked,
-    speciesName,
-    icon,
-    petType,
-    _creatureID,
-    _sourceText,
-    _description,
-    _isHatchable,
-    canBattle = C_PetJournal.GetPetInfoByIndex(index)
+  if type(ownedPetGUIDs) == "table" then
+    for _, petGUID in ipairs(ownedPetGUIDs) do
+      local speciesID,
+      customName,
+      level,
+      _xp,
+      _maxXP,
+      _displayID,
+      favorite,
+      speciesName,
+      icon,
+      petType,
+      _creatureID,
+      _sourceText,
+      _description,
+      _isWild,
+      canBattle =
+          C_PetJournal.GetPetInfoByPetID(petGUID)
 
-    if isOwned and petGUID and speciesID then
-      local quality =
-          select(
-            5,
-            C_PetJournal.GetPetStats(petGUID)
-          )
+      if speciesID then
+        local quality =
+            select(
+              5,
+              C_PetJournal.GetPetStats(petGUID)
+            )
 
-      level = tonumber(level) or 0
-      quality = tonumber(quality) or 0
+        level = tonumber(level) or 0
+        quality = tonumber(quality) or 0
 
-      ------------------------------------------------
-      -- Lightweight cached pet data
-      ------------------------------------------------
-      local pet = {
-        petGUID = petGUID,
-        speciesID = speciesID,
-        name = customName or speciesName,
-        level = level,
-        quality = quality,
-        favorite = favorite == true,
-        icon = icon,
-        petType = petType,
-        canBattle = canBattle == true,
-      }
+        ----------------------------------------------
+        -- Lightweight cached pet data
+        ----------------------------------------------
+        local pet = {
+          petGUID = petGUID,
+          speciesID = speciesID,
+          name = customName or speciesName,
+          level = level,
+          quality = quality,
+          favorite = favorite == true,
+          icon = icon,
+          petType = petType,
+          canBattle = canBattle == true,
+        }
 
-      self.Cache[petGUID] = pet
+        self.Cache[petGUID] = pet
 
-      ------------------------------------------------
-      -- Keep all owned instances grouped by species
-      ------------------------------------------------
-      local speciesPets = self.OwnedPetsBySpeciesID[speciesID]
+        ----------------------------------------------
+        -- Keep all owned instances grouped by species
+        ----------------------------------------------
+        local speciesPets =
+            self.OwnedPetsBySpeciesID[speciesID]
 
-      if not speciesPets then
-        speciesPets = {}
-        self.OwnedPetsBySpeciesID[speciesID] = speciesPets
-      end
+        if not speciesPets then
+          speciesPets = {}
+          self.OwnedPetsBySpeciesID[speciesID] = speciesPets
+        end
 
-      speciesPets[#speciesPets + 1] = petGUID
+        speciesPets[#speciesPets + 1] = petGUID
 
-      ------------------------------------------------
-      -- Best owned pet for this species
-      ------------------------------------------------
-      local bestLevel = bestLevels[speciesID]
-      local bestQuality = bestQualities[speciesID]
+        ----------------------------------------------
+        -- Best owned pet for this species
+        ----------------------------------------------
+        local bestLevel = bestLevels[speciesID]
+        local bestQuality = bestQualities[speciesID]
 
-      if IsBetterPet(level, quality, bestLevel, bestQuality) then
-        self.BestOwnedPetBySpeciesID[speciesID] = petGUID
-        bestLevels[speciesID] = level
-        bestQualities[speciesID] = quality
+        if IsBetterPet(
+              level,
+              quality,
+              bestLevel,
+              bestQuality
+            ) then
+          self.BestOwnedPetBySpeciesID[speciesID] = petGUID
+
+          bestLevels[speciesID] = level
+          bestQualities[speciesID] = quality
+        end
       end
     end
   end
