@@ -273,11 +273,16 @@ function PetJournalService:FindOwnedPetForImport(speciesID, breedID, usedPetGUID
   end
 
   local breedService = addon.Services and addon.Services.Breed
-  local bestPetGUID = nil
-  local bestBreedMatch = false
-  local bestLevel = -1
-  local bestQuality = -1
 
+  local exactBreedCandidates = {}
+  local fallbackCandidates = {}
+
+  --------------------------------------------------
+  -- Split available pets into:
+  --
+  -- 1. Exact requested breed
+  -- 2. Same species, another breed
+  --------------------------------------------------
   for _, petGUID in ipairs(candidates) do
     if not usedPetGUIDs[petGUID] then
       local pet = self.Cache[petGUID]
@@ -285,51 +290,80 @@ function PetJournalService:FindOwnedPetForImport(speciesID, breedID, usedPetGUID
       if pet then
         local breedMatch = false
 
-        ------------------------------------------------
-        -- Breed 0 = no breed preference
-        ------------------------------------------------
-
         if not breedID or breedID == 0 then
           breedMatch = true
         elseif breedService
-            and type(breedService.GetJournalBreedID) == "function" then
-          local journalBreedID = breedService:GetJournalBreedID(petGUID)
+            and type(
+              breedService.GetJournalBreedID
+            ) == "function" then
+          local journalBreedID =
+              breedService:GetJournalBreedID(petGUID)
 
-          breedMatch = journalBreedID ~= nil
-              and tonumber(journalBreedID) == breedID
+          breedMatch =
+              journalBreedID ~= nil
+              and tonumber(
+                journalBreedID
+              ) == breedID
         end
 
-        local level = tonumber(pet.level) or 0
-        local quality = tonumber(pet.quality) or 0
-        local isBetter = false
+        local candidate = {
+          petGUID = petGUID,
+          pet = pet,
+        }
 
-        ------------------------------------------------
-        -- Requested breed wins first
-        ------------------------------------------------
-
-        if breedMatch ~= bestBreedMatch then
-          isBetter = breedMatch == true
-
-          ------------------------------------------------
-          -- Then highest level
-          ------------------------------------------------
-        elseif level > bestLevel then
-          isBetter = true
-
-          ------------------------------------------------
-          -- Then highest quality
-          ------------------------------------------------
-        elseif level == bestLevel and quality > bestQuality then
-          isBetter = true
-        end
-
-        if isBetter then
-          bestPetGUID = petGUID
-          bestBreedMatch = breedMatch
-          bestLevel = level
-          bestQuality = quality
+        if breedMatch then
+          exactBreedCandidates[
+          #exactBreedCandidates + 1
+          ] = candidate
+        else
+          fallbackCandidates[
+          #fallbackCandidates + 1
+          ] = candidate
         end
       end
+    end
+  end
+
+  --------------------------------------------------
+  -- Prefer the exact breed.
+  --
+  -- If that breed is not owned, use another
+  -- available copy of the exact same species.
+  --------------------------------------------------
+  local pool
+
+  if #exactBreedCandidates > 0 then
+    pool = exactBreedCandidates
+  else
+    pool = fallbackCandidates
+  end
+
+  if #pool == 0 then
+    return nil
+  end
+
+  --------------------------------------------------
+  -- Within the chosen pool:
+  -- highest level, then highest quality
+  --------------------------------------------------
+  local bestPetGUID = nil
+  local bestLevel = -1
+  local bestQuality = -1
+
+  for _, candidate in ipairs(pool) do
+    local pet = candidate.pet
+
+    local level = tonumber(pet.level) or 0
+    local quality = tonumber(pet.quality) or 0
+
+    if level > bestLevel
+        or (level == bestLevel
+          and quality > bestQuality
+        ) then
+      bestPetGUID = candidate.petGUID
+
+      bestLevel = level
+      bestQuality = quality
     end
   end
 

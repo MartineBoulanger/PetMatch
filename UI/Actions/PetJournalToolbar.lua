@@ -569,11 +569,29 @@ function PetJournalToolbar:UpdateDismissButton()
   )
 end
 
-local function FinalDismiss(attempt, expectedPetGUID, previousSummonedPetGUID)
-  if PetJournalToolbar.RestorePending then
+local function FinalDismiss(attempt, expectedPetGUID, previousSummonedPetGUID, generation)
+  --------------------------------------------------
+  -- Stop if another team was loaded
+  --------------------------------------------------
+  if generation
+      and addon.Services.BattleSlot
+      and addon.Services.BattleSlot.LoadGeneration
+      ~= generation then
     return
   end
 
+  local mode =
+      addon.Settings:Get("summonedPetMode")
+      or "keep"
+
+  if mode ~= "dismiss"
+      and mode ~= "restore" then
+    return
+  end
+
+  --------------------------------------------------
+  -- Check exact summoned pet
+  --------------------------------------------------
   local currentSummonedPetGUID =
       C_PetJournal.GetSummonedPetGUID()
 
@@ -581,6 +599,9 @@ local function FinalDismiss(attempt, expectedPetGUID, previousSummonedPetGUID)
     return
   end
 
+  --------------------------------------------------
+  -- Dismiss
+  --------------------------------------------------
   C_PetJournal.DismissSummonedPet(
     currentSummonedPetGUID
   )
@@ -588,19 +609,27 @@ local function FinalDismiss(attempt, expectedPetGUID, previousSummonedPetGUID)
   PetJournalToolbar:UpdateDismissButton()
 
   --------------------------------------------------
-  -- Restore previous pet
+  -- Restore previous summoned pet
   --------------------------------------------------
-  local mode =
-      addon.Settings:Get("summonedPetMode")
-      or "keep"
-
   if mode == "restore"
       and previousSummonedPetGUID
       and previousSummonedPetGUID ~= expectedPetGUID then
     PetJournalToolbar.RestorePending = true
+
     C_Timer.After(
       1.5,
       function()
+        --------------------------------------------------
+        -- Cancel restore after another team load
+        --------------------------------------------------
+        if generation
+            and addon.Services.BattleSlot
+            and addon.Services.BattleSlot.LoadGeneration
+            ~= generation then
+          PetJournalToolbar.RestorePending = false
+          return
+        end
+
         local currentPetGUID =
             C_PetJournal.GetSummonedPetGUID()
 
@@ -614,24 +643,6 @@ local function FinalDismiss(attempt, expectedPetGUID, previousSummonedPetGUID)
       end
     )
   end
-
-  --------------------------------------------------
-  -- Retry dismiss
-  --------------------------------------------------
-  if attempt >= 3 then
-    return
-  end
-
-  C_Timer.After(
-    0.25,
-    function()
-      FinalDismiss(
-        attempt + 1,
-        expectedPetGUID,
-        previousSummonedPetGUID
-      )
-    end
-  )
 end
 
 function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation, previousSummonedPetGUID)
@@ -644,12 +655,13 @@ function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation, 
     return
   end
 
-  if not expectedPetGUID or expectedPetGUID == "" then
+  if not expectedPetGUID
+      or expectedPetGUID == "" then
     return
   end
 
   --------------------------------------------------
-  -- Stop if another team has been loaded meanwhile
+  -- Stop if another team was loaded
   --------------------------------------------------
   if generation
       and addon.Services.BattleSlot
@@ -660,19 +672,31 @@ function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation, 
 
   attempt = attempt or 1
 
-  local summonedPetGUID = C_PetJournal.GetSummonedPetGUID()
+  local summonedPetGUID =
+      C_PetJournal.GetSummonedPetGUID()
 
   --------------------------------------------------
-  -- Correct pet is now actually summoned
+  -- Exact expected pet is summoned
   --------------------------------------------------
   if summonedPetGUID == expectedPetGUID then
     C_Timer.After(
       0.3,
       function()
+        --------------------------------------------------
+        -- Check generation again after timer
+        --------------------------------------------------
+        if generation
+            and addon.Services.BattleSlot
+            and addon.Services.BattleSlot.LoadGeneration
+            ~= generation then
+          return
+        end
+
         FinalDismiss(
           1,
           expectedPetGUID,
-          previousSummonedPetGUID
+          previousSummonedPetGUID,
+          generation
         )
       end
     )
@@ -681,7 +705,7 @@ function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation, 
   end
 
   --------------------------------------------------
-  -- Give Blizzard up to 3 seconds
+  -- Blizzard may need some time to summon slot 1
   --------------------------------------------------
   if attempt >= 30 then
     return
