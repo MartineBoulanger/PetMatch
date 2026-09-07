@@ -98,9 +98,7 @@ local function GetBattleSlotBreedLabel(slotIndex)
   return label
 end
 
-local function GetPendingSpecialSlotIcon(
-    specialSlot
-)
+local function GetPendingSpecialSlotIcon(specialSlot)
   if type(specialSlot) ~= "table" then
     return nil
   end
@@ -118,9 +116,7 @@ local function GetPendingSpecialSlotIcon(
         or 0
 
     if petType > 0 then
-      return PET_FAMILY_ICONS[
-      petType
-      ]
+      return PET_FAMILY_ICONS[petType]
     end
 
     return RANDOM_PET_ICON
@@ -130,10 +126,7 @@ local function GetPendingSpecialSlotIcon(
 end
 
 local function GetPendingSlotOverlay(slotIndex)
-  local existing =
-      PendingSlotOverlays[
-      slotIndex
-      ]
+  local existing = PendingSlotOverlays[slotIndex]
 
   if existing then
     return existing
@@ -172,7 +165,6 @@ local function GetPendingSlotOverlay(slotIndex)
   --------------------------------------------------
   -- Hide the normal pet behind the special icon
   --------------------------------------------------
-
   overlay.Background =
       overlay:CreateTexture(
         nil,
@@ -190,7 +182,6 @@ local function GetPendingSlotOverlay(slotIndex)
   --------------------------------------------------
   -- Special-slot icon
   --------------------------------------------------
-
   overlay.Icon =
       overlay:CreateTexture(
         nil,
@@ -222,9 +213,7 @@ local function GetPendingSlotOverlay(slotIndex)
 
   overlay:Hide()
 
-  PendingSlotOverlays[
-  slotIndex
-  ] = overlay
+  PendingSlotOverlays[slotIndex] = overlay
 
   return overlay
 end
@@ -289,7 +278,7 @@ local function LayoutBattleSlotBadges(slotIndex)
 
   local specialOverlay = PendingSlotOverlays[slotIndex]
   local tagOverlay = BattleSlotTagOverlays[slotIndex]
-  local hasSpecial = specialOverlay and specialOverlay:IsShown()
+  -- local hasSpecial = specialOverlay and specialOverlay:IsShown()
   local hasTag = tagOverlay and tagOverlay:IsShown()
 
   if tagOverlay then
@@ -327,30 +316,21 @@ local function LayoutBattleSlotBadges(slotIndex)
   end
 end
 
-local function RefreshPendingBattleSlotVisual(
-    slotIndex
-)
-  local battleSlotService =
-      addon.Services.BattleSlot
+local function RefreshPendingBattleSlotVisual(slotIndex)
+  local battleSlotService = addon.Services.BattleSlot
 
   if not battleSlotService then
     return
   end
 
-  local overlay =
-      GetPendingSlotOverlay(
-        slotIndex
-      )
+  local overlay = GetPendingSlotOverlay(slotIndex)
 
   if not overlay then
     return
   end
 
   local specialSlot =
-      battleSlotService:
-      GetPendingSpecialSlot(
-        slotIndex
-      )
+      battleSlotService:GetPendingSpecialSlot(slotIndex)
 
   if not specialSlot then
     overlay:Hide()
@@ -358,10 +338,7 @@ local function RefreshPendingBattleSlotVisual(
     return
   end
 
-  local icon =
-      GetPendingSpecialSlotIcon(
-        specialSlot
-      )
+  local icon = GetPendingSpecialSlotIcon(specialSlot)
 
   if not icon then
     overlay:Hide()
@@ -369,9 +346,7 @@ local function RefreshPendingBattleSlotVisual(
     return
   end
 
-  overlay.Icon:SetTexture(
-    icon
-  )
+  overlay.Icon:SetTexture(icon)
 
   overlay:Show()
   LayoutBattleSlotBadges(slotIndex)
@@ -379,18 +354,12 @@ end
 
 local function RefreshAllPendingBattleSlotVisuals()
   for slotIndex = 1, 3 do
-    RefreshPendingBattleSlotVisual(
-      slotIndex
-    )
+    RefreshPendingBattleSlotVisual(slotIndex)
   end
 end
 
-local function BuildRandomSpecialSlot(
-    petType
-)
-  petType =
-      tonumber(petType)
-      or 0
+local function BuildRandomSpecialSlot(petType)
+  petType = tonumber(petType) or 0
 
   return {
     type = "random",
@@ -413,9 +382,7 @@ end
 local function GetRaidMarkerTexture(tagID)
   tagID = tonumber(tagID)
 
-  if not tagID
-      or tagID < 1
-      or tagID > 8 then
+  if not tagID or tagID < 1 or tagID > 8 then
     return nil
   end
 
@@ -476,16 +443,13 @@ local function RefreshAllBattleSlotTagVisuals()
 end
 
 local function RefreshBattleSlotBreedVisual(slotIndex)
-  local label =
-      GetBattleSlotBreedLabel(slotIndex)
+  local label = GetBattleSlotBreedLabel(slotIndex)
 
   if not label then
     return
   end
 
-  if addon.Settings:Get(
-        "petListBreedPosition"
-      ) == "hidden" then
+  if addon.Settings:Get("petListBreedPosition") == "hidden" then
     label:SetText("")
     label:Hide()
     return
@@ -500,11 +464,8 @@ local function RefreshBattleSlotBreedVisual(slotIndex)
     return
   end
 
-  local slotInfo =
-      battleSlot:GetSlotLoadout(slotIndex)
-
-  local petGUID =
-      slotInfo and slotInfo.petGUID
+  local slotInfo = battleSlot:GetSlotLoadout(slotIndex)
+  local petGUID = slotInfo and slotInfo.petGUID
 
   if not petGUID then
     label:SetText("")
@@ -512,8 +473,7 @@ local function RefreshBattleSlotBreedVisual(slotIndex)
     return
   end
 
-  local breed =
-      breedService:GetJournalBreed(petGUID)
+  local breed = breedService:GetJournalBreed(petGUID)
 
   if not breed then
     label:SetText("")
@@ -532,26 +492,19 @@ local function RefreshAllBattleSlotBreedVisuals()
 end
 
 local function IsBreedVisible()
-  return addon.Settings:Get(
-    "petListBreedPosition"
-  ) ~= "hidden"
+  return addon.Settings:Get("petListBreedPosition") ~= "hidden"
 end
 
 local function GetBreedPosition()
-  return addon.Settings:Get(
-    "petListBreedPosition"
-  ) or "right"
+  return addon.Settings:Get("petListBreedPosition") or "right"
 end
 
 local function UsesRightSideBreed()
-  return IsBreedVisible()
-      and GetBreedPosition() == "right"
+  return IsBreedVisible() and GetBreedPosition() == "right"
 end
 
 local function UsesCompactRows()
-  return addon.Settings:Get(
-    "compactPetListRows"
-  ) == true
+  return addon.Settings:Get("compactPetListRows") == true
 end
 
 local function GetPetJournalScrollBox()
@@ -681,8 +634,7 @@ local function SaveNameAnchors(button)
     relativeTo,
     relativePoint,
     offsetX,
-    offsetY =
-        button.name:GetPoint(index)
+    offsetY = button.name:GetPoint(index)
 
     anchors[index] = {
       point,
@@ -693,8 +645,7 @@ local function SaveNameAnchors(button)
     }
   end
 
-  button.PetMatchOriginalNameAnchors =
-      anchors
+  button.PetMatchOriginalNameAnchors = anchors
 end
 
 local function RestoreNameAnchors(button)
@@ -702,8 +653,7 @@ local function RestoreNameAnchors(button)
     return
   end
 
-  local anchors =
-      button.PetMatchOriginalNameAnchors
+  local anchors = button.PetMatchOriginalNameAnchors
 
   if not anchors then
     return
@@ -755,27 +705,21 @@ local function SaveOriginalRowLayout(button)
   }
 end
 
-local function RestoreRegionLayout(
-    region,
-    layout
-)
+local function RestoreRegionLayout(region, layout)
   if not region or not layout then
     return
   end
 
   region:ClearAllPoints()
 
-  if layout.width
-      and layout.height then
+  if layout.width and layout.height then
     region:SetSize(
       layout.width,
       layout.height
     )
   end
 
-  for _, anchor in ipairs(
-    layout.anchors or {}
-  ) do
+  for _, anchor in ipairs(layout.anchors or {}) do
     region:SetPoint(
       anchor[1],
       anchor[2],
@@ -787,8 +731,7 @@ local function RestoreRegionLayout(
 end
 
 local function RestoreNormalRow(button)
-  local layout =
-      button.PetMatchOriginalRowLayout
+  local layout = button.PetMatchOriginalRowLayout
 
   if not layout then
     return
@@ -823,9 +766,7 @@ local function RestoreNormalRow(button)
     layout.levelText
   )
 
-  local iconBorder =
-      button.iconBorder
-      or button.IconBorder
+  local iconBorder = button.iconBorder or button.IconBorder
 
   if iconBorder and icon then
     iconBorder:ClearAllPoints()
@@ -875,17 +816,14 @@ local function ApplyCompactRow(button)
     )
   end
 
-  local iconBorder =
-      button.iconBorder
-      or button.IconBorder
+  local iconBorder = button.iconBorder or button.IconBorder
 
   if iconBorder and icon then
     iconBorder:ClearAllPoints()
     iconBorder:SetAllPoints(icon)
   end
 
-  local levelBackground =
-      GetPetLevelBackground(button)
+  local levelBackground = GetPetLevelBackground(button)
 
   if levelBackground and icon then
     levelBackground:ClearAllPoints()
@@ -904,8 +842,7 @@ local function ApplyCompactRow(button)
     )
   end
 
-  local levelText =
-      GetPetLevelText(button)
+  local levelText = GetPetLevelText(button)
 
   if levelText then
     levelText:ClearAllPoints()
@@ -929,8 +866,7 @@ local function ApplyCompactRow(button)
     end
   end
 
-  local familyBackground =
-      GetPetFamilyBackground(button)
+  local familyBackground = GetPetFamilyBackground(button)
 
   if familyBackground then
     familyBackground:ClearAllPoints()
@@ -965,8 +901,7 @@ local function ApplyRowLayout(button)
 end
 
 local function ApplyScrollBoxRowExtent()
-  local scrollBox =
-      GetPetJournalScrollBox()
+  local scrollBox = GetPetJournalScrollBox()
 
   if not scrollBox
       or type(scrollBox.GetView)
@@ -974,12 +909,10 @@ local function ApplyScrollBoxRowExtent()
     return
   end
 
-  local view =
-      scrollBox:GetView()
+  local view = scrollBox:GetView()
 
   if not view
-      or type(view.SetElementExtent)
-      ~= "function" then
+      or type(view.SetElementExtent) ~= "function" then
     return
   end
 
@@ -992,8 +925,7 @@ local function ApplyScrollBoxRowExtent()
     rowHeight
   )
 
-  if type(scrollBox.FullUpdate)
-      == "function" then
+  if type(scrollBox.FullUpdate) == "function" then
     local updateImmediately =
         _G.ScrollBoxConstants
         and _G.ScrollBoxConstants
@@ -1087,9 +1019,7 @@ local function CreateBreedLabel(button)
   return label
 end
 
-local function UpdateBreedLabelSize(
-    breedLabel
-)
+local function UpdateBreedLabelSize(breedLabel)
   if not breedLabel then
     return
   end
@@ -1118,11 +1048,7 @@ local function UpdateBreedLabelSize(
   )
 end
 
-local function CreateStatusIcon(
-    button,
-    key,
-    tooltip
-)
+local function CreateStatusIcon(button, key, tooltip)
   button.PetMatchStatusIcons =
       button.PetMatchStatusIcons or {}
 
@@ -1287,10 +1213,7 @@ local function ClearPetMatchDisplay(button)
   RestoreNameAnchors(button)
 end
 
-local function UpdateTeamIcon(
-    button,
-    petGUID
-)
+local function UpdateTeamIcon(button, petGUID)
   local icon = GetTeamIcon(button)
 
   local teamService =
@@ -1315,12 +1238,8 @@ local function UpdateTeamIcon(
       or nil
 end
 
-local function UpdateTagIcon(
-    button,
-    petGUID
-)
-  local icon =
-      GetTagIcon(button)
+local function UpdateTagIcon(button, petGUID)
+  local icon = GetTagIcon(button)
 
   local tagService =
       addon.Services
@@ -1414,8 +1333,7 @@ local function GetFavoriteIcon(button)
     return nil
   end
 
-  local dragButton =
-      button.dragButton
+  local dragButton = button.dragButton
 
   if not dragButton then
     return nil
@@ -1428,8 +1346,7 @@ local function GetFavoriteIcon(button)
 end
 
 local function PositionFavoriteIcon(button)
-  local favoriteIcon =
-      GetFavoriteIcon(button)
+  local favoriteIcon = GetFavoriteIcon(button)
 
   if not favoriteIcon then
     return
@@ -1461,10 +1378,7 @@ local function PositionFavoriteIcon(button)
   end
 end
 
-local function ApplyNameRightAnchor(
-    button,
-    rightRegion
-)
+local function ApplyNameRightAnchor(button, rightRegion)
   if not button.name then
     return
   end
@@ -1474,15 +1388,9 @@ local function ApplyNameRightAnchor(
   button.name:ClearAllPoints()
 
   if UsesCompactRows() then
-    local levelBackground =
-        GetPetLevelBackground(button)
-
-    local icon =
-        GetPetIcon(button)
-
-    local leftRegion =
-        levelBackground
-        or icon
+    local levelBackground = GetPetLevelBackground(button)
+    local icon = GetPetIcon(button)
+    local leftRegion = levelBackground or icon
 
     if leftRegion then
       button.name:SetPoint(
@@ -1518,16 +1426,8 @@ local function ApplyNameRightAnchor(
       0
     )
   else
-    ------------------------------------------------
-    -- Originele Blizzard-linkerpositie herstellen
-    ------------------------------------------------
-
-    local anchors =
-        button.PetMatchOriginalNameAnchors
-
-    local firstAnchor =
-        anchors
-        and anchors[1]
+    local anchors = button.PetMatchOriginalNameAnchors
+    local firstAnchor = anchors and anchors[1]
 
     if firstAnchor then
       button.name:SetPoint(
@@ -1539,10 +1439,6 @@ local function ApplyNameRightAnchor(
       )
     end
   end
-
-  --------------------------------------------------
-  -- Alleen rechts begrenzen voor breed/statusiconen
-  --------------------------------------------------
 
   if rightRegion then
     button.name:SetPoint(
@@ -1655,12 +1551,8 @@ local function LayoutRightSide(
   )
 end
 
-local function UpdatePetNameColor(
-    button,
-    petGUID
-)
-  if not button
-      or not button.name
+local function UpdatePetNameColor(button, petGUID)
+  if not button or not button.name
       or not petGUID then
     return
   end
@@ -1670,8 +1562,7 @@ local function UpdatePetNameColor(
         petGUID
       )
 
-  local color =
-      PET_RARITY_COLORS[quality]
+  local color = PET_RARITY_COLORS[quality]
 
   if color then
     button.name:SetTextColor(
@@ -1694,8 +1585,7 @@ local function InstallLevellingDrag(button)
     return
   end
 
-  button.PetMatchLevellingDragInstalled =
-      true
+  button.PetMatchLevellingDragInstalled = true
 
   button:RegisterForDrag(
     "LeftButton"
@@ -1704,16 +1594,13 @@ local function InstallLevellingDrag(button)
   button:HookScript(
     "OnDragStart",
     function(control)
-      local petGUID =
-          control.petID
-          or control.petGUID
+      local petGUID = control.petID or control.petGUID
 
       if not petGUID then
         return
       end
 
-      local queueService =
-          addon.Services.LevellingQueue
+      local queueService = addon.Services.LevellingQueue
 
       if not queueService then
         return
@@ -1723,17 +1610,11 @@ local function InstallLevellingDrag(button)
       -- Only allow pets that can actually
       -- enter the queue.
       --------------------------------------------------
-
-      if queueService:Contains(
-            petGUID
-          ) then
+      if queueService:Contains(petGUID) then
         return
       end
 
-      local allowed =
-          queueService:CanAdd(
-            petGUID
-          )
+      local allowed = queueService:CanAdd(petGUID)
 
       if not allowed then
         return
@@ -1755,13 +1636,10 @@ local function InstallLevellingDrag(button)
         function()
           local drag = addon.UI.Components.LevellingQueueDrag
 
-          if drag
-              and drag:GetSource()
-              == "petJournal" then
+          if drag and drag:GetSource() == "petJournal" then
             drag:Clear()
 
-            if type(ClearCursor)
-                == "function" then
+            if type(ClearCursor) == "function" then
               ClearCursor()
             end
           end
@@ -1792,10 +1670,7 @@ local function UpdatePetButton(button, elementData)
 
   if UsesRightSideBreed() then
     local breed =
-        addon.Services.Breed:
-        GetJournalBreed(
-          petGUID
-        )
+        addon.Services.Breed:GetJournalBreed(petGUID)
 
     if breed then
       breedLabel = CreateBreedLabel(button)
@@ -1884,23 +1759,19 @@ local function UpdatePetButton(button, elementData)
 
   PositionFavoriteIcon(button)
 
-  local tooltip =
-      addon.UI.Components.PetTooltip
+  local tooltip = addon.UI.Components.PetTooltip
 
-  if tooltip
-      and button.dragButton then
+  if tooltip and button.dragButton then
     tooltip:Attach(
       button.dragButton,
 
       function()
         if button.petID then
-          return "petGUID",
-              button.petID
+          return "petGUID", button.petID
         end
 
         if button.speciesID then
-          return "speciesID",
-              button.speciesID
+          return "speciesID", button.speciesID
         end
 
         return nil
@@ -1911,21 +1782,13 @@ local function UpdatePetButton(button, elementData)
   end
 end
 
-local function BuildTagMenuText(
-    definition
-)
+local function BuildTagMenuText(definition)
   if type(definition) ~= "table" then
     return "Unknown"
   end
 
-  local texture =
-      GetRaidMarkerTexture(
-        definition.id
-      )
-
-  local name =
-      definition.name
-      or "Unknown"
+  local texture = GetRaidMarkerTexture(definition.id)
+  local name = definition.name or "Unknown"
 
   if not texture then
     return name
@@ -2062,27 +1925,18 @@ local function GetBattleSlotIndexFromOwner(owner)
       break
     end
 
-    local name =
-        frame.GetName
-        and frame:GetName()
+    local name = frame.GetName and frame:GetName()
 
     if name then
       local slotIndex =
-          name:match(
-            "^PetJournalLoadoutPet([123])$"
-          )
+          name:match("^PetJournalLoadoutPet([123])$")
 
       if slotIndex then
-        return tonumber(
-          slotIndex
-        )
+        return tonumber(slotIndex)
       end
     end
 
-    frame =
-        frame.GetParent
-        and frame:GetParent()
-        or nil
+    frame = frame.GetParent and frame:GetParent() or nil
   end
 
   return nil
@@ -2093,9 +1947,7 @@ function PetList:InstallPetContextMenu()
     return true
   end
 
-  if not Menu
-      or type(Menu.ModifyMenu)
-      ~= "function" then
+  if not Menu or type(Menu.ModifyMenu) ~= "function" then
     return false
   end
 
@@ -2170,14 +2022,9 @@ function PetList:InstallPetContextMenu()
           { "Mechanical", 10 },
         }
 
-        for _, family in ipairs(
-          families
-        ) do
-          local name =
-              family[1]
-
-          local petType =
-              family[2]
+        for _, family in ipairs(families) do
+          local name = family[1]
+          local petType = family[2]
 
           randomMenu:CreateButton(
             name,
@@ -2219,10 +2066,7 @@ function PetList:InstallPetContextMenu()
         )
       end
 
-      local petGUID =
-          GetOwnerPetGUID(
-            owner
-          )
+      local petGUID = GetOwnerPetGUID(owner)
       if not petGUID then
         return
       end
@@ -2380,8 +2224,7 @@ function PetList:InstallHook()
     return true
   end
 
-  if type(_G.PetJournal_InitPetButton)
-      ~= "function" then
+  if type(_G.PetJournal_InitPetButton) ~= "function" then
     return false
   end
 
@@ -2430,14 +2273,10 @@ function PetList:InstallHook()
 end
 
 function PetList:ApplyBreedDisplay()
-  local showBreed =
-      IsBreedVisible()
+  local showBreed = IsBreedVisible()
+  local position = GetBreedPosition()
 
-  local position =
-      GetBreedPosition()
-
-  local letBattlePetBreedIDShowName =
-      showBreed
+  local letBattlePetBreedIDShowName = showBreed
       and position == "afterName"
 
   addon.Services.Breed:
@@ -2468,9 +2307,7 @@ function PetList:OnAddonLoaded(name)
   end
 
   if name == "BattlePetBreedID" then
-    addon.Services.Breed:
-        ClearCache()
-
+    addon.Services.Breed:ClearCache()
     self:ApplyBreedDisplay()
   end
 end

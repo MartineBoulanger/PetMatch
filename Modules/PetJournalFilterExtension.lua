@@ -288,14 +288,6 @@ local ADVANCED_SEARCH_FIELDS = {
 }
 
 local function QueueApplyFilters()
-  --------------------------------------------------
-  -- Blizzard kan tijdens het openen van de
-  -- Pet Journal meerdere list updates vlak na
-  -- elkaar sturen.
-  --
-  -- We wachten kort tot die reeks klaar is en
-  -- voeren daarna slechts één volledige rebuild uit.
-  --------------------------------------------------
   if not refreshRequired then
     return
   end
@@ -628,7 +620,6 @@ local function MatchesAdvancedSearch(
   --------------------------------------------------
   -- Lazy stats
   --------------------------------------------------
-
   local statsLoaded = false
 
   local health = nil
@@ -652,27 +643,17 @@ local function MatchesAdvancedSearch(
     currentPower,
     currentSpeed,
     currentRarity =
-        C_PetJournal.GetPetStats(
-          petID
-        )
+        C_PetJournal.GetPetStats(petID)
 
-    health =
-        tonumber(currentHealth)
-
-    power =
-        tonumber(currentPower)
-
-    speed =
-        tonumber(currentSpeed)
-
-    rarity =
-        tonumber(currentRarity)
+    health = tonumber(currentHealth)
+    power = tonumber(currentPower)
+    speed = tonumber(currentSpeed)
+    rarity = tonumber(currentRarity)
   end
 
   --------------------------------------------------
   -- Filters
   --------------------------------------------------
-
   for _, filter in ipairs(filters) do
     local field = filter.field
 
@@ -906,10 +887,7 @@ local function SetOtherFilter(group, value)
   RefreshSorting()
 end
 
-local function HasSelection(
-    filter,
-    options
-)
+local function HasSelection(filter, options)
   for _, option in ipairs(options) do
     if filter[option] == true then
       return true
@@ -919,11 +897,7 @@ local function HasSelection(
   return false
 end
 
-local function MatchesFilter(
-    filter,
-    options,
-    value
-)
+local function MatchesFilter(filter, options, value)
   if not HasSelection(
         filter,
         options
@@ -938,11 +912,7 @@ local function MatchesFilter(
   return filter[value] == true
 end
 
-local function Toggle(
-    filter,
-    key,
-    onChanged
-)
+local function Toggle(filter, key, onChanged)
   filter[key] = filter[key] ~= true
 
   if onChanged then
@@ -952,16 +922,9 @@ local function Toggle(
   end
 end
 
-local function AddCheckAllButtons(
-    submenu,
-    filter,
-    options,
-    onChanged
-)
+local function AddCheckAllButtons(submenu, filter, options, onChanged)
   local checkAllButton =
-      submenu:CreateButton(
-        CHECK_ALL
-      )
+      submenu:CreateButton(CHECK_ALL)
 
   checkAllButton:SetResponder(
     function()
@@ -982,9 +945,7 @@ local function AddCheckAllButtons(
   )
 
   local uncheckAllButton =
-      submenu:CreateButton(
-        UNCHECK_ALL
-      )
+      submenu:CreateButton(UNCHECK_ALL)
 
   uncheckAllButton:SetResponder(
     function()
@@ -1010,13 +971,9 @@ local function SyncNativePetTypes()
         Filters.petTypes,
         PET_TYPES
       ) then
-    PetJournalFilterDropdown_SetAllPetTypes(
-      false
-    )
+    PetJournalFilterDropdown_SetAllPetTypes(false)
 
-    for _, petType in ipairs(
-      PET_TYPES
-    ) do
+    for _, petType in ipairs(PET_TYPES) do
       if Filters.petTypes[petType] then
         C_PetJournal.SetPetTypeFilter(
           petType,
@@ -1025,9 +982,7 @@ local function SyncNativePetTypes()
       end
     end
   else
-    PetJournalFilterDropdown_SetAllPetTypes(
-      true
-    )
+    PetJournalFilterDropdown_SetAllPetTypes(true)
   end
 end
 
@@ -1036,9 +991,7 @@ local function SyncNativeSources()
         Filters.sources,
         PET_SOURCES
       ) then
-    PetJournalFilterDropdown_SetAllPetSources(
-      false
-    )
+    PetJournalFilterDropdown_SetAllPetSources(false)
 
     for _, sourceIndex in ipairs(
       PET_SOURCES
@@ -1051,16 +1004,13 @@ local function SyncNativeSources()
       end
     end
   else
-    PetJournalFilterDropdown_SetAllPetSources(
-      true
-    )
+    PetJournalFilterDropdown_SetAllPetSources(true)
   end
 end
 
 local function SyncNativeFilters()
   SyncNativePetTypes()
   SyncNativeSources()
-
   RefreshSorting()
 end
 
@@ -1103,9 +1053,7 @@ local function GetLevelRangeKey(level)
     return nil
   end
 
-  for _, range in ipairs(
-    LEVEL_RANGES
-  ) do
+  for _, range in ipairs(LEVEL_RANGES) do
     if level >= range.min
         and level <= range.max then
       return range.key
@@ -1130,21 +1078,16 @@ local function GetRaidMarkerTexture(tagID)
   )
 end
 
-local function BuildTagFilterLabel(
-    definition
-)
+local function BuildTagFilterLabel(definition)
   if not definition then
     return "Unknown"
   end
 
   local texture =
-      GetRaidMarkerTexture(
-        definition.id
-      )
+      GetRaidMarkerTexture(definition.id)
 
   if not texture then
-    return definition.name
-        or "Unknown"
+    return definition.name or "Unknown"
   end
 
   return string.format(
@@ -1154,9 +1097,7 @@ local function BuildTagFilterLabel(
   )
 end
 
-local function GetPetTagFilterValue(
-    petGUID
-)
+local function GetPetTagFilterValue(petGUID)
   if not petGUID then
     return "none"
   end
@@ -1169,10 +1110,7 @@ local function GetPetTagFilterValue(
     return "none"
   end
 
-  local tagID =
-      tagService:GetTag(
-        petGUID
-      )
+  local tagID = tagService:GetTag(petGUID)
 
   return tagID or "none"
 end
@@ -1197,14 +1135,8 @@ local function HasDuplicatePet(speciesID)
   return type(pets) == "table" and #pets > 1
 end
 
-local function CreateExpansionMenu(
-    owner,
-    root
-)
-  local submenu =
-      root:CreateButton(
-        "Expansion"
-      )
+local function CreateExpansionMenu(owner, root)
+  local submenu = root:CreateButton("Expansion")
 
   AddCheckAllButtons(
     submenu,
@@ -1219,9 +1151,7 @@ local function CreateExpansionMenu(
       expansion,
 
       function()
-        return Filters.expansions[
-        expansion
-        ] == true
+        return Filters.expansions[expansion] == true
       end,
 
       function()
@@ -1234,14 +1164,8 @@ local function CreateExpansionMenu(
   end
 end
 
-local function CreateRarityMenu(
-    owner,
-    root
-)
-  local submenu =
-      root:CreateButton(
-        "Rarity"
-      )
+local function CreateRarityMenu(owner, root)
+  local submenu = root:CreateButton("Rarity")
 
   AddCheckAllButtons(
     submenu,
@@ -1249,9 +1173,7 @@ local function CreateRarityMenu(
     RARITIES
   )
 
-  for _, rarity in ipairs(
-    RARITIES
-  ) do
+  for _, rarity in ipairs(RARITIES) do
     submenu:CreateCheckbox(
       rarity,
 
@@ -1271,14 +1193,8 @@ local function CreateRarityMenu(
   end
 end
 
-local function CreateLevelMenu(
-    owner,
-    root
-)
-  local submenu =
-      root:CreateButton(
-        "Level"
-      )
+local function CreateLevelMenu(owner, root)
+  local submenu = root:CreateButton("Level")
 
   AddCheckAllButtons(
     submenu,
@@ -1286,19 +1202,14 @@ local function CreateLevelMenu(
     LEVEL_RANGE_KEYS
   )
 
-  for _, range in ipairs(
-    LEVEL_RANGES
-  ) do
-    local rangeKey =
-        range.key
+  for _, range in ipairs(LEVEL_RANGES) do
+    local rangeKey = range.key
 
     submenu:CreateCheckbox(
       range.label,
 
       function()
-        return Filters.levels[
-        rangeKey
-        ] == true
+        return Filters.levels[rangeKey] == true
       end,
 
       function()
@@ -1311,14 +1222,8 @@ local function CreateLevelMenu(
   end
 end
 
-local function CreateBreedMenu(
-    owner,
-    root
-)
-  local submenu =
-      root:CreateButton(
-        "Breed"
-      )
+local function CreateBreedMenu(owner, root)
+  local submenu = root:CreateButton("Breed")
 
   AddCheckAllButtons(
     submenu,
@@ -1326,9 +1231,7 @@ local function CreateBreedMenu(
     BREEDS
   )
 
-  for _, breed in ipairs(
-    BREEDS
-  ) do
+  for _, breed in ipairs(BREEDS) do
     submenu:CreateCheckbox(
       breed,
 
@@ -1348,14 +1251,8 @@ local function CreateBreedMenu(
   end
 end
 
-local function CreateTagMenu(
-    owner,
-    root
-)
-  local submenu =
-      root:CreateButton(
-        "Tag"
-      )
+local function CreateTagMenu(owner, root)
+  local submenu = root:CreateButton("Tag")
 
   AddCheckAllButtons(
     submenu,
@@ -1363,26 +1260,19 @@ local function CreateTagMenu(
     TAG_FILTER_OPTIONS
   )
 
-  local tagService =
-      addon.Services
+  local tagService = addon.Services
       and addon.Services.PetTag
 
   if tagService then
     for _, definition in ipairs(
-      tagService:GetDefinitions()
-    ) do
-      local tagID =
-          definition.id
+      tagService:GetDefinitions()) do
+      local tagID = definition.id
 
       submenu:CreateCheckbox(
-        BuildTagFilterLabel(
-          definition
-        ),
+        BuildTagFilterLabel(definition),
 
         function()
-          return Filters.tags[
-          tagID
-          ] == true
+          return Filters.tags[tagID] == true
         end,
 
         function()
@@ -1642,10 +1532,7 @@ local function CreateOtherMenu(owner, root)
 
   submenu:CreateDivider()
 
-  local resetButton =
-      submenu:CreateButton(
-        "Reset"
-      )
+  local resetButton = submenu:CreateButton("Reset")
 
   resetButton:SetResponder(
     function()
@@ -1657,10 +1544,7 @@ local function CreateOtherMenu(owner, root)
 end
 
 local function CreatePetFamiliesMenu(owner, root)
-  local submenu =
-      root:CreateButton(
-        PET_FAMILIES
-      )
+  local submenu = root:CreateButton(PET_FAMILIES)
 
   AddCheckAllButtons(
     submenu,
@@ -1669,22 +1553,14 @@ local function CreatePetFamiliesMenu(owner, root)
     SyncNativePetTypes
   )
 
-  for _, petType in ipairs(
-    PET_TYPES
-  ) do
-    local currentPetType =
-        petType
+  for _, petType in ipairs(PET_TYPES) do
+    local currentPetType = petType
 
     submenu:CreateCheckbox(
-      _G[
-      "BATTLE_PET_NAME_"
-      .. currentPetType
-      ],
+      _G["BATTLE_PET_NAME_" .. currentPetType],
 
       function()
-        return Filters.petTypes[
-        currentPetType
-        ] == true
+        return Filters.petTypes[currentPetType] == true
       end,
 
       function()
@@ -1718,16 +1594,12 @@ local function CreatePetMatchupMenu(root, label, mode)
     return
   end
 
-  local submenu =
-      root:CreateButton(label)
+  local submenu = root:CreateButton(label)
 
   --------------------------------------------------
   -- Check All
   --------------------------------------------------
-  local checkAllButton =
-      submenu:CreateButton(
-        CHECK_ALL
-      )
+  local checkAllButton = submenu:CreateButton(CHECK_ALL)
 
   checkAllButton:SetResponder(
     function()
@@ -1748,17 +1620,11 @@ local function CreatePetMatchupMenu(root, label, mode)
   --------------------------------------------------
   -- Uncheck All
   --------------------------------------------------
-  local uncheckAllButton =
-      submenu:CreateButton(
-        UNCHECK_ALL
-      )
+  local uncheckAllButton = submenu:CreateButton(UNCHECK_ALL)
 
   uncheckAllButton:SetResponder(
     function()
-      typeFilter:ClearMode(
-        mode
-      )
-
+      typeFilter:ClearMode(mode)
       RefreshPetTypeFilters()
 
       return MenuResponse.Refresh
@@ -1772,10 +1638,7 @@ local function CreatePetMatchupMenu(root, label, mode)
     local currentPetType = petType
 
     submenu:CreateCheckbox(
-      _G[
-      "BATTLE_PET_NAME_"
-      .. currentPetType
-      ],
+      _G["BATTLE_PET_NAME_" .. currentPetType],
 
       function()
         return typeFilter:
@@ -1800,10 +1663,7 @@ local function CreatePetMatchupMenu(root, label, mode)
 end
 
 local function CreateSourcesMenu(owner, root)
-  local submenu =
-      root:CreateButton(
-        SOURCES
-      )
+  local submenu = root:CreateButton(SOURCES)
 
   AddCheckAllButtons(
     submenu,
@@ -1812,22 +1672,14 @@ local function CreateSourcesMenu(owner, root)
     SyncNativeSources
   )
 
-  for _, sourceIndex in ipairs(
-    PET_SOURCES
-  ) do
-    local currentSource =
-        sourceIndex
+  for _, sourceIndex in ipairs(PET_SOURCES) do
+    local currentSource = sourceIndex
 
     submenu:CreateCheckbox(
-      _G[
-      "BATTLE_PET_SOURCE_"
-      .. currentSource
-      ],
+      _G["BATTLE_PET_SOURCE_" .. currentSource],
 
       function()
-        return Filters.sources[
-        currentSource
-        ] == true
+        return Filters.sources[currentSource] == true
       end,
 
       function()
@@ -1843,26 +1695,16 @@ local function CreateSourcesMenu(owner, root)
   end
 end
 
-local function HasCustomFilter(
-    filter,
-    options
-)
-  return HasSelection(
-    filter,
-    options
-  )
+local function HasCustomFilter(filter, options)
+  return HasSelection(filter, options)
 end
 
-local function GetExpansionOrder(
-    expansionName
-)
+local function GetExpansionOrder(expansionName)
   if not expansionName then
     return 0
   end
 
-  for index, name in ipairs(
-    EXPANSIONS
-  ) do
+  for index, name in ipairs(EXPANSIONS) do
     if name == expansionName then
       return index
     end
@@ -1871,16 +1713,12 @@ local function GetExpansionOrder(
   return 0
 end
 
-local function GetBreedOrder(
-    breedName
-)
+local function GetBreedOrder(breedName)
   if not breedName then
     return math.huge
   end
 
-  for index, name in ipairs(
-    BREEDS
-  ) do
+  for index, name in ipairs(BREEDS) do
     if name == breedName then
       return index
     end
@@ -1889,9 +1727,7 @@ local function GetBreedOrder(
   return math.huge
 end
 
-local function GetPetStatsForSorting(
-    petID
-)
+local function GetPetStatsForSorting(petID)
   if not petID then
     return 0, 0, 0
   end
@@ -1899,37 +1735,21 @@ local function GetPetStatsForSorting(
   local health,
   _maxHealth,
   power,
-  speed =
-      C_PetJournal.GetPetStats(
-        petID
-      )
+  speed = C_PetJournal.GetPetStats(petID)
 
   return tonumber(health) or 0,
       tonumber(power) or 0,
       tonumber(speed) or 0
 end
 
-local function IsPetInAnyTeam(
-    petID,
-    speciesID
-)
-  --------------------------------------------------
-  -- Koppel hier jouw bestaande teamservice.
-  --------------------------------------------------
-
-  local teamService =
-      addon.Services
-      and addon.Services.Team
+local function IsPetInAnyTeam(petID, speciesID)
+  local teamService = addon.Services and addon.Services.Team
 
   if teamService
-      and type(
-        teamService.IsPetInAnyTeam
+      and type(teamService.IsPetInAnyTeam
       ) == "function" then
     return teamService:
-    IsPetInAnyTeam(
-      petID,
-      speciesID
-    ) == true
+    IsPetInAnyTeam(petID, speciesID) == true
   end
 
   return false
@@ -1961,15 +1781,11 @@ local function ToggleSortLevel(sortKey)
       index
     )
   else
-    if #SortLevels
-        >= MAX_SORT_LEVELS then
+    if #SortLevels >= MAX_SORT_LEVELS then
       return
     end
 
-    SortLevels[
-    #SortLevels + 1
-    ] =
-        sortKey
+    SortLevels[#SortLevels + 1] = sortKey
   end
 
   RefreshSorting()
@@ -1980,11 +1796,8 @@ local function PopulateSortData(item)
   -- Favorites
   --------------------------------------------------
   if SortOptions.favoritesFirst then
-    item.isFavorite =
-        item.petID ~= nil
-        and C_PetJournal.PetIsFavorite(
-          item.petID
-        ) == true
+    item.isFavorite = item.petID ~= nil
+        and C_PetJournal.PetIsFavorite(item.petID) == true
   else
     item.isFavorite = false
   end
@@ -1992,9 +1805,7 @@ local function PopulateSortData(item)
   --------------------------------------------------
   -- Expansion
   --------------------------------------------------
-  if IsSortLevelSelected(
-        "expansion"
-      ) then
+  if IsSortLevelSelected("expansion") then
     local expansionName =
         GetExpansionName(
           item.petID,
@@ -2012,9 +1823,7 @@ local function PopulateSortData(item)
   --------------------------------------------------
   -- Breed
   --------------------------------------------------
-  if IsSortLevelSelected(
-        "breed"
-      ) then
+  if IsSortLevelSelected("breed") then
     local breedName =
         GetBreedName(
           item.petID,
@@ -2031,34 +1840,14 @@ local function PopulateSortData(item)
 
   --------------------------------------------------
   -- Stats
-  --
-  -- Only call GetPetStats when one of these
-  -- sort options actually needs the values.
   --------------------------------------------------
-  local needsHealth =
-      IsSortLevelSelected(
-        "health"
-      )
+  local needsHealth = IsSortLevelSelected("health")
+  local needsPower = IsSortLevelSelected("power")
+  local needsSpeed = IsSortLevelSelected("speed")
 
-  local needsPower =
-      IsSortLevelSelected(
-        "power"
-      )
-
-  local needsSpeed =
-      IsSortLevelSelected(
-        "speed"
-      )
-
-  if needsHealth
-      or needsPower
-      or needsSpeed then
-    local health,
-    power,
-    speed =
-        GetPetStatsForSorting(
-          item.petID
-        )
+  if needsHealth or needsPower or needsSpeed then
+    local health, power, speed =
+        GetPetStatsForSorting(item.petID)
 
     item.health = health
     item.power = power
@@ -2072,14 +1861,8 @@ local function PopulateSortData(item)
   --------------------------------------------------
   -- Team usage
   --------------------------------------------------
-  if IsSortLevelSelected(
-        "teams"
-      ) then
-    item.isInTeam =
-        IsPetInAnyTeam(
-          item.petID,
-          item.speciesID
-        )
+  if IsSortLevelSelected("teams") then
+    item.isInTeam = IsPetInAnyTeam(item.petID, item.speciesID)
   else
     item.isInTeam = false
   end
@@ -2196,23 +1979,16 @@ local function SortItems(items)
       -- Favorites first
       ------------------------------------------------
       if SortOptions.favoritesFirst
-          and a.isFavorite
-          ~= b.isFavorite then
+          and a.isFavorite ~= b.isFavorite then
         return a.isFavorite == true
       end
 
       ------------------------------------------------
       -- Level 1 -> 2 -> 3
       ------------------------------------------------
-      for _, sortKey in ipairs(
-        SortLevels
-      ) do
+      for _, sortKey in ipairs(SortLevels) do
         local comparison =
-            CompareSortLevel(
-              sortKey,
-              a,
-              b
-            )
+            CompareSortLevel(sortKey, a, b)
 
         if comparison ~= 0 then
           if SortOptions.reverse then
@@ -2294,7 +2070,6 @@ local function CreateUnifiedSortMenu(root)
         ------------------------------------------------
         -- Dynamic label
         ------------------------------------------------
-
         if frame.fontString then
           frame.fontString:SetText(
             index
@@ -2310,11 +2085,9 @@ local function CreateUnifiedSortMenu(root)
         ------------------------------------------------
         -- Disable other options at max 3
         ------------------------------------------------
-
         frame:SetEnabled(
           index ~= nil
-          or #SortLevels
-          < MAX_SORT_LEVELS
+          or #SortLevels < MAX_SORT_LEVELS
         )
       end
     )
@@ -2392,10 +2165,7 @@ local function CreateUnifiedSortMenu(root)
 end
 
 local function AcquireItem()
-  local item =
-      table.remove(
-        ItemPool
-      )
+  local item = table.remove(ItemPool)
 
   if not item then
     item = {}
@@ -2404,19 +2174,13 @@ local function AcquireItem()
   return item
 end
 
-local function ReleaseItemList(
-    list
-)
+local function ReleaseItemList(list)
   for index = 1, #list do
-    local item =
-        list[index]
+    local item = list[index]
 
     wipe(item)
 
-    ItemPool[
-    #ItemPool + 1
-    ] =
-        item
+    ItemPool[#ItemPool + 1] = item
 
     list[index] = nil
   end
@@ -2425,8 +2189,7 @@ end
 function FilterExtension:RequestRefresh()
   refreshRequired = true
 
-  if type(PetJournal_UpdatePetList)
-      ~= "function" then
+  if type(PetJournal_UpdatePetList) ~= "function" then
     return
   end
 
@@ -2628,8 +2391,7 @@ function FilterExtension:GetActiveFilterNames()
         Filters.petTypes,
         PET_TYPES
       ) then
-    names[#names + 1] =
-    "Pet Families"
+    names[#names + 1] = "Pet Families"
   end
 
   if HasCustomFilter(
@@ -2671,8 +2433,7 @@ function FilterExtension:GetActiveFilterNames()
         Filters.tags,
         TAG_FILTER_OPTIONS
       ) then
-    names[#names + 1] =
-    "Tag"
+    names[#names + 1] = "Tag"
   end
 
   if HasOtherFilters() then
@@ -2690,73 +2451,49 @@ function FilterExtension:GetActiveFilterNames()
   if typeFilter then
     --------------------------------------------------
     -- Pet Families
-    --
-    -- The filter bar uses PetTypeFilterService,
-    -- while the Filter menu uses Filters.petTypes.
-    -- Show Pet Families only once.
     --------------------------------------------------
     if typeFilter:
-        HasSelectedTypes(
-          "petType"
-        )
+        HasSelectedTypes("petType")
         and not HasCustomFilter(
           Filters.petTypes,
           PET_TYPES
         ) then
-      names[#names + 1] =
-      "Pet Families"
+      names[#names + 1] = "Pet Families"
     end
 
     --------------------------------------------------
     -- Strong Vs
     --------------------------------------------------
-    if typeFilter:
-        HasSelectedTypes(
-          "strongVs"
-        ) then
-      names[#names + 1] =
-      "Strong Vs"
+    if typeFilter:HasSelectedTypes("strongVs") then
+      names[#names + 1] = "Strong Vs"
     end
 
     --------------------------------------------------
     -- Weak Vs
     --------------------------------------------------
-    if typeFilter:
-        HasSelectedTypes(
-          "weakVs"
-        ) then
-      names[#names + 1] =
-      "Weak Vs"
+    if typeFilter:HasSelectedTypes("weakVs") then
+      names[#names + 1] = "Weak Vs"
     end
 
     --------------------------------------------------
     -- Takes More From
     --------------------------------------------------
-    if typeFilter:
-        HasSelectedTypes(
-          "takesMoreFrom"
-        ) then
-      names[#names + 1] =
-      "Takes More From"
+    if typeFilter:HasSelectedTypes("takesMoreFrom") then
+      names[#names + 1] = "Takes More From"
     end
 
     --------------------------------------------------
     -- Takes Less From
     --------------------------------------------------
-    if typeFilter:
-        HasSelectedTypes(
-          "takesLessFrom"
-        ) then
-      names[#names + 1] =
-      "Takes Less From"
+    if typeFilter:HasSelectedTypes("takesLessFrom") then
+      names[#names + 1] = "Takes Less From"
     end
 
     --------------------------------------------------
     -- Level 25
     --------------------------------------------------
     if typeFilter:IsLevel25Only() then
-      names[#names + 1] =
-      "Level 25"
+      names[#names + 1] = "Level 25"
     end
   end
 
@@ -2794,8 +2531,7 @@ function FilterExtension:GetActiveSortNames()
 end
 
 function FilterExtension:LayoutPetList(filterBarShown)
-  if not PetJournal
-      or not PetJournal.ScrollBox
+  if not PetJournal or not PetJournal.ScrollBox
       or not PetJournal.LeftInset then
     return
   end
@@ -2831,8 +2567,7 @@ function FilterExtension:LayoutPetList(filterBarShown)
 end
 
 function FilterExtension:CreatePetTypeFilterBar()
-  if self.PetTypeFilterBar
-      or not PetJournal
+  if self.PetTypeFilterBar or not PetJournal
       or not PetJournal.LeftInset then
     return
   end
@@ -3127,17 +2862,14 @@ function FilterExtension:UpdateFilterBar(visiblePetCount)
 end
 
 function FilterExtension:RefreshFilterBar()
-  self:UpdateFilterBar(
-    #ActiveItems
-  )
+  self:UpdateFilterBar(#ActiveItems)
 end
 
 function FilterExtension:UpdatePetTypeFilterDisplay()
   self:CreatePetTypeFilterBar()
 
   if self.PetTypeFilterBar then
-    local frame =
-        self.PetTypeFilterBar:GetFrame()
+    local frame = self.PetTypeFilterBar:GetFrame()
 
     if ShowsPetTypeFilterBar() then
       frame:Show()
@@ -3149,8 +2881,7 @@ function FilterExtension:UpdatePetTypeFilterDisplay()
   if self.FilterBar then
     local layoutOffset = GetPetTypeFilterLayoutOffset()
 
-    self.FilterBar:
-        ClearAllPoints()
+    self.FilterBar:ClearAllPoints()
 
     self.FilterBar:SetPoint(
       "TOPLEFT",
@@ -3178,8 +2909,7 @@ function FilterExtension:UpdatePetTypeFilterDisplay()
     and self.FilterBar:IsShown()
   )
 
-  if PetJournal
-      and PetJournal.FilterDropdown
+  if PetJournal and PetJournal.FilterDropdown
       and PetJournal.FilterDropdown.GenerateMenu then
     PetJournal.FilterDropdown:GenerateMenu()
   end
@@ -3228,8 +2958,7 @@ function FilterExtension:ResetFiltersOnly()
     false
   )
 
-  local typeFilter =
-      addon.Services.PetTypeFilter
+  local typeFilter = addon.Services.PetTypeFilter
 
   if typeFilter then
     typeFilter:ClearAll()
@@ -3250,11 +2979,9 @@ function FilterExtension:ResetFiltersOnly()
 
   RefreshSorting()
 
-  if PetJournal
-      and PetJournal.FilterDropdown
+  if PetJournal and PetJournal.FilterDropdown
       and PetJournal.FilterDropdown.GenerateMenu then
-    PetJournal.FilterDropdown:
-        GenerateMenu()
+    PetJournal.FilterDropdown:GenerateMenu()
   end
 end
 
@@ -3331,8 +3058,7 @@ function FilterExtension:ResetAllFilters()
 
   RefreshSorting()
 
-  if PetJournal
-      and PetJournal.FilterDropdown
+  if PetJournal and PetJournal.FilterDropdown
       and PetJournal.FilterDropdown.GenerateMenu then
     PetJournal.FilterDropdown:GenerateMenu()
   end
@@ -3396,10 +3122,7 @@ function FilterExtension:MatchesPet(
             petID
           )
 
-      rarityName =
-          RARITY_NAMES[
-          tonumber(rarity)
-          ]
+      rarityName = RARITY_NAMES[tonumber(rarity)]
     end
 
     if not MatchesFilter(
@@ -3465,10 +3188,7 @@ function FilterExtension:MatchesPet(
         Filters.tags,
         TAG_FILTER_OPTIONS
       ) then
-    local tagValue =
-        GetPetTagFilterValue(
-          petID
-        )
+    local tagValue = GetPetTagFilterValue(petID)
 
     if not MatchesFilter(
           Filters.tags,
@@ -3530,11 +3250,7 @@ function FilterExtension:MatchesPet(
   -- Other: Team
   --------------------------------------------------
   if OtherFilters.team ~= nil then
-    local isInTeam =
-        IsPetInAnyTeam(
-          petID,
-          speciesID
-        )
+    local isInTeam = IsPetInAnyTeam(petID, speciesID)
 
     if OtherFilters.team == "inTeam"
         and not isInTeam then
@@ -3627,8 +3343,7 @@ function FilterExtension:ApplyFilters()
           tradable == true
         )
 
-    if matchesPetMatchFilter
-        and typeFilter then
+    if matchesPetMatchFilter and typeFilter then
       matchesPetMatchFilter =
           typeFilter:DoesPetDataMatch(
             level,

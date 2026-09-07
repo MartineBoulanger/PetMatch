@@ -175,7 +175,7 @@ end
 
 function PetTooltipService:ApplyExpansionData(pet)
   if not pet or not pet.speciesID then
-    print("No pet or speciesID")
+    addon.Logger:WARN("No pet or speciesID")
     return
   end
 
@@ -184,7 +184,7 @@ function PetTooltipService:ApplyExpansionData(pet)
       and addon.Data.PetExpansion
 
   if not speciesInfo then
-    print("addon.Data.SpeciesInfo missing")
+    addon.Logger:WARN("addon.Data.SpeciesInfo missing")
     return
   end
 

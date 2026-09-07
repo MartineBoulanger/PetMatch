@@ -366,9 +366,7 @@ function BattleSlotService:ClearPendingSpecialSlot(
 end
 
 function BattleSlotService:ClearPendingSpecialSlots()
-  wipe(
-    self.PendingSpecialSlots
-  )
+  wipe(self.PendingSpecialSlots)
 end
 
 function BattleSlotService:Debug()
@@ -376,13 +374,13 @@ function BattleSlotService:Debug()
     local guid = self:GetSlot(i)
 
     if guid then
-      print(
+      addon.Logger:INFO(
         "[PetMatch] Battle Slot",
         i,
         guid
       )
     else
-      print(
+      addon.Logger:INFO(
         "[PetMatch] Battle Slot",
         i,
         "Empty"
@@ -752,8 +750,7 @@ local function ResolveHealthyDuplicate(savedPetGUID, slot, usedPetGUIDs, preserv
   -- Check health of the pet we would keep
   --------------------------------------------------
   local health,
-  maxHealth =
-      C_PetJournal.GetPetStats(petGUID)
+  maxHealth = C_PetJournal.GetPetStats(petGUID)
 
   health = tonumber(health) or 0
   maxHealth = tonumber(maxHealth) or 0

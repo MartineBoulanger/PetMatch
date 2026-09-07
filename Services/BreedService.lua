@@ -63,9 +63,7 @@ function BreedService:GetJournalBreedID(petGUID)
 end
 
 function BreedService:GetBreedName(breedID)
-  return BREED_NAMES[
-  tonumber(breedID)
-  ]
+  return BREED_NAMES[tonumber(breedID)]
 end
 
 function BreedService:GetPossibleBreeds(

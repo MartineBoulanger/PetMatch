@@ -24,17 +24,12 @@ function Profiles:GetCurrentProfile()
       addon.DB.profileKeys[UnitGUID("player")]
   if not profileName then
     profileName = "Default"
-    addon.DB.profileKeys[
-    UnitGUID("player")
-    ] = profileName
+    addon.DB.profileKeys[UnitGUID("player")] = profileName
   end
   if not addon.DB.profiles[profileName] then
     addon.DB.profiles[profileName] =
-        addon.Utils:DeepCopy(
-          DEFAULT_PROFILE
-        )
-    addon.DB.profiles[profileName].created =
-        time()
+        addon.Utils:DeepCopy(DEFAULT_PROFILE)
+    addon.DB.profiles[profileName].created = time()
   end
   return addon.DB.profiles[profileName]
 end
@@ -44,11 +39,8 @@ function Profiles:Create(name)
     return false
   end
   addon.DB.profiles[name] =
-      addon.Utils:DeepCopy(
-        DEFAULT_PROFILE
-      )
-  addon.DB.profiles[name].name =
-      name
+      addon.Utils:DeepCopy(DEFAULT_PROFILE)
+  addon.DB.profiles[name].name = name
   addon.EventBus:Fire(
     addon.Events.PROFILE_CHANGED,
     name

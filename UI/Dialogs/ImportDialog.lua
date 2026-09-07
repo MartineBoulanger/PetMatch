@@ -70,10 +70,7 @@ end
 --------------------------------------------------
 -- Loading
 --------------------------------------------------
-function ImportDialog:SetLoading(
-    loading,
-    message
-)
+function ImportDialog:SetLoading(loading,message)
   self.Loading = loading == true
 
   if self.SaveButton then
@@ -154,11 +151,7 @@ function ImportDialog:StartProgress()
   self.Progress:Show()
 end
 
-function ImportDialog:SetProgress(
-    progress,
-    completed,
-    total
-)
+function ImportDialog:SetProgress(progress, completed, total)
   if not self.Progress then
     return
   end
@@ -204,9 +197,7 @@ function ImportDialog:StopProgress()
 end
 
 function ImportDialog:HandleLargePaste()
-  local value =
-      self.Input:GetText()
-      or ""
+  local value = self.Input:GetText() or ""
 
   if #value < 5000 then
     return

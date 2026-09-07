@@ -102,7 +102,6 @@ local function AddBlizzardBorder(button)
   local sourceBorder = healFrame and healFrame.Border
 
   if not sourceBorder then
-    -- addon.Logger:Warn("Heal Pet border was not found")
     return
   end
 

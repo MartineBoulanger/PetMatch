@@ -55,8 +55,7 @@ function Settings:Initialize()
   local profile =
       addon.Profiles:GetCurrentProfile()
 
-  profile.settings =
-      profile.settings or {}
+  profile.settings = profile.settings or {}
 
   ApplyDefaults(
     DEFAULT_SETTINGS,
@@ -68,8 +67,7 @@ function Settings:Get(key)
   local profile =
       addon.Profiles:GetCurrentProfile()
 
-  profile.settings =
-      profile.settings or {}
+  profile.settings = profile.settings or {}
 
   ApplyDefaults(
     DEFAULT_SETTINGS,
@@ -83,8 +81,7 @@ function Settings:Set(key, value)
   local profile =
       addon.Profiles:GetCurrentProfile()
 
-  profile.settings =
-      profile.settings or {}
+  profile.settings = profile.settings or {}
 
   profile.settings[key] = value
 
@@ -99,11 +96,8 @@ function Settings:GetUI(key)
   local profile =
       addon.Profiles:GetCurrentProfile()
 
-  profile.settings =
-      profile.settings or {}
-
-  profile.settings.ui =
-      profile.settings.ui or {}
+  profile.settings = profile.settings or {}
+  profile.settings.ui = profile.settings.ui or {}
 
   ApplyDefaults(
     DEFAULT_SETTINGS.ui,
@@ -117,11 +111,8 @@ function Settings:SetUI(key, value)
   local profile =
       addon.Profiles:GetCurrentProfile()
 
-  profile.settings =
-      profile.settings or {}
-
-  profile.settings.ui =
-      profile.settings.ui or {}
+  profile.settings = profile.settings or {}
+  profile.settings.ui = profile.settings.ui or {}
 
   profile.settings.ui[key] = value
 

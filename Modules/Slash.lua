@@ -104,19 +104,6 @@ commands.listpets = function()
 end
 
 commands.queue = function()
-  -- local export,
-  -- errorMessage =
-  --     addon.Services.ImportExport:
-  --     ExportLevellingQueue()
-
-  -- if export then
-  --   print(export)
-  -- else
-  --   print(
-  --     "PetMatch:",
-  --     errorMessage
-  --   )
-  -- end
   local importText = [[
   PMQ1
   species=1125;breed=3;level=7;rarity=4;type=7
@@ -132,14 +119,14 @@ commands.queue = function()
       )
 
   if not preview then
-    print(
+    Print(
       "Import error:",
       errorMessage
     )
     return
   end
 
-  print(
+  Print(
     "Total:",
     preview.total,
     "Addable:",
@@ -153,7 +140,7 @@ commands.queue = function()
   for index, item in ipairs(
     preview.pets
   ) do
-    print(
+    Print(
       index,
       item.status,
       item.petGUID or "nil",
@@ -167,7 +154,7 @@ commands.rating = function()
   local team = addon.Services.Team:GetSelected()
 
   if not team then
-    print("PetMatch: no team selected")
+    Print("PetMatch: no team selected")
     return
   end
 
@@ -177,7 +164,7 @@ commands.rating = function()
   stats.pvp.losses = 1
   stats.pvp.draws = 1
 
-  print(
+  Print(
     "PetMatch: test stats added to "
     .. tostring(team.name)
   )
@@ -188,7 +175,7 @@ commands.battletest = function()
       addon.Services.Team:GetActive()
 
   if not team then
-    print(
+    Print(
       "[PetMatch]: no active team."
     )
 
@@ -202,7 +189,7 @@ commands.battletest = function()
         "draw"
       )
 
-  print(
+  Print(
     "[PetMatch]: test draw added."
   )
 end

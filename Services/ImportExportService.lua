@@ -526,8 +526,6 @@ local function SplitNotesAndScript(text)
 
   text = text or ""
 
-  -- Ondersteun imports waarin \n letterlijk
-  -- als twee tekens voorkomt.
   text = text:gsub("\\r\\n", "\n")
   text = text:gsub("\\n", "\n")
 
@@ -558,8 +556,6 @@ local function SplitNotesAndScript(text)
         true
       )
 
-  -- Geen geldige afsluitende marker:
-  -- laat de volledige tekst als notes staan.
   if not endPos then
     return Trim(text), ""
   end
@@ -892,10 +888,7 @@ function ImportExportService:Parse(value)
   return nil, "Unknown team format"
 end
 
-function ImportExportService:Import(
-    value,
-    options
-)
+function ImportExportService:Import(value, options)
   options = options or {}
 
   value = Trim(value)
@@ -912,7 +905,7 @@ function ImportExportService:Import(
   if format == "petmatch" then
     if not self.ImportPetMatch then
       return nil,
-          "PetMatch-import wordt nog niet ondersteund."
+          "PetMatch-import is not supported yet."
     end
 
     return self:ImportPetMatch(
@@ -922,7 +915,7 @@ function ImportExportService:Import(
   end
 
   return nil,
-      "Het importformaat kon niet worden herkend."
+      "The import string has not a recognized format."
 end
 
 function ImportExportService:GetAbilityIDsFromChoices(
@@ -945,7 +938,6 @@ function ImportExportService:GetAbilityIDsFromChoices(
     elseif choice == 2 then
       selected[abilitySlot] = abilityIDs[abilitySlot + 3]
     else
-      -- 0 betekent dat Rematch geen voorkeur opslaat.
       selected[abilitySlot] = nil
     end
   end
@@ -1376,7 +1368,7 @@ function ImportExportService:DecodeRematchPetTag(token)
   token = string.upper(Trim(token))
 
   if token == "" then
-    return nil, "Empty Rematch pet tag"
+    return nil, "Empty pet tag"
   end
 
   -- Speciale Rematch-slots.
@@ -1437,7 +1429,7 @@ function ImportExportService:DecodeRematchPetTag(token)
   end
 
   if #token < 5 then
-    return nil, "Invalid Rematch pet tag: " .. token
+    return nil, "Invalid pet tag: " .. token
   end
 
   local choices = {
@@ -1453,7 +1445,7 @@ function ImportExportService:DecodeRematchPetTag(token)
         and choice ~= 1
         and choice ~= 2 then
       return nil,
-          "Invalid Rematch ability choice"
+          "Invalid ability choice"
     end
   end
 
@@ -1461,7 +1453,7 @@ function ImportExportService:DecodeRematchPetTag(token)
   local speciesID = DecodeBase32(token:sub(5))
 
   if not speciesID then
-    return nil, "Invalid Rematch species code"
+    return nil, "Invalid species code"
   end
 
   return {
@@ -1485,7 +1477,7 @@ function ImportExportService:ParseRematchTeam(line)
   local fields = SplitPreservingEmpty(line, ":")
 
   if #fields < 6 then
-    return nil, "Incomplete Rematch team string"
+    return nil, "Incomplete team string"
   end
 
   --------------------------------------------------
@@ -1494,7 +1486,7 @@ function ImportExportService:ParseRematchTeam(line)
   local core = FindRematchCore(self, fields)
 
   if not core then
-    return nil, "Unable to locate Rematch pet slots"
+    return nil, "Unable to locate pet slots"
   end
 
   --------------------------------------------------
@@ -1512,7 +1504,7 @@ function ImportExportService:ParseRematchTeam(line)
   local name = Trim(table.concat(nameParts, ":"))
 
   if name == "" then
-    return nil, "Rematch team has no name"
+    return nil, "The team has no name"
   end
 
   --------------------------------------------------
@@ -1596,7 +1588,7 @@ function ImportExportService:ParseRematchGroupHeader(line)
   local inner = Trim(line:match("^__%s*(.-)%s*__$"))
 
   if not inner or inner == "" then
-    return nil, "Rematch group has no name"
+    return nil, "The group has no name"
   end
 
   if not inner:find(":", 1, true) then
@@ -1621,7 +1613,7 @@ function ImportExportService:ParseRematchDocument(value)
   value = NormalizeNewlines(value)
 
   if IsBlank(value) then
-    return nil, "Paste a Rematch team or group export"
+    return nil, "Paste a team or group export"
   end
 
   local document = {
@@ -1681,7 +1673,7 @@ function ImportExportService:ParseRematchDocument(value)
   end
 
   if teamCount == 0 then
-    return nil, "No valid Rematch teams were found"
+    return nil, "No valid teams were found"
   end
 
   return document
@@ -1690,14 +1682,9 @@ end
 function ImportExportService:ParseRematchDocumentAsync(value, options)
   options = options or {}
 
-  local onProgress =
-      options.onProgress
-
-  local onComplete =
-      options.onComplete
-
-  local onError =
-      options.onError
+  local onProgress = options.onProgress
+  local onComplete = options.onComplete
+  local onError = options.onError
 
   local batchSize =
       tonumber(
@@ -1713,7 +1700,7 @@ function ImportExportService:ParseRematchDocumentAsync(value, options)
   if IsBlank(value) then
     if onError then
       onError(
-        "Paste a Rematch team or group export"
+        "Paste a team or group export string"
       )
     end
 
@@ -1781,7 +1768,7 @@ function ImportExportService:ParseRematchDocumentAsync(value, options)
     if teamCount == 0 then
       if onError then
         onError(
-          "No valid Rematch teams were found"
+          "No valid teams were found"
         )
       end
 
@@ -1988,8 +1975,7 @@ function ImportExportService:PrepareImport(
       self:DetectFormat(value)
 
   if not format then
-    return nil,
-        "Het importformaat kon niet worden herkend."
+    return nil, "The import string has no recognizable format."
   end
 
   if format == "rematch" then
@@ -2038,7 +2024,7 @@ function ImportExportService:PrepareImportAsync(
   if not format then
     if onError then
       onError(
-        "Het importformaat kon niet worden herkend."
+        "The import string has no recognizable format."
       )
     end
 
