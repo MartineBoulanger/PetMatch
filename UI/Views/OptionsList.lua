@@ -19,6 +19,7 @@ local PET_TYPE_FILTER_SECTION_HEIGHT = 104
 local STATUS_BAR_SECTION_HEIGHT = 86
 local TEAM_CARD_SECTION_HEIGHT = 86
 local PVE_BATTLE_SECTION_HEIGHT = 86
+local TARGETS_SECTION_HEIGHT = 126
 
 function OptionsList:Create(parent)
   local frame =
@@ -49,6 +50,7 @@ function OptionsList:Create(parent)
     petTypeFilters = false,
     statusBar = false,
     petBattles = false,
+    targets = false,
   }
 
   self:RegisterEvents()
@@ -98,6 +100,8 @@ function OptionsList:RegisterEvents()
       elseif key == "autoOpenNotesOnPvEBattle"
           or key == "autoOpenPetJournalAfterBattle" then
         self:RefreshPetBattlesMode()
+      elseif key == "targetTeamLoadMode" then
+        self:RefreshTargetTeamLoadMode()
       end
     end
   )
@@ -178,6 +182,13 @@ function OptionsList:ClearItems()
   self.PetBattlesAccordion = nil
   self.AutoOpenPvENotesCheckbox = nil
   self.AutoOpenPetJournalCheckbox = nil
+
+  -- Targets Option
+  self.TargetsAccordion = nil
+  self.TargetDisabledModeButton = nil
+  self.TargetButtonModeButton = nil
+  self.TargetAutoModeButton = nil
+  self.TargetConfirmModeButton = nil
 end
 
 function OptionsList:GetSections()
@@ -268,6 +279,14 @@ function OptionsList:GetSections()
       contentHeight = PVE_BATTLE_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetBattlesOptions(content)
+      end,
+    },
+    {
+      key = "targets",
+      title = "Targets",
+      contentHeight = TARGETS_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildTargetOptions(content)
       end,
     },
   }
@@ -378,6 +397,9 @@ function OptionsList:CreateSection(section, currentOffset)
     self.PetBattlesAccordion = accordion
   end
 
+  if section.key == "targets" then
+    self.TargetsAccordion = accordion
+  end
 
   return currentOffset
       + accordion:GetHeight()
@@ -1318,6 +1340,109 @@ function OptionsList:BuildPetBattlesOptions(parent)
   self:RefreshPetBattlesMode()
 end
 
+function OptionsList:BuildTargetOptions(parent)
+  local description =
+      parent:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  description:SetPoint(
+    "TOPLEFT",
+    parent,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  description:SetPoint(
+    "RIGHT",
+    parent,
+    "RIGHT",
+    0,
+    0
+  )
+
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    "Choose what happens when targeting an NPC with one or more saved teams."
+  )
+
+  self.TargetDisabledModeButton =
+      self:CreateRadioButton(
+        parent,
+        "Disabled",
+        "targetTeamLoadMode",
+        "off",
+        self.RefreshTargetTeamLoadMode
+      )
+
+  self.TargetDisabledModeButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.TargetButtonModeButton =
+      self:CreateRadioButton(
+        parent,
+        "Show Load Team button",
+        "targetTeamLoadMode",
+        "button",
+        self.RefreshTargetTeamLoadMode
+      )
+
+  self.TargetButtonModeButton:SetPoint(
+    "TOPLEFT",
+    self.TargetDisabledModeButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.TargetAutoModeButton =
+      self:CreateRadioButton(
+        parent,
+        "Load team automatically",
+        "targetTeamLoadMode",
+        "auto",
+        self.RefreshTargetTeamLoadMode
+      )
+
+  self.TargetAutoModeButton:SetPoint(
+    "TOPLEFT",
+    self.TargetButtonModeButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.TargetConfirmModeButton =
+      self:CreateRadioButton(
+        parent,
+        "Ask before loading team",
+        "targetTeamLoadMode",
+        "confirm",
+        self.RefreshTargetTeamLoadMode
+      )
+
+  self.TargetConfirmModeButton:SetPoint(
+    "TOPLEFT",
+    self.TargetAutoModeButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshTargetTeamLoadMode()
+end
+
 function OptionsList:RefreshDuplicateMode()
   if not self.SkipButton
       or not self.ReplaceButton
@@ -1547,6 +1672,39 @@ function OptionsList:RefreshPetBattlesMode()
       ) ~= false
     )
   end
+end
+
+function OptionsList:RefreshTargetTeamLoadMode()
+  if not self.TargetDisabledModeButton
+      or not self.TargetButtonModeButton
+      or not self.TargetAutoModeButton
+      or not self.TargetConfirmModeButton then
+    return
+  end
+
+  local mode =
+      addon.Settings:Get("targetTeamLoadMode")
+      or "off"
+
+  self.TargetDisabledModeButton:
+      SetChecked(
+        mode == "off"
+      )
+
+  self.TargetButtonModeButton:
+      SetChecked(
+        mode == "button"
+      )
+
+  self.TargetAutoModeButton:
+      SetChecked(
+        mode == "auto"
+      )
+
+  self.TargetConfirmModeButton:
+      SetChecked(
+        mode == "confirm"
+      )
 end
 
 function OptionsList:UpdateContentHeight()

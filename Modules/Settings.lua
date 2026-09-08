@@ -32,6 +32,7 @@ local DEFAULT_SETTINGS = {
   autoOpenNotesOnPvEBattle = false,
   autoOpenPetJournalAfterBattle = true,
   statusBarClearMode = "all",
+  targetTeamLoadMode = "off",
 }
 
 local function ApplyDefaults(defaults, target)

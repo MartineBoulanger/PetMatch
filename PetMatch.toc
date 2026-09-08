@@ -53,6 +53,7 @@ Services/BreedService.lua
 Services/PetTooltipService.lua
 Services/PetTypeFilterService.lua
 Services/TeamStatisticsService.lua
+Services/TargetTeamService.lua
 
 Core/API.lua
 Core/Blizzard.lua
@@ -111,12 +112,15 @@ UI/Dialogs/FillLevellingQueueDialog.lua
 UI/Dialogs/ImportLevellingQueueDialog.lua
 UI/Dialogs/ExportLevellingQueueDialog.lua
 UI/Dialogs/TeamStatisticsDialog.lua
+UI/Dialogs/TargetTeamConfirmDialog.lua
+UI/Dialogs/TargetTeamSelectDialog.lua
 
 UI/Actions/FolderContextMenu.lua
 UI/Actions/PetJournalToolbar.lua
 UI/Actions/RandomPetsButton.lua
 UI/Actions/SaveTeamButton.lua
 UI/Actions/TeamStatisticsMenu.lua
+UI/Actions/TargetTeamLoadButton.lua
 UI/Actions/TeamContextMenu.lua
 UI/Actions/TeamListControls.lua
 UI/Actions/UpdateTeamButton.lua

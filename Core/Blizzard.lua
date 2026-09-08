@@ -292,6 +292,9 @@ function Blizzard:IsCollectionsLoaded()
   return PetJournal ~= nil
 end
 
+--------------------------------------------------
+-- Pet Battle
+--------------------------------------------------
 local petBattleFrame = CreateFrame("Frame")
 petBattleFrame:RegisterEvent("PET_BATTLE_OPENING_START")
 petBattleFrame:RegisterEvent("PET_BATTLE_FINAL_ROUND")
@@ -313,6 +316,37 @@ petBattleFrame:SetScript(
   end
 )
 
+--------------------------------------------------
+-- Target changes
+--------------------------------------------------
+local targetFrame = CreateFrame("Frame")
+targetFrame:RegisterEvent("PLAYER_TARGET_CHANGED")
+targetFrame:SetScript(
+  "OnEvent",
+  function(_, event)
+    if event ~= "PLAYER_TARGET_CHANGED" then
+      return
+    end
+
+    local targetService = addon.Services.TargetTeam
+
+    if not targetService then
+      return
+    end
+
+    local result = targetService:ResolveCurrentTarget()
+
+    if not result.npcID then
+      return
+    end
+
+    targetService:HandleResolvedTarget(result)
+  end
+)
+
+--------------------------------------------------
+-- Addon loading
+--------------------------------------------------
 local frame = CreateFrame("Frame")
 frame:RegisterEvent("ADDON_LOADED")
 frame:SetScript(
