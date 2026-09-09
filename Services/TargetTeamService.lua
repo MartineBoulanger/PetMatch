@@ -216,6 +216,21 @@ function TargetTeamService:GetNPCIDFromUnit(unitToken)
     return nil
   end
 
+  ------------------------------------------------
+  -- Unit identity can be secret in Midnight.
+  --
+  -- Some modern targets expose secret identity
+  -- data. Target-based team loading is only
+  -- needed for older pet battle NPCs anyway.
+  ------------------------------------------------
+  if C_Secrets
+      and C_Secrets.ShouldUnitIdentityBeSecret
+      and C_Secrets.ShouldUnitIdentityBeSecret(
+        unitToken
+      ) then
+    return nil
+  end
+
   local guid = UnitGUID(unitToken)
 
   if type(guid) ~= "string" or guid == "" then

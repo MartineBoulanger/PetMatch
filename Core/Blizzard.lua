@@ -334,6 +334,23 @@ targetFrame:SetScript(
       return
     end
 
+    local mode =
+        addon.Settings:Get("targetTeamLoadMode")
+        or "off"
+
+    if mode == "off" then
+      local loadButton =
+          addon.UI
+          and addon.UI.Actions
+          and addon.UI.Actions.TargetTeamLoadButton
+
+      if loadButton then
+        loadButton:Hide()
+      end
+
+      return
+    end
+
     local result = targetService:ResolveCurrentTarget()
 
     if not result.npcID then
