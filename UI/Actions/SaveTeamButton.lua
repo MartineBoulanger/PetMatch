@@ -12,6 +12,18 @@ local function FindBattleButton()
       or _G.PetJournalFindBattle
 end
 
+local function ZoneTrackerToggle()
+  local frame = _G.PetTrackerTrackToggle
+
+  if type(frame) == "table"
+      and type(frame.IsShown) == "function"
+      and frame:IsShown() then
+    return frame
+  end
+
+  return nil
+end
+
 function SaveTeamButton:Create()
   if self.Frame then
     return self.Frame
@@ -20,9 +32,6 @@ function SaveTeamButton:Create()
   if not PetJournal then
     return nil
   end
-
-  local findBattleButton =
-      FindBattleButton()
 
   local button =
       CreateFrame(
@@ -42,17 +51,26 @@ function SaveTeamButton:Create()
     end
   )
 
+  button:Hide()
+
+  self.Frame = button
+  self:UpdateAnchor()
+  
+  return button
+end
+
+function SaveTeamButton:UpdateAnchor()
+  local button = self.Frame
+
+  if not button then
+    return
+  end
+
+  local findBattleButton = FindBattleButton()
+
   button:ClearAllPoints()
 
-  if findBattleButton then
-    button:SetPoint(
-      "RIGHT",
-      findBattleButton,
-      "LEFT",
-      -2,
-      0
-    )
-  else
+  if not findBattleButton then
     -- Veilige fallback als Blizzard de interne knopnaam wijzigt.
     button:SetPoint(
       "BOTTOMRIGHT",
@@ -62,22 +80,43 @@ function SaveTeamButton:Create()
       12
     )
 
-    addon.Logger:Warn(
-      "Find Battle button was not found; using fallback position"
-    )
+    if not self.FallbackUsed then
+      self.FallbackUsed = true
+
+      addon.Logger:Warn(
+        "Find Battle button was not found; using fallback position"
+      )
+    end
+
+    return
   end
 
-  button:Hide()
+  local zoneTrackerToggle = ZoneTrackerToggle()
 
-  self.Frame = button
-
-  return button
+  if zoneTrackerToggle then
+    button:SetPoint(
+      "RIGHT",
+      zoneTrackerToggle,
+      "LEFT",
+      -8,
+      1
+    )
+  else
+    button:SetPoint(
+      "RIGHT",
+      findBattleButton,
+      "LEFT",
+      -2,
+      0
+    )
+  end
 end
 
 function SaveTeamButton:Show()
   local button = self:Create()
 
   if button then
+    self:UpdateAnchor()
     button:Show()
   end
 end
