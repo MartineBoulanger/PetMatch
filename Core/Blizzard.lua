@@ -174,6 +174,88 @@ local function AutoOpenPetJournalAfterBattle()
   )
 end
 
+local function InitializePetCollectionButton()
+  local petCount = PetJournal and PetJournal.PetCount
+
+  if not petCount then
+    return
+  end
+
+  if petCount.PetMatchInitialized then
+    return
+  end
+
+  petCount.PetMatchInitialized = true
+
+  petCount:EnableMouse(true)
+
+  petCount:SetScript(
+    "OnMouseUp",
+    function(_, button)
+      if button ~= "LeftButton" then
+        return
+      end
+
+      local dialog = addon.UI
+          and addon.UI.Dialogs
+          and addon.UI.Dialogs.PetCollectionDialog
+
+      if not dialog then
+        return
+      end
+
+      dialog:Show()
+    end
+  )
+
+  petCount:HookScript(
+    "OnEnter",
+    function()
+      if petCount.Label then
+        petCount.Label:SetTextColor(
+          1,
+          0.82,
+          0
+        )
+      end
+
+      GameTooltip:SetOwner(
+        petCount,
+        "ANCHOR_RIGHT"
+      )
+
+      GameTooltip:SetText(
+        "Pet Collection"
+      )
+
+      GameTooltip:AddLine(
+        "Click to view your pet collection statistics.",
+        1,
+        1,
+        1,
+        true
+      )
+
+      GameTooltip:Show()
+    end
+  )
+
+  petCount:HookScript(
+    "OnLeave",
+    function()
+      if petCount.Label then
+        petCount.Label:SetTextColor(
+          1,
+          1,
+          1
+        )
+      end
+
+      GameTooltip:Hide()
+    end
+  )
+end
+
 function Blizzard:Initialize()
   if self.Hooked then
     return
@@ -200,6 +282,8 @@ function Blizzard:Initialize()
       addon.UI.Host:Update()
     end
   )
+
+  InitializePetCollectionButton()
 
   --------------------------------------------------
   -- Blizzard panel changes

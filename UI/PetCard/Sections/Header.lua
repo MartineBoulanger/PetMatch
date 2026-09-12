@@ -12,14 +12,7 @@ local ICON_BORDER_PADDING = 4
 -- local CIRCLE_MASK = "Interface\\Common\\RingBorder"
 local CIRCLE_MASK = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
 
-local PET_RARITY_COLORS = {
-  [1] = ITEM_QUALITY_COLORS[0],
-  [2] = ITEM_QUALITY_COLORS[1],
-  [3] = ITEM_QUALITY_COLORS[2],
-  [4] = ITEM_QUALITY_COLORS[3],
-  [5] = ITEM_QUALITY_COLORS[4],
-  [6] = ITEM_QUALITY_COLORS[5],
-}
+local PET_RARITY_COLORS = addon.Constants.PET_RARITY_COLORS
 
 local PET_FAMILY_ICONS = {
   [1] = "Interface\\Icons\\Pet_Type_Humanoid",

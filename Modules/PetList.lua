@@ -30,14 +30,7 @@ local COMPACT_NAME_SPACING       = 4
 
 local PET_LIST_TOP_OFFSET        = 4
 
-local PET_RARITY_COLORS          = {
-  [1] = ITEM_QUALITY_COLORS[0],
-  [2] = ITEM_QUALITY_COLORS[1],
-  [3] = ITEM_QUALITY_COLORS[2],
-  [4] = ITEM_QUALITY_COLORS[3],
-  [5] = ITEM_QUALITY_COLORS[4],
-  [6] = ITEM_QUALITY_COLORS[5]
-}
+local PET_RARITY_COLORS          = addon.Constants.PET_RARITY_COLORS
 
 local RANDOM_PET_ICON            = "Interface\\Icons\\INV_Misc_Dice_02"
 local LEVELING_PET_ICON          = "Interface\\AddOns\\PetMatch\\Media\\levelingicon"

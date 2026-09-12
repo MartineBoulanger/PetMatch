@@ -6,34 +6,10 @@ LevellingQueueRow.__index = LevellingQueueRow
 local ROW_HEIGHT = 48
 local ICON_SIZE = 36
 
-local PET_RARITY_COLORS = {
-  [1] = ITEM_QUALITY_COLORS[0],
-  [2] = ITEM_QUALITY_COLORS[1],
-  [3] = ITEM_QUALITY_COLORS[2],
-  [4] = ITEM_QUALITY_COLORS[3],
-  [5] = ITEM_QUALITY_COLORS[4],
-  [6] = ITEM_QUALITY_COLORS[5],
-}
-
-local PET_FAMILY_ICONS = {
-  [1]  = "Interface\\Icons\\Pet_Type_Humanoid",
-  [2]  = "Interface\\Icons\\Pet_Type_Dragon",
-  [3]  = "Interface\\Icons\\Pet_Type_Flying",
-  [4]  = "Interface\\Icons\\Pet_Type_Undead",
-  [5]  = "Interface\\Icons\\Pet_Type_Critter",
-  [6]  = "Interface\\Icons\\Pet_Type_Magical",
-  [7]  = "Interface\\Icons\\Pet_Type_Elemental",
-  [8]  = "Interface\\Icons\\Pet_Type_Beast",
-  [9]  = "Interface\\Icons\\Pet_Type_Water",
-  [10] = "Interface\\Icons\\Pet_Type_Mechanical",
-}
-
 local function GetQualityColor(quality)
   quality = tonumber(quality) or 0
 
-  local color =
-      PET_RARITY_COLORS
-      and PET_RARITY_COLORS[quality]
+  local color = addon.Constants.PET_RARITY_COLORS[quality]
 
   if not color then
     return 1, 1, 1
@@ -672,11 +648,7 @@ function LevellingQueueRow:SetPet(item)
   end
 
   local texture =
-      PET_FAMILY_ICONS[
-      tonumber(
-        pet.petType
-      )
-      ]
+      addon.Constants.PET_FAMILY_ICONS[tonumber(pet.petType)]
 
   if texture then
     self.Family:SetTexture(texture)

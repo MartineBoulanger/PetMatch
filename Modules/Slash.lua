@@ -16,18 +16,6 @@ commands.version = function()
   )
 end
 
-commands.modules = function()
-  Print(
-    "Loaded modules:"
-  )
-  for _, module in ipairs(addon.Modules) do
-    Print(
-      "-",
-      module.Name
-    )
-  end
-end
-
 commands.database = function()
   if addon.DB then
     Print(
@@ -66,131 +54,34 @@ commands.settings = function()
   )
 end
 
-commands.pets = function()
-  local pets =
-      addon.Services.PetJournal:GetAll()
-  local count = 0
-  for _, pet in pairs(pets) do
-    count = count + 1
-
-    Print(
-      pet.name,
-      "Level",
-      pet.level
-    )
-  end
-  Print(
-    "Pets found:",
-    count
-  )
+commands.stats = function()
+  DevTools_Dump({
+    overview = addon.Services.PetCollectionStats:GetOverview(),
+    -- families = addon.Services.PetCollectionStats:GetFamilyStats(),
+    -- sources = addon.Services.PetCollectionStats:GetSourceStats(),
+    -- expansions = addon.Services.PetCollectionStats:GetExpansionStats(),
+    breeds = addon.Services.PetCollectionStats:GetBreedStats()
+  })
 end
 
-commands.listpets = function()
-  local pets =
-      addon.Services.PetJournal:GetAll()
-  local count = 0
-  for guid, pet in pairs(pets) do
-    count = count + 1
-    if count <= 10 then
-      Print(
-        pet.name,
-        guid
-      )
-    end
-  end
-  Print(
-    "Showing first 10 pets"
-  )
-end
+commands.breeds = function(msg)
+  -- DevTools_Dump(
+  --   addon.Services.Breed:GetPossibleBreeds(39)
+  -- )
+  local speciesID = tonumber(msg)
 
-commands.queue = function()
-  local importText = [[
-  PMQ1
-  species=1125;breed=3;level=7;rarity=4;type=7
-  species=1125;breed=3;level=18;rarity=4;type=7
-  species=1125;breed=3;level=1;rarity=4;type=7
-  ]]
-
-  local preview,
-  errorMessage =
-      addon.Services.ImportExport:
-      PrepareLevellingQueueImport(
-        importText
-      )
-
-  if not preview then
-    Print(
-      "Import error:",
-      errorMessage
+  if not speciesID then
+    print(
+      "Usage: /pmbreedtest <speciesID>"
     )
     return
   end
 
-  Print(
-    "Total:",
-    preview.total,
-    "Addable:",
-    preview.addable,
-    "Unavailable:",
-    preview.unavailable,
-    "Invalid:",
-    preview.invalid
-  )
-
-  for index, item in ipairs(
-    preview.pets
-  ) do
-    Print(
-      index,
-      item.status,
-      item.petGUID or "nil",
-      item.pet and item.pet.level or "nil",
-      item.pet and item.pet.quality or "nil"
+  DevTools_Dump(
+    addon.Services.Breed:
+    GetPossibleBreeds(
+      speciesID
     )
-  end
-end
-
-commands.rating = function()
-  local team = addon.Services.Team:GetSelected()
-
-  if not team then
-    Print("PetMatch: no team selected")
-    return
-  end
-
-  local stats = addon.Services.TeamStatistics:EnsureStats(team)
-
-  stats.pvp.wins = 2
-  stats.pvp.losses = 1
-  stats.pvp.draws = 1
-
-  Print(
-    "PetMatch: test stats added to "
-    .. tostring(team.name)
-  )
-end
-
-commands.battletest = function()
-  local team =
-      addon.Services.Team:GetActive()
-
-  if not team then
-    Print(
-      "[PetMatch]: no active team."
-    )
-
-    return
-  end
-
-  addon.Services.TeamStatistics:
-      RecordResult(
-        team,
-        "pvp",
-        "draw"
-      )
-
-  Print(
-    "[PetMatch]: test draw added."
   )
 end
 
@@ -215,10 +106,7 @@ function Slash:Initialize()
         unpack(args)
       )
     else
-      Print(
-        "Commands:",
-        "version, modules, database, debug, settings, pets, listpets"
-      )
+      Print("Command unknown")
     end
   end
 end

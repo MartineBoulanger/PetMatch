@@ -12,21 +12,8 @@ local INVALID_BREEDS = {
   ["ERR-PID"] = true,
 }
 
-local BREED_NAMES = {
-  [3] = "B/B",
-  [4] = "P/P",
-  [5] = "S/S",
-  [6] = "H/H",
-  [7] = "H/P",
-  [8] = "P/S",
-  [9] = "H/S",
-  [10] = "P/B",
-  [11] = "S/B",
-  [12] = "H/B",
-}
-
 local BREED_IDS = {}
-for breedID, breedName in pairs(BREED_NAMES) do
+for breedID, breedName in pairs(addon.Constants.PET_BREED_NAMES) do
   BREED_IDS[breedName] = breedID
 end
 
@@ -63,7 +50,7 @@ function BreedService:GetJournalBreedID(petGUID)
 end
 
 function BreedService:GetBreedName(breedID)
-  return BREED_NAMES[tonumber(breedID)]
+  return addon.Constants.PET_BREED_NAMES[tonumber(breedID)]
 end
 
 function BreedService:GetPossibleBreeds(

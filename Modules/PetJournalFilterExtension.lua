@@ -50,13 +50,6 @@ local RARITIES = {
   "Rare",
 }
 
-local RARITY_NAMES = {
-  [1] = "Poor",
-  [2] = "Common",
-  [3] = "Uncommon",
-  [4] = "Rare",
-}
-
 local BREEDS = {
   "B/B",
   "H/B",
@@ -413,7 +406,7 @@ local function NormalizePetTypeSearch(value)
 end
 
 local function GetSearchRarityName(rarity)
-  local name = RARITY_NAMES[tonumber(rarity)]
+  local name = addon.Constants.PET_RARITY_NAMES[tonumber(rarity)]
 
   if not name then
     return nil
@@ -3122,7 +3115,7 @@ function FilterExtension:MatchesPet(
             petID
           )
 
-      rarityName = RARITY_NAMES[tonumber(rarity)]
+      rarityName = addon.Constants.PET_RARITY_NAMES[tonumber(rarity)]
     end
 
     if not MatchesFilter(
