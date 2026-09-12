@@ -674,6 +674,10 @@ function LevellingQueuePanel:HandleExternalDrop()
 end
 
 function LevellingQueuePanel:RefreshToolbarItems()
+  if InCombatLockdown() then
+    return
+  end
+
   if not self.ToolbarButtons then
     return
   end

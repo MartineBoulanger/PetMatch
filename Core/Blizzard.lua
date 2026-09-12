@@ -446,6 +446,24 @@ targetFrame:SetScript(
 )
 
 --------------------------------------------------
+-- Combat
+--------------------------------------------------
+local combatFrame = CreateFrame("Frame")
+combatFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+combatFrame:SetScript(
+  "OnEvent",
+  function(_, event)
+    if event ~= "PLAYER_REGEN_DISABLED" then
+      return
+    end
+
+    if PetJournal and PetJournal:IsShown() then
+      HideUIPanel(CollectionsJournal)
+    end
+  end
+)
+
+--------------------------------------------------
 -- Addon loading
 --------------------------------------------------
 local frame = CreateFrame("Frame")
