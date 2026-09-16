@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local LevellingQueuePanel = {}
 
 local TOOLBAR_HEIGHT = 32
@@ -13,7 +14,7 @@ local MENU_TEMPLATES = {
 
 local MENU_BUTTON_WIDTH = 120
 local MENU_BUTTON_HEIGHT = 22
-local MENU_BUTTON_TEXT = "Queue"
+local MENU_BUTTON_TEXT = L["QUEUE"]
 
 local SORT_BUTTON_WIDTH = 55
 local SORT_BUTTON_HEIGHT = 22
@@ -28,23 +29,23 @@ local FOOTER_GAP = 0
 local LEVELLING_ITEMS = {
   {
     itemID = 98114,
-    name = "Pet Treat",
+    name = L["PET_TREAT"],
   },
   {
     itemID = 98112,
-    name = "Lesser Pet Treat",
+    name = L["LESSER_PET_TREAT"],
   },
   {
     itemID = 122457,
-    name = "Ultimate Battle-Training Stone",
+    name = L["ULTIMATE_STONE"],
   },
   {
     itemID = 116429,
-    name = "Flawless Battle-Training Stone",
+    name = L["FLAWLESS_STONE"],
   },
   {
     itemID = 98715,
-    name = "Marked Flawless Battle-Stone",
+    name = L["MARKED_STONE"],
   },
 }
 
@@ -152,14 +153,14 @@ function LevellingQueuePanel:PopulateMenu(root)
   local service = addon.Services.LevellingQueue
 
   root:CreateTitle(
-    "Levelling Queue"
+    L["LEVELLING_QUEUE"]
   )
 
   --------------------------------------------------
   -- Fill
   --------------------------------------------------
   local fill = root:CreateButton(
-    "Add All Levelling Pets",
+    L["LEVELLING_PET_ALL"],
     function()
       addon.UI.Dialogs.FillLevellingQueueDialog:Show()
     end
@@ -175,7 +176,7 @@ function LevellingQueuePanel:PopulateMenu(root)
   -- Import
   --------------------------------------------------
   root:CreateButton(
-    "Import Queue",
+    L["QUEUE_IMPORT"],
     function()
       addon.UI.Dialogs.ImportLevellingQueueDialog:Show()
     end
@@ -186,7 +187,7 @@ function LevellingQueuePanel:PopulateMenu(root)
   --------------------------------------------------
   local export =
       root:CreateButton(
-        "Export Queue",
+        L["QUEUE_EXPORT"],
         function()
           addon.UI.Dialogs.ExportLevellingQueueDialog:Show()
         end
@@ -203,7 +204,7 @@ function LevellingQueuePanel:PopulateMenu(root)
   --------------------------------------------------
   local clear =
       root:CreateButton(
-        "Clear Levelling Queue",
+        L["CLEAR_QUEUE"],
         function()
           addon.UI.Dialogs.ClearLevellingQueueDialog:Show()
         end
@@ -235,7 +236,7 @@ function LevellingQueuePanel:CreateMenuButton(parent, text, width, height, popul
 
   if not dropdown then
     addon.Logger:Warn(
-      "Unable to create menu button."
+      L["UNABLE_CREATING_MENU"]
     )
 
     return nil
@@ -271,20 +272,20 @@ function LevellingQueuePanel:CreateMenuButton(parent, text, width, height, popul
 end
 
 function LevellingQueuePanel:PopulateSortMenu(root)
-  root:CreateTitle("Sort Levelling Queue")
+  root:CreateTitle(L["SORT_QUEUE"])
 
   --------------------------------------------------
   -- Level
   --------------------------------------------------
   root:CreateButton(
-    "Highest Level First",
+    L["HIGHEST_LEVEL_FIRST"],
     function()
       self:SortQueue("levelHigh")
     end
   )
 
   root:CreateButton(
-    "Lowest Level First",
+    L["LOWEST_LEVEL_FIRST"],
     function()
       self:SortQueue("levelLow")
     end
@@ -296,14 +297,14 @@ function LevellingQueuePanel:PopulateSortMenu(root)
   -- Rarity
   --------------------------------------------------
   root:CreateButton(
-    "Highest Rarity First",
+    L["HIGHEST_RARITY_FIRST"],
     function()
       self:SortQueue("rarityHigh")
     end
   )
 
   root:CreateButton(
-    "Lowest Rarity First",
+    L["LOWEST_RARITY_FIRST"],
     function()
       self:SortQueue("rarityLow")
     end
@@ -315,7 +316,7 @@ function LevellingQueuePanel:PopulateSortMenu(root)
   -- Pet type
   --------------------------------------------------
   root:CreateButton(
-    "Pet Type",
+    L["PET_TYPE"],
     function()
       self:SortQueue("petType")
     end
@@ -330,7 +331,7 @@ function LevellingQueuePanel:CreateSortButton()
   local button =
       self:CreateMenuButton(
         self.Toolbar,
-        "Sort",
+        L["SORT"],
         SORT_BUTTON_WIDTH,
         SORT_BUTTON_HEIGHT,
         function(rootDescription)
@@ -387,7 +388,7 @@ function LevellingQueuePanel:CreateFooter(parent)
   local menuButton =
       self:CreateMenuButton(
         self.Footer,
-        "Queue",
+        L["QUEUE"],
         MENU_BUTTON_WIDTH,
         MENU_BUTTON_HEIGHT,
         function(rootDescription)
@@ -603,7 +604,7 @@ function LevellingQueuePanel:Create(parent)
 
   self.EmptyText:SetWidth(200)
   self.EmptyText:SetJustifyH("CENTER")
-  self.EmptyText:SetText("No pets are currently in the levelling queue.")
+  self.EmptyText:SetText(L["NO_PETS_IN_QUEUE"])
 
   self.EmptyText:SetTextColor(
     0.70,
@@ -714,11 +715,11 @@ function LevellingQueuePanel:Refresh()
 
   if count == 1 then
     self.Count:SetText(
-      "1 pet"
+      L["ONE_PET"]
     )
   else
     self.Count:SetFormattedText(
-      "%d pets",
+      "%d " .. L["PETS"],
       count
     )
   end

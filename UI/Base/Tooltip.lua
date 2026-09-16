@@ -193,10 +193,6 @@ local function AcquireRow()
 
   row.CustomHeight = nil
 
-  -- if row.AbilityGrid then
-  --   row.AbilityGrid:Hide()
-  -- end
-
   return row
 end
 
@@ -213,20 +209,13 @@ local function ReleaseRows()
     row.LeftText:SetText("")
     row.RightText:SetText("")
 
-    -- if row.AbilityGrid then
-    --   row.AbilityGrid:Hide()
-    -- end
-
     row.CustomHeight = nil
   end
 
   frame.ActiveRowCount = 0
 end
 
-local function ApplyColor(
-    fontString,
-    color
-)
+local function ApplyColor(fontString, color)
   if not color then
     return
   end
@@ -251,10 +240,7 @@ function Tooltip:SetWidth(width)
   )
 end
 
-function Tooltip:SetTitle(
-    text,
-    color
-)
+function Tooltip:SetTitle(text, color)
   local frame = GetTooltipFrame()
 
   frame.Title:SetText(text or "")
@@ -272,10 +258,7 @@ function Tooltip:SetTitle(
   )
 end
 
-function Tooltip:AddLine(
-    text,
-    color
-)
+function Tooltip:AddLine(text, color)
   local row = AcquireRow()
 
   row.LeftText:SetText(
@@ -313,12 +296,7 @@ function Tooltip:AddLine(
   return row
 end
 
-function Tooltip:AddDoubleLine(
-    leftText,
-    rightText,
-    leftColor,
-    rightColor
-)
+function Tooltip:AddDoubleLine(leftText, rightText, leftColor, rightColor)
   local row = AcquireRow()
 
   row.LeftText:SetText(
@@ -381,33 +359,6 @@ function Tooltip:AddAbilityGrid(slots)
   row.RightText:Hide()
   row.Icon:Hide()
 
-  -- if not row.AbilityGrid then
-  --   row.AbilityGrid =
-  --       addon.UI.Base.AbilityGrid:Create(row)
-
-  --   row.AbilityGrid.Frame:SetPoint(
-  --     "TOPLEFT",
-  --     row,
-  --     "TOPLEFT",
-  --     0,
-  --     0
-  --   )
-
-  --   row.AbilityGrid.Frame:SetPoint(
-  --     "TOPRIGHT",
-  --     row,
-  --     "TOPRIGHT",
-  --     0,
-  --     0
-  --   )
-  -- end
-
-  -- row.AbilityGrid:SetAbilities(slots)
-  -- row.AbilityGrid:Show()
-
-  -- row.CustomHeight =
-  --     row.AbilityGrid.Frame:GetHeight()
-
   return row
 end
 
@@ -420,10 +371,7 @@ function Tooltip:Clear()
   ReleaseRows()
 end
 
-function Tooltip:SetOwner(
-    owner,
-    anchor
-)
+function Tooltip:SetOwner(owner, anchor)
   local frame = GetTooltipFrame()
 
   frame.Owner = owner

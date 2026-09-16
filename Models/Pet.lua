@@ -1,5 +1,7 @@
 local _, addon = ...
 
+local L = addon.L
+
 local Pet = {}
 
 setmetatable(
@@ -18,7 +20,7 @@ function Pet:Create(data)
   pet.breedID = data.breedID
   pet.breedName = data.breedName
   pet.abilities = data.abilities or {}
-  pet.name = data.name or "Unknown"
+  pet.name = data.name or L["UNKNOWN"]
   pet.customName = data.customName
   pet.speciesName = data.speciesName
   pet.icon = data.icon

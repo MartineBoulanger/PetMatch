@@ -1,10 +1,12 @@
 local _, addon = ...
 
 addon.Profiles = addon.Profiles or {}
+
+local L = addon.L
 local Profiles = {}
 
 local DEFAULT_PROFILE = {
-  name = "Default",
+  name = L["DEFAULT"],
   created = 0,
   teams = {},
   tags = {},
@@ -23,7 +25,7 @@ function Profiles:GetCurrentProfile()
   local profileName =
       addon.DB.profileKeys[UnitGUID("player")]
   if not profileName then
-    profileName = "Default"
+    profileName = L["DEFAULT"]
     addon.DB.profileKeys[UnitGUID("player")] = profileName
   end
   if not addon.DB.profiles[profileName] then
@@ -49,7 +51,7 @@ function Profiles:Create(name)
 end
 
 function Profiles:Delete(name)
-  if name == "Default" then
+  if name == L["DEFAULT"] then
     return false
   end
   addon.DB.profiles[name] = nil

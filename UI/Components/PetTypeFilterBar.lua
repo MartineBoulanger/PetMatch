@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local PetTypeFilterBar = {}
 PetTypeFilterBar.__index = PetTypeFilterBar
 
@@ -14,57 +15,28 @@ local TYPE_BUTTON_SIZE = 24
 local TYPE_BUTTON_SPACING = 1
 
 --------------------------------------------------
--- Pet types
---------------------------------------------------
-local PET_FAMILY_ICONS = {
-  [1] = "Interface\\Icons\\Pet_Type_Humanoid",
-  [2] = "Interface\\Icons\\Pet_Type_Dragon",
-  [3] = "Interface\\Icons\\Pet_Type_Flying",
-  [4] = "Interface\\Icons\\Pet_Type_Undead",
-  [5] = "Interface\\Icons\\Pet_Type_Critter",
-  [6] = "Interface\\Icons\\Pet_Type_Magical",
-  [7] = "Interface\\Icons\\Pet_Type_Elemental",
-  [8] = "Interface\\Icons\\Pet_Type_Beast",
-  [9] = "Interface\\Icons\\Pet_Type_Water",
-  [10] = "Interface\\Icons\\Pet_Type_Mechanical",
-}
-
-local PET_TYPE_NAMES = {
-  [1] = _G.BATTLE_PET_NAME_1 or "Humanoid",
-  [2] = _G.BATTLE_PET_NAME_2 or "Dragonkin",
-  [3] = _G.BATTLE_PET_NAME_3 or "Flying",
-  [4] = _G.BATTLE_PET_NAME_4 or "Undead",
-  [5] = _G.BATTLE_PET_NAME_5 or "Critter",
-  [6] = _G.BATTLE_PET_NAME_6 or "Magic",
-  [7] = _G.BATTLE_PET_NAME_7 or "Elemental",
-  [8] = _G.BATTLE_PET_NAME_8 or "Beast",
-  [9] = _G.BATTLE_PET_NAME_9 or "Aquatic",
-  [10] = _G.BATTLE_PET_NAME_10 or "Mechanical",
-}
-
---------------------------------------------------
 -- Modes
 --------------------------------------------------
 local FILTER_MODES = {
   {
     key = "petType",
-    label = "Pet Families",
+    label = L["PET_FAMILIES"],
   },
   {
     key = "strongVs",
-    label = "Strong Vs",
+    label = L["STRONG_VS"],
   },
   {
     key = "weakVs",
-    label = "Weak Vs",
+    label = L["WEAK_VS"],
   },
   {
     key = "takesMoreFrom",
-    label = "Takes More From",
+    label = L["TAKES_MORE"],
   },
   {
     key = "takesLessFrom",
-    label = "Takes Less From",
+    label = L["TAKES_LESS"],
   },
 }
 
@@ -84,7 +56,7 @@ local function GetModeLabel(mode)
     end
   end
 
-  return "Pet Families"
+  return L["PET_FAMILIES"]
 end
 
 --------------------------------------------------
@@ -232,11 +204,11 @@ local function CreateLevelButton(instance)
       )
 
       GameTooltip:SetText(
-        "Level 25"
+        L["LEVEL_25"]
       )
 
       GameTooltip:AddLine(
-        "Show only level 25 Battle Pets.",
+        L["SHOW_LEVEL_25"],
         1,
         1,
         1,
@@ -327,7 +299,7 @@ local function CreatePetTypeButton(instance, petType)
   )
 
   button.Icon:SetTexture(
-    PET_FAMILY_ICONS[
+    addon.Constants.PET_FAMILY_ICONS[
     petType
     ]
   )
@@ -419,14 +391,12 @@ local function CreatePetTypeButton(instance, petType)
       )
 
       GameTooltip:SetText(
-        PET_TYPE_NAMES[
-        self.PetType
-        ]
+        addon.Constants.PET_FAMILY_NAMES[self.PetType]
       )
 
       if mode == "petType" then
         GameTooltip:AddLine(
-          "Show pets of this family.",
+          L["SHOW_FAMILY_PETS"],
           1,
           1,
           1,
@@ -434,7 +404,7 @@ local function CreatePetTypeButton(instance, petType)
         )
       elseif mode == "strongVs" then
         GameTooltip:AddLine(
-          "Show pet families whose attacks are strong against this family.",
+          L["SHOW_STRONG_VS"],
           1,
           1,
           1,
@@ -442,7 +412,7 @@ local function CreatePetTypeButton(instance, petType)
         )
       elseif mode == "weakVs" then
         GameTooltip:AddLine(
-          "Show pet families whose attacks are weak against this family.",
+          L["SHOW_WEAK_VS"],
           1,
           1,
           1,
@@ -450,7 +420,7 @@ local function CreatePetTypeButton(instance, petType)
         )
       elseif mode == "takesMoreFrom" then
         GameTooltip:AddLine(
-          "Show pet families that take increased damage from this family.",
+          L["SHOW_TAKES_MORE"],
           1,
           1,
           1,
@@ -458,7 +428,7 @@ local function CreatePetTypeButton(instance, petType)
         )
       elseif mode == "takesLessFrom" then
         GameTooltip:AddLine(
-          "Show pet families that take reduced damage from this family.",
+          L["SHOW_TAKES_LESS"],
           1,
           1,
           1,
@@ -523,7 +493,7 @@ local function CreateModeDropdown(instance)
   end
 
   dropdown:SetDefaultText(
-    "Pet Type"
+    L["PET_TYPE"]
   )
 
   dropdown:SetupMenu(
@@ -559,7 +529,7 @@ end
 function PetTypeFilterBar:Create(parent)
   assert(
     parent,
-    "PetTypeFilterBar requires a parent"
+    L["PARENT_PET_FILTER_ERROR"]
   )
 
   local frame =

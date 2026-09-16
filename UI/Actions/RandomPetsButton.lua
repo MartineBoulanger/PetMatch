@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local RandomPetsButton = {}
 
 local BUTTON_SIZE = 24
@@ -87,7 +88,7 @@ local function GetRandomPets()
   local petService = addon.Services.PetJournal
 
   if not petService then
-    return nil, "Pet Journal service is unavailable"
+    return nil, L["JOURNAL_ERROR"]
   end
 
   petService:EnsureIndex()
@@ -95,7 +96,7 @@ local function GetRandomPets()
   local cache = petService:GetAll()
 
   if type(cache) ~= "table" then
-    return nil, "Pet Journal cache is unavailable"
+    return nil, L["JOURNAL_ERROR"]
   end
 
   local candidates = {}
@@ -109,7 +110,7 @@ local function GetRandomPets()
   end
 
   if #candidates < 3 then
-    return nil, "You need at least 3 owned battle pets"
+    return nil, L["NEED_3_PETS"]
   end
 
   for index = 1, 3 do
@@ -129,7 +130,7 @@ end
 function RandomPetsButton:LoadRandomPets()
   if C_PetBattles.IsInBattle() then
     addon.Logger:Warn(
-      "Cannot change battle pets during a pet battle"
+      L["CANNOT_CHANGE"]
     )
 
     return false
@@ -137,7 +138,7 @@ function RandomPetsButton:LoadRandomPets()
 
   if InCombatLockdown() then
     addon.Logger:Warn(
-      "Cannot change battle pets during combat"
+      L["CANNOT_SWITCH"]
     )
 
     return false
@@ -148,7 +149,7 @@ function RandomPetsButton:LoadRandomPets()
   if not pets then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to choose random pets"
+      or L["UNABLE_RANDOM_PET"]
     )
 
     return false
@@ -166,7 +167,7 @@ function RandomPetsButton:LoadRandomPets()
   if not success then
     addon.Logger:Warn(
       loadError
-      or "Unable to load random pets"
+      or L["UNABLE_LOAD_PET"]
     )
 
     return false

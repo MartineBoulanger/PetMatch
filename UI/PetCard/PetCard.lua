@@ -2,6 +2,8 @@ local _, addon = ...
 
 addon.UI.PetCard = addon.UI.PetCard or {}
 
+local L = addon.L
+
 local PetCard = {}
 PetCard.__index = PetCard
 
@@ -11,7 +13,7 @@ local CONTENT_TOP_SPACING = 0
 local SECTION_SPACING = 8
 
 function PetCard:Create(parent)
-  assert(parent, "PetCard requires a parent frame")
+  assert(parent, L["PARENT_PET_CARD"])
 
   local instance = setmetatable({}, PetCard)
 
@@ -29,9 +31,9 @@ function PetCard:Create(parent)
   --------------------------------------------------
   if instance.Frame.TitleContainer
       and instance.Frame.TitleContainer.TitleText then
-    instance.Frame.TitleContainer.TitleText:SetText("Pet Details")
+    instance.Frame.TitleContainer.TitleText:SetText(L["PET_DETAILS"])
   elseif type(instance.Frame.SetTitle) == "function" then
-    instance.Frame:SetTitle("Pet Details")
+    instance.Frame:SetTitle(L["PET_DETAILS"])
   end
 
   --------------------------------------------------
@@ -136,7 +138,7 @@ end
 
 function PetCard:SetCloseHandler(handler)
   if handler ~= nil and type(handler) ~= "function" then
-    error("PetCard: SetCloseHandler requires a function or nil.")
+    error(L["PET_CARD_ERROR"])
   end
 
   self.CloseHandler = handler

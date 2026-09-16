@@ -11,7 +11,7 @@ function ScrollBox:Create(parent, options)
   local scrollBarWidth = options.scrollBarWidth or 8
 
   --------------------------------------------------
-  -- Container = ALLEEN content area
+  -- Container
   --------------------------------------------------
   local container = CreateFrame(
     "Frame",

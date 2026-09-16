@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local Dialog = {}
 Dialog.__index = Dialog
 
@@ -144,7 +145,7 @@ function Dialog:Create(options)
   if instance.ShowFooter then
     instance:CreateFooter()
   end
-  
+
   instance:CreateCloseButton(options)
 
   instance.Frame:Hide()
@@ -584,7 +585,7 @@ function Dialog:AddFooterButton(options)
   if not self.ShowFooter
       or not self.Footer then
     error(
-      "Cannot add a footer button to a Dialog with showFooter = false."
+      L["FOOTER_ERROR"]
     )
   end
 
@@ -646,7 +647,7 @@ function Dialog:AddAcceptButton(options)
       self:AddFooterButton({
         text =
             options.text
-            or "Accept",
+            or L["ACCEPT"],
 
         width =
             options.width
@@ -671,7 +672,7 @@ function Dialog:AddExtraButton(options)
       self:AddFooterButton({
         text =
             options.text
-            or "Extra",
+            or L["EXTRA"],
 
         width =
             options.width
@@ -696,7 +697,7 @@ function Dialog:AddCancelButton(options)
       self:AddFooterButton({
         text =
             options.text
-            or "Cancel",
+            or L["CANCEL"],
 
         width =
             options.width

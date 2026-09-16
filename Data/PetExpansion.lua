@@ -85,10 +85,7 @@ local EXPANSION_OUTLIERS = {
   [4816] = 11
 }
 
-local function FindExpansion(
-    speciesID,
-    expansionID
-)
+local function FindExpansion(speciesID, expansionID)
   local range =
       EXPANSION_RANGES[expansionID]
 
@@ -100,29 +97,20 @@ local function FindExpansion(
   local lastSpeciesID = range[2]
 
   if speciesID < firstSpeciesID then
-    return FindExpansion(
-      speciesID,
-      expansionID - 1
-    )
+    return FindExpansion(speciesID, expansionID - 1)
   end
 
   if speciesID > lastSpeciesID then
-    return FindExpansion(
-      speciesID,
-      expansionID + 1
-    )
+    return FindExpansion(speciesID, expansionID + 1)
   end
 
   return expansionID
 end
 
-function PetExpansion:GetExpansionID(
-    speciesID
-)
+function PetExpansion:GetExpansionID(speciesID)
   speciesID = tonumber(speciesID)
 
-  if not speciesID
-      or speciesID <= 0 then
+  if not speciesID or speciesID <= 0 then
     return nil
   end
 
@@ -133,15 +121,10 @@ function PetExpansion:GetExpansionID(
     return outlierExpansion
   end
 
-  return FindExpansion(
-    speciesID,
-    4
-  )
+  return FindExpansion(speciesID, 4)
 end
 
-function PetExpansion:GetExpansionNameByID(
-    expansionID
-)
+function PetExpansion:GetExpansionNameByID(expansionID)
   expansionID = tonumber(expansionID)
 
   if expansionID == nil then
@@ -149,36 +132,25 @@ function PetExpansion:GetExpansionNameByID(
   end
 
   local name =
-      _G[
-      "EXPANSION_NAME"
-      .. expansionID
-      ]
+      _G["EXPANSION_NAME" .. expansionID]
 
-  if type(name) ~= "string"
-      or name == "" then
+  if type(name) ~= "string" or name == "" then
     return nil
   end
 
   return name
 end
 
-function PetExpansion:GetExpansionName(
-    speciesID
-)
+function PetExpansion:GetExpansionName(speciesID)
   local expansionID =
-      self:GetExpansionID(
-        speciesID
-      )
+      self:GetExpansionID(speciesID)
 
   if expansionID == nil then
     return nil
   end
 
   local expansionName =
-      _G[
-      "EXPANSION_NAME"
-      .. expansionID
-      ]
+      _G["EXPANSION_NAME" .. expansionID]
 
   if type(expansionName) ~= "string"
       or expansionName == "" then

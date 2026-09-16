@@ -13,19 +13,6 @@ local CURSOR_OFFSET_Y = 8
 
 local DEFAULT_BORDER_COLOR = { 0.32, 0.32, 0.32, 1, }
 
-local PET_FAMILY_ICONS = {
-  [1] = "Interface\\Icons\\Pet_Type_Humanoid",
-  [2] = "Interface\\Icons\\Pet_Type_Dragon",
-  [3] = "Interface\\Icons\\Pet_Type_Flying",
-  [4] = "Interface\\Icons\\Pet_Type_Undead",
-  [5] = "Interface\\Icons\\Pet_Type_Critter",
-  [6] = "Interface\\Icons\\Pet_Type_Magical",
-  [7] = "Interface\\Icons\\Pet_Type_Elemental",
-  [8] = "Interface\\Icons\\Pet_Type_Beast",
-  [9] = "Interface\\Icons\\Pet_Type_Water",
-  [10] = "Interface\\Icons\\Pet_Type_Mechanical",
-}
-
 local function PositionTooltipAtCursor(tooltip)
   if not tooltip then
     return
@@ -310,7 +297,7 @@ function AbilityCell:SetAbility(ability)
   --------------------------------------------------
   local abilityID = ability.abilityID or ability.id
   local petType = GetAbilityPetType(abilityID)
-  local familyTexture = petType and PET_FAMILY_ICONS[petType]
+  local familyTexture = petType and addon.Constants.PET_FAMILY_ICONS[petType]
 
   if familyTexture then
     self.FamilyBackground:SetTexture(familyTexture)

@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local OptionsPanel = {}
 
 function OptionsPanel:Create(parent)
@@ -67,7 +68,7 @@ function OptionsPanel:CreateGeneralSection()
     -18
   )
 
-  title:SetText("General")
+  title:SetText(L["GENERAL"])
 
   self:CreateDuplicateSection(title)
 end
@@ -88,7 +89,7 @@ function OptionsPanel:CreateDuplicateSection(anchor)
     -20
   )
 
-  title:SetText("Duplicate Teams")
+  title:SetText(L["DUPLICATE_TEAMS"])
 
   self.SkipButton =
       CreateFrame(
@@ -107,7 +108,7 @@ function OptionsPanel:CreateDuplicateSection(anchor)
   )
 
   self.SkipButton.text:SetText(
-    "Skip existing teams"
+    L["SKIP_EXISTING"]
   )
 
   self.SkipButton:SetScript(
@@ -134,7 +135,7 @@ function OptionsPanel:CreateDuplicateSection(anchor)
   )
 
   self.ReplaceButton.text:SetText(
-    "Replace existing teams"
+    L["REPLACE_EXISTING"]
   )
 
   self.ReplaceButton:SetScript(
@@ -161,7 +162,7 @@ function OptionsPanel:CreateDuplicateSection(anchor)
   )
 
   self.KeepButton.text:SetText(
-    "Keep both"
+    L["KEEP_BOTH"]
   )
 
   self.KeepButton:SetScript(

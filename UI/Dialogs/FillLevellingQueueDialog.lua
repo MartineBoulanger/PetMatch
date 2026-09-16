@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local FillLevellingQueueDialog = {}
 
 local DIALOG_WIDTH = 384
@@ -31,7 +32,7 @@ function FillLevellingQueueDialog:Fill()
 
   if added == 0 then
     addon.Logger:Warn(
-      "No pets were added to the levelling queue."
+      L["NOT_ADDED_QUEUE"]
     )
 
     return true
@@ -39,13 +40,13 @@ function FillLevellingQueueDialog:Fill()
 
   if added == 1 then
     addon.Logger:Info(
-      "Added 1 pet to the levelling queue."
+      L["ONE_PET_ADDED_QUEUE"]
     )
   else
     addon.Logger:Info(
-      "Added "
+      L["ADDED_QUEUE1"]
       .. added
-      .. " pets to the levelling queue."
+      .. L["ADDED_QUEUE2"]
     )
   end
 
@@ -107,7 +108,7 @@ function FillLevellingQueueDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchFillLevellingQueueDialog",
-        title = "Fill Levelling Queue",
+        title = L["FILL_QUEUE"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -128,12 +129,12 @@ function FillLevellingQueueDialog:Create()
   --------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
       })
 
   self.FillButton =
       dialog:AddAcceptButton({
-        text = "Add Pets",
+        text = L["ADD_PETS"],
         width = 100,
       })
 
@@ -164,7 +165,7 @@ function FillLevellingQueueDialog:Show()
 
   if #candidates == 0 then
     addon.Logger:Warn(
-      "Every pet that can be levelled is already in the queue."
+      L["ALL_ALREADY_IN_QUEUE"]
     )
 
     return
@@ -178,18 +179,18 @@ function FillLevellingQueueDialog:Show()
 
   if #candidates == 1 then
     message =
-    "Add 1 pet to the levelling queue?"
+        L["ADD_ONE_PET_QUEUE"]
   else
     message =
-        "Add "
+        L["ADD_MULTI_PETS_QUEUE1"]
         .. #candidates
-        .. " pets to the levelling queue?"
+        .. L["ADD_MULTI_PETS_QUEUE2"]
   end
 
   self.Message:SetText(
     message
     .. "\n\n"
-    .. "Every pet below level 25 will be added. "
+    .. L["ALL_PETS_ADD_TO_QUEUE"]
   )
 
   dialog:Show()

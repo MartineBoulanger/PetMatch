@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local Panels = {}
 
 local PANEL_WIDTH = 275
@@ -114,7 +115,7 @@ function Panels:MoveCloseButton()
 
   if not closeButton then
     addon.Logger:Warn(
-      "PetMatch: Pet Journal close button was not found."
+      L["CLOSE_BUTTON_ERROR"]
     )
     return
   end
@@ -266,7 +267,7 @@ function Panels:Create()
 
   assert(
     PetJournal,
-    "PetMatch: PetJournal is unavailable"
+    L["PETMATCH_UNAVAILABLE"]
   )
 
   local frame =
@@ -303,11 +304,11 @@ function Panels:Create()
   if frame.TitleContainer
       and frame.TitleContainer.TitleText then
     frame.TitleContainer.TitleText:SetText(
-      "PetMatch"
+      L["PETMATCH"]
     )
   elseif type(frame.SetTitle) == "function" then
     frame:SetTitle(
-      "PetMatch"
+      L["PETMATCH"]
     )
   end
 
@@ -691,7 +692,7 @@ function Panels:CreateTabs(parent)
         "PanelTabButtonTemplate"
       )
 
-  teamsTab:SetText("Teams")
+  teamsTab:SetText(L["TEAMS"])
   teamsTab:SetHeight(TAB_HEIGHT)
 
   teamsTab:SetScript(
@@ -717,7 +718,7 @@ function Panels:CreateTabs(parent)
         "PanelTabButtonTemplate"
       )
 
-  levellingTab:SetText("Levelling")
+  levellingTab:SetText(L["LEVELLING"])
   levellingTab:SetHeight(TAB_HEIGHT)
 
   levellingTab:SetScript(
@@ -745,7 +746,7 @@ function Panels:CreateTabs(parent)
         "PanelTabButtonTemplate"
       )
 
-  optionsTab:SetText("Options")
+  optionsTab:SetText(L["OPTIONS"])
   optionsTab:SetHeight(TAB_HEIGHT)
 
   optionsTab:SetScript(
@@ -851,7 +852,7 @@ function Panels:CreateNewFolderButton(parent)
       addon.UI.Base.Button:Create(
         parent,
         {
-          text = "New Folder",
+          text = L["NEW_FOLDER"],
           width = 120,
           height = 22,
 
@@ -890,7 +891,7 @@ function Panels:CreatePMLButton(parent)
       addon.UI.Base.Button:Create(
         parent,
         {
-          text = "Open PML Logs",
+          text = L["PML"],
           width = 120,
           height = 22,
 

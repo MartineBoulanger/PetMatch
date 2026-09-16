@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local MoveTeamDialog = {}
 
 local DIALOG_WIDTH = 320
@@ -30,7 +31,7 @@ function MoveTeamDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchMoveTeamDialog",
-        title = "Move Team",
+        title = L["MOVE_TEAM"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -52,8 +53,7 @@ function MoveTeamDialog:Create()
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Select the folder you want "
-              .. "to move this team to.",
+          text = L["SELECT_TEAM_MOVE1"] .. L["SELECT_TEAM_MOVE2"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -110,7 +110,7 @@ function MoveTeamDialog:Create()
   --------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 100,
       })
 
@@ -211,7 +211,7 @@ function MoveTeamDialog:RefreshFolders()
   -- Unsorted
   --------------------------------------------------
   self:CreateFolderButton(
-    "Unsorted",
+    L["UNSORTED"],
     nil,
     index
   )
@@ -252,7 +252,7 @@ end
 --------------------------------------------------
 function MoveTeamDialog:Show(team)
   if not team then
-    addon.Logger:Warn("Select a team first")
+    addon.Logger:Warn(L["SELECT_TEAM"])
     return
   end
 
@@ -260,13 +260,14 @@ function MoveTeamDialog:Show(team)
 
   self.Team = team
 
-  dialog:SetTitle("Move Team")
+  dialog:SetTitle(L["MOVE_TEAM"])
 
   self.Description:SetText(
-    "Select the folder you want to move "
+    L["SELECT_TEAM_MOVE1"]
     .. "\""
-    .. (team.name or "Unnamed Team")
-    .. "\" to."
+    .. (team.name or L["UNNAMED_TEAM"])
+    .. "\""
+    .. L["SELECT_TEAM_MOVE2"]
   )
 
   self:RefreshFolders()
@@ -304,7 +305,7 @@ function MoveTeamDialog:MoveToFolder(folderID)
   if not movedTeam then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to move team"
+      or L["UNABLE_MOVE_TEAM"]
     )
     return
   end

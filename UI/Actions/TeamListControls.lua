@@ -1,12 +1,8 @@
 local _, addon = ...
 
+local L = addon.L
 local TeamListControls = {}
 
-local SORT_LABELS = {
-  name = "Name",
-  modified = "Recent",
-  favorites = "Favorites",
-}
 
 local SORT_BUTTON_WIDTH = 67
 local SORT_BUTTON_HEIGHT = 20
@@ -69,7 +65,7 @@ function TeamListControls:Create(parent)
   )
 
   self.SearchInput.Instructions:SetText(
-    "Search through the teams..."
+    L["SEARCH_TEAMS"]
   )
 
   self.SearchInput:SetScript(
@@ -143,7 +139,7 @@ function TeamListControls:Create(parent)
       SORT_BUTTON_HEIGHT
     )
 
-    dropdown:SetText("Sort")
+    dropdown:SetText(L["SORT"])
 
     dropdown.resizeToText = false
 
@@ -161,11 +157,11 @@ function TeamListControls:Create(parent)
 
     dropdown:SetupMenu(
       function(_, rootDescription)
-        rootDescription:CreateTitle("Sort Teams")
+        rootDescription:CreateTitle(L["SORT_TEAMS"])
 
         for _, sortMode in ipairs(sortModes) do
           rootDescription:CreateRadio(
-            SORT_LABELS[sortMode],
+            addon.Constants.SORT_LABELS[sortMode],
 
             function()
               return addon.Services.Team:GetSortMode() == sortMode

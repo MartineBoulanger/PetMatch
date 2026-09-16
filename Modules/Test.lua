@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local Test = {}
 
 function Test:Initialize()
@@ -7,7 +8,7 @@ function Test:Initialize()
     addon.Events.DATABASE_READY,
     function()
       addon.Logger:Info(
-        "EventBus test module successful"
+        L["TEST"]
       )
     end
   )

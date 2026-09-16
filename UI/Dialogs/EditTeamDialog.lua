@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local EditTeamDialog = {}
 
 local DIALOG_WIDTH = 340
@@ -34,14 +35,14 @@ function EditTeamDialog:Save()
   local team = self.Team
 
   if not team then
-    addon.Logger:Warn("No team selected")
+    addon.Logger:Warn(L["NO_TEAM_SELECTED"])
     return false
   end
 
   local name = addon.Utils:Trim(self.NameInput:GetText() or "")
 
   if name == "" then
-    addon.Logger:Warn("Enter a team name")
+    addon.Logger:Warn(L["TEAM_NAME_ERROR"])
     self.NameInput:SetFocus()
     self.NameInput:HighlightText()
     return false
@@ -51,7 +52,7 @@ function EditTeamDialog:Save()
   local updatedTeam, errorMessage = addon.Services.Team:Edit(team.id, name, replacePets)
 
   if not updatedTeam then
-    addon.Logger:Warn(errorMessage or "Unable to edit team")
+    addon.Logger:Warn(errorMessage or L["UNABLE_TO_UPDATE"])
     self.NameInput:SetFocus()
     self.NameInput:HighlightText()
     return false
@@ -94,7 +95,7 @@ function EditTeamDialog:CreateContent(dialog)
   --------------------------------------------------
   self.NameLabel = addon.UI.Base.Label:Create(content,
     {
-      text = "Team name",
+      text = L["TEAM_NAME"],
       width = DIALOG_WIDTH - (CONTENT_MARGIN.left + CONTENT_MARGIN.right) - (CONTENT_PADDING * 2) + 10,
       justify =
       "LEFT"
@@ -118,7 +119,7 @@ function EditTeamDialog:CreateContent(dialog)
   --------------------------------------------------
   self.PetSourceLabel = addon.UI.Base.Label:Create(content,
     {
-      text = "Choose which pets should be saved " .. "in the edited team",
+      text = L["SOURCE_LABEL"],
       width = DIALOG_WIDTH -
           (CONTENT_MARGIN.left + CONTENT_MARGIN.right) - (CONTENT_PADDING * 2),
       justify = "LEFT"
@@ -132,7 +133,7 @@ function EditTeamDialog:CreateContent(dialog)
   --------------------------------------------------
   self.KeepSavedButton = addon.UI.Base.Button:Create(content,
     {
-      text = "Keep Saved Pets",
+      text = L["KEEP_SAVED_PETS"],
       width = 137,
       onClick = function()
         self:SetPetSource("saved")
@@ -145,7 +146,7 @@ function EditTeamDialog:CreateContent(dialog)
   --------------------------------------------------
   self.UseCurrentButton = addon.UI.Base.Button:Create(content,
     {
-      text = "Use Current Slots",
+      text = L["USE_CURRENT_SLOTS"],
       width = 137,
       onClick = function()
         self:SetPetSource("current")
@@ -170,7 +171,7 @@ function EditTeamDialog:Create()
 
   local dialog = addon.UI.Base.Dialog:Create({
     name = "PetMatchEditTeamDialog",
-    title = "Edit Team",
+    title = L["EDIT_TEAM"],
     width = DIALOG_WIDTH,
     contentMargin = CONTENT_MARGIN,
     padding = CONTENT_PADDING,
@@ -188,8 +189,8 @@ function EditTeamDialog:Create()
   --------------------------------------------------
   -- Footer buttons
   --------------------------------------------------
-  self.CancelButton = dialog:AddCancelButton({ text = "Cancel", width = 100 })
-  self.SaveButton = dialog:AddAcceptButton({ text = "Save Changes", width = 120 })
+  self.CancelButton = dialog:AddCancelButton({ text = L["CANCEL"], width = 100 })
+  self.SaveButton = dialog:AddAcceptButton({ text = L["SAVE_CHANGES"], width = 120 })
 
   dialogInstance = dialog
   self.Dialog = dialog
@@ -205,7 +206,7 @@ end
 --------------------------------------------------
 function EditTeamDialog:Show(team)
   if not team then
-    addon.Logger:Warn("Select a team first")
+    addon.Logger:Warn(L["SELECT_TEAM"])
     return
   end
 

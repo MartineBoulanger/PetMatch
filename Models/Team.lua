@@ -1,5 +1,7 @@
 local _, addon = ...
 
+local L = addon.L
+
 local Team = {}
 
 setmetatable(
@@ -11,7 +13,7 @@ setmetatable(
 
 function Team:Create(name)
   local team = addon.Models.Base:New()
-  team.name = name or "New Team"
+  team.name = name or L["NEW_TEAM"]
   team.description = ""
   team.icon = nil
   team.folderID = nil
@@ -29,7 +31,7 @@ function Team:Create(name)
   team.breeds = {}
   team.specialSlots = {}
   team.targetNPCIDs = {}
-  team.createdBy = "PetMatch"
+  team.createdBy = L["PETMATCH"]
   team.strategy = ""
   team.difficulty = nil
   team.favorite = false

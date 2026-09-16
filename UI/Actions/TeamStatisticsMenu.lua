@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TeamStatisticsMenu = {}
 
 function TeamStatisticsMenu:Show(rootDescription, team)
@@ -9,7 +10,7 @@ function TeamStatisticsMenu:Show(rootDescription, team)
   end
 
   rootDescription:CreateButton(
-    "Statistics",
+    L["STATISTICS"],
     function()
       addon.UI.Dialogs.TeamStatisticsDialog:Show(team)
     end

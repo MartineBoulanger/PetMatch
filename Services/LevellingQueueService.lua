@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local LevellingQueueService = {}
 LevellingQueueService.Initialized = false
 
@@ -184,31 +185,31 @@ end
 --------------------------------------------------
 function LevellingQueueService:CanAdd(petGUID)
   if not petGUID then
-    return false, "No pet was provided."
+    return false, L["NO_PET_PROVIDED"]
   end
 
   if self:Contains(petGUID) then
-    return false, "This pet is already in the levelling queue."
+    return false, L["PET_ALREADY_THERE"]
   end
 
   local pet = GetPetInfo(petGUID)
 
   if not pet then
-    return false, "The pet could not be found."
+    return false, L["NO_PET_FOUND"]
   end
 
   if pet.canBattle ~= true then
-    return false, "This pet cannot battle."
+    return false, L["PET_CANNOT_BATTLE"]
   end
 
   local level = tonumber(pet.level)
 
   if not level then
-    return false, "The pet level could not be determined."
+    return false, L["LEVEL_PET_ERROR"]
   end
 
   if level >= MAX_PET_LEVEL then
-    return false, "Only pets below level 25 can be added."
+    return false, L["ONLY_BELOW_25"]
   end
 
   return true

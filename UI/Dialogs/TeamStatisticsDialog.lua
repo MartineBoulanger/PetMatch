@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TeamStatisticsDialog = {}
 
 local DIALOG_WIDTH = 384
@@ -259,7 +260,7 @@ function TeamStatisticsDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Wins",
+          text = L["WINS"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -297,7 +298,7 @@ function TeamStatisticsDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Losses",
+          text = L["LOSSES"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -335,7 +336,7 @@ function TeamStatisticsDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Draws",
+          text = L["DRAWS"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -408,7 +409,7 @@ function TeamStatisticsDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Win Rating",
+          text = L["WIN_RATING"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -446,7 +447,7 @@ function TeamStatisticsDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Loss Rating",
+          text = L["LOSS_RATING"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -492,7 +493,7 @@ function TeamStatisticsDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchTeamStatisticsDialog",
-        title = "Team Statistics",
+        title = L["TEAM_STATISTICS"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -550,11 +551,11 @@ function TeamStatisticsDialog:Show(team)
 
   local teamName =
       team.name
-      or "Unnamed Team"
+      or L["UNNAMED_TEAM"]
 
   dialog:SetTitle(
     teamName
-    .. " Statistics"
+    .. L["STATS"]
   )
 
   self:ShowStats(

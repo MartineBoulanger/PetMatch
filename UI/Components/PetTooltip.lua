@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local PetTooltip = {}
 local Card
 
@@ -75,7 +76,7 @@ local function GetPetCard()
   local component = addon.UI.PetCard and addon.UI.PetCard.Card
 
   if not component then
-    error("PetMatch: PetCard component is not loaded.")
+    error(L["NO_PET_CARD"])
   end
 
   Card = component:Create(UIParent)
@@ -330,7 +331,7 @@ function PetTooltip:SetClickBlocker(frame, blocker)
   end
 
   if blocker ~= nil and type(blocker) ~= "function" then
-    error("PetTooltip: click blocker must be a function or nil.")
+    error(L["PET_TOOLTIP_ERROR"])
   end
 
   frame.__PetMatchTooltipClickBlocker = blocker
@@ -342,7 +343,7 @@ function PetTooltip:Attach(frame, provider, anchor, source, highlightProvider)
   end
 
   if type(provider) ~= "function" then
-    error("PetTooltip: Attach requires a provider function.")
+    error(L["NO_PROVIDER"])
   end
 
   frame.__PetMatchTooltipProvider = provider

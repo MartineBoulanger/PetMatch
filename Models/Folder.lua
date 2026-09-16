@@ -1,5 +1,7 @@
 local _, addon = ...
 
+local L = addon.L
+
 local Folder = {}
 
 setmetatable(Folder, {
@@ -9,7 +11,7 @@ setmetatable(Folder, {
 function Folder:Create(name)
   local folder = addon.Models.Base:New()
 
-  folder.name = name or "New Folder"
+  folder.name = name or L["NEW_FOLDER"]
   folder.icon = nil
   folder.color = nil
   folder.order = 0

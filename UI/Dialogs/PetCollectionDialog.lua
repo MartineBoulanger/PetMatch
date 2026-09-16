@@ -1,10 +1,9 @@
 local _, addon = ...
 
+local L = addon.L
 local PetCollectionDialog = {}
 
 local DIALOG_WIDTH = 560
-
-local STAT_HEIGHT = 54
 
 local TAB_HEIGHT = 26
 local TAB_SPACING = 4
@@ -23,23 +22,23 @@ local dialogInstance
 local TAB_ORDER = {
   {
     key = "general",
-    text = "General",
+    text = L["GENERAL"],
   },
   {
     key = "families",
-    text = "Families",
+    text = L["FAMILIES"],
   },
   {
     key = "sources",
-    text = "Sources",
+    text = L["SOURCES"],
   },
   {
     key = "expansions",
-    text = "Expansions",
+    text = L["EXPANSIONS"],
   },
   {
     key = "breeds",
-    text = "Breeds",
+    text = L["BREEDS"],
   },
 }
 
@@ -141,7 +140,7 @@ function PetCollectionDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchPetCollectionDialog",
-        title = "Pet Collection",
+        title = L["PET_COLLECTION_TITLE"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -289,15 +288,15 @@ function PetCollectionDialog:Create()
   local rowDefinitions = {
     {
       key = "totalOwned",
-      text = "Total Owned Pets",
+      text = L["TOTAL_OWNED_PETS"],
     },
     {
       key = "uniqueOwned",
-      text = "Unique Owned Pets",
+      text = L["UNIQUE_OWNED_PETS"],
     },
     {
       key = "missing",
-      text = "Missing Pets",
+      text = L["MISSING_PETS"],
     },
   }
 
@@ -384,15 +383,15 @@ function PetCollectionDialog:Create()
   local secondaryRows = {
     {
       key = "duplicates",
-      text = "Duplicated Pets",
+      text = L["DUPLICATED_PETS"],
     },
     {
       key = "rare",
-      text = "Rare Quality Pets",
+      text = L["RARE_QUALITY_PETS"],
     },
     {
       key = "maxLevel",
-      text = "Max Level Pets",
+      text = L["MAX_LEVEL_PETS"],
     },
   }
 
@@ -450,7 +449,7 @@ function PetCollectionDialog:Create()
       addon.UI.Base.Label:Create(
         self.GeneralContent,
         {
-          text = "Collection Progress",
+          text = L["COLLECTION_PROGRESS"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -771,7 +770,7 @@ function PetCollectionDialog:Create()
   ------------------------------------------------
   self.CloseButton =
       dialog:AddCancelButton({
-        text = "Close",
+        text = L["CLOSE"],
         width = 80,
       })
 
@@ -935,13 +934,13 @@ function PetCollectionDialog:Refresh()
         color = GetQualityColor(quality),
         tooltipTitle = addon.Constants.PET_RARITY_NAMES[quality],
         tooltipLines = {
-          tostring(count) .. " unique pets",
+          tostring(count) .. L["NUMBER_UNIQUE"],
           string.format(
-            "%.1f%% of all collectible pets",
+            L["OF_ALL_COLLECTIBLES_PETS"],
             totalPercentage
           ),
           string.format(
-            "%.1f%% of your collection",
+            L["OF_YOUR_COLLECTION"],
             ownedPercentage
           ),
         },
@@ -981,16 +980,16 @@ function PetCollectionDialog:Refresh()
         tooltipTitle = family.name,
         tooltipLines = {
           string.format(
-            "%d / %d collected",
+            L["COLLECTED_PETS"],
             family.owned or 0,
             family.maximum or 0
           ),
           string.format(
-            "%.1f%% complete",
+            L["COMPLETE_PETS"],
             family.percentage or 0
           ),
           string.format(
-            "%d missing",
+            L["MISSING_PETS_TEXT"],
             family.missing or 0
           ),
         },
@@ -1018,16 +1017,16 @@ function PetCollectionDialog:Refresh()
           tooltipTitle = source.name,
           tooltipLines = {
             string.format(
-              "%d / %d collected",
+              L["COLLECTED_PETS"],
               source.owned or 0,
               source.maximum or 0
             ),
             string.format(
-              "%.1f%% complete",
+              L["COMPLETE_PETS"],
               source.percentage or 0
             ),
             string.format(
-              "%d missing",
+              L["MISSING_PETS_TEXT"],
               source.missing or 0
             ),
           },
@@ -1056,16 +1055,16 @@ function PetCollectionDialog:Refresh()
           tooltipTitle = expansion.name,
           tooltipLines = {
             string.format(
-              "%d / %d collected",
+              L["COLLECTED_PETS"],
               expansion.owned or 0,
               expansion.maximum or 0
             ),
             string.format(
-              "%.1f%% complete",
+              L["COMPLETE_PETS"],
               expansion.percentage or 0
             ),
             string.format(
-              "%d missing",
+              L["MISSING_PETS_TEXT"],
               expansion.missing or 0
             ),
           },
@@ -1098,16 +1097,16 @@ function PetCollectionDialog:Refresh()
           tooltipTitle = breed.name,
           tooltipLines = {
             string.format(
-              "%d / %d collected",
+              L["COLLECTED_PETS"],
               breed.owned or 0,
               breed.maximum or 0
             ),
             string.format(
-              "%.1f%% complete",
+              L["COMPLETE_PETS"],
               breed.percentage or 0
             ),
             string.format(
-              "%d missing",
+              L["MISSING_PETS_TEXT"],
               breed.missing or 0
             ),
           },

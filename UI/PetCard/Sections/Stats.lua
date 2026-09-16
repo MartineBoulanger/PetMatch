@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local Stats = {}
 Stats.__index = Stats
 
@@ -337,12 +338,12 @@ function Stats:SetPet(pet)
   if pet.level
       and pet.level > 0 then
     self.Level.Value:SetFormattedText(
-      "Level %d",
+      L["LEVEL"] .. " %d",
       pet.level
     )
   else
     self.Level.Value:SetText(
-      "Not Collected"
+      L["NOT_COLLECTED"]
     )
   end
 

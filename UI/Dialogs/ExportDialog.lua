@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local ExportDialog = {}
 
 local DIALOG_WIDTH = 420
@@ -74,8 +75,7 @@ function ExportDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Copy this Rematch string "
-              .. "and share it with another player.",
+          text = L["COPY_STRING"],
           fontObject = "GameFontHighlightSmall",
           justify = "LEFT",
         }
@@ -237,7 +237,7 @@ function ExportDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchExportDialog",
-        title = "Export Team",
+        title = L["EXPORT_TEAM"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -255,12 +255,12 @@ function ExportDialog:Create()
   --------------------------------------------------
   -- Footer buttons
   --------------------------------------------------
-  self.CloseButton = dialog:AddCancelButton({ text = "Cancel", width = 80, })
+  self.CloseButton = dialog:AddCancelButton({ text = L["CANCEL"], width = 80, })
 
   self.CopyButton =
       dialog:AddFooterButton({
-        text = "Select All",
-        width = 90,
+        text = L["SELECT_ALL"],
+        width = 120,
         onClick = function() self:SelectAll() end,
       })
 
@@ -282,7 +282,7 @@ function ExportDialog:Show(team)
   team = team or addon.Services.Team:GetSelected()
 
   if not team then
-    addon.Logger:Warn("Select a team first")
+    addon.Logger:Warn(L["SELECT_TEAM"])
     return
   end
 
@@ -296,16 +296,15 @@ function ExportDialog:Show(team)
   if not value then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to export team"
+      or L["UNABLE_EXPORT"]
     )
     return
   end
 
-  dialog:SetTitle("Export Team")
+  dialog:SetTitle(L["EXPORT_TEAM"])
 
   self.Description:SetText(
-    "Copy this Rematch string "
-    .. "and share it with another player."
+    L["COPY_STRING"]
   )
 
   self:SetValue(value)
@@ -326,7 +325,7 @@ function ExportDialog:ShowAll()
   if not exportString then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to export folders and teams"
+      or L["UNABLE_EXPORT_EVERYTHING"]
     )
     return
   end
@@ -334,8 +333,7 @@ function ExportDialog:ShowAll()
   dialog:SetTitle("Export All Folders and Teams")
 
   self.Description:SetText(
-    "Copy this export string to share "
-    .. "all folders and teams."
+    L["COPY_EXPORT_STRING"]
   )
 
   self:SetValue(exportString)
@@ -360,22 +358,21 @@ function ExportDialog:ShowFolder(folderKey)
   if not exportString then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to export folder"
+      or L["UNABLE_EXPORT_FOLDER"]
     )
     return
   end
 
   local folder = addon.Services.Folder:Get(folderKey)
-  local folderName = folder and folder.name or "Folder"
+  local folderName = folder and folder.name or L["FOLDER"]
 
   dialog:SetTitle(
-    "Export Folder: "
+    L["EXPORT_FOLDER"]
     .. folderName
   )
 
   self.Description:SetText(
-    "Copy this export string "
-    .. "to share the selected folder."
+    L["COPY_EXPORT_FOLDER"]
   )
 
   self:SetValue(exportString)

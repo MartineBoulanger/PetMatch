@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local SaveTeamDialog = {}
 
 local DIALOG_WIDTH = 320
@@ -32,7 +33,7 @@ function SaveTeamDialog:Save()
   local name = addon.Utils:Trim(self.NameInput:GetText() or "")
 
   if name == "" then
-    addon.Logger:Warn("Enter a team name")
+    addon.Logger:Warn(L["TEAM_NAME_ERROR"])
     self.NameInput:SetFocus()
     self.NameInput:HighlightText()
     return false
@@ -69,7 +70,7 @@ function SaveTeamDialog:Save()
       addon.Services.Team:CreateFromBattleSlots(name, folderID, pendingSpecialSlots)
 
   if not team then
-    addon.Logger:Warn(errorMessage or "Unable to save team")
+    addon.Logger:Warn(errorMessage or L["UNABLE_SAVE_TEAM"])
     self.NameInput:SetFocus()
     self.NameInput:HighlightText()
     return false
@@ -94,7 +95,7 @@ function SaveTeamDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Team name",
+          text = L["TEAM_NAME"],
           justify = "LEFT",
         }
       )
@@ -176,7 +177,7 @@ function SaveTeamDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchSaveTeamDialog",
-        title = "Save Current Team",
+        title = L["SAVE_CURRENT"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -197,13 +198,13 @@ function SaveTeamDialog:Create()
   --------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 100,
       })
 
   self.SaveButton =
       dialog:AddAcceptButton({
-        text = "Save",
+        text = L["SAVE"],
         width = 100,
       })
 
@@ -225,7 +226,7 @@ function SaveTeamDialog:Show()
 
   self.NameInput:SetText("")
 
-  dialog:SetTitle("Save Current Team")
+  dialog:SetTitle(L["SAVE_CURRENT"])
   dialog:Show()
   dialog:RefreshLayout()
 

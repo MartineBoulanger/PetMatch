@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local Header = {}
 Header.__index = Header
 
@@ -9,23 +10,7 @@ local PET_ICON_SIZE = 48
 local FAMILY_ICON_SIZE = 40
 local ICON_BORDER_PADDING = 4
 
--- local CIRCLE_MASK = "Interface\\Common\\RingBorder"
 local CIRCLE_MASK = "Interface\\CHARACTERFRAME\\TempPortraitAlphaMask"
-
-local PET_RARITY_COLORS = addon.Constants.PET_RARITY_COLORS
-
-local PET_FAMILY_ICONS = {
-  [1] = "Interface\\Icons\\Pet_Type_Humanoid",
-  [2] = "Interface\\Icons\\Pet_Type_Dragon",
-  [3] = "Interface\\Icons\\Pet_Type_Flying",
-  [4] = "Interface\\Icons\\Pet_Type_Undead",
-  [5] = "Interface\\Icons\\Pet_Type_Critter",
-  [6] = "Interface\\Icons\\Pet_Type_Magical",
-  [7] = "Interface\\Icons\\Pet_Type_Elemental",
-  [8] = "Interface\\Icons\\Pet_Type_Beast",
-  [9] = "Interface\\Icons\\Pet_Type_Water",
-  [10] = "Interface\\Icons\\Pet_Type_Mechanical",
-}
 
 --------------------------------------------------
 -- Helpers
@@ -34,8 +19,8 @@ local function GetQualityColor(quality)
   quality = tonumber(quality) or 0
 
   local color =
-      PET_RARITY_COLORS
-      and PET_RARITY_COLORS[quality]
+      addon.Constants.PET_RARITY_COLORS
+      and addon.Constants.PET_RARITY_COLORS[quality]
 
   if not color then
     return 1, 1, 1
@@ -415,15 +400,14 @@ local function ShowPetInfoTooltip(owner, pet)
 
   if type(sourceText) ~= "string"
       or sourceText == "" then
-    sourceText = "Unknown"
+    sourceText = L["UNKNOWN"]
   end
 
   local description = pet.description
 
   if type(description) ~= "string"
       or description == "" then
-    description =
-    "No description available."
+    description = L["NO_DESCRIPTION"]
   end
 
   --------------------------------------------------
@@ -727,7 +711,7 @@ function Header:SetPet(pet)
 
   self.Name:SetText(
     pet.name
-    or "Unknown"
+    or L["UNKNOWN"]
   )
 
   self.Name:SetTextColor(
@@ -742,7 +726,7 @@ function Header:SetPet(pet)
   --------------------------------------------------
 
   local familyIcon =
-      PET_FAMILY_ICONS[
+      addon.Constants.PET_FAMILY_ICONS[
       self.PetType
       ]
 

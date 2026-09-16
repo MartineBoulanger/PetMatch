@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TargetTeamService = {}
 
 --------------------------------------------------
@@ -96,13 +97,13 @@ function TargetTeamService:SetTeamNPCIDs(teamID, npcIDs)
   local teamService = addon.Services.Team
 
   if not teamService then
-    return nil, "The Team service is unavailable"
+    return nil, L["NO_TEAM_SERVICE"]
   end
 
   local team = teamService:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   local normalized = {}
@@ -137,19 +138,19 @@ function TargetTeamService:AddTeamNPC(teamID, npcID)
   npcID = NormalizeNPCID(npcID)
 
   if not npcID then
-    return nil, "Invalid NPC ID"
+    return nil, L["INVALID_NPC_ID"]
   end
 
   local teamService = addon.Services.Team
 
   if not teamService then
-    return nil, "The Team service is unavailable"
+    return nil, L["NO_TEAM_SERVICE"]
   end
 
   local team = teamService:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   if self:TeamHasNPC(team, npcID) then
@@ -177,19 +178,19 @@ function TargetTeamService:RemoveTeamNPC(teamID, npcID)
   npcID = NormalizeNPCID(npcID)
 
   if not npcID then
-    return nil, "Invalid NPC ID"
+    return nil, L["INVALID_NPC_ID"]
   end
 
   local teamService = addon.Services.Team
 
   if not teamService then
-    return nil, "The Team service is unavailable"
+    return nil, L["NO_TEAM_SERVICE"]
   end
 
   local team = teamService:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   local npcIDs = {}

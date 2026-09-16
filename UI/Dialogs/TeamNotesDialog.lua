@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TeamNotesDialog = {}
 
 local DIALOG_WIDTH = 400
@@ -31,7 +32,7 @@ end
 --------------------------------------------------
 function TeamNotesDialog:Save()
   if not self.TeamID then
-    addon.Logger:Warn("No team selected")
+    addon.Logger:Warn(L["NO_TEAM_SELECTED"])
     return false
   end
 
@@ -41,7 +42,7 @@ function TeamNotesDialog:Save()
   if not team then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to save team notes"
+      or L["UNABLE_SAVE_NOTES"]
     )
     return false
   end
@@ -279,7 +280,7 @@ function TeamNotesDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchTeamNotesDialog",
-        title = "Team Notes",
+        title = L["TEAM_NOTES"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -300,13 +301,13 @@ function TeamNotesDialog:Create()
   --------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 95,
       })
 
   self.SaveButton =
       dialog:AddAcceptButton({
-        text = "Save",
+        text = L["SAVE"],
         width = 95,
       })
 
@@ -332,11 +333,11 @@ function TeamNotesDialog:Show(team)
 
   self.TeamID = team.id
 
-  dialog:SetTitle("Team Notes")
+  dialog:SetTitle(L["TEAM_NOTES"])
 
   self.TeamName:SetText(
     team.name
-    or "Unnamed Team"
+    or L["UNNAMED_TEAM"]
   )
 
   self.Input:SetText(

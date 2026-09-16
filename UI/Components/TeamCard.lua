@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TeamCard = {}
 local TargetNameCache = {}
 local PendingTargetNames = {}
@@ -162,8 +163,8 @@ targetLoaderFrame:SetScript(
 )
 
 function TeamCard:Create(parent, team)
-  assert(parent, "TeamCard requires a parent frame")
-  assert(team, "TeamCard requires a team")
+  assert(parent, L["PARENT_TEAM_ERROR"])
+  assert(team, L["TEAM_CARD_ERROR"])
 
   local frame = CreateFrame(
     "Button",
@@ -456,7 +457,7 @@ function TeamCard:Create(parent, team)
       if not updatedTeam then
         addon.Logger:Warn(
           errorMessage
-          or "Unable to update favorite"
+          or L["UNABLE_FAVORITE_UPDATE"]
         )
 
         return
@@ -477,11 +478,11 @@ function TeamCard:Create(parent, team)
       if frame.Team
           and frame.Team.favorite then
         GameTooltip:SetText(
-          "Remove from Favorites"
+          L["REMOVE_FAVORITE"]
         )
       else
         GameTooltip:SetText(
-          "Add to Favorites"
+          L["ADD_FAVORITE"]
         )
       end
 
@@ -725,7 +726,7 @@ function TeamCard:Create(parent, team)
 
     if not success then
       addon.Logger:Warn(
-        errorMessage or "Unable to load team"
+        errorMessage or L["UNABLE_LOAD_TEAM"]
       )
 
       return

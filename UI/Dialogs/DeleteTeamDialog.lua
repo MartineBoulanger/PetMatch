@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local DeleteTeamDialog = {}
 
 local DIALOG_WIDTH = 384
@@ -29,7 +30,7 @@ function DeleteTeamDialog:Delete()
 
   if not deleted then
     addon.Logger:Warn(
-      "Unable to delete team"
+      L["UNABLE_DELETE_TEAM"]
     )
     return false
   end
@@ -92,7 +93,7 @@ function DeleteTeamDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchDeleteTeamDialog",
-        title = "Delete Team",
+        title = L["DELETE_TEAM"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -113,13 +114,13 @@ function DeleteTeamDialog:Create()
   --------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 100,
       })
 
   self.DeleteButton =
       dialog:AddAcceptButton({
-        text = "Delete",
+        text = L["DELETE"],
         width = 100,
       })
 
@@ -148,16 +149,16 @@ function DeleteTeamDialog:Show(team)
 
   self.Team = team
 
-  dialog:SetTitle("Delete Team")
+  dialog:SetTitle(L["DELETE_TEAM"])
 
-  local teamName = team.name or "Unnamed Team"
+  local teamName = team.name or L["UNNAMED_TEAM"]
 
   self.Message:SetText(
-    "Are you sure you want to delete "
+    L["DELETE_TEAM1"]
     .. "\""
     .. teamName
     .. "\"?\n\n"
-    .. "This action cannot be undone."
+    .. L["DELETE_TEAM2"]
   )
 
   dialog:Show()

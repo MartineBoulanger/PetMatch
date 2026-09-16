@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local ImportLevellingQueueDialog = {}
 
 local DIALOG_WIDTH = 400
@@ -86,31 +87,31 @@ function ImportLevellingQueueDialog:RefreshSortDropdown()
   local options = {
     {
       id = "original",
-      name = "Keep imported order",
+      name = L["KEEP_SORT_ORDER"],
     },
     {
       id = "rarityHigh",
-      name = "Highest rarity first",
+      name = L["HIGHEST_RARITY_FIRST"],
     },
     {
       id = "rarityLow",
-      name = "Lowest rarity first",
+      name = L["LOWEST_RARITY_FIRST"],
     },
     {
       id = "levelHigh",
-      name = "Highest level first",
+      name = L["HIGHEST_LEVEL_FIRST"],
     },
     {
       id = "levelLow",
-      name = "Lowest level first",
+      name = L["LOWEST_LEVEL_FIRST"],
     },
     {
       id = "petType",
-      name = "Pet type",
+      name = L["PET_TYPE"],
     },
   }
 
-  local selectedText = "Keep imported order"
+  local selectedText = L["KEEP_SORT_ORDER"]
 
   for _, option in ipairs(options) do
     if option.id == self.SortMode then
@@ -164,25 +165,25 @@ function ImportLevellingQueueDialog:RefreshPreview()
   local message
 
   if total == 0 then
-    message = "No pets were found in the import."
+    message = L["NO_PETS_FOUND"]
   elseif addable == total then
     message =
         string.format(
-          "%d pet%s found. All %d can be added.",
+          L["NUMBER_PETS_FOUND"],
           total,
           total == 1 and "" or "s",
           total
         )
   elseif addable == 0 then
     message = string.format(
-      "%d pet%s found. None can be added.",
+      L["FOUND_BUT_NOT_ADDED"],
       total,
       total == 1 and "" or "s"
     )
 
     if unavailableTotal > 0 then
       message = message .. string.format(
-        "\n%d pet%s already queued or unavailable.",
+        "\n" .. L["NUMBER_PETS_QUEUED"],
         unavailableTotal,
         unavailableTotal == 1 and " is" or "s are"
       )
@@ -190,14 +191,14 @@ function ImportLevellingQueueDialog:RefreshPreview()
   else
     message =
         string.format(
-          "%d pets found. %d can be added.",
+          L["NUMBER_PETS_FOUND_ADDED"],
           total,
           addable
         )
 
     if unavailableTotal > 0 then
       message = message .. string.format(
-        "\n%d pet%s already queued or unavailable.",
+        L["NUMBER_PETS_QUEUED"],
         unavailableTotal,
         unavailableTotal == 1 and " is" or "s are"
       )
@@ -229,7 +230,7 @@ function ImportLevellingQueueDialog:PrepareImport()
   if not preview then
     self:SetStatus(
       errorMessage
-      or "Invalid levelling queue.",
+      or L["INVALID_QUEUE"],
       true
     )
 
@@ -267,7 +268,7 @@ function ImportLevellingQueueDialog:Import()
   if not added then
     self:SetStatus(
       errorMessage
-      or "Unable to import levelling queue.",
+      or L["UNABLE_IMPORT_QUEUE"],
       true
     )
 
@@ -276,7 +277,7 @@ function ImportLevellingQueueDialog:Import()
 
   if added == 0 then
     self:SetStatus(
-      "No pets were added.",
+      L["NOT_ADDED_QUEUE"],
       true
     )
 
@@ -285,7 +286,7 @@ function ImportLevellingQueueDialog:Import()
 
   addon.Logger:Info(
     string.format(
-      "%d pet%s added to the levelling queue.",
+      L["NUMBER_PETS_ADDED"],
       added,
       added == 1 and "" or "s"
     )
@@ -322,8 +323,7 @@ function ImportLevellingQueueDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Paste a PetMatch levelling queue "
-              .. "export string below.",
+          text = L["PASTE_QUEUE"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -575,7 +575,7 @@ function ImportLevellingQueueDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchImportLevellingQueueDialog",
-        title = "Import Levelling Queue",
+        title = L["IMPORT_QUEUE_TITLE"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -604,7 +604,7 @@ function ImportLevellingQueueDialog:Create()
 
   self.ImportButton =
       dialog:AddFooterButton({
-        text = "Import",
+        text = L["IMPORT"],
         width = 95,
         onClick =
             function()

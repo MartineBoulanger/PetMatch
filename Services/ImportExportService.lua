@@ -1,5 +1,7 @@
 local _, addon = ...
 
+local L = addon.L
+
 local ImportExportService = {}
 
 local PM_VERSION = "PM1"
@@ -225,10 +227,7 @@ local function GetOwnedPetsForSpecies(speciesID)
   return pets
 end
 
-local function GetAbilityChoices(
-    speciesID,
-    selectedAbilities
-)
+local function GetAbilityChoices(speciesID, selectedAbilities)
   local abilityIDs =
       C_PetJournal.GetPetAbilityList(
         speciesID
@@ -408,10 +407,7 @@ local function StartsWith(value, prefix)
   return value:sub(1, #prefix) == prefix
 end
 
-local function EncodeRematchPetTag(
-    team,
-    slot
-)
+local function EncodeRematchPetTag(team, slot)
   local specialSlot =
       team.specialSlots
       and team.specialSlots[slot]
@@ -608,7 +604,7 @@ local function GetSpeciesName(speciesID)
   speciesID = tonumber(speciesID)
 
   if not speciesID then
-    return "Unknown pet"
+    return L["UNKNOWN"]
   end
 
   local speciesName =
@@ -691,9 +687,7 @@ local function FindRematchCore(service, fields)
   return nil
 end
 
-function ImportExportService:NeedsPreview(
-    document
-)
+function ImportExportService:NeedsPreview(document)
   if not document
       or not document.groups then
     return false
@@ -746,13 +740,13 @@ end
 
 function ImportExportService:ExportTeam(team)
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   local parts = {
     PM_VERSION,
     "name=" .. Escape(
-      team.name or "Imported Team"
+      team.name or L["IMPORTED_TEAM"]
     ),
     "favorite="
     .. (
@@ -805,14 +799,14 @@ function ImportExportService:ParsePetMatch(value)
   value = Trim(value)
 
   if value:sub(1, 4) ~= "PM1|" then
-    return nil, "Not a PetMatch PM1 string"
+    return nil, L["NOT_PETMATCH_STRING"]
   end
 
   local fields = Split(value, "|")
 
   local result = {
     format = "petmatch",
-    name = "Imported Team",
+    name = L["IMPORTED_TEAM"],
     favorite = false,
     folderName = nil,
     slots = {},
@@ -866,15 +860,15 @@ function ImportExportService:Parse(value)
   value = Trim(value)
 
   if value == "" then
-    return nil, "Paste a team string"
+    return nil, L["TEAM_STRING_ERROR"]
   end
 
   if #value > MAX_IMPORT_BYTES then
     return nil,
-        "The import string is too large. "
-        .. "Maximum size is "
+        L["STRING_TOO_LARGE"]
+        .. L["MAX_IS"]
         .. MAX_IMPORT_BYTES
-        .. " bytes."
+        .. L["BYTES"]
   end
 
   local format = self:DetectFormat(value)
@@ -885,7 +879,7 @@ function ImportExportService:Parse(value)
     return self:ParseRematchTeam(value)
   end
 
-  return nil, "Unknown team format"
+  return nil, L["UNKNOWN_FORMAT"]
 end
 
 function ImportExportService:Import(value, options)
@@ -904,8 +898,7 @@ function ImportExportService:Import(value, options)
 
   if format == "petmatch" then
     if not self.ImportPetMatch then
-      return nil,
-          "PetMatch-import is not supported yet."
+      return nil, L["NO_SUPPORT"]
     end
 
     return self:ImportPetMatch(
@@ -914,14 +907,10 @@ function ImportExportService:Import(value, options)
     )
   end
 
-  return nil,
-      "The import string has not a recognized format."
+  return nil, L["UNRECOGNIZED_FORMAT"]
 end
 
-function ImportExportService:GetAbilityIDsFromChoices(
-    speciesID,
-    choices
-)
+function ImportExportService:GetAbilityIDsFromChoices(speciesID, choices)
   local abilityIDs = C_PetJournal.GetPetAbilityList(speciesID)
 
   if type(abilityIDs) ~= "table" then
@@ -1002,7 +991,7 @@ function ImportExportService:ImportRematchDocument(document, options)
           result.warnings[
           #result.warnings + 1
           ] =
-              "Unable to create folder: "
+              L["UNABLE_FOLDER_CREATE"]
               .. groupData.name
         end
       end
@@ -1046,7 +1035,7 @@ function ImportExportService:ImportRematchDocument(document, options)
                     string.format(
                       "%s requires %d copies of %s, but only %d could be assigned.",
                       teamData.name
-                      or "Imported team",
+                      or L["IMPORTED_TEAM"],
                       required,
                       petName,
                       assigned
@@ -1056,7 +1045,7 @@ function ImportExportService:ImportRematchDocument(document, options)
                     string.format(
                       "%s requires %s, but no owned pet could be assigned.",
                       teamData.name
-                      or "Imported team",
+                      or L["IMPORTED_TEAM"],
                       petName
                     )
               end
@@ -1171,7 +1160,7 @@ function ImportExportService:ImportRematchDocumentAsync(document, options)
           result.warnings[
           #result.warnings + 1
           ] =
-              "Unable to create folder: "
+              L["UNABLE_FOLDER_CREATE"]
               .. groupData.name
         end
       end
@@ -1198,7 +1187,7 @@ function ImportExportService:ImportRematchDocumentAsync(document, options)
   if total == 0 then
     if onError then
       onError(
-        "No teams selected."
+        L["NO_TEAMS_SELECTED"]
       )
     end
 
@@ -1258,7 +1247,7 @@ function ImportExportService:ImportRematchDocumentAsync(document, options)
 
       if team and missingSpecies and #missingSpecies > 0 then
         addon.Logger:Warn(
-          "Imported team is missing one or more required pets."
+          L["MISSING_PET_ERROR"]
         )
 
         local requiredCounts = GetRequiredSpeciesCounts(teamData)
@@ -1281,9 +1270,9 @@ function ImportExportService:ImportRematchDocumentAsync(document, options)
             if required > 1 then
               warning =
                   string.format(
-                    "%s requires %d copies of %s, but only %d could be assigned.",
+                    L["REQUIRES_COPIES_ERROR"],
                     teamData.name
-                    or "Imported team",
+                    or L["IMPORTED_TEAM"],
                     required,
                     petName,
                     assigned
@@ -1291,9 +1280,9 @@ function ImportExportService:ImportRematchDocumentAsync(document, options)
             else
               warning =
                   string.format(
-                    "%s requires %s, but no owned pet could be assigned.",
+                    L["REQUIRES_NO_OWNED_PET"],
                     teamData.name
-                    or "Imported team",
+                    or L["IMPORTED_TEAM"],
                     petName
                   )
             end
@@ -1368,7 +1357,7 @@ function ImportExportService:DecodeRematchPetTag(token)
   token = string.upper(Trim(token))
 
   if token == "" then
-    return nil, "Empty pet tag"
+    return nil, L["EMPTY_TAG"]
   end
 
   -- Speciale Rematch-slots.
@@ -1409,14 +1398,14 @@ function ImportExportService:DecodeRematchPetTag(token)
 
   if token:sub(1, 1) == "Q" then
     if #token < 3 then
-      return nil, "Invalid leveling queue tag: " .. token
+      return nil, L["INVALID_QUEUE_TAG"] .. token
     end
 
     local level = DecodeBase32(token:sub(2, 2))
     local rarity = DecodeBase32(token:sub(3, 3))
 
     if not level or not rarity then
-      return nil, "Invalid leveling queue tag: " .. token
+      return nil, L["INVALID_QUEUE_TAG"] .. token
     end
 
     return {
@@ -1429,7 +1418,7 @@ function ImportExportService:DecodeRematchPetTag(token)
   end
 
   if #token < 5 then
-    return nil, "Invalid pet tag: " .. token
+    return nil, L["INVALID_TAG"] .. ": " .. token
   end
 
   local choices = {
@@ -1444,8 +1433,7 @@ function ImportExportService:DecodeRematchPetTag(token)
     if choice ~= 0
         and choice ~= 1
         and choice ~= 2 then
-      return nil,
-          "Invalid ability choice"
+      return nil, L["INVALID_ABILITY"]
     end
   end
 
@@ -1453,7 +1441,7 @@ function ImportExportService:DecodeRematchPetTag(token)
   local speciesID = DecodeBase32(token:sub(5))
 
   if not speciesID then
-    return nil, "Invalid species code"
+    return nil, L["INVALID_SPECIES"]
   end
 
   return {
@@ -1477,7 +1465,7 @@ function ImportExportService:ParseRematchTeam(line)
   local fields = SplitPreservingEmpty(line, ":")
 
   if #fields < 6 then
-    return nil, "Incomplete team string"
+    return nil, L["INCOMPLETE_STRING"]
   end
 
   --------------------------------------------------
@@ -1486,7 +1474,7 @@ function ImportExportService:ParseRematchTeam(line)
   local core = FindRematchCore(self, fields)
 
   if not core then
-    return nil, "Unable to locate pet slots"
+    return nil, L["UNABLE_TO_LOCATE"]
   end
 
   --------------------------------------------------
@@ -1504,7 +1492,7 @@ function ImportExportService:ParseRematchTeam(line)
   local name = Trim(table.concat(nameParts, ":"))
 
   if name == "" then
-    return nil, "The team has no name"
+    return nil, L["NO_TEAM_NAME"]
   end
 
   --------------------------------------------------
@@ -1588,7 +1576,7 @@ function ImportExportService:ParseRematchGroupHeader(line)
   local inner = Trim(line:match("^__%s*(.-)%s*__$"))
 
   if not inner or inner == "" then
-    return nil, "The group has no name"
+    return nil, L["NO_FOLDER_NAME"]
   end
 
   if not inner:find(":", 1, true) then
@@ -1613,7 +1601,7 @@ function ImportExportService:ParseRematchDocument(value)
   value = NormalizeNewlines(value)
 
   if IsBlank(value) then
-    return nil, "Paste a team or group export"
+    return nil, L["PASTE_STRING"]
   end
 
   local document = {
@@ -1656,7 +1644,7 @@ function ImportExportService:ParseRematchDocument(value)
         else
           document.warnings[#document.warnings + 1] =
               errorMessage
-              or ("Unable to parse line: " .. line)
+              or (L["CANNOT_PARSE"] .. line)
         end
       end
     end
@@ -1673,7 +1661,7 @@ function ImportExportService:ParseRematchDocument(value)
   end
 
   if teamCount == 0 then
-    return nil, "No valid teams were found"
+    return nil, L["INVALID_TEAMS"]
   end
 
   return document
@@ -1700,7 +1688,7 @@ function ImportExportService:ParseRematchDocumentAsync(value, options)
   if IsBlank(value) then
     if onError then
       onError(
-        "Paste a team or group export string"
+        L["PASTE_STRING"]
       )
     end
 
@@ -1768,7 +1756,7 @@ function ImportExportService:ParseRematchDocumentAsync(value, options)
     if teamCount == 0 then
       if onError then
         onError(
-          "No valid teams were found"
+          L["INVALID_TEAMS"]
         )
       end
 
@@ -1849,7 +1837,7 @@ function ImportExportService:ParseRematchDocumentAsync(value, options)
             ] =
                 errorMessage
                 or (
-                  "Unable to parse line: "
+                  L["CANNOT_PARSE"]
                   .. line
                 )
           end
@@ -1975,7 +1963,7 @@ function ImportExportService:PrepareImport(
       self:DetectFormat(value)
 
   if not format then
-    return nil, "The import string has no recognizable format."
+    return nil, L["UNRECOGNIZED_FORMAT"]
   end
 
   if format == "rematch" then
@@ -2024,7 +2012,7 @@ function ImportExportService:PrepareImportAsync(
   if not format then
     if onError then
       onError(
-        "The import string has no recognizable format."
+        L["UNRECOGNIZED_FORMAT"]
       )
     end
 
@@ -2104,7 +2092,7 @@ function ImportExportService:ExportRematchTeam(
     team
 )
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   local name =
@@ -2113,7 +2101,7 @@ function ImportExportService:ExportRematchTeam(
       )
 
   if name == "" then
-    return nil, "Team has no name"
+    return nil, L["NO_TEAM_NAME"]
   end
 
   name = name:gsub(":", " -")
@@ -2201,7 +2189,7 @@ function ImportExportService:ExportAll()
           return nil,
               errorMessage
               or (
-                "Unable to export team: "
+                L["UNABLE_EXPORT"]
                 .. tostring(team.name)
               )
         end
@@ -2259,8 +2247,7 @@ function ImportExportService:ExportAll()
   end
 
   if #lines == 0 then
-    return nil,
-        "No teams were found to export"
+    return nil, L["NO_EXPORT_TEAMS"]
   end
 
   return table.concat(lines, "\n")
@@ -2273,7 +2260,7 @@ function ImportExportService:ExportFolder(
       addon.Services.Folder:Get(folderKey)
 
   if not folder then
-    return nil, "Folder was not found"
+    return nil, L["FOLDER_NOT_FOUND"]
   end
 
   local teams = {}
@@ -2287,7 +2274,7 @@ function ImportExportService:ExportFolder(
   end
 
   if #teams == 0 then
-    return nil, "Folder contains no teams"
+    return nil, L["FOLDER_EMPTY"]
   end
 
   local lines = {
@@ -2303,7 +2290,7 @@ function ImportExportService:ExportFolder(
       return nil,
           errorMessage
           or (
-            "Unable to export team: "
+            L["UNABLE_EXPORT"]
             .. tostring(team.name)
           )
     end
@@ -2318,19 +2305,19 @@ function ImportExportService:ExportLevellingQueue()
   local queueService = addon.Services and addon.Services.LevellingQueue
 
   if not queueService then
-    return nil, "Levelling queue service is not available."
+    return nil, L["INVALID_QUEUE"]
   end
 
   local petService = addon.Services and addon.Services.PetJournal
 
   if not petService then
-    return nil, "Pet Journal service is not available."
+    return nil, L["JOURNAL_ERROR"]
   end
 
   local queue = queueService:GetAll()
 
   if type(queue) ~= "table" or #queue == 0 then
-    return nil, "The levelling queue is empty."
+    return nil, L["EMPTY_QUEUE"]
   end
 
   local lines = { PM_QUEUE_VERSION }
@@ -2339,13 +2326,13 @@ function ImportExportService:ExportLevellingQueue()
     local pet = petService:GetPet(petGUID)
 
     if not pet then
-      return nil, "A pet in the levelling queue could not be found."
+      return nil, L["QUEUE_PET_NOT_FOUND"]
     end
 
     local speciesID = tonumber(pet.speciesID)
 
     if not speciesID then
-      return nil, "A pet in the levelling queue has no species ID."
+      return nil, L["QUEUE_PET_NO_ID"]
     end
 
     local breedID = GetPetBreedID(petGUID)
@@ -2376,11 +2363,11 @@ function ImportExportService:ParseLevellingQueue(value)
   value = Trim(value)
 
   if value == "" then
-    return nil, "Paste a levelling queue."
+    return nil, L["PASTE_QUEUE"]
   end
 
   if #value > MAX_IMPORT_BYTES then
-    return nil, "The import is too large."
+    return nil, L["STRING_TOO_LARGE"]
   end
 
   local lines = {}
@@ -2393,7 +2380,7 @@ function ImportExportService:ParseLevellingQueue(value)
   end
 
   if #lines == 0 or lines[1] ~= PM_QUEUE_VERSION then
-    return nil, "Not a PetMatch levelling queue."
+    return nil, L["NO_QUEUE"]
   end
 
   local result = {
@@ -2433,7 +2420,7 @@ function ImportExportService:ParseLevellingQueue(value)
   end
 
   if #result.pets == 0 then
-    return nil, "The levelling queue contains no valid pets."
+    return nil, L["QUEUE_INVALID_PETS"]
   end
 
   return result
@@ -2450,7 +2437,7 @@ function ImportExportService:PrepareLevellingQueueImport(value)
       and addon.Services.LevellingQueue
 
   if not queueService then
-    return nil, "Levelling queue service is not available."
+    return nil, L["INVALID_QUEUE_SERVICE"]
   end
 
   local unavailablePets = {}
@@ -2621,13 +2608,13 @@ end
 
 function ImportExportService:ImportLevellingQueue(preview)
   if type(preview) ~= "table" or type(preview.pets) ~= "table" then
-    return 0, "Invalid levelling queue import."
+    return 0, L["INVALID_QUEUE_STRING"]
   end
 
   local queueService = addon.Services and addon.Services.LevellingQueue
 
   if not queueService then
-    return 0, "Levelling queue service is not available."
+    return 0, L["INVALID_QUEUE_SERVICE"]
   end
 
   local added = 0

@@ -60,7 +60,7 @@ function Source:SetPet(pet)
 
   if type(sourceText) ~= "string"
       or sourceText == "" then
-    sourceText = "Unknown"
+    sourceText = addon.L["UNKNOWN"]
   end
 
   self.Text:SetText(

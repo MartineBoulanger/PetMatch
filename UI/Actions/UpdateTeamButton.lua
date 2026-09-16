@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local UpdateTeamButton = {}
 
 function UpdateTeamButton:Create()
@@ -28,7 +29,7 @@ function UpdateTeamButton:Create()
       )
 
   button:SetSize(110, 22)
-  button:SetText("Update Team")
+  button:SetText(L["UPDATE_TEAM"])
 
   button:ClearAllPoints()
   button:SetPoint(
@@ -81,7 +82,7 @@ function UpdateTeamButton:UpdateSelectedTeam()
   if not updatedTeam then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to update team"
+      or L["UNABLE_TO_UPDATE"]
     )
     return
   end

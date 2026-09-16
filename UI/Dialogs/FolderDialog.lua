@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local FolderDialog = {}
 
 local DIALOG_WIDTH = 320
@@ -33,7 +34,7 @@ function FolderDialog:Save()
   local name = addon.Utils:Trim(self.NameInput:GetText() or "")
 
   if name == "" then
-    addon.Logger:Warn("Enter a folder name")
+    addon.Logger:Warn(L["FOLDER_NAME_ERROR"])
     self.NameInput:SetFocus()
     self.NameInput:HighlightText()
     return false
@@ -44,7 +45,7 @@ function FolderDialog:Save()
 
   if self.Mode == "rename" then
     if not self.Folder then
-      addon.Logger:Warn("No folder selected")
+      addon.Logger:Warn(L["NO_FOLDER_SELECTED"])
       return false
     end
 
@@ -61,7 +62,7 @@ function FolderDialog:Save()
   end
 
   if not folder then
-    addon.Logger:Warn(errorMessage or "Unable to save folder")
+    addon.Logger:Warn(errorMessage or L["UNABLE_SAVE_FOLDER"])
     self.NameInput:SetFocus()
     self.NameInput:HighlightText()
     return false
@@ -85,7 +86,7 @@ function FolderDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Folder name",
+          text = L["FOLDER_NAME"],
           justify = "LEFT",
         }
       )
@@ -167,7 +168,7 @@ function FolderDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchFolderDialog",
-        title = "Create Folder",
+        title = L["CREATE_FOLDER"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -188,13 +189,13 @@ function FolderDialog:Create()
   --------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 100,
       })
 
   self.SaveButton =
       dialog:AddAcceptButton({
-        text = "Save",
+        text = L["SAVE"],
         width = 100,
       })
 
@@ -217,9 +218,9 @@ function FolderDialog:ShowCreate()
   self.Mode = "create"
   self.Folder = nil
 
-  dialog:SetTitle("Create Folder")
+  dialog:SetTitle(L["CREATE_FOLDER"])
 
-  self.NameInput:SetText("New Folder")
+  self.NameInput:SetText(L["NEW_FOLDER"])
 
   dialog:Show()
   dialog:RefreshLayout()
@@ -241,7 +242,7 @@ function FolderDialog:ShowRename(folder)
   self.Mode = "rename"
   self.Folder = folder
 
-  dialog:SetTitle("Rename Folder")
+  dialog:SetTitle(L["RENAME_FOLDER"])
 
   self.NameInput:SetText(folder.name or "")
 

@@ -1,6 +1,8 @@
 local _, addon = ...
 
 addon.UI.Dialogs = addon.UI.Dialogs or {}
+
+local L = addon.L
 local DeleteFolderDialog = {}
 
 local DIALOG_WIDTH = 384
@@ -38,7 +40,7 @@ local function DeleteFolder(
   if not success then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to delete folder"
+      or L["UNABLE_DELETE_FOLDER"]
     )
 
     return
@@ -52,7 +54,7 @@ end
 local function CreateDialog()
   local dialog = addon.UI.Base.Dialog:Create({
     name = "PetMatchDeleteFolderDialog",
-    title = "Delete Folder",
+    title = L["DELETE_FOLDER"],
     width = DIALOG_WIDTH,
     contentMargin = {
       left = -12,
@@ -75,16 +77,16 @@ local function CreateDialog()
   })
 
   dialog.CancelButton = dialog:AddCancelButton({
-    text = "Cancel"
+    text = L["CANCEL"]
   })
 
   dialog.MoveButton = dialog:AddAcceptButton({
-    text = "Move to Unsorted",
+    text = L["MOVE_TO_UNSORTED"],
     width = 140
   })
 
   dialog.DeleteButton = dialog:AddExtraButton({
-    text = "Delete Teams",
+    text = L["DELETE_TEAMS"],
     width = 110
   })
 
@@ -140,24 +142,24 @@ function DeleteFolderDialog:Show(folder)
   local teamText
 
   if teamCount == 1 then
-    teamText = "1 team"
+    teamText = L["ONE_TEAM"]
   else
     teamText =
         tostring(teamCount)
-        .. " teams"
+        .. L["TEAMS"]
   end
 
   dialogInstance.folder = folder
 
   dialogInstance.Message:SetText(
-    "Delete folder \""
+    L["DELETE_FOLDER1"]
     .. folder.name
     .. "\"?\n\n"
-    .. "This folder contains "
+    .. L["DELETE_FOLDER2"]
     .. teamText
     .. ".\n"
-    .. "You can move them to Unsorted "
-    .. "or delete them permanently."
+    .. L["DELETE_FOLDER3"]
+    .. L["DELETE_FOLDER4"]
   )
 
   dialogInstance.DeleteButton:SetEnabled(

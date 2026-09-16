@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local FolderService = {}
 
 FolderService.UNSORTED = "__UNSORTED__"
@@ -28,14 +29,14 @@ function FolderService:Create(name)
   name = addon.Utils:Trim(name or "")
 
   if name == "" then
-    return nil, "Enter a folder name"
+    return nil, L["FOLDER_NAME_ERROR"]
   end
 
   local normalizedName = string.lower(name)
 
   for _, folder in pairs(self:GetFolders()) do
     if string.lower(folder.name or "") == normalizedName then
-      return nil, "A folder with that name already exists"
+      return nil, L["EXIST_FOLDER"]
     end
   end
 
@@ -65,13 +66,13 @@ function FolderService:Rename(folderID, name)
   local folder = self:Get(folderID)
 
   if not folder then
-    return nil, "Folder not found"
+    return nil, L["FOLDER_NOT_FOUND"]
   end
 
   name = addon.Utils:Trim(name or "")
 
   if name == "" then
-    return nil, "Enter a folder name"
+    return nil, L["FOLDER_NAME_ERROR"]
   end
 
   local normalizedName = string.lower(name)
@@ -79,7 +80,7 @@ function FolderService:Rename(folderID, name)
   for otherID, otherFolder in pairs(self:GetFolders()) do
     if otherID ~= folderID
         and string.lower(otherFolder.name or "") == normalizedName then
-      return nil, "A folder with that name already exists"
+      return nil, L["EXIST_FOLDER"]
     end
   end
 
@@ -99,7 +100,7 @@ function FolderService:Delete(folderID, deleteTeams)
   local folder = folders[folderID]
 
   if not folder then
-    return false, "Folder not found"
+    return false, L["FOLDER_NOT_FOUND"]
   end
 
   for id, team in pairs(
@@ -167,7 +168,7 @@ function FolderService:Move(folderID, newIndex)
   local folder = self:Get(folderID)
 
   if not folder then
-    return false, "Folder not found"
+    return false, L["FOLDER_NOT_FOUND"]
   end
 
   local folders = self:GetSortedFolders()
@@ -184,13 +185,13 @@ function FolderService:Move(folderID, newIndex)
   end
 
   if not currentIndex then
-    return false, "Folder not found"
+    return false, L["FOLDER_NOT_FOUND"]
   end
 
   newIndex = tonumber(newIndex)
 
   if not newIndex then
-    return false, "Invalid folder position"
+    return false, L["INVALID_FOLDER_POSITION"]
   end
 
   newIndex = math.floor(newIndex)

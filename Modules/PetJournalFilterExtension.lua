@@ -1,5 +1,7 @@
 local _, addon = ...
 
+local L = addon.L
+
 local FilterExtension = {}
 
 local Filters = {
@@ -27,41 +29,6 @@ local currentFilterBarShown = nil
 local applyFiltersQueued = false
 
 local APPLY_FILTERS_DELAY = 0.4
-
-local EXPANSIONS = {
-  "Classic",
-  "Burning Crusade",
-  "Wrath of the Lich King",
-  "Cataclysm",
-  "Mists of Pandaria",
-  "Warlords of Draenor",
-  "Legion",
-  "Battle for Azeroth",
-  "Shadowlands",
-  "Dragonflight",
-  "The War Within",
-  "Midnight",
-}
-
-local RARITIES = {
-  "Poor",
-  "Common",
-  "Uncommon",
-  "Rare",
-}
-
-local BREEDS = {
-  "B/B",
-  "H/B",
-  "P/B",
-  "S/B",
-  "H/H",
-  "P/P",
-  "S/S",
-  "H/P",
-  "H/S",
-  "P/S",
-}
 
 local LEVEL_RANGES = {
   {
@@ -190,7 +157,8 @@ local OtherFilters = {
   tradable = nil,
   battle = nil,
   team = nil,
-  duplicates = nil
+  duplicates = nil,
+  level25 = nil,
 }
 
 local TAG_FILTER_OPTIONS = {
@@ -202,8 +170,9 @@ local TAG_FILTER_OPTIONS = {
   6,
   7,
   8,
-  "none",
+  L["NONE"],
 }
+
 local RAID_MARKER_TEXTURE_FORMAT = "Interface\\TargetingFrame\\UI-RaidTargetingIcon_%d"
 
 local MAX_SORT_LEVELS = 3
@@ -233,27 +202,27 @@ local ALL_SORT_OPTIONS = {
   },
   {
     key = "expansion",
-    label = "Expansion",
+    label = L["EXPANSION"],
   },
   {
     key = "breed",
-    label = "Breed",
+    label = L["BREED"],
   },
   {
     key = "health",
-    label = "Health",
+    label = L["HEALTH"],
   },
   {
     key = "power",
-    label = "Power",
+    label = L["POWER"],
   },
   {
     key = "speed",
-    label = "Speed",
+    label = L["SPEED"],
   },
   {
     key = "teams",
-    label = "Teams",
+    label = L["TEAMS"],
   },
 }
 
@@ -813,12 +782,12 @@ local function InitializeFilters()
 
   InitializeFilter(
     Filters.expansions,
-    EXPANSIONS
+    addon.Constants.EXPANSION_NAMES
   )
 
   InitializeFilter(
     Filters.rarities,
-    RARITIES
+    addon.Constants.PET_RARITY_NAMES
   )
 
   InitializeFilter(
@@ -828,7 +797,7 @@ local function InitializeFilters()
 
   InitializeFilter(
     Filters.breeds,
-    BREEDS
+    addon.Constants.BREEDS_FOR_FILTERS
   )
 
   InitializeFilter(
@@ -848,6 +817,40 @@ local function RefreshSorting()
   FilterExtension:ApplyFilters()
 end
 
+local function HasLevel25Pet(speciesID)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return false
+  end
+
+  local petJournalService = addon.Services
+      and addon.Services.PetJournal
+
+  if not petJournalService then
+    return false
+  end
+
+  petJournalService:EnsureIndex()
+
+  local petGUIDs =
+      petJournalService.OwnedPetsBySpeciesID[speciesID]
+
+  if type(petGUIDs) ~= "table" then
+    return false
+  end
+
+  for _, petGUID in ipairs(petGUIDs) do
+    local pet = petJournalService.Cache[petGUID]
+
+    if pet and tonumber(pet.level) == 25 then
+      return true
+    end
+  end
+
+  return false
+end
+
 local function IsOtherFilterChecked(group, value)
   return OtherFilters[group] == value
 end
@@ -858,6 +861,7 @@ local function HasOtherFilters()
       or OtherFilters.battle ~= nil
       or OtherFilters.team ~= nil
       or OtherFilters.duplicates ~= nil
+      or OtherFilters.level25 ~= nil
 end
 
 local function ResetOtherFilters()
@@ -866,6 +870,7 @@ local function ResetOtherFilters()
   OtherFilters.battle = nil
   OtherFilters.team = nil
   OtherFilters.duplicates = nil
+  OtherFilters.level25 = nil
 
   RefreshSorting()
 end
@@ -1073,20 +1078,20 @@ end
 
 local function BuildTagFilterLabel(definition)
   if not definition then
-    return "Unknown"
+    return L["UNKNOWN"]
   end
 
   local texture =
       GetRaidMarkerTexture(definition.id)
 
   if not texture then
-    return definition.name or "Unknown"
+    return definition.name or L["UNKNOWN"]
   end
 
   return string.format(
     "|T%s:14:14:0:0|t %s",
     texture,
-    definition.name or "Unknown"
+    definition.name or L["UNKNOWN"]
   )
 end
 
@@ -1129,16 +1134,16 @@ local function HasDuplicatePet(speciesID)
 end
 
 local function CreateExpansionMenu(owner, root)
-  local submenu = root:CreateButton("Expansion")
+  local submenu = root:CreateButton(L["EXPANSION"])
 
   AddCheckAllButtons(
     submenu,
     Filters.expansions,
-    EXPANSIONS
+    addon.Constants.EXPANSION_NAMES
   )
 
   for _, expansion in ipairs(
-    EXPANSIONS
+    addon.Constants.EXPANSION_NAMES
   ) do
     submenu:CreateCheckbox(
       expansion,
@@ -1158,15 +1163,15 @@ local function CreateExpansionMenu(owner, root)
 end
 
 local function CreateRarityMenu(owner, root)
-  local submenu = root:CreateButton("Rarity")
+  local submenu = root:CreateButton(L["RARITY"])
 
   AddCheckAllButtons(
     submenu,
     Filters.rarities,
-    RARITIES
+    addon.Constants.PET_RARITY_NAMES
   )
 
-  for _, rarity in ipairs(RARITIES) do
+  for _, rarity in ipairs(addon.Constants.PET_RARITY_NAMES) do
     submenu:CreateCheckbox(
       rarity,
 
@@ -1187,7 +1192,7 @@ local function CreateRarityMenu(owner, root)
 end
 
 local function CreateLevelMenu(owner, root)
-  local submenu = root:CreateButton("Level")
+  local submenu = root:CreateButton(L["LEVEL"])
 
   AddCheckAllButtons(
     submenu,
@@ -1216,15 +1221,15 @@ local function CreateLevelMenu(owner, root)
 end
 
 local function CreateBreedMenu(owner, root)
-  local submenu = root:CreateButton("Breed")
+  local submenu = root:CreateButton(L["BREED"])
 
   AddCheckAllButtons(
     submenu,
     Filters.breeds,
-    BREEDS
+    addon.Constants.BREEDS_FOR_FILTERS
   )
 
-  for _, breed in ipairs(BREEDS) do
+  for _, breed in ipairs(addon.Constants.BREEDS_FOR_FILTERS) do
     submenu:CreateCheckbox(
       breed,
 
@@ -1245,7 +1250,7 @@ local function CreateBreedMenu(owner, root)
 end
 
 local function CreateTagMenu(owner, root)
-  local submenu = root:CreateButton("Tag")
+  local submenu = root:CreateButton(L["TAG"])
 
   AddCheckAllButtons(
     submenu,
@@ -1283,7 +1288,7 @@ local function CreateTagMenu(owner, root)
   submenu:CreateDivider()
 
   submenu:CreateCheckbox(
-    "No Tag",
+    L["NO_TAG"],
 
     function()
       return Filters.tags.none
@@ -1302,13 +1307,13 @@ local function CreateTagMenu(owner, root)
 end
 
 local function CreateOtherMenu(owner, root)
-  local submenu = root:CreateButton("Other")
+  local submenu = root:CreateButton(L["OTHER"])
 
   --------------------------------------------------
   -- Leveling
   --------------------------------------------------
   submenu:CreateCheckbox(
-    "Leveling",
+    L["LEVELING"],
 
     function()
       return IsOtherFilterChecked(
@@ -1328,7 +1333,7 @@ local function CreateOtherMenu(owner, root)
   )
 
   submenu:CreateCheckbox(
-    "Not Leveling",
+    L["NOT_LEVELING"],
 
     function()
       return IsOtherFilterChecked(
@@ -1341,6 +1346,26 @@ local function CreateOtherMenu(owner, root)
       SetOtherFilter(
         "leveling",
         "notLeveling"
+      )
+
+      return MenuResponse.Refresh
+    end
+  )
+
+  submenu:CreateCheckbox(
+    L["WITHOUT_LEVEL_25"],
+
+    function()
+      return IsOtherFilterChecked(
+        "level25",
+        "withoutLevel25"
+      )
+    end,
+
+    function()
+      SetOtherFilter(
+        "level25",
+        "withoutLevel25"
       )
 
       return MenuResponse.Refresh
@@ -1353,7 +1378,7 @@ local function CreateOtherMenu(owner, root)
   -- Tradable
   --------------------------------------------------
   submenu:CreateCheckbox(
-    "Tradable",
+    L["TRADABLE"],
 
     function()
       return IsOtherFilterChecked(
@@ -1373,7 +1398,7 @@ local function CreateOtherMenu(owner, root)
   )
 
   submenu:CreateCheckbox(
-    "Not Tradable",
+    L["NOT_TRADABLE"],
 
     function()
       return IsOtherFilterChecked(
@@ -1398,7 +1423,7 @@ local function CreateOtherMenu(owner, root)
   -- Battle
   --------------------------------------------------
   submenu:CreateCheckbox(
-    "Can Battle",
+    L["CAN_BATTLE"],
 
     function()
       return IsOtherFilterChecked(
@@ -1418,7 +1443,7 @@ local function CreateOtherMenu(owner, root)
   )
 
   submenu:CreateCheckbox(
-    "Can't Battle",
+    L["CANNOT_BATTLE"],
 
     function()
       return IsOtherFilterChecked(
@@ -1443,7 +1468,7 @@ local function CreateOtherMenu(owner, root)
   -- Teams
   --------------------------------------------------
   submenu:CreateCheckbox(
-    "In A Team",
+    L["IN_TEAM"],
 
     function()
       return IsOtherFilterChecked(
@@ -1463,7 +1488,7 @@ local function CreateOtherMenu(owner, root)
   )
 
   submenu:CreateCheckbox(
-    "Not In A Team",
+    L["NOT_IN_TEAM"],
 
     function()
       return IsOtherFilterChecked(
@@ -1488,7 +1513,7 @@ local function CreateOtherMenu(owner, root)
   -- Duplicates
   --------------------------------------------------
   submenu:CreateCheckbox(
-    "Duplicates",
+    L["DUPLICATES"],
     function()
       return IsOtherFilterChecked(
         "duplicates",
@@ -1506,7 +1531,7 @@ local function CreateOtherMenu(owner, root)
   )
 
   submenu:CreateCheckbox(
-    "No Duplicates",
+    L["NO_DUPLICATES"],
     function()
       return IsOtherFilterChecked(
         "duplicates",
@@ -1525,7 +1550,7 @@ local function CreateOtherMenu(owner, root)
 
   submenu:CreateDivider()
 
-  local resetButton = submenu:CreateButton("Reset")
+  local resetButton = submenu:CreateButton(L["RESET"])
 
   resetButton:SetResponder(
     function()
@@ -1697,7 +1722,7 @@ local function GetExpansionOrder(expansionName)
     return 0
   end
 
-  for index, name in ipairs(EXPANSIONS) do
+  for index, name in ipairs(addon.Constants.EXPANSION_NAMES) do
     if name == expansionName then
       return index
     end
@@ -1711,7 +1736,7 @@ local function GetBreedOrder(breedName)
     return math.huge
   end
 
-  for index, name in ipairs(BREEDS) do
+  for index, name in ipairs(addon.Constants.BREEDS_FOR_FILTERS) do
     if name == breedName then
       return index
     end
@@ -2092,7 +2117,7 @@ local function CreateUnifiedSortMenu(root)
   submenu:CreateDivider()
 
   submenu:CreateCheckbox(
-    "Favorites First",
+    L["FAVORITES_FIRST"],
 
     function()
       return SortOptions.favoritesFirst == true
@@ -2106,7 +2131,7 @@ local function CreateUnifiedSortMenu(root)
   )
 
   submenu:CreateCheckbox(
-    "Can Battle",
+    L["CAN_BATTLE"],
     function()
       return IsOtherFilterChecked(
         "battle",
@@ -2124,7 +2149,7 @@ local function CreateUnifiedSortMenu(root)
   )
 
   submenu:CreateCheckbox(
-    "Reverse Sort",
+    L["REVERSE_SORT"],
 
     function()
       return SortOptions.reverse == true
@@ -2288,25 +2313,25 @@ function FilterExtension:SetupFilterDropdown()
       if ShowsPetTypeFilterMenus() then
         CreatePetMatchupMenu(
           root,
-          "Strong Vs",
+          L["STRONG_VS"],
           "strongVs"
         )
 
         CreatePetMatchupMenu(
           root,
-          "Weak Vs",
+          L["WEAK_VS"],
           "weakVs"
         )
 
         CreatePetMatchupMenu(
           root,
-          "Takes More From",
+          L["TAKES_MORE"],
           "takesMoreFrom"
         )
 
         CreatePetMatchupMenu(
           root,
-          "Takes Less From",
+          L["TAKES_LESS"],
           "takesLessFrom"
         )
       end
@@ -2384,59 +2409,59 @@ function FilterExtension:GetActiveFilterNames()
         Filters.petTypes,
         PET_TYPES
       ) then
-    names[#names + 1] = "Pet Families"
+    names[#names + 1] = L["PET_FAMILIES"]
   end
 
   if HasCustomFilter(
         Filters.sources,
         PET_SOURCES
       ) then
-    names[#names + 1] = "Sources"
+    names[#names + 1] = L["SOURCES"]
   end
 
   if HasCustomFilter(
         Filters.expansions,
-        EXPANSIONS
+        addon.Constants.EXPANSION_NAMES
       ) then
-    names[#names + 1] = "Expansion"
+    names[#names + 1] = L["EXPANSION"]
   end
 
   if HasCustomFilter(
         Filters.rarities,
-        RARITIES
+        addon.Constants.PET_RARITY_NAMES
       ) then
-    names[#names + 1] = "Rarity"
+    names[#names + 1] = L["RARITY"]
   end
 
   if HasCustomFilter(
         Filters.levels,
         LEVEL_RANGE_KEYS
       ) then
-    names[#names + 1] = "Level"
+    names[#names + 1] = L["LEVEL"]
   end
 
   if HasCustomFilter(
         Filters.breeds,
-        BREEDS
+        addon.Constants.BREEDS_FOR_FILTERS
       ) then
-    names[#names + 1] = "Breed"
+    names[#names + 1] = L["BREED"]
   end
 
   if HasCustomFilter(
         Filters.tags,
         TAG_FILTER_OPTIONS
       ) then
-    names[#names + 1] = "Tag"
+    names[#names + 1] = L["TAG"]
   end
 
   if HasOtherFilters() then
-    names[#names + 1] = "Other"
+    names[#names + 1] = L["OTHER"]
   end
 
   if AdvancedSearch
       and type(AdvancedSearch.filters) == "table"
       and #AdvancedSearch.filters > 0 then
-    names[#names + 1] = "Search"
+    names[#names + 1] = L["SEARCH"]
   end
 
   local typeFilter = addon.Services and addon.Services.PetTypeFilter
@@ -2451,42 +2476,42 @@ function FilterExtension:GetActiveFilterNames()
           Filters.petTypes,
           PET_TYPES
         ) then
-      names[#names + 1] = "Pet Families"
+      names[#names + 1] = L["PET_FAMILIES"]
     end
 
     --------------------------------------------------
     -- Strong Vs
     --------------------------------------------------
     if typeFilter:HasSelectedTypes("strongVs") then
-      names[#names + 1] = "Strong Vs"
+      names[#names + 1] = L["STRONG_VS"]
     end
 
     --------------------------------------------------
     -- Weak Vs
     --------------------------------------------------
     if typeFilter:HasSelectedTypes("weakVs") then
-      names[#names + 1] = "Weak Vs"
+      names[#names + 1] = L["WEAK_VS"]
     end
 
     --------------------------------------------------
     -- Takes More From
     --------------------------------------------------
     if typeFilter:HasSelectedTypes("takesMoreFrom") then
-      names[#names + 1] = "Takes More From"
+      names[#names + 1] = L["TAKES_MORE"]
     end
 
     --------------------------------------------------
     -- Takes Less From
     --------------------------------------------------
     if typeFilter:HasSelectedTypes("takesLessFrom") then
-      names[#names + 1] = "Takes Less From"
+      names[#names + 1] = L["TAKES_LESS"]
     end
 
     --------------------------------------------------
     -- Level 25
     --------------------------------------------------
     if typeFilter:IsLevel25Only() then
-      names[#names + 1] = "Level 25"
+      names[#names + 1] = L["LEVEL_25"]
     end
   end
 
@@ -2517,7 +2542,7 @@ function FilterExtension:GetActiveSortNames()
   end
 
   if SortOptions.reverse then
-    names[#names + 1] = "Reverse"
+    names[#names + 1] = L["REVERSE_SORT"]
   end
 
   return names
@@ -2569,7 +2594,7 @@ function FilterExtension:CreatePetTypeFilterBar()
 
   if not component then
     addon.Logger:Warn(
-      "PetTypeFilterBar component is unavailable"
+      L["FILTER_BAR_UNAVAILABLE"]
     )
     return
   end
@@ -2819,7 +2844,7 @@ function FilterExtension:UpdateFilterBar(visiblePetCount)
   end
 
   self.FilterBar.Count:SetFormattedText(
-    "Pets: %d",
+    L["PETS"] .. ": %d",
     tonumber(visiblePetCount) or 0
   )
 
@@ -2827,7 +2852,7 @@ function FilterExtension:UpdateFilterBar(visiblePetCount)
 
   if #activeFilters > 0 then
     parts[#parts + 1] =
-        "Filters: "
+        L["FILTERS"] .. ": "
         .. table.concat(
           activeFilters,
           ", "
@@ -2836,7 +2861,7 @@ function FilterExtension:UpdateFilterBar(visiblePetCount)
 
   if #activeSorts > 0 then
     parts[#parts + 1] =
-        "Sort: "
+        L["SORT"] .. ": "
         .. table.concat(
           activeSorts,
           ", "
@@ -2923,13 +2948,13 @@ function FilterExtension:ResetFiltersOnly()
 
   SetAll(
     Filters.expansions,
-    EXPANSIONS,
+    addon.Constants.EXPANSION_NAMES,
     false
   )
 
   SetAll(
     Filters.rarities,
-    RARITIES,
+    addon.Constants.PET_RARITY_NAMES,
     false
   )
 
@@ -2941,7 +2966,7 @@ function FilterExtension:ResetFiltersOnly()
 
   SetAll(
     Filters.breeds,
-    BREEDS,
+    addon.Constants.BREEDS_FOR_FILTERS,
     false
   )
 
@@ -2966,6 +2991,7 @@ function FilterExtension:ResetFiltersOnly()
   OtherFilters.battle = nil
   OtherFilters.team = nil
   OtherFilters.duplicates = nil
+  OtherFilters.level25 = nil
 
   SyncNativePetTypes()
   SyncNativeSources()
@@ -2993,13 +3019,13 @@ function FilterExtension:ResetAllFilters()
 
   SetAll(
     Filters.expansions,
-    EXPANSIONS,
+    addon.Constants.EXPANSION_NAMES,
     false
   )
 
   SetAll(
     Filters.rarities,
-    RARITIES,
+    addon.Constants.PET_RARITY_NAMES,
     false
   )
 
@@ -3011,7 +3037,7 @@ function FilterExtension:ResetAllFilters()
 
   SetAll(
     Filters.breeds,
-    BREEDS,
+    addon.Constants.BREEDS_FOR_FILTERS,
     false
   )
 
@@ -3036,6 +3062,7 @@ function FilterExtension:ResetAllFilters()
   OtherFilters.battle = nil
   OtherFilters.team = nil
   OtherFilters.duplicates = nil
+  OtherFilters.level25 = nil
 
   SortOptions.favoritesFirst = true
   SortOptions.reverse = false
@@ -3083,7 +3110,7 @@ function FilterExtension:MatchesPet(
   --------------------------------------------------
   if HasSelection(
         Filters.expansions,
-        EXPANSIONS
+        addon.Constants.EXPANSION_NAMES
       ) then
     local expansion =
         GetExpansionName(
@@ -3093,7 +3120,7 @@ function FilterExtension:MatchesPet(
 
     if not MatchesFilter(
           Filters.expansions,
-          EXPANSIONS,
+          addon.Constants.EXPANSION_NAMES,
           expansion
         ) then
       return false
@@ -3105,7 +3132,7 @@ function FilterExtension:MatchesPet(
   --------------------------------------------------
   if HasSelection(
         Filters.rarities,
-        RARITIES
+        addon.Constants.PET_RARITY_NAMES
       ) then
     local rarityName
 
@@ -3120,7 +3147,7 @@ function FilterExtension:MatchesPet(
 
     if not MatchesFilter(
           Filters.rarities,
-          RARITIES,
+          addon.Constants.PET_RARITY_NAMES,
           rarityName
         ) then
       return false
@@ -3157,7 +3184,7 @@ function FilterExtension:MatchesPet(
   --------------------------------------------------
   if HasSelection(
         Filters.breeds,
-        BREEDS
+        addon.Constants.BREEDS_FOR_FILTERS
       ) then
     local breed =
         GetBreedName(
@@ -3167,7 +3194,7 @@ function FilterExtension:MatchesPet(
 
     if not MatchesFilter(
           Filters.breeds,
-          BREEDS,
+          addon.Constants.BREEDS_FOR_FILTERS,
           breed
         ) then
       return false
@@ -3209,6 +3236,15 @@ function FilterExtension:MatchesPet(
 
     if OtherFilters.leveling == "notLeveling"
         and isLeveling then
+      return false
+    end
+  end
+
+  --------------------------------------------------
+  -- Other: Without Level 25
+  --------------------------------------------------
+  if OtherFilters.level25 == "withoutLevel25" then
+    if not isOwned or HasLevel25Pet(speciesID) then
       return false
     end
   end

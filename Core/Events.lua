@@ -1,19 +1,22 @@
 local _, addon = ...
 
 addon.EventBus = addon.EventBus or {}
+
+local L = addon.L
+
 local EventBus = {}
 EventBus.Registered = {}
 
 function EventBus:Register(event, callback)
   if not event then
     addon.Logger:Error(
-      "Cannot register empty event"
+      L["CANNOT_REGISTER_EVENT"]
     )
     return
   end
   if type(callback) ~= "function" then
     addon.Logger:Error(
-      "Invalid callback for event",
+      L["INVALID_FALLBACK"],
       event
     )
     return
@@ -43,7 +46,7 @@ function EventBus:Fire(event, ...)
     )
     if not success then
       addon.Logger:Error(
-        "Error in event:",
+        L["EVENT_ERROR"],
         event,
         err
       )

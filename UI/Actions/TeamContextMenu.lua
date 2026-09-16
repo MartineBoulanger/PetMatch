@@ -1,5 +1,7 @@
 local _, addon = ...
 
+local L = addon.L
+
 local TeamContextMenu = {}
 
 function TeamContextMenu:Show(owner, team)
@@ -21,13 +23,13 @@ function TeamContextMenu:Show(owner, team)
     owner,
     function(_, rootDescription)
       rootDescription:CreateTitle(
-        team.name or "Team"
+        team.name or L["TEAM"]
       )
 
       rootDescription:CreateButton(
         hasNotes
-        and "Edit Notes"
-        or "Add Notes",
+        and L["EDIT_NOTES"]
+        or L["ADD_NOTES"],
         function()
           addon.UI.Dialogs.TeamNotesDialog:Show(
             team
@@ -37,8 +39,8 @@ function TeamContextMenu:Show(owner, team)
 
       rootDescription:CreateButton(
         hasScript
-        and "Edit Script"
-        or "Add Script",
+        and L["EDIT_SCRIPT"]
+        or L["ADD_SCRIPT"],
         function()
           addon.UI.Dialogs.TeamScriptDialog:Show(
             team
@@ -62,7 +64,7 @@ function TeamContextMenu:Show(owner, team)
 
       local moveUp =
           rootDescription:CreateButton(
-            "Move Up",
+            L["MOVE_UP"],
             function()
               teamService:MoveUp(team.id)
             end
@@ -75,7 +77,7 @@ function TeamContextMenu:Show(owner, team)
 
       local moveDown =
           rootDescription:CreateButton(
-            "Move Down",
+            L["MOVE_DOWN"],
             function()
               teamService:MoveDown(team.id)
             end
@@ -87,7 +89,7 @@ function TeamContextMenu:Show(owner, team)
       )
 
       rootDescription:CreateButton(
-        "Move To Folder",
+        L["MOVE_TO_FOLDER"],
         function()
           addon.UI.Dialogs.MoveTeamDialog:Show(team)
         end
@@ -96,21 +98,21 @@ function TeamContextMenu:Show(owner, team)
       rootDescription:CreateDivider()
 
       rootDescription:CreateButton(
-        "Edit Team",
+        L["EDIT_TEAM"],
         function()
           addon.UI.Dialogs.EditTeamDialog:Show(team)
         end
       )
 
       rootDescription:CreateButton(
-        "Export Team",
+        L["EXPORT_TEAM"],
         function()
           addon.UI.Dialogs.ExportDialog:Show(team)
         end
       )
 
       rootDescription:CreateButton(
-        "Delete Team",
+        L["DELETE_TEAM"],
         function()
           addon.UI.Dialogs.DeleteTeamDialog:Show(team)
         end

@@ -1,31 +1,17 @@
 local _, addon = ...
 
+local L = addon.L
 local BreedSection = {}
 BreedSection.__index = BreedSection
 
 local TITLE_HEIGHT = 18
 local BREED_TOP_SPACING = 9
 local HELP_TOP_SPACING = 8
-local BOTTOM_PADDING = 4
 
 local BREED_TOOLTIP_OFFSET_X = 8
 local BREED_TOOLTIP_OFFSET_Y = 0
 local BREED_TOOLTIP_WIDTH = 240
 
-local PET_RARITY_COLORS = addon.Constants.PET_RARITY_COLORS
-
-local BREED_NAME_TO_ID = {
-  ["B/B"] = 3,
-  ["P/P"] = 4,
-  ["S/S"] = 5,
-  ["H/H"] = 6,
-  ["H/P"] = 7,
-  ["P/S"] = 8,
-  ["H/S"] = 9,
-  ["P/B"] = 10,
-  ["S/B"] = 11,
-  ["H/B"] = 12,
-}
 
 local function GetQualityHex(quality)
   quality =
@@ -33,9 +19,7 @@ local function GetQualityHex(quality)
       or 0
 
   local color =
-      PET_RARITY_COLORS[
-      quality
-      ]
+      addon.Constants.PET_RARITY_COLORS[quality]
 
   if not color then
     return "ffffffff"
@@ -103,7 +87,7 @@ local function GetCurrentBreedID(pet)
   end
 
   return breedName
-      and BREED_NAME_TO_ID[breedName]
+      and addon.Constants.BREED_NAME_TO_ID[breedName]
       or nil
 end
 
@@ -144,7 +128,7 @@ function BreedSection:Create(parent)
   )
 
   instance.Title:SetText(
-    "Possible Breeds"
+    L["POSSIBLE_BREEDS"]
   )
 
   instance.Divider =

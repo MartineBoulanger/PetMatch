@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local FolderContextMenu = {}
 
 local function IsVirtualFolder(folderKey)
@@ -20,7 +21,7 @@ function FolderContextMenu:Show(owner, folderKey)
   MenuUtil.CreateContextMenu(
     owner,
     function(_, rootDescription)
-      local folderName = folder and folder.name or "Folder"
+      local folderName = folder and folder.name or L["FOLDER"]
 
       rootDescription:CreateTitle(folderName)
 
@@ -30,7 +31,7 @@ function FolderContextMenu:Show(owner, folderKey)
 
       local moveUp =
           rootDescription:CreateButton(
-            "Move Up",
+            L["MOVE_UP"],
             function()
               folderService:MoveUp(folderKey)
             end
@@ -43,7 +44,7 @@ function FolderContextMenu:Show(owner, folderKey)
 
       local moveDown =
           rootDescription:CreateButton(
-            "Move Down",
+            L["MOVE_DOWN"],
             function()
               folderService:MoveDown(folderKey)
             end
@@ -58,7 +59,7 @@ function FolderContextMenu:Show(owner, folderKey)
 
       local renameButton =
           rootDescription:CreateButton(
-            "Rename Folder",
+            L["RENAME_FOLDER"],
             function()
               self:RenameFolder(folderKey)
             end
@@ -71,7 +72,7 @@ function FolderContextMenu:Show(owner, folderKey)
 
       local deleteButton =
           rootDescription:CreateButton(
-            "Delete Folder",
+            L["DELETE_FOLDER"],
             function()
               self:DeleteFolder(folderKey)
             end
@@ -85,7 +86,7 @@ function FolderContextMenu:Show(owner, folderKey)
       rootDescription:CreateDivider()
 
       rootDescription:CreateButton(
-        "Import Teams",
+        L["IMPORT_TEAMS"],
         function()
           self:ImportTeams(folderKey)
         end
@@ -93,7 +94,7 @@ function FolderContextMenu:Show(owner, folderKey)
 
       local exportButton =
           rootDescription:CreateButton(
-            "Export Teams",
+            L["EXPORT_TEAMS"],
             function()
               self:ExportTeams(folderKey)
             end
@@ -107,9 +108,7 @@ function FolderContextMenu:Show(owner, folderKey)
   )
 end
 
-function FolderContextMenu:RenameFolder(
-    folderKey
-)
+function FolderContextMenu:RenameFolder(folderKey)
   local folder = addon.Services.Folder:Get(folderKey)
 
   if not folder then
@@ -133,13 +132,10 @@ function FolderContextMenu:DeleteFolder(folderKey)
   )
 end
 
-function FolderContextMenu:ImportTeams(
-    folderKey
-)
+function FolderContextMenu:ImportTeams(folderKey)
   local storageFolderID = folderKey
 
-  if folderKey
-      == addon.Services.Folder.UNSORTED then
+  if folderKey == addon.Services.Folder.UNSORTED then
     storageFolderID = nil
   elseif IsVirtualFolder(folderKey) then
     storageFolderID = nil
@@ -150,9 +146,7 @@ function FolderContextMenu:ImportTeams(
   )
 end
 
-function FolderContextMenu:ExportTeams(
-    folderKey
-)
+function FolderContextMenu:ExportTeams(folderKey)
   local folder = addon.Services.Folder:Get(folderKey)
 
   if not folder then

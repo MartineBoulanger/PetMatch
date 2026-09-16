@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local ImportPreviewDialog = {}
 
 local DIALOG_WIDTH = 460
@@ -91,11 +92,11 @@ local function UpdateImportButton(dialog)
   dialog.Status:SetTextColor(unpack(addon.UI.Theme.Colors.TextMuted))
 
   if selectedCount == 1 then
-    dialog.Status:SetText("1 team selected")
+    dialog.Status:SetText(L["ONE_TEAM_SELECTED"])
   else
     dialog.Status:SetText(
       tostring(selectedCount)
-      .. " teams selected"
+      .. L["NUMBER_TEAMS_SELECTED"]
     )
   end
 end
@@ -210,7 +211,7 @@ local function BuildPreview(dialog)
         )
 
     if groupName == "" then
-      groupName = "Selected folder"
+      groupName = L["SELECTED_FOLDER"]
     end
 
     --------------------------------------------------
@@ -268,7 +269,7 @@ local function BuildPreview(dialog)
 
       if teamName == "" then
         teamName =
-            "Unnamed Team "
+            L["UNNAMED_TEAM"] .. " "
             .. tostring(
               teamIndex
             )
@@ -389,7 +390,7 @@ local function ImportSelected(dialog)
 
   if #document.groups == 0 then
     dialog.Status:SetText(
-      "Select at least one team."
+      L["SELECT_LEAST_ONE_TEAM"]
     )
 
     return
@@ -407,7 +408,7 @@ local function ImportSelected(dialog)
   )
 
   dialog.Status:SetText(
-    "Importing selected teams..."
+    L["IMPORT_SELECTED_TEAMS"]
   )
 
   dialog.Progress:SetValue(0)
@@ -460,7 +461,7 @@ local function ImportSelected(dialog)
 
         dialog.Status:SetText(
           string.format(
-            "Importing team %d of %d...",
+            L["IMPORT_NUMBER_OF_NUMBER"],
             completed,
             total
           )
@@ -481,7 +482,7 @@ local function ImportSelected(dialog)
 
         dialog.Status:SetText(
           errorMessage
-          or "Unable to import the selected teams."
+          or L["UNABLE_IMPORT_TEAM"]
         )
       end
 
@@ -503,7 +504,7 @@ local function ImportSelected(dialog)
 
         dialog.Status:SetText(
           string.format(
-            "%d team%s imported.",
+            L["NUMBER_TEAMS_IMPORTED"],
             #result.teams,
             #result.teams == 1
             and ""
@@ -545,7 +546,7 @@ local function CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Select the teams you want to import.",
+          text = L["SELECT_TEAMS_TO_IMPORT"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -751,7 +752,7 @@ local function CreateDialog()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchImportPreviewDialog",
-        title = "Import Preview",
+        title = L["IMPORT_PREVIEW"],
         width = DIALOG_WIDTH,
         autoHeight = true,
         showFooter = true,
@@ -770,13 +771,13 @@ local function CreateDialog()
   --------------------------------------------------
   dialog.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 100,
       })
 
   dialog.ImportButton =
       dialog:AddFooterButton({
-        text = "Import Selected",
+        text = L["IMPORT_SELECTED"],
         width = 140,
         onClick = function() ImportSelected(dialog) end,
       })

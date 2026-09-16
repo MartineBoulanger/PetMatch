@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TeamList = {}
 
 local HEADER_HEIGHT = 28
@@ -226,11 +227,11 @@ end
 function TeamList:GetFolderSections()
   local sections = {
     {
-      label = "Favorites",
+      label = L["FAVORITES"],
       folderKey = addon.Services.Folder.FAVORITES,
     },
     {
-      label = "Unsorted",
+      label = L["UNSORTED"],
       folderKey = addon.Services.Folder.UNSORTED,
     },
   }
@@ -408,7 +409,7 @@ function TeamList:CreateTeamCards(folderKey, currentOffset)
     )
 
     emptyLabel:SetText(
-      "No teams in this folder"
+      L["NO_TEAMS"]
     )
 
     table.insert(

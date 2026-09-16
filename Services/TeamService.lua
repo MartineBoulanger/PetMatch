@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TeamService = {}
 
 local function GetProfile()
@@ -195,11 +196,11 @@ function TeamService:CreateFromBattleSlots(name, folderID, pendingSpecialSlots)
   name = addon.Utils:Trim(name or "")
 
   if name == "" then
-    return nil, "Enter a team name"
+    return nil, L["TEAM_NAME_ERROR"]
   end
 
   if folderID and not addon.Services.Folder:Get(folderID) then
-    return nil, "Folder not found"
+    return nil, L["FOLDER_NOT_FOUND"]
   end
 
   pendingSpecialSlots =
@@ -223,13 +224,13 @@ function TeamService:CreateFromBattleSlots(name, folderID, pendingSpecialSlots)
   end
 
   if not hasSlot then
-    return nil, "The current Battle Pet Slots are empty"
+    return nil, L["EMPTY_PET_SLOTS"]
   end
 
   local team = self:Create(name)
 
   if not team then
-    return nil, "Unable to create team"
+    return nil, L["UNABLE_TEAM_CREATE"]
   end
 
   team.pets = {}
@@ -289,7 +290,7 @@ function TeamService:Load(teamID)
   local team = self:Get(teamID)
 
   if not team then
-    return false, "Team not found"
+    return false, L["NO_TEAM_FOUND"]
   end
 
   local profile = GetProfile()
@@ -327,13 +328,13 @@ function TeamService:Rename(teamID, name)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   name = addon.Utils:Trim(name or "")
 
   if name == "" then
-    return nil, "Enter a team name"
+    return nil, L["TEAM_NAME_ERROR"]
   end
 
   team.name = name
@@ -351,7 +352,7 @@ function TeamService:SetNotes(teamID, notes)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   notes = tostring(notes or "")
@@ -371,7 +372,7 @@ function TeamService:SetScript(teamID, script)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   team.script = addon.Utils:Trim(script or "")
@@ -389,7 +390,7 @@ function TeamService:ReplacePetsFromBattleSlots(teamID, pendingSpecialSlots)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   pendingSpecialSlots =
@@ -458,8 +459,7 @@ function TeamService:ReplacePetsFromBattleSlots(teamID, pendingSpecialSlots)
   end
 
   if not hasSlot then
-    return nil,
-        "The current Battle Pet Slots are empty"
+    return nil, L["EMPTY_PET_SLOTS"]
   end
 
   team.pets = newPets
@@ -507,11 +507,11 @@ function TeamService:MoveToFolder(teamID, folderID)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   if folderID and not addon.Services.Folder:Get(folderID) then
-    return nil, "Folder not found"
+    return nil, L["FOLDER_NOT_FOUND"]
   end
 
   if team.folderID == folderID then
@@ -694,7 +694,7 @@ function TeamService:SetFavorite(teamID, favorite)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   favorite = favorite == true
@@ -724,7 +724,7 @@ function TeamService:ToggleFavorite(teamID)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   return self:SetFavorite(
@@ -737,11 +737,11 @@ function TeamService:AddTag(teamID, tagID)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   if not addon.Services.Tag:Get(tagID) then
-    return nil, "Tag not found"
+    return nil, L["TAG_NOT_FOUND"]
   end
 
   team.tags = team.tags or {}
@@ -770,7 +770,7 @@ function TeamService:RemoveTag(teamID, tagID)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   team.tags = team.tags or {}
@@ -799,7 +799,7 @@ function TeamService:ToggleTag(teamID, tagID)
   local team = self:Get(teamID)
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   team.tags = team.tags or {}
@@ -819,7 +819,7 @@ end
 
 function TeamService:BuildFromImport(importData, resolvedPetsBySpeciesID)
   if type(importData) ~= "table" then
-    return nil, "Invalid import data", {}
+    return nil, L["INVALID_IMPORT_DATA"], {}
   end
 
   local team = {
@@ -837,7 +837,7 @@ function TeamService:BuildFromImport(importData, resolvedPetsBySpeciesID)
   }
 
   if team.name == "" then
-    team.name = "Imported Team"
+    team.name = L["IMPORTED_TEAM"]
   end
 
   local missingSpecies = {}
@@ -907,7 +907,7 @@ function TeamService:CreateFromImport(importData, options)
 
   if team then
     if conflictMode == "skip" then
-      return nil, "Team already exists", missingSpecies
+      return nil, L["TEAM_EXISTS"], missingSpecies
     elseif conflictMode == "keep" then
       local uniqueName =
           self:GetUniqueName(
@@ -918,18 +918,18 @@ function TeamService:CreateFromImport(importData, options)
       team = self:Create(uniqueName)
 
       if not team then
-        return nil, "Unable to create team", missingSpecies
+        return nil, L["UNABLE_TEAM_CREATE"], missingSpecies
       end
     elseif conflictMode == "replace" then
       -- Gebruik het bestaande team.
     else
-      return nil, "Unknown conflict mode", missingSpecies
+      return nil, L["UNKNOWN_CONFLICT"], missingSpecies
     end
   else
     team = self:Create(importedTeam.name)
 
     if not team then
-      return nil, "Unable to create team", missingSpecies
+      return nil, L["UNABLE_TEAM_CREATE"], missingSpecies
     end
   end
 
@@ -951,15 +951,11 @@ function TeamService:CreateFromImport(importData, options)
   return team, nil, missingSpecies
 end
 
-function TeamService:OverrideFromImport(
-    teamID,
-    importData
-)
-  local existingTeam =
-      self:Get(teamID)
+function TeamService:OverrideFromImport(teamID, importData)
+  local existingTeam = self:Get(teamID)
 
   if not existingTeam then
-    return nil, "No team selected", {}
+    return nil, L["NO_TEAM_SELECTED"], {}
   end
 
   local importedTeam,
@@ -968,44 +964,20 @@ function TeamService:OverrideFromImport(
       self:BuildFromImport(importData)
 
   if not importedTeam then
-    return nil,
-        errorMessage,
-        missingSpecies
+    return nil, errorMessage, missingSpecies
   end
 
-  existingTeam.name =
-      importedTeam.name
-
-  existingTeam.pets =
-      importedTeam.pets
-
-  existingTeam.abilities =
-      importedTeam.abilities
-
-  existingTeam.breeds =
-      importedTeam.breeds
-
-  existingTeam.specialSlots =
-      importedTeam.specialSlots
-
-  existingTeam.targetNPCIDs =
-      importedTeam.targetNPCIDs
-
-  existingTeam.folderID =
-      importedTeam.folderID
-
-  existingTeam.favorite =
-      importedTeam.favorite
-
-  existingTeam.notes =
-      importedTeam.notes
-
-  existingTeam.script =
-      importedTeam.script
-
-  existingTeam.importSource =
-      importedTeam.importSource
-
+  existingTeam.name = importedTeam.name
+  existingTeam.pets = importedTeam.pets
+  existingTeam.abilities = importedTeam.abilities
+  existingTeam.breeds = importedTeam.breeds
+  existingTeam.specialSlots = importedTeam.specialSlots
+  existingTeam.targetNPCIDs = importedTeam.targetNPCIDs
+  existingTeam.folderID = importedTeam.folderID
+  existingTeam.favorite = importedTeam.favorite
+  existingTeam.notes = importedTeam.notes
+  existingTeam.script = importedTeam.script
+  existingTeam.importSource = importedTeam.importSource
   existingTeam.modified = time()
 
   addon.EventBus:Fire(
@@ -1019,36 +991,25 @@ function TeamService:OverrideFromImport(
     missingSpecies
   )
 
-  return existingTeam,
-      nil,
-      missingSpecies
+  return existingTeam, nil, missingSpecies
 end
 
-function TeamService:LoadFromImport(
-    importData
-)
-  local importedTeam,
-  errorMessage,
-  missingSpecies =
+function TeamService:LoadFromImport(importData)
+  local importedTeam, errorMessage, missingSpecies =
       self:BuildFromImport(importData)
 
   if not importedTeam then
-    return false,
-        errorMessage,
-        missingSpecies
+    return false, errorMessage, missingSpecies
   end
 
   local success, loadError =
-      addon.Services.BattleSlot:
-      LoadPets(
+      addon.Services.BattleSlot:LoadPets(
         importedTeam.pets,
         importedTeam.abilities
       )
 
   if not success then
-    return false,
-        loadError,
-        missingSpecies
+    return false, loadError, missingSpecies
   end
 
   addon.EventBus:Fire(
@@ -1056,35 +1017,20 @@ function TeamService:LoadFromImport(
     importedTeam
   )
 
-  return true,
-      nil,
-      missingSpecies
+  return true, nil, missingSpecies
 end
 
-function TeamService:FindByName(
-    name,
-    folderID
-)
+function TeamService:FindByName(name, folderID)
   local normalizedName =
-      string.lower(
-        addon.Utils:Trim(name or "")
-      )
+      string.lower(addon.Utils:Trim(name or ""))
 
-  for _, team in pairs(
-    self:GetTeams()
-  ) do
+  for _, team in pairs(self:GetTeams()) do
     local teamName =
-        string.lower(
-          addon.Utils:Trim(
-            team.name or ""
-          )
-        )
+        string.lower(addon.Utils:Trim(team.name or ""))
 
-    local sameFolder =
-        team.folderID == folderID
+    local sameFolder = team.folderID == folderID
 
-    if teamName == normalizedName
-        and sameFolder then
+    if teamName == normalizedName and sameFolder then
       return team
     end
   end
@@ -1092,14 +1038,8 @@ function TeamService:FindByName(
   return nil
 end
 
-function TeamService:GetUniqueName(
-    name,
-    folderID
-)
-  if not self:FindByName(
-        name,
-        folderID
-      ) then
+function TeamService:GetUniqueName(name, folderID)
+  if not self:FindByName(name, folderID) then
     return name
   end
 
@@ -1180,7 +1120,7 @@ function TeamService:Move(teamID, newIndex)
   local team = self:Get(teamID)
 
   if not team then
-    return false, "Team not found"
+    return false, L["NO_TEAM_FOUND"]
   end
 
   local teams = self:GetTeamsInFolder(team.folderID)

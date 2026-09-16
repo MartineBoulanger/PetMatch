@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local ExportLevellingQueueDialog = {}
 
 local DIALOG_WIDTH = 420
@@ -71,8 +72,7 @@ function ExportLevellingQueueDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Copy this levelling queue export "
-              .. "string and share it with " .. "another player.",
+          text = L["COPY_QUEUE_STRING"],
           fontObject = "GameFontHighlightSmall",
           justify = "LEFT",
         }
@@ -247,7 +247,7 @@ function ExportLevellingQueueDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchExportLevellingQueueDialog",
-        title = "Export Levelling Queue",
+        title = L["EXPORT_QUEUE"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -270,14 +270,14 @@ function ExportLevellingQueueDialog:Create()
   --------------------------------------------------
   self.CloseButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 80,
       })
 
   self.CopyButton =
       dialog:AddFooterButton({
-        text = "Select All",
-        width = 90,
+        text = L["SELECT_ALL"],
+        width = 120,
         onClick =
             function()
               self:SelectAll()
@@ -306,18 +306,16 @@ function ExportLevellingQueueDialog:Show()
   if not value then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to export levelling queue"
+      or L["UNABLE_EXPORT_QUEUE"]
     )
 
     return
   end
 
-  dialog:SetTitle("Export Levelling Queue")
+  dialog:SetTitle(L["EXPORT_QUEUE"])
 
   self.Description:SetText(
-    "Copy this levelling queue export "
-    .. "string and share it with "
-    .. "another player."
+    L["COPY_QUEUE_STRING"]
   )
 
   self:SetValue(value)

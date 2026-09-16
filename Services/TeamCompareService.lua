@@ -8,26 +8,19 @@ local function IsSpecialSlot(team, slot)
       and type(team.specialSlots[slot]) == "table"
 end
 
-function TeamCompareService:Compare(
-    team,
-    currentSlots
-)
+function TeamCompareService:Compare(team, currentSlots)
   local changedSlots = {}
 
   if not team then
     return false, changedSlots
   end
 
-  currentSlots =
-      currentSlots
-      or {}
+  currentSlots = currentSlots or {}
 
   for slot = 1, 3 do
     if not IsSpecialSlot(team, slot) then
       local savedPetGUID =
-          team.pets
-          and team.pets[slot]
-          or nil
+          team.pets and team.pets[slot] or nil
 
       local currentPetGUID = currentSlots[slot]
 
@@ -52,9 +45,7 @@ function TeamCompareService:CompareWithCurrentSlots(team)
   for slot = 1, 3 do
     if not IsSpecialSlot(team, slot) then
       local savedPet =
-          team.pets
-          and team.pets[slot]
-          or nil
+          team.pets and team.pets[slot] or nil
 
       local currentPet = currentLoadout.pets[slot]
 

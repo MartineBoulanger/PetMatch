@@ -1,5 +1,7 @@
 local addonName, addon = ...
 
+local L = addon.L
+
 local frame = CreateFrame(
   "Frame",
   "PetMatchFrame"
@@ -37,7 +39,7 @@ local function Enable()
     end
   )
 
-  addon.Logger:Info("v1.20.1 Loaded - open the PetJournal to use the addon")
+  addon.Logger:Info("v1.21.0 " .. L["LOADED"])
 end
 
 frame:RegisterEvent("ADDON_LOADED")

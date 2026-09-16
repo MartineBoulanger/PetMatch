@@ -1,6 +1,9 @@
 local _, addon = ...
 
 addon.Blizzard = addon.Blizzard or {}
+
+local L = addon.L
+
 local Blizzard = {}
 
 Blizzard.Hooked = false
@@ -14,7 +17,7 @@ local function UpdateLoadoutTitle(team)
 
   local title =
       BATTLE_PET_SLOTS
-      or "Battle Pet Slots"
+      or L["SLOT_DEFAULT_NAME"]
 
   if team
       and type(team.name) == "string"
@@ -225,11 +228,11 @@ local function InitializePetCollectionButton()
       )
 
       GameTooltip:SetText(
-        "Pet Collection"
+        L["PET_COLLECTION_TITLE"]
       )
 
       GameTooltip:AddLine(
-        "Click to view your pet collection statistics.",
+        L["PET_COLLECTION_TOOLTIP"],
         1,
         1,
         1,

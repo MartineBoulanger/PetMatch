@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local LevellingQueueRow = {}
 LevellingQueueRow.__index = LevellingQueueRow
 
@@ -26,9 +27,7 @@ function LevellingQueueRow:IsItemTargeting()
   return panel and panel.PendingItemID ~= nil
 end
 
-local function HandleSpecialPetClick(
-    petGUID
-)
+local function HandleSpecialPetClick(petGUID)
   if not petGUID then
     return false
   end
@@ -534,7 +533,7 @@ function LevellingQueueRow:SetPet(item)
 
   self.Icon:SetTexture(pet.icon)
 
-  self.Name:SetText(pet.name or "Unknown Pet")
+  self.Name:SetText(pet.name or L["UNKNOWN"])
 
   local _, _, _, _, quality =
       C_PetJournal.GetPetStats(
@@ -609,7 +608,7 @@ function LevellingQueueRow:SetPet(item)
   end
 
   self.Level:SetFormattedText(
-    "Level %d",
+    L["LEVEL"] .. " %d",
     level
   )
 
@@ -722,7 +721,7 @@ function LevellingQueueRow:OpenContextMenu()
       --------------------------------------------------
       local moveUp =
           root:CreateButton(
-            "Move Up",
+            L["MOVE_UP"],
             function()
               service:MoveUp(
                 petGUID
@@ -740,7 +739,7 @@ function LevellingQueueRow:OpenContextMenu()
       --------------------------------------------------
       local moveDown =
           root:CreateButton(
-            "Move Down",
+            L["MOVE_DOWN"],
             function()
               service:MoveDown(
                 petGUID
@@ -759,7 +758,7 @@ function LevellingQueueRow:OpenContextMenu()
       -- Remove
       --------------------------------------------------
       root:CreateButton(
-        "Remove from Levelling Queue",
+        L["REMOVE_FROM_QUEUE"],
         function()
           service:Remove(
             petGUID

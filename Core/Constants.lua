@@ -1,5 +1,7 @@
 local _, addon = ...
 
+local L = addon.L
+
 addon.Constants = {
   ADDON_NAME = "PetMatch",
   VERSION = "0.1.0",
@@ -7,6 +9,30 @@ addon.Constants = {
   CHAT_PREFIX = "|cff00ccff[PetMatch]|r",
 
   -- pet breed variables
+  BREEDS_FOR_FILTERS = {
+    "B/B",
+    "P/P",
+    "S/S",
+    "H/H",
+    "H/P",
+    "P/S",
+    "H/S",
+    "P/B",
+    "S/B",
+    "H/B",
+  },
+  BREED_NAME_TO_ID = {
+    ["B/B"] = 3,
+    ["P/P"] = 4,
+    ["S/S"] = 5,
+    ["H/H"] = 6,
+    ["H/P"] = 7,
+    ["P/S"] = 8,
+    ["H/S"] = 9,
+    ["P/B"] = 10,
+    ["S/B"] = 11,
+    ["H/B"] = 12,
+  },
   PET_BREED_NAMES = {
     [3] = "B/B",
     [4] = "P/P",
@@ -42,10 +68,10 @@ addon.Constants = {
     [6] = ITEM_QUALITY_COLORS[5], -- legendary
   },
   PET_RARITY_NAMES = {
-    [1] = "Poor",
-    [2] = "Common",
-    [3] = "Uncommon",
-    [4] = "Rare",
+    [1] = L["POOR"],
+    [2] = L["COMMON"],
+    [3] = L["UNCOMMON"],
+    [4] = L["RARE"],
   },
 
   -- pet type variables
@@ -72,6 +98,18 @@ addon.Constants = {
     [8] = { r = 0.918, g = 0.176, b = 0.129 },  -- Beast      #ea2d21
     [9] = { r = 0.067, g = 0.647, b = 0.710 },  -- Aquatic    #11a5b5
     [10] = { r = 0.467, g = 0.455, b = 0.400 }, -- Mechanical #777466
+  },
+  PET_FAMILY_NAMES = {
+    [1] = _G.BATTLE_PET_NAME_1 or L["FAM_HUM"],
+    [2] = _G.BATTLE_PET_NAME_2 or L["FAM_DRA"],
+    [3] = _G.BATTLE_PET_NAME_3 or L["FAM_FLY"],
+    [4] = _G.BATTLE_PET_NAME_4 or L["FAM_UND"],
+    [5] = _G.BATTLE_PET_NAME_5 or L["FAM_CRI"],
+    [6] = _G.BATTLE_PET_NAME_6 or L["FAM_MAG"],
+    [7] = _G.BATTLE_PET_NAME_7 or L["FAM_ELE"],
+    [8] = _G.BATTLE_PET_NAME_8 or L["FAM_BEA"],
+    [9] = _G.BATTLE_PET_NAME_9 or L["FAM_AQU"],
+    [10] = _G.BATTLE_PET_NAME_10 or L["FAM_MEC"],
   },
 
   -- pet sources variables
@@ -132,6 +170,27 @@ addon.Constants = {
     [9] = { r = 0.325, g = 0.702, b = 0.624 },  -- DF       #53B39F
     [10] = { r = 0.565, g = 0.800, b = 0.867 }, -- TWW      #90CCDD
     [11] = { r = 0.427, g = 0.247, b = 0.753 }, -- Midnight #6D3FC0
+  },
+  EXPANSION_NAMES = {
+    "Classic",
+    "Burning Crusade",
+    "Wrath of the Lich King",
+    "Cataclysm",
+    "Mists of Pandaria",
+    "Warlords of Draenor",
+    "Legion",
+    "Battle for Azeroth",
+    "Shadowlands",
+    "Dragonflight",
+    "The War Within",
+    "Midnight",
+  },
+
+  -- sorting and filtering
+  SORT_LABELS = {
+    name = L["NAME"],
+    modified = L["RECENT"],
+    favorites = L["FAVORITES"],
   },
 }
 

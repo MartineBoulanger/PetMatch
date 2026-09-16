@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local PetJournalToolbar = {}
 
 local BUTTON_SIZE = 40
@@ -211,11 +212,7 @@ local function GetSafariHatName()
   return "Safari Hat"
 end
 
-local function CreateSafariHatButton(
-    parent,
-    name,
-    texture
-)
+local function CreateSafariHatButton(parent, name, texture)
   local button =
       CreateFrame(
         "Button",
@@ -297,11 +294,7 @@ local function CreateSafariHatButton(
   return button
 end
 
-local function CreateBandageButton(
-    parent,
-    name,
-    texture
-)
+local function CreateBandageButton(parent, name, texture)
   local button =
       CreateFrame(
         "Button",
@@ -367,8 +360,8 @@ local function CreateBandageButton(
     2
   )
 
-  button.TooltipTitle = "Battle Pet Bandage"
-  button.TooltipDescription = "Heals and resurrects all of your battle pets to 100% health."
+  button.TooltipTitle = L["PET_BANDAGE"]
+  button.TooltipDescription = L["PET_BANDAGE_TOOLTIP"]
 
   button:SetScript(
     "OnEnter",
@@ -391,17 +384,13 @@ local function CreateBandageButton(
   return button
 end
 
-function PetJournalToolbar:SetButtonEnabled(
-    button,
-    enabled
-)
+function PetJournalToolbar:SetButtonEnabled(button, enabled)
   if not button then
     return
   end
 
   local canToggle =
-      not (button:IsProtected()
-        and InCombatLockdown())
+      not (button:IsProtected() and InCombatLockdown())
 
   if enabled then
     if canToggle then
@@ -484,27 +473,23 @@ function PetJournalToolbar:UpdateSafariHatButton()
     button.RemoveOverlay:Show()
 
     button.TooltipTitle =
-        "Remove " .. safariHatName
+        L["REMOVE_SAFARI_HAT"] .. safariHatName
 
-    button.TooltipDescription =
-    "Remove the active Safari Hat buff."
+    button.TooltipDescription = L["REMOVE_SAFARI_HAT_TOOLTIP"]
   else
     button.RemoveOverlay:Hide()
 
     button.TooltipTitle =
-        "Use " .. safariHatName
+        L["USE_SAFARI_HAT"] .. safariHatName
 
     if hasToy then
-      button.TooltipDescription =
-      "Use the Safari Hat toy."
+      button.TooltipDescription = L["HAS_SAFARI_HAT_TOOLTIP"]
     else
-      button.TooltipDescription =
-      "You have not collected the Safari Hat toy."
+      button.TooltipDescription = L["NO_SAFARI_HAT_TOOLTIP"]
     end
   end
 
-  if not stateApplied
-      or InCombatLockdown() then
+  if not stateApplied or InCombatLockdown() then
     self.SafariHatUpdatePending = true
     return
   end
@@ -980,8 +965,8 @@ function PetJournalToolbar:Create()
         {
           name = "PetMatchImportButton",
           texture = "Interface\\AddOns\\PetMatch\\Media\\Import",
-          tooltipTitle = "Import Team(s)",
-          tooltipDescription = "Import Rematch team or a backup you made with Export.",
+          tooltipTitle = L["IMPORT_TEAMS"],
+          tooltipDescription = L["IMPORT_TEAM_TOOLTIP"],
           onClick = function()
             addon.UI.Dialogs.ImportDialog:Show()
           end,
@@ -996,8 +981,8 @@ function PetJournalToolbar:Create()
         {
           name = "PetMatchExportButton",
           texture = "Interface\\AddOns\\PetMatch\\Media\\Export",
-          tooltipTitle = "Export Everything",
-          tooltipDescription = "Export all folders with all teams - good for backup.",
+          tooltipTitle = L["EXPORT_EVERYTHING"],
+          tooltipDescription = L["EXPORT_EVERYTHING_TOOLTIP"],
           onClick = function()
             addon.UI.Dialogs.ExportDialog:ShowAll()
           end,
@@ -1012,8 +997,8 @@ function PetJournalToolbar:Create()
         {
           name = "PetMatchDismissPetButton",
           texture = "Interface\\AddOns\\PetMatch\\Media\\Dismiss",
-          tooltipTitle = "Dismiss Pet",
-          tooltipDescription = "Dismiss the pet that is currently summoned.",
+          tooltipTitle = L["DISMISS_PET"],
+          tooltipDescription = L["DISMISS_PET_TOOLTIP"],
           onClick = function()
             self:DismissPet()
           end,

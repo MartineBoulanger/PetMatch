@@ -1,5 +1,6 @@
 local _, addon                   = ...
 
+local L                          = addon.L
 local PetList                    = {}
 
 PetList.Hooked                   = false
@@ -30,23 +31,8 @@ local COMPACT_NAME_SPACING       = 4
 
 local PET_LIST_TOP_OFFSET        = 4
 
-local PET_RARITY_COLORS          = addon.Constants.PET_RARITY_COLORS
-
 local RANDOM_PET_ICON            = "Interface\\Icons\\INV_Misc_Dice_02"
 local LEVELING_PET_ICON          = "Interface\\AddOns\\PetMatch\\Media\\levelingicon"
-
-local PET_FAMILY_ICONS           = {
-  [1]  = "Interface\\Icons\\Pet_Type_Humanoid",
-  [2]  = "Interface\\Icons\\Pet_Type_Dragon",
-  [3]  = "Interface\\Icons\\Pet_Type_Flying",
-  [4]  = "Interface\\Icons\\Pet_Type_Undead",
-  [5]  = "Interface\\Icons\\Pet_Type_Critter",
-  [6]  = "Interface\\Icons\\Pet_Type_Magical",
-  [7]  = "Interface\\Icons\\Pet_Type_Elemental",
-  [8]  = "Interface\\Icons\\Pet_Type_Beast",
-  [9]  = "Interface\\Icons\\Pet_Type_Water",
-  [10] = "Interface\\Icons\\Pet_Type_Mechanical",
-}
 
 local PendingSlotOverlays        = {}
 local BattleSlotTagOverlays      = {}
@@ -109,7 +95,7 @@ local function GetPendingSpecialSlotIcon(specialSlot)
         or 0
 
     if petType > 0 then
-      return PET_FAMILY_ICONS[petType]
+      return addon.Constants.PET_FAMILY_ICONS[petType]
     end
 
     return RANDOM_PET_ICON
@@ -754,10 +740,22 @@ local function RestoreNormalRow(button)
     layout.levelBackground
   )
 
+  local levelText = GetPetLevelText(button)
+
   RestoreRegionLayout(
-    GetPetLevelText(button),
+    levelText,
     layout.levelText
   )
+
+  if levelText then
+    local textWidth = levelText:GetStringWidth()
+    local currentWidth = levelText:GetWidth()
+
+    if textWidth and currentWidth
+        and currentWidth < textWidth then
+      levelText:SetWidth(math.ceil(textWidth) + 2)
+    end
+  end
 
   local iconBorder = button.iconBorder or button.IconBorder
 
@@ -841,6 +839,11 @@ local function ApplyCompactRow(button)
     levelText:ClearAllPoints()
 
     if levelBackground then
+      levelText:SetSize(
+        COMPACT_LEVEL_SIZE,
+        COMPACT_LEVEL_SIZE
+      )
+
       levelText:SetPoint(
         "CENTER",
         levelBackground,
@@ -849,11 +852,15 @@ local function ApplyCompactRow(button)
         0
       )
     elseif icon then
+      levelText:SetWidth(
+        COMPACT_LEVEL_SIZE
+      )
+
       levelText:SetPoint(
         "LEFT",
         icon,
         "RIGHT",
-        1,
+        0,
         0
       )
     end
@@ -1122,7 +1129,7 @@ local function GetTeamIcon(button)
       CreateStatusIcon(
         button,
         "team",
-        "Used in a PetMatch team"
+        L["USED_IN_TEAM"]
       )
 
   icon.Texture:SetTexture(
@@ -1162,7 +1169,7 @@ local function GetLevelingIcon(button)
       CreateStatusIcon(
         button,
         "leveling",
-        "In the Levelling Queue"
+        L["IN_LEVELLING_QUEUE"]
       )
 
   icon.Texture:SetTexture(
@@ -1280,7 +1287,7 @@ local function UpdateTagIcon(button, petGUID)
       string.format(
         "Pet tag: %s",
         definition.name
-        or "Unknown"
+        or L["UNKNOWN"]
       )
 
   icon:Show()
@@ -1555,7 +1562,7 @@ local function UpdatePetNameColor(button, petGUID)
         petGUID
       )
 
-  local color = PET_RARITY_COLORS[quality]
+  local color = addon.Constants.PET_RARITY_COLORS[quality]
 
   if color then
     button.name:SetTextColor(
@@ -1777,11 +1784,11 @@ end
 
 local function BuildTagMenuText(definition)
   if type(definition) ~= "table" then
-    return "Unknown"
+    return L["UNKNOWN"]
   end
 
   local texture = GetRaidMarkerTexture(definition.id)
-  local name = definition.name or "Unknown"
+  local name = definition.name or L["UNKNOWN"]
 
   if not texture then
     return name
@@ -1957,11 +1964,11 @@ function PetList:InstallPetContextMenu()
 
         local slotMenu =
             root:CreateButton(
-              "Set Pet Slot As"
+              L["SET_PET_SLOT"]
             )
 
         slotMenu:CreateButton(
-          "Use Current Pet",
+          L["USE_CURRENT_PET"],
 
           function()
             addon.Services.BattleSlot:
@@ -1979,11 +1986,11 @@ function PetList:InstallPetContextMenu()
 
         local randomMenu =
             slotMenu:CreateButton(
-              "Random Pet"
+              L["RANDOM_PET"]
             )
 
         randomMenu:CreateButton(
-          "Any Pet",
+          L["ANY_PET"],
           function()
             local success =
                 addon.Services.BattleSlot:
@@ -2003,16 +2010,16 @@ function PetList:InstallPetContextMenu()
         )
 
         local families = {
-          { "Humanoid",   1 },
-          { "Dragonkin",  2 },
-          { "Flying",     3 },
-          { "Undead",     4 },
-          { "Critter",    5 },
-          { "Magic",      6 },
-          { "Elemental",  7 },
-          { "Beast",      8 },
-          { "Aquatic",    9 },
-          { "Mechanical", 10 },
+          { L["FAM_HUM"], 1 },
+          { L["FAM_DRA"], 2 },
+          { L["FAM_FLY"], 3 },
+          { L["FAM_UND"], 4 },
+          { L["FAM_CRI"], 5 },
+          { L["FAM_MAG"], 6 },
+          { L["FAM_ELE"], 7 },
+          { L["FAM_BEA"], 8 },
+          { L["FAM_AQU"], 9 },
+          { L["FAM_MEC"], 10 },
         }
 
         for _, family in ipairs(families) do
@@ -2041,7 +2048,7 @@ function PetList:InstallPetContextMenu()
         end
 
         slotMenu:CreateButton(
-          "Levelling Pet",
+          L["LEVELLING_PET"],
           function()
             local success =
                 addon.Services.BattleSlot:
@@ -2070,7 +2077,7 @@ function PetList:InstallPetContextMenu()
       local tagService = addon.Services.PetTag
 
       if tagService then
-        local submenu = root:CreateButton("Pet Tag")
+        local submenu = root:CreateButton(L["PET_TAG"])
 
         for _, definition in ipairs(
           tagService:GetDefinitions()
@@ -2101,7 +2108,7 @@ function PetList:InstallPetContextMenu()
         if currentTag then
           submenu:CreateDivider()
           submenu:CreateButton(
-            "Remove Tag",
+            L["REMOVE_TAG"],
             function()
               tagService:ClearTag(petGUID)
               RefreshPetJournal()
@@ -2131,7 +2138,7 @@ function PetList:InstallPetContextMenu()
       -- Already in queue
       --------------------------------------------------
       if state.inQueue then
-        local queueMenu = root:CreateButton("Levelling Queue")
+        local queueMenu = root:CreateButton(L["LEVELLING_QUEUE"])
         local index = queueService:GetIndex(petGUID)
         local count = queueService:GetCount()
 
@@ -2140,7 +2147,7 @@ function PetList:InstallPetContextMenu()
         --------------------------------------------------
         local moveUp =
             queueMenu:CreateButton(
-              "Move Up",
+              L["MOVE_UP"],
               function()
                 queueService:MoveUp(petGUID)
               end
@@ -2156,7 +2163,7 @@ function PetList:InstallPetContextMenu()
         --------------------------------------------------
         local moveDown =
             queueMenu:CreateButton(
-              "Move Down",
+              L["MOVE_DOWN"],
               function()
                 queueService:
                     MoveDown(
@@ -2175,7 +2182,7 @@ function PetList:InstallPetContextMenu()
         -- Remove
         --------------------------------------------------
         queueMenu:CreateButton(
-          "Remove from Levelling Queue",
+          L["REMOVE_FROM_QUEUE"],
           function()
             queueService:Remove(petGUID)
             RefreshPetJournal()
@@ -2189,14 +2196,14 @@ function PetList:InstallPetContextMenu()
       --------------------------------------------------
       if state.canAdd then
         root:CreateButton(
-          "Add to Levelling Queue",
+          L["ADD_TO_QUEUE"],
 
           function()
             local success, errorMessage = queueService:Add(petGUID)
             if not success then
               addon.Logger:Warn(
                 errorMessage
-                or "Unable to add pet to the levelling queue."
+                or L["QUEUE_ERROR"]
               )
               return
             end

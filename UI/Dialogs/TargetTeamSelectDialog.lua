@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TargetTeamSelectDialog = {}
 
 local DIALOG_WIDTH = 300
@@ -32,7 +33,7 @@ function TargetTeamSelectDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchTargetTeamSelectDialog",
-        title = "Choose Team",
+        title = L["CHOOSE_TEAM"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -60,8 +61,7 @@ function TargetTeamSelectDialog:Create()
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Multiple teams are available for this target. "
-              .. "Select the team you want to load.",
+          text = L["MULTI_TEAMS_AVAILABLE"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -120,7 +120,7 @@ function TargetTeamSelectDialog:Create()
   ------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 100,
       })
 
@@ -327,7 +327,7 @@ function TargetTeamSelectDialog:CreateTeamRow(team, index)
       addon.UI.Base.Label:Create(
         row,
         {
-          text = team.name or "Unnamed Team",
+          text = team.name or L["UNNAMED_TEAM"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -456,12 +456,11 @@ function TargetTeamSelectDialog:Show(teams, npcID)
   self.NPCID = npcID
 
   dialog:SetTitle(
-    "Choose Team"
+    L["CHOOSE_TEAM"]
   )
 
   self.Description:SetText(
-    "Multiple teams are available for this target. "
-    .. "Select the team you want to load."
+    L["MULTI_TEAMS_AVAILABLE"]
   )
 
   self:RefreshTeams()
@@ -508,7 +507,7 @@ function TargetTeamSelectDialog:LoadTeam(team)
   if not success then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to load team"
+      or L["UNABLE_LOAD_TEAM"]
     )
     return
   end

@@ -1,10 +1,9 @@
 local _, addon = ...
 
+local L = addon.L
 local PetTooltipService = {}
 
-function PetTooltipService:GetPetStats(
-    petGUID
-)
+function PetTooltipService:GetPetStats(petGUID)
   if type(petGUID) ~= "string"
       or petGUID == "" then
     return {
@@ -38,9 +37,7 @@ function PetTooltipService:GetPetStats(
   }
 end
 
-function PetTooltipService:GetAbilities(
-    speciesID
-)
+function PetTooltipService:GetAbilities(speciesID)
   speciesID = tonumber(speciesID)
 
   if not speciesID then
@@ -73,7 +70,7 @@ function PetTooltipService:GetAbilities(
 
       table.insert(abilities, {
         id = abilityID,
-        name = name or "Unknown",
+        name = name or L["UNKNOWN"],
         icon = icon,
         petType = petType,
         noStrongWeakHints = noStrongWeakHints == true,
@@ -87,19 +84,16 @@ function PetTooltipService:GetAbilities(
   return abilities
 end
 
-function PetTooltipService:CreatePet(
-    petGUID
-)
+function PetTooltipService:CreatePet(petGUID)
   if type(petGUID) ~= "string"
       or petGUID == "" then
-    return nil, "Invalid pet GUID"
+    return nil, L["INVALID_GUID"]
   end
 
   local journalService = addon.Services.PetJournal
 
   if not journalService then
-    return nil,
-        "Pet Journal service is unavailable"
+    return nil, L["JOURNAL_ERROR"]
   end
 
   local journalPet =
@@ -108,7 +102,7 @@ function PetTooltipService:CreatePet(
       )
 
   if not journalPet then
-    return nil, "Pet not found"
+    return nil, L["PET_NOT_FOUND"]
   end
 
   local stats = self:GetPetStats(petGUID)
@@ -175,7 +169,7 @@ end
 
 function PetTooltipService:ApplyExpansionData(pet)
   if not pet or not pet.speciesID then
-    addon.Logger:WARN("No pet or speciesID")
+    addon.Logger:WARN(L["PET_NOT_FOUND"])
     return
   end
 
@@ -184,7 +178,7 @@ function PetTooltipService:ApplyExpansionData(pet)
       and addon.Data.PetExpansion
 
   if not speciesInfo then
-    addon.Logger:WARN("addon.Data.SpeciesInfo missing")
+    addon.Logger:WARN(L["PET_NOT_FOUND"])
     return
   end
 
@@ -202,9 +196,7 @@ function PetTooltipService:ApplyExpansionData(pet)
       _G["EXPANSION_NAME" .. expansionID]
 end
 
-function PetTooltipService:ApplyPassiveData(
-    pet
-)
+function PetTooltipService:ApplyPassiveData(pet)
   if not pet
       or not pet.petType then
     return
@@ -215,13 +207,11 @@ function PetTooltipService:ApplyPassiveData(
   }
 end
 
-function PetTooltipService:GetBySpeciesID(
-    speciesID
-)
+function PetTooltipService:GetBySpeciesID(speciesID)
   speciesID = tonumber(speciesID)
 
   if not speciesID then
-    return nil, "Invalid species ID"
+    return nil, L["INVALID_SPECIES_ID"]
   end
 
   local journalService =
@@ -246,13 +236,11 @@ function PetTooltipService:GetBySpeciesID(
   )
 end
 
-function PetTooltipService:CreateSpeciesPet(
-    speciesID
-)
+function PetTooltipService:CreateSpeciesPet(speciesID)
   speciesID = tonumber(speciesID)
 
   if not speciesID then
-    return nil, "Invalid species ID"
+    return nil, L["INVALID_SPECIES_ID"]
   end
 
   local speciesName,
@@ -267,60 +255,43 @@ function PetTooltipService:CreateSpeciesPet(
   unique,
   obtainable,
   displayID =
-      C_PetJournal.GetPetInfoBySpeciesID(
-        speciesID
-      )
+      C_PetJournal.GetPetInfoBySpeciesID(speciesID)
 
   if not speciesName then
-    return nil, "Pet species not found"
+    return nil, L["PET_NOT_FOUND"]
   end
 
   local numCollected =
-      C_PetJournal.GetNumCollectedInfo(
-        speciesID
-      )
+      C_PetJournal.GetNumCollectedInfo(speciesID)
 
   local pet =
       addon.Models.Pet:Create({
         petGUID = nil,
         speciesID = speciesID,
-
         name = speciesName,
         speciesName = speciesName,
         customName = nil,
-
         icon = icon,
         petType = petType,
         creatureID = creatureID,
         displayID = displayID,
-
         sourceText = sourceText,
         description = description,
-
         isWild = isWild == true,
         canBattle = canBattle == true,
         tradable = tradable == true,
         unique = unique == true,
         obtainable = obtainable ~= false,
-
-        isOwned =
-            tonumber(numCollected) ~= nil
+        isOwned = tonumber(numCollected) ~= nil
             and numCollected > 0,
-
         level = nil,
         quality = nil,
-
         health = nil,
         maxHealth = nil,
         power = nil,
         speed = nil,
-
-        abilities =
-            canBattle
-            and self:GetAbilities(
-              speciesID
-            )
-            or {},
+        abilities = canBattle
+            and self:GetAbilities(speciesID) or {},
       })
 
   self:ApplyExpansionData(pet)

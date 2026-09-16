@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TargetTeamConfirmDialog = {}
 
 local DIALOG_WIDTH = 320
@@ -26,7 +27,7 @@ function TargetTeamConfirmDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchTargetTeamConfirmDialog",
-        title = "Load Team",
+        title = L["LOAD_TEAM"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -84,12 +85,12 @@ function TargetTeamConfirmDialog:Create()
   ------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
       })
 
   self.LoadButton =
       dialog:AddAcceptButton({
-        text = "Load Team",
+        text = L["LOAD_TEAM"],
         width = 100,
       })
 
@@ -139,13 +140,13 @@ function TargetTeamConfirmDialog:Show(team, npcID)
   self.NPCID = npcID
 
   dialog:SetTitle(
-    "Load Team"
+    L["LOAD_TEAM"]
   )
 
   self.Description:SetText(
-    "Load \""
-    .. (team.name or "Unnamed Team")
-    .. "\" for the current target?"
+    L["LOAD"] .. " \""
+    .. (team.name or L["UNNAMED_TEAM"])
+    .. "\" " .. L["LOAD_CURRENT"]
   )
 
   dialog:Show()
@@ -189,7 +190,7 @@ function TargetTeamConfirmDialog:LoadTeam()
   if not success then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to load team"
+      or L["UNABLE_LOAD_TEAM"]
     )
 
     return false

@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TargetTeamLoadButton = {}
 
 --------------------------------------------------
@@ -42,9 +43,7 @@ function TargetTeamLoadButton:Create()
     22
   )
 
-  button:SetText(
-    "Load Team"
-  )
+  button:SetText(L["LOAD_TEAM"])
 
   button:SetScript(
     "OnClick",
@@ -90,9 +89,7 @@ function TargetTeamLoadButton:SetTeam(team, npcID)
   self.Team = team
   self.NPCID = npcID
 
-  button:SetText(
-    "Load Team"
-  )
+  button:SetText(L["LOAD_TEAM"])
 
   button:Show()
 end

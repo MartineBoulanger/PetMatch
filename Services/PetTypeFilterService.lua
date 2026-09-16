@@ -613,10 +613,7 @@ function PetTypeFilterService:DoesPetDataMatch(level, petType, speciesID)
   return true
 end
 
-function PetTypeFilterService:GetMatchedAbilities(
-    speciesID,
-    level
-)
+function PetTypeFilterService:GetMatchedAbilities(speciesID, level)
   speciesID = tonumber(speciesID)
   level = tonumber(level) or 0
 

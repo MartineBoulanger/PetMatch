@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local TeamScriptDialog = {}
 
 local DIALOG_WIDTH = 400
@@ -32,7 +33,7 @@ end
 function TeamScriptDialog:Save()
   if not self.TeamID then
     addon.Logger:Warn(
-      "No team selected"
+      L["NO_TEAM_SELECTED"]
     )
     return false
   end
@@ -45,7 +46,7 @@ function TeamScriptDialog:Save()
   if not team then
     addon.Logger:Warn(
       errorMessage
-      or "Unable to save team script"
+      or L["UNABLE_SAVE_SCRIPT"]
     )
     return false
   end
@@ -135,8 +136,7 @@ function TeamScriptDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Enter a Pet Battle Script "
-              .. "for this team.",
+          text = L["ENTER_SCRIPT"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.TextMuted,
         }
@@ -314,7 +314,7 @@ function TeamScriptDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchTeamScriptDialog",
-        title = "Team Script",
+        title = L["TEAM_SCRIPT"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -335,13 +335,13 @@ function TeamScriptDialog:Create()
   --------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 95,
       })
 
   self.SaveButton =
       dialog:AddAcceptButton({
-        text = "Save",
+        text = L["SAVE"],
         width = 95,
       })
 
@@ -367,11 +367,11 @@ function TeamScriptDialog:Show(team)
 
   self.TeamID = team.id
 
-  dialog:SetTitle("Team Script")
+  dialog:SetTitle(L["TEAM_SCRIPT"])
 
   self.TeamName:SetText(
     team.name
-    or "Unnamed Team"
+    or L["UNNAMED_TEAM"]
   )
 
   self.Input:SetText(

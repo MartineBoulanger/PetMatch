@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local OptionsList = {}
 
 local CONTENT_WIDTH = 235
@@ -195,7 +196,7 @@ function OptionsList:GetSections()
   return {
     {
       key = "duplicateTeams",
-      title = "Duplicate Teams",
+      title = L["DUPLICATE_TEAMS"],
       contentHeight = DUPLICATE_SECTION_HEIGHT,
       build = function(content)
         self:BuildDuplicateTeamOptions(content)
@@ -203,7 +204,7 @@ function OptionsList:GetSections()
     },
     {
       key = "petBreeds",
-      title = "Pet Breeds",
+      title = L["PET_BREEDS"],
       contentHeight = BREED_SECTION_HEIGHT,
       build = function(content)
         self:BuildBreedOptions(content)
@@ -211,7 +212,7 @@ function OptionsList:GetSections()
     },
     {
       key = "petList",
-      title = "Pet List",
+      title = L["PET_LIST"],
       contentHeight = PET_LIST_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetListOptions(content)
@@ -219,7 +220,7 @@ function OptionsList:GetSections()
     },
     {
       key = "teamCards",
-      title = "Team Cards",
+      title = L["TEAM_CARDS"],
       contentHeight = TEAM_CARD_SECTION_HEIGHT,
       build = function(content)
         self:BuildTeamCardOptions(content)
@@ -227,7 +228,7 @@ function OptionsList:GetSections()
     },
     {
       key = "petCard",
-      title = "Pet Card",
+      title = L["PET_CARD"],
       contentHeight = PET_CARD_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetCardOptions(content)
@@ -235,7 +236,7 @@ function OptionsList:GetSections()
     },
     {
       key = "petCardVisibility",
-      title = "Pet Card Visibility",
+      title = L["PET_CARD_VISIBILITY"],
       contentHeight = PET_CARD_VISIBILITY_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetCardVisibilityOptions(content)
@@ -243,7 +244,7 @@ function OptionsList:GetSections()
     },
     {
       key = "levellingQueue",
-      title = "Levelling Queue",
+      title = L["LEVELLING_QUEUE"],
       contentHeight = LEVELLING_QUEUE_SECTION_HEIGHT,
       build = function(content)
         self:BuildLevellingQueueOptions(content)
@@ -251,7 +252,7 @@ function OptionsList:GetSections()
     },
     {
       key = "summonedPet",
-      title = "Summoned Pet",
+      title = L["SUMMONED_PET"],
       contentHeight = SUMMONED_PET_SECTION_HEIGHT,
       build = function(content)
         self:BuildSummonedPetOptions(content)
@@ -259,7 +260,7 @@ function OptionsList:GetSections()
     },
     {
       key = "petTypeFilters",
-      title = "Pet Type Filters",
+      title = L["PET_TYPE_FILTERS"],
       contentHeight = PET_TYPE_FILTER_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetTypeFilterOptions(content)
@@ -267,7 +268,7 @@ function OptionsList:GetSections()
     },
     {
       key = "statusBar",
-      title = "Status Bar",
+      title = L["STATUS_BAR"],
       contentHeight = STATUS_BAR_SECTION_HEIGHT,
       build = function(content)
         self:BuildStatusBarOptions(content)
@@ -275,7 +276,7 @@ function OptionsList:GetSections()
     },
     {
       key = "petBattles",
-      title = "Pet Battles",
+      title = L["PET_BATTLES"],
       contentHeight = PVE_BATTLE_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetBattlesOptions(content)
@@ -283,7 +284,7 @@ function OptionsList:GetSections()
     },
     {
       key = "targets",
-      title = "Targets",
+      title = L["TARGETS"],
       contentHeight = TARGETS_SECTION_HEIGHT,
       build = function(content)
         self:BuildTargetOptions(content)
@@ -513,13 +514,13 @@ function OptionsList:BuildDuplicateTeamOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose what happens when an imported team already exists."
+    L["DUPLICATED_TEAMS_DESCRIPTION"]
   )
 
   self.SkipButton =
       self:CreateRadioButton(
         parent,
-        "Skip existing teams",
+        L["SKIP_EXISTING"],
         "duplicateTeamMode",
         "skip",
         self.RefreshDuplicateMode
@@ -536,7 +537,7 @@ function OptionsList:BuildDuplicateTeamOptions(parent)
   self.ReplaceButton =
       self:CreateRadioButton(
         parent,
-        "Replace existing teams",
+        L["REPLACE_EXISTING"],
         "duplicateTeamMode",
         "replace",
         self.RefreshDuplicateMode
@@ -553,7 +554,7 @@ function OptionsList:BuildDuplicateTeamOptions(parent)
   self.KeepButton =
       self:CreateRadioButton(
         parent,
-        "Keep both",
+        L["KEEP_BOTH"],
         "duplicateTeamMode",
         "keep",
         self.RefreshDuplicateMode
@@ -599,13 +600,13 @@ function OptionsList:BuildBreedOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose how pet breeds are displayed in the Pet Journal."
+    L["PET_BREEDS_DESCRIPTION"]
   )
 
   self.RightBreedButton =
       self:CreateRadioButton(
         parent,
-        "Right side (PetMatch)",
+        L["RIGHT_SIDE"],
         "petListBreedPosition",
         "right",
         self.RefreshBreedMode
@@ -622,7 +623,7 @@ function OptionsList:BuildBreedOptions(parent)
   self.AfterNameBreedButton =
       self:CreateRadioButton(
         parent,
-        "After pet name (BattlePetBreedID)",
+        L["AFTER_NAME"],
         "petListBreedPosition",
         "afterName",
         self.RefreshBreedMode
@@ -639,7 +640,7 @@ function OptionsList:BuildBreedOptions(parent)
   self.HiddenBreedButton =
       self:CreateRadioButton(
         parent,
-        "Hidden",
+        L["HIDDEN"],
         "petListBreedPosition",
         "hidden",
         self.RefreshBreedMode
@@ -685,13 +686,13 @@ function OptionsList:BuildPetListOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose the row size used in the Pet Journal pet list."
+    L["PET_LIST_DESCRIPTION"]
   )
 
   self.NormalRowsButton =
       self:CreateRadioButton(
         parent,
-        "Normal rows",
+        L["NORMAL_ROWS"],
         "compactPetListRows",
         false,
         self.RefreshPetListMode
@@ -708,7 +709,7 @@ function OptionsList:BuildPetListOptions(parent)
   self.CompactRowsButton =
       self:CreateRadioButton(
         parent,
-        "Compact rows",
+        L["COMPACT_ROWS"],
         "compactPetListRows",
         true,
         self.RefreshPetListMode
@@ -754,13 +755,13 @@ function OptionsList:BuildTeamCardOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose the height used for team cards."
+    L["TEAM_CARDS_DESCRIPTION"]
   )
 
   self.TeamCardNormalHeightButton =
       self:CreateRadioButton(
         parent,
-        "Normal height",
+        L["NORMAL_HEIGHT"],
         "teamCardHeightMode",
         "normal",
         self.RefreshTeamCardHeightMode
@@ -777,7 +778,7 @@ function OptionsList:BuildTeamCardOptions(parent)
   self.TeamCardLargeHeightButton =
       self:CreateRadioButton(
         parent,
-        "Large height",
+        L["LARGE_HEIGHT"],
         "teamCardHeightMode",
         "large",
         self.RefreshTeamCardHeightMode
@@ -823,13 +824,13 @@ function OptionsList:BuildPetCardOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose how the Pet Card opens in the Pet Journal."
+    L["PET_CARD_DESCRIPTION"]
   )
 
   self.PetCardHoverButton =
       self:CreateRadioButton(
         parent,
-        "Show on hover",
+        L["SHOW_ON_HOVER"],
         "petCardInteractionMode",
         "hover",
         self.RefreshPetCardMode
@@ -846,7 +847,7 @@ function OptionsList:BuildPetCardOptions(parent)
   self.PetCardClickButton =
       self:CreateRadioButton(
         parent,
-        "Show on click",
+        L["SHOW_ON_CLICK"],
         "petCardInteractionMode",
         "click",
         self.RefreshPetCardMode
@@ -863,7 +864,7 @@ function OptionsList:BuildPetCardOptions(parent)
   self.PetCardBothButton =
       self:CreateRadioButton(
         parent,
-        "Show on hover and click",
+        L["SHOW_ON_BOTH"],
         "petCardInteractionMode",
         "both",
         self.RefreshPetCardMode
@@ -909,13 +910,13 @@ function OptionsList:BuildPetCardVisibilityOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose where the Pet Card will be visible."
+    L["PET_CARD_VISIBILITY_DESCRIPTION"]
   )
 
   self.PetCardPetListCheckbox =
       self:CreateCheckbox(
         parent,
-        "Pet Journal list",
+        L["JOURNAL_LIST"],
         "petCardPetListEnabled",
         self.RefreshPetCardVisibility
       )
@@ -931,7 +932,7 @@ function OptionsList:BuildPetCardVisibilityOptions(parent)
   self.PetCardTeamsCheckbox =
       self:CreateCheckbox(
         parent,
-        "Team pets",
+        L["TEAM_PETS"],
         "petCardTeamsEnabled",
         self.RefreshPetCardVisibility
       )
@@ -947,7 +948,7 @@ function OptionsList:BuildPetCardVisibilityOptions(parent)
   self.PetCardLevellingQueueCheckbox =
       self:CreateCheckbox(
         parent,
-        "Levelling Queue pets",
+        L["QUEUE_PETS"],
         "petCardLevellingQueueEnabled",
         self.RefreshPetCardVisibility
       )
@@ -992,13 +993,13 @@ function OptionsList:BuildLevellingQueueOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose whether newly acquired battle pets below level 25 are automatically added to the Levelling Queue."
+    L["QUEUE_DESCRIPTION"]
   )
 
   self.LevellingQueueAutoAddEnabledButton =
       self:CreateRadioButton(
         parent,
-        "Automatically add new pets",
+        L["AUTO_ADD_PET"],
         "levellingQueueAutoAddMode",
         "enabled",
         self.RefreshLevellingQueueAutoAddMode
@@ -1015,7 +1016,7 @@ function OptionsList:BuildLevellingQueueOptions(parent)
   self.LevellingQueueAutoAddDisabledButton =
       self:CreateRadioButton(
         parent,
-        "Do not automatically add new pets",
+        L["NOT_AUTO_PET_ADD"],
         "levellingQueueAutoAddMode",
         "disabled",
         self.RefreshLevellingQueueAutoAddMode
@@ -1061,13 +1062,13 @@ function OptionsList:BuildSummonedPetOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose what happens to your currently summoned pet."
+    L["SUMMONED_PET_DESCRIPTION"]
   )
 
   self.AutoDismissPetButton =
       self:CreateRadioButton(
         parent,
-        "Auto Dismiss Pet",
+        L["AUTO_DISMISS"],
         "summonedPetMode",
         "dismiss",
         self.RefreshSummonedPetMode
@@ -1084,7 +1085,7 @@ function OptionsList:BuildSummonedPetOptions(parent)
   self.KeepSummonedPetButton =
       self:CreateRadioButton(
         parent,
-        "Keep Summoned Pet",
+        L["KEEP_PET"],
         "summonedPetMode",
         "keep",
         self.RefreshSummonedPetMode
@@ -1101,7 +1102,7 @@ function OptionsList:BuildSummonedPetOptions(parent)
   self.RestorePreviousPetButton =
       self:CreateRadioButton(
         parent,
-        "Restore Previous Summoned Pet",
+        L["RESTORE_PET"],
         "summonedPetMode",
         "restore",
         self.RefreshSummonedPetMode
@@ -1147,13 +1148,13 @@ function OptionsList:BuildPetTypeFilterOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose where the pet type matchup filters are shown."
+    L["PET_TYPE_DESCRIPTION"]
   )
 
   self.PetTypeFilterBothButton =
       self:CreateRadioButton(
         parent,
-        "Filter Bar and Filter Menu",
+        L["FILTER_BAR_AND_MENU"],
         "petTypeFilterDisplayMode",
         "both",
         self.RefreshPetTypeFilterMode
@@ -1170,7 +1171,7 @@ function OptionsList:BuildPetTypeFilterOptions(parent)
   self.PetTypeFilterMenuButton =
       self:CreateRadioButton(
         parent,
-        "Filter Menu Only",
+        L["FILTER_MENU_ONLY"],
         "petTypeFilterDisplayMode",
         "menu",
         self.RefreshPetTypeFilterMode
@@ -1187,7 +1188,7 @@ function OptionsList:BuildPetTypeFilterOptions(parent)
   self.PetTypeFilterBarButton =
       self:CreateRadioButton(
         parent,
-        "Filter Bar Only",
+        L["FILTER_BAR_ONLY"],
         "petTypeFilterDisplayMode",
         "bar",
         self.RefreshPetTypeFilterMode
@@ -1233,13 +1234,13 @@ function OptionsList:BuildStatusBarOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose what the status bar shows and clears."
+    L["STATUS_BAR_DESCRIPTION"]
   )
 
   self.StatusBarAllButton =
       self:CreateRadioButton(
         parent,
-        "Filters and sorting",
+        L["FILTERS_AND_SORTING"],
         "statusBarClearMode",
         "all",
         self.RefreshStatusBarMode
@@ -1256,7 +1257,7 @@ function OptionsList:BuildStatusBarOptions(parent)
   self.StatusBarFiltersButton =
       self:CreateRadioButton(
         parent,
-        "Filters only",
+        L["FILTERS_ONLY"],
         "statusBarClearMode",
         "filters",
         self.RefreshStatusBarMode
@@ -1302,13 +1303,13 @@ function OptionsList:BuildPetBattlesOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose what happens when entering or leaving a pet battle."
+    L["PET_BATTLES_DESCRIPTION"]
   )
 
   self.AutoOpenPvENotesCheckbox =
       self:CreateCheckbox(
         parent,
-        "Open Team Notes in PvE Battle",
+        L["OPEN_NOTES"],
         "autoOpenNotesOnPvEBattle",
         self.RefreshPetBattlesMode
       )
@@ -1324,7 +1325,7 @@ function OptionsList:BuildPetBattlesOptions(parent)
   self.AutoOpenPetJournalCheckbox =
       self:CreateCheckbox(
         parent,
-        "Open Pet Journal After Battle",
+        L["OPEN_JOURNAL"],
         "autoOpenPetJournalAfterBattle",
         self.RefreshPetBattlesMode
       )
@@ -1369,13 +1370,13 @@ function OptionsList:BuildTargetOptions(parent)
   description:SetWordWrap(true)
 
   description:SetText(
-    "Choose what happens when targeting an NPC with one or more saved teams."
+    L["TARGETS_DESCRIPTION"]
   )
 
   self.TargetDisabledModeButton =
       self:CreateRadioButton(
         parent,
-        "Disabled",
+        L["TARGETS_DISABLED"],
         "targetTeamLoadMode",
         "off",
         self.RefreshTargetTeamLoadMode
@@ -1392,7 +1393,7 @@ function OptionsList:BuildTargetOptions(parent)
   self.TargetButtonModeButton =
       self:CreateRadioButton(
         parent,
-        "Show Load Team button",
+        L["SHOW_LOAD_TEAM"],
         "targetTeamLoadMode",
         "button",
         self.RefreshTargetTeamLoadMode
@@ -1409,7 +1410,7 @@ function OptionsList:BuildTargetOptions(parent)
   self.TargetAutoModeButton =
       self:CreateRadioButton(
         parent,
-        "Load team automatically",
+        L["AUTO_LOAD_TEAM"],
         "targetTeamLoadMode",
         "auto",
         self.RefreshTargetTeamLoadMode
@@ -1426,7 +1427,7 @@ function OptionsList:BuildTargetOptions(parent)
   self.TargetConfirmModeButton =
       self:CreateRadioButton(
         parent,
-        "Ask before loading team",
+        L["CONFIRM_LOAD_TEAM"],
         "targetTeamLoadMode",
         "confirm",
         self.RefreshTargetTeamLoadMode

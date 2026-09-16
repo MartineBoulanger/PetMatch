@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local SaveTeamButton = {}
 
 local function FindBattleButton()
@@ -10,6 +11,54 @@ local function FindBattleButton()
       )
       or _G.PetJournalFindBattleButton
       or _G.PetJournalFindBattle
+end
+
+local function SummonButton()
+  local frame = _G.PetJournalSummonButton
+
+  if type(frame) == "table"
+      and type(frame.IsShown) == "function"
+      and frame:IsShown() then
+    return frame
+  end
+
+  return nil
+end
+
+local function ZoneTrackerToggle()
+  local frame = _G.PetTrackerTrackToggle
+
+  if type(frame) == "table"
+      and type(frame.IsShown) == "function"
+      and frame:IsShown() then
+    return frame
+  end
+
+  return nil
+end
+
+function SaveTeamButton:UpdatePetTrackerAnchor()
+  local toggle = ZoneTrackerToggle()
+
+  if not toggle then
+    return
+  end
+
+  local summonButton = SummonButton()
+
+  if not summonButton then
+    return
+  end
+
+  toggle:ClearAllPoints()
+
+  toggle:SetPoint(
+    "LEFT",
+    summonButton,
+    "RIGHT",
+    0,
+    -1
+  )
 end
 
 function SaveTeamButton:Create()
@@ -33,7 +82,7 @@ function SaveTeamButton:Create()
       )
 
   button:SetSize(90, 22)
-  button:SetText("Save As")
+  button:SetText(L["SAVE_AS"])
 
   button:SetScript(
     "OnClick",
@@ -63,7 +112,7 @@ function SaveTeamButton:Create()
     )
 
     addon.Logger:Warn(
-      "Find Battle button was not found; using fallback position"
+      L["FIND_BATTLE_ERROR"]
     )
   end
 
@@ -79,6 +128,7 @@ function SaveTeamButton:Show()
 
   if button then
     button:Show()
+    self:UpdatePetTrackerAnchor()
   end
 end
 

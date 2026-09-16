@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local Button = {}
 
 function Button:Create(parent, options)
@@ -22,7 +23,7 @@ function Button:Create(parent, options)
 
   button:SetText(
     options.text
-    or "Button"
+    or L["BUTTON"]
   )
 
   if options.onClick then

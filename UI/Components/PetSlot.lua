@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local PetSlot = {}
 PetSlot.__index = PetSlot
 
@@ -8,18 +9,6 @@ local ICON_HEIGHT = 24
 
 local RANDOM_PET_ICON = "Interface\\Icons\\INV_Misc_Dice_02"
 local LEVELING_PET_ICON = "Interface\\AddOns\\PetMatch\\Media\\levelingicon"
-local PET_FAMILY_ICONS = {
-  [1]  = "Interface\\Icons\\Pet_Type_Humanoid",
-  [2]  = "Interface\\Icons\\Pet_Type_Dragon",
-  [3]  = "Interface\\Icons\\Pet_Type_Flying",
-  [4]  = "Interface\\Icons\\Pet_Type_Undead",
-  [5]  = "Interface\\Icons\\Pet_Type_Critter",
-  [6]  = "Interface\\Icons\\Pet_Type_Magical",
-  [7]  = "Interface\\Icons\\Pet_Type_Elemental",
-  [8]  = "Interface\\Icons\\Pet_Type_Beast",
-  [9]  = "Interface\\Icons\\Pet_Type_Water",
-  [10] = "Interface\\Icons\\Pet_Type_Mechanical",
-}
 
 local function GetSpecialSlotIcon(specialSlot)
   if type(specialSlot) ~= "table" then
@@ -35,7 +24,7 @@ local function GetSpecialSlotIcon(specialSlot)
     local petType = tonumber(specialSlot.petType) or 0
 
     if petType > 0 then
-      return PET_FAMILY_ICONS[petType], nil
+      return addon.Constants.PET_FAMILY_ICONS[petType], nil
     end
 
     return RANDOM_PET_ICON, nil
@@ -45,7 +34,7 @@ local function GetSpecialSlotIcon(specialSlot)
 end
 
 function PetSlot:Create(parent)
-  assert(parent, "PetSlot requires a parent frame")
+  assert(parent, L["PARENT_FRAME_ERROR"])
 
   local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
 

@@ -2,6 +2,8 @@ local _, addon = ...
 
 addon.API = addon.API or {}
 
+local L = addon.L
+
 local API = addon.API
 API.Listeners = API.Listeners or {}
 
@@ -76,7 +78,7 @@ function API:SetScript(teamID, script)
   local service = GetTeamService()
 
   if not service then
-    return nil, "Team service is unavailable"
+    return nil, L["NO_TEAM_SERVICE"]
   end
 
   script = NormalizeScript(script)
@@ -94,7 +96,7 @@ function API:SetScript(teamID, script)
       or nil
 
   if not team then
-    return nil, "Team not found"
+    return nil, L["NO_TEAM_FOUND"]
   end
 
   team.script = script

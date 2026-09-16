@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local BattleSlotService = {}
 BattleSlotService.LoadGeneration = 0
 BattleSlotService.PendingSpecialSlots = {}
@@ -8,9 +9,7 @@ BattleSlotService.IsLoadingTeam = false
 local MAX_ABILITY_ATTEMPTS = 6
 local ABILITY_RETRY_DELAY = 0.08
 
-local function AbilitiesMatch(
-    expectedAbilities
-)
+local function AbilitiesMatch(expectedAbilities)
   if type(expectedAbilities) ~= "table" then
     return true
   end
@@ -47,10 +46,7 @@ local function AbilitiesMatch(
   return true
 end
 
-local function ApplyAbilities(
-    pets,
-    abilities
-)
+local function ApplyAbilities(pets, abilities)
   if type(abilities) ~= "table" then
     return
   end
@@ -129,7 +125,7 @@ local function ApplyAbilitiesWithRetry(pets, abilities, attempt, generation)
       end
 
       addon.Logger:Warn(
-        "Some pet abilities could not be applied"
+        L["ABILITIES_ERROR"]
       )
     end
   )
@@ -273,11 +269,11 @@ function BattleSlotService:SetPendingSpecialSlot(slot, specialSlot)
   if not slot
       or slot < 1
       or slot > 3 then
-    return false, "Invalid battle pet slot"
+    return false, L["INVALID_SLOT"]
   end
 
   if type(specialSlot) ~= "table" then
-    return false, "Invalid special slot data"
+    return false, L["INVALID_SPECIAL_SLOT"]
   end
 
   self.PendingSpecialSlots[slot] = {
@@ -375,15 +371,15 @@ function BattleSlotService:Debug()
 
     if guid then
       addon.Logger:INFO(
-        "[PetMatch] Battle Slot",
+        L["INFO_SLOT"],
         i,
         guid
       )
     else
       addon.Logger:INFO(
-        "[PetMatch] Battle Slot",
+        L["INFO_SLOT"],
         i,
-        "Empty"
+        L["EMPTY"]
       )
     end
   end
@@ -392,7 +388,7 @@ end
 function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
   if type(specialSlot) ~= "table" then
     return nil, string.format(
-      "Invalid special pet slot %d",
+      L["INVALID_SPECIAL_SLOT"] .. ": %d",
       slot
     )
   end
@@ -415,7 +411,7 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
     local queueService = addon.Services.LevellingQueue
 
     if not queueService then
-      return nil, "The Levelling Queue service is unavailable"
+      return nil, L["INVALID_QUEUE"]
     end
 
     local queue = queueService:GetAll()
@@ -478,7 +474,7 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
     local pets = addon.Services.PetJournal:GetAll()
 
     if type(pets) ~= "table" then
-      return nil, "The Pet Journal cache is unavailable"
+      return nil, L["JOURNAL_ERROR"]
     end
 
     local candidates = {}
@@ -497,7 +493,7 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
 
     if #candidates == 0 then
       return nil, string.format(
-        "No available level 25 pet for levelling slot %d",
+        L["INVALID_LEVEL_25"] .. L["INVALID_LEVEL_25_PART4"],
         slot
       )
     end
@@ -512,7 +508,7 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
   --------------------------------------------------
   if slotType ~= "random" then
     return nil, string.format(
-      "Unsupported special slot type '%s'",
+      L["UNSUPPORTED_SLOT"] .. " '%s'",
       tostring(slotType)
     )
   end
@@ -520,7 +516,7 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
   local pets = addon.Services.PetJournal:GetAll()
 
   if type(pets) ~= "table" then
-    return nil, "The Pet Journal cache is unavailable"
+    return nil, L["JOURNAL_ERROR"]
   end
 
   local candidates = {}
@@ -573,14 +569,14 @@ function BattleSlotService:ResolveSpecialSlot(specialSlot, slot, usedPetGUIDs)
 
     if petType > 0 then
       return nil, string.format(
-        "No available level 25 pet of family %d for slot %d",
+        L["INVALID_LEVEL_25"] .. L["INVALID_LEVEL_25_PART2"] .. L["INVALID_LEVEL_25_PART3"],
         petType,
         slot
       )
     end
 
     return nil, string.format(
-      "No available level 25 pet for slot %d",
+      L["INVALID_LEVEL_25"] .. L["INVALID_LEVEL_25_PART3"],
       slot
     )
   end
@@ -826,17 +822,17 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots, preserveCurre
   local generation = self.LoadGeneration
 
   if type(pets) ~= "table" then
-    return false, "Invalid pet list"
+    return false, L["INVALID_PET_LIST"]
   end
 
   specialSlots = specialSlots or {}
 
   if C_PetBattles.IsInBattle() then
-    return false, "Cannot load a team during a pet battle"
+    return false, L["LOAD_ERROR"]
   end
 
   if InCombatLockdown() then
-    return false, "Cannot load a team during combat"
+    return false, L["LOAD_COMBAT_ERROR"]
   end
 
   --------------------------------------------------
@@ -989,7 +985,7 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots, preserveCurre
       addon.Services.LoadoutMonitor:Resume()
     end
 
-    return false, "The team contains no pets"
+    return false, L["NO_PETS_ERROR"]
   end
 
   --------------------------------------------------

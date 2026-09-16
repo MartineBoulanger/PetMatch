@@ -2,40 +2,42 @@ local _, addon = ...
 
 addon.Services = addon.Services or {}
 
+local L = addon.L
+
 local PetTagService = {}
 
 PetTagService.Tags = {
   {
     id = 1,
-    name = "Star",
+    name = L["TAG_STAR"],
   },
   {
     id = 2,
-    name = "Circle",
+    name = L["TAG_CIRCLE"],
   },
   {
     id = 3,
-    name = "Diamond",
+    name = L["TAG_DIAMOND"],
   },
   {
     id = 4,
-    name = "Triangle",
+    name = L["TAG_TRIANGLE"],
   },
   {
     id = 5,
-    name = "Moon",
+    name = L["TAG_MOON"],
   },
   {
     id = 6,
-    name = "Square",
+    name = L["TAG_SQUARE"],
   },
   {
     id = 7,
-    name = "Cross",
+    name = L["TAG_CROSS"],
   },
   {
     id = 8,
-    name = "Skull",
+    name = L["TAG_SKULL"],
   },
 }
 
@@ -93,15 +95,15 @@ function PetTagService:GetTagDefinition(petGUID)
   return self:GetDefinition(tagID)
 end
 
-function PetTagService:SetTag(petGUID,tagID)
+function PetTagService:SetTag(petGUID, tagID)
   if type(petGUID) ~= "string" or petGUID == "" then
-    return false, "Invalid pet GUID"
+    return false, L["INVALID_GUID"]
   end
 
   tagID = tonumber(tagID)
 
   if not self:GetDefinition(tagID) then
-    return false, "Invalid pet tag"
+    return false, L["INVALID_TAG"]
   end
 
   local tags = GetTagStorage()

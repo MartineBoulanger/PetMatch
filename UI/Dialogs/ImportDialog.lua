@@ -1,5 +1,6 @@
 local _, addon = ...
 
+local L = addon.L
 local ImportDialog = {}
 
 local DIALOG_WIDTH = 400
@@ -33,7 +34,7 @@ local function GetSortedFolders()
     if type(folder) == "table" then
       folders[#folders + 1] = {
         id = folder.id or folderID,
-        name = folder.name or "Unnamed Folder",
+        name = folder.name or L["UNNAMED_FOLDER"],
       }
     end
   end
@@ -70,7 +71,7 @@ end
 --------------------------------------------------
 -- Loading
 --------------------------------------------------
-function ImportDialog:SetLoading(loading,message)
+function ImportDialog:SetLoading(loading, message)
   self.Loading = loading == true
 
   if self.SaveButton then
@@ -118,7 +119,7 @@ function ImportDialog:SetLoading(loading,message)
   if self.Loading then
     self:SetStatus(
       message
-      or "Preparing import..."
+      or L["PREPARE_IMPORT"]
     )
 
     self:StartProgress()
@@ -205,7 +206,7 @@ function ImportDialog:HandleLargePaste()
 
   self:SetLoading(
     true,
-    "Reading pasted import..."
+    L["READING_STRING"]
   )
 
   C_Timer.After(
@@ -219,7 +220,7 @@ function ImportDialog:HandleLargePaste()
 
       if not format then
         self:SetStatus(
-          "Unknown import format.",
+          L["UNKNOWN_IMPORT_STRING"],
           true
         )
 
@@ -227,7 +228,7 @@ function ImportDialog:HandleLargePaste()
       end
 
       self:SetStatus(
-        "Import string ready."
+        L["IMPORT_STRING_READY"]
       )
     end
   )
@@ -255,8 +256,7 @@ function ImportDialog:CreateContent(dialog)
       addon.UI.Base.Label:Create(
         content,
         {
-          text = "Paste a PetMatch or Rematch "
-              .. "import string below.",
+          text = L["PASTE_IMPORT_STRING"],
           justify = "LEFT",
           color = addon.UI.Theme.Colors.Text,
         }
@@ -426,7 +426,7 @@ function ImportDialog:CreateContent(dialog)
       end
 
       self:SetStatus(
-        "Large import string detected."
+        L["DETECTED_LARGE_STRING"]
       )
 
       --------------------------------------------------
@@ -455,11 +455,11 @@ function ImportDialog:CreateContent(dialog)
 
           if format then
             self:SetStatus(
-              "Import string ready."
+              L["IMPORT_STRING_READY"]
             )
           else
             self:SetStatus(
-              "Unknown import format.",
+              L["UNKNOWN_IMPORT_STRING"],
               true
             )
           end
@@ -534,7 +534,7 @@ function ImportDialog:CreateContent(dialog)
     0
   )
 
-  self.NewTeamRadio.Label:SetText("Save as new team")
+  self.NewTeamRadio.Label:SetText(L["SAVE_AS_NEW"])
 
   self.NewTeamRadio:SetScript(
     "OnClick",
@@ -579,7 +579,7 @@ function ImportDialog:CreateContent(dialog)
   )
 
   self.OverrideRadio.Label:SetText(
-    "Override selected team"
+    L["OVERRIDE_TEAM"]
   )
 
   self.OverrideRadio:SetScript(
@@ -714,7 +714,7 @@ function ImportDialog:Create()
   local dialog =
       addon.UI.Base.Dialog:Create({
         name = "PetMatchImportDialog",
-        title = "Import Teams",
+        title = L["IMPORT_TEAMS"],
         width = DIALOG_WIDTH,
         contentMargin = CONTENT_MARGIN,
         padding = CONTENT_PADDING,
@@ -734,20 +734,20 @@ function ImportDialog:Create()
   --------------------------------------------------
   self.CancelButton =
       dialog:AddCancelButton({
-        text = "Cancel",
+        text = L["CANCEL"],
         width = 95,
       })
 
   self.SaveButton =
       dialog:AddFooterButton({
-        text = "Save",
+        text = L["SAVE"],
         width = 95,
         onClick = function() self:SaveTeam() end,
       })
 
   self.LoadButton =
       dialog:AddFooterButton({
-        text = "Load",
+        text = L["LOAD"],
         width = 95,
         onClick = function() self:LoadTeam() end,
       })
@@ -865,7 +865,7 @@ function ImportDialog:GetFolderOptions()
   local options = {
     {
       id = nil,
-      name = "Unsorted",
+      name = L["UNSORTED"],
     },
   }
 
@@ -899,7 +899,7 @@ function ImportDialog:GetImportData()
   local importData, errorMessage = addon.Services.ImportExport:Parse(value)
 
   if not importData then
-    self:SetStatus(errorMessage or "Invalid import string")
+    self:SetStatus(errorMessage or L["INVALID_IMPORT_STRING"])
     return nil
   end
 
@@ -925,7 +925,7 @@ function ImportDialog:SaveTeam()
 
   if value == "" then
     self:SetStatus(
-      "Paste an export string first.",
+      L["PASTE_EXPORT_STRING"],
       true
     )
 
@@ -934,7 +934,7 @@ function ImportDialog:SaveTeam()
 
   self:SetLoading(
     true,
-    "Preparing import..."
+    L["PREPARE_IMPORT"]
   )
 
   self.Progress:SetValue(0)
@@ -981,7 +981,7 @@ function ImportDialog:SaveTeam()
 
                 self:SetStatus(
                   errorMessage
-                  or "Unable to prepare import.",
+                  or L["UNABLE_TO_PREPARE"],
                   true
                 )
               end,
@@ -1037,7 +1037,7 @@ function ImportDialog:HandlePreparedImport(
   --------------------------------------------------
 
   self:SetStatus(
-    "Importing team..."
+    L["IMPORTING"]
   )
 
   local result,
@@ -1061,7 +1061,7 @@ function ImportDialog:HandlePreparedImport(
   if not result then
     self:SetStatus(
       importError
-      or "Unable to import.",
+      or L["UNABLE_TO_IMPORT"],
       true
     )
 
@@ -1096,7 +1096,7 @@ function ImportDialog:OverrideExisting()
   local selectedTeam = addon.Services.Team:GetSelected()
 
   if not selectedTeam then
-    self:SetStatus("Select a team to override")
+    self:SetStatus(L["SELECT_OVERRIDE_TEAM"])
     return
   end
 
@@ -1116,7 +1116,7 @@ function ImportDialog:OverrideExisting()
   if not team then
     self:SetStatus(
       errorMessage
-      or "Unable to override team"
+      or L["UNABLE_TO_OVERRIDE"]
     )
 
     return
@@ -1135,7 +1135,7 @@ function ImportDialog:OverrideExisting()
 
     if not success then
       self:SetStatus(
-        loadError or "Unable to load team."
+        loadError or L["UNABLE_LOAD_TEAM"]
       )
       return
     end
@@ -1158,7 +1158,7 @@ function ImportDialog:LoadTeam()
 
   if value == "" then
     self:SetStatus(
-      "Paste an export string first.",
+      L["PASTE_EXPORT_STRING"],
       true
     )
 
@@ -1167,7 +1167,7 @@ function ImportDialog:LoadTeam()
 
   self:SetLoading(
     true,
-    "Preparing team..."
+    L["PREPARE_TEAM"]
   )
 
   C_Timer.After(
@@ -1189,7 +1189,7 @@ function ImportDialog:ProcessLoad()
   end
 
   self:SetStatus(
-    "Loading team..."
+    L["LOADING_TEAM"]
   )
 
   local success, errorMessage =
@@ -1203,7 +1203,7 @@ function ImportDialog:ProcessLoad()
 
     self:SetStatus(
       errorMessage
-      or "Unable to load team",
+      or L["UNABLE_LOAD_TEAM"],
       true
     )
 
@@ -1273,7 +1273,7 @@ function ImportDialog:RefreshFolderDropdown()
   end
 
   local selectedFolderID = self.SelectedFolderID
-  local selectedText = "Unsorted"
+  local selectedText = L["UNSORTED"]
 
   if selectedFolderID then
     local selectedFolder = addon.Services.Folder:Get(selectedFolderID)
@@ -1281,7 +1281,7 @@ function ImportDialog:RefreshFolderDropdown()
     if selectedFolder then
       selectedText =
           selectedFolder.name
-          or "Unsorted"
+          or L["UNSORTED"]
     end
   end
 
@@ -1293,7 +1293,7 @@ function ImportDialog:RefreshFolderDropdown()
         rootDescription
     )
       rootDescription:CreateRadio(
-        "Unsorted",
+        L["UNSORTED"],
         function()
           return self.SelectedFolderID == nil
         end,
