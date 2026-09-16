@@ -1,5 +1,5 @@
 ## Interface: 120100
-## Version: 1.21.0
+## Version: 1.21.1
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
@@ -30,7 +30,7 @@ Localization\itIT.lua
 Localization\koKR.lua
 Localization\ptBR.lua
 Localization\ruRU.lua
-# Localization\zhCN.lua
+Localization\zhCN.lua
 Localization\zhTW.lua
 
 Core/Constants.lua
