@@ -157,21 +157,29 @@ local function AutoOpenPetJournalAfterBattle()
   C_Timer.After(
     0.5,
     function()
-      if not CollectionsJournal then
-        return
+      ----------------------------------------------
+      -- Ensure Blizzard Collections is loaded
+      ----------------------------------------------
+      if not C_AddOns.IsAddOnLoaded("Blizzard_Collections") then
+        local loaded =
+            C_AddOns.LoadAddOn("Blizzard_Collections")
+
+        if not loaded then
+          return
+        end
       end
 
-      if not PetJournal then
+      ----------------------------------------------
+      -- Open Pet Journal
+      ----------------------------------------------
+      if not CollectionsJournal or not PetJournal then
         return
       end
 
       ShowUIPanel(CollectionsJournal)
 
       if CollectionsJournal_SetTab then
-        CollectionsJournal_SetTab(
-          CollectionsJournal,
-          2
-        )
+        CollectionsJournal_SetTab(CollectionsJournal, 2)
       end
     end
   )
