@@ -276,38 +276,85 @@ function PetJournalService:FindOwnedPetForImport(speciesID, breedID, usedPetGUID
 
   usedPetGUIDs = usedPetGUIDs or {}
 
-  local candidates = self.OwnedPetsBySpeciesID[speciesID]
+  local petGUIDs =
+      self.OwnedPetsBySpeciesID[
+      speciesID
+      ]
 
-  if type(candidates) ~= "table" or #candidates == 0 then
+  if type(petGUIDs) ~= "table"
+      or #petGUIDs == 0 then
     return nil
   end
 
-  local breedService = addon.Services and addon.Services.Breed
+  local breedService =
+      addon.Services
+      and addon.Services.Breed
 
-  local exactBreedCandidates = {}
-  local fallbackCandidates = {}
+  local requestedBreed =
+      breedID
+      and breedID > 0
+
+  local candidates = {}
 
   --------------------------------------------------
-  -- Split available pets into:
-  --
-  -- 1. Exact requested breed
-  -- 2. Same species, another breed
+  -- Normal imported team slots only use
+  -- level 25 pets.
   --------------------------------------------------
-  for _, petGUID in ipairs(candidates) do
+  for _, petGUID in ipairs(petGUIDs) do
     if not usedPetGUIDs[petGUID] then
-      local pet = self.Cache[petGUID]
+      local pet =
+          self.Cache[petGUID]
 
-      if pet then
+      if pet
+          and pet.canBattle ~= false
+          and tonumber(pet.level) == 25 then
+        local health,
+        maxHealth =
+            C_PetJournal.GetPetStats(
+              petGUID
+            )
+
+        health =
+            tonumber(health)
+            or 0
+
+        maxHealth =
+            tonumber(maxHealth)
+            or 0
+
+        --------------------------------------------------
+        -- Health priority:
+        --
+        -- 3 = Full health
+        -- 2 = Damaged
+        -- 1 = Dead
+        --------------------------------------------------
+        local healthState
+
+        if health <= 0 then
+          healthState = 1
+        elseif maxHealth > 0
+            and health >= maxHealth then
+          healthState = 3
+        else
+          healthState = 2
+        end
+
+        --------------------------------------------------
+        -- Check requested breed.
+        --------------------------------------------------
         local breedMatch = false
 
-        if not breedID or breedID == 0 then
-          breedMatch = true
-        elseif breedService
+        if requestedBreed
+            and breedService
             and type(
               breedService.GetJournalBreedID
             ) == "function" then
           local journalBreedID =
-              breedService:GetJournalBreedID(petGUID)
+              breedService:
+              GetJournalBreedID(
+                petGUID
+              )
 
           breedMatch =
               journalBreedID ~= nil
@@ -316,64 +363,107 @@ function PetJournalService:FindOwnedPetForImport(speciesID, breedID, usedPetGUID
               ) == breedID
         end
 
-        local candidate = {
+        candidates[
+        #candidates + 1
+        ] = {
           petGUID = petGUID,
           pet = pet,
+          healthState = healthState,
+          breedMatch = breedMatch,
         }
-
-        if breedMatch then
-          exactBreedCandidates[
-          #exactBreedCandidates + 1
-          ] = candidate
-        else
-          fallbackCandidates[
-          #fallbackCandidates + 1
-          ] = candidate
-        end
       end
     end
   end
 
   --------------------------------------------------
-  -- Prefer the exact breed.
-  --
-  -- If that breed is not owned, use another
-  -- available copy of the exact same species.
+  -- No unused level 25 copy exists.
   --------------------------------------------------
-  local pool
-
-  if #exactBreedCandidates > 0 then
-    pool = exactBreedCandidates
-  else
-    pool = fallbackCandidates
-  end
-
-  if #pool == 0 then
+  if #candidates == 0 then
     return nil
   end
 
   --------------------------------------------------
-  -- Within the chosen pool:
-  -- highest level, then highest quality
+  -- Find the best available health state.
+  --
+  -- Full > Damaged > Dead
+  --------------------------------------------------
+  local bestHealthState = 0
+
+  for _, candidate in ipairs(candidates) do
+    if candidate.healthState
+        > bestHealthState then
+      bestHealthState =
+          candidate.healthState
+    end
+  end
+
+  --------------------------------------------------
+  -- Only compare pets from the best available
+  -- health state.
+  --------------------------------------------------
+  local pool = {}
+
+  for _, candidate in ipairs(candidates) do
+    if candidate.healthState
+        == bestHealthState then
+      pool[#pool + 1] =
+          candidate
+    end
+  end
+
+  --------------------------------------------------
+  -- Within the best health state, prefer the
+  -- requested breed.
+  --------------------------------------------------
+  if requestedBreed then
+    local bestBreedPetGUID = nil
+    local bestBreedQuality = -1
+
+    for _, candidate in ipairs(pool) do
+      if candidate.breedMatch then
+        local quality =
+            tonumber(
+              candidate.pet.quality
+            ) or 0
+
+        if not bestBreedPetGUID
+            or quality > bestBreedQuality then
+          bestBreedPetGUID =
+              candidate.petGUID
+
+          bestBreedQuality =
+              quality
+        end
+      end
+    end
+
+    if bestBreedPetGUID then
+      return bestBreedPetGUID
+    end
+  end
+
+  --------------------------------------------------
+  -- Requested breed is not available in the best
+  -- health state, or no breed was requested.
+  --
+  -- Use quality as the final tie-breaker.
   --------------------------------------------------
   local bestPetGUID = nil
-  local bestLevel = -1
   local bestQuality = -1
 
   for _, candidate in ipairs(pool) do
-    local pet = candidate.pet
+    local quality =
+        tonumber(
+          candidate.pet.quality
+        ) or 0
 
-    local level = tonumber(pet.level) or 0
-    local quality = tonumber(pet.quality) or 0
+    if not bestPetGUID
+        or quality > bestQuality then
+      bestPetGUID =
+          candidate.petGUID
 
-    if level > bestLevel
-        or (level == bestLevel
-          and quality > bestQuality
-        ) then
-      bestPetGUID = candidate.petGUID
-
-      bestLevel = level
-      bestQuality = quality
+      bestQuality =
+          quality
     end
   end
 

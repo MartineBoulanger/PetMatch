@@ -30,6 +30,7 @@ function Team:Create(name)
   }
   team.breeds = {}
   team.specialSlots = {}
+  team.preferences = {}
   team.targetNPCIDs = {}
   team.createdBy = L["PETMATCH"]
   team.strategy = ""

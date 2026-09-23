@@ -828,6 +828,7 @@ function TeamService:BuildFromImport(importData, resolvedPetsBySpeciesID)
     abilities = {},
     breeds = {},
     specialSlots = {},
+    preferences = {},
     folderID = importData.folderID,
     favorite = importData.favorite == true,
     notes = importData.notes or "",
@@ -835,6 +836,17 @@ function TeamService:BuildFromImport(importData, resolvedPetsBySpeciesID)
     targetNPCIDs = importData.npcIDs or {},
     importSource = importData.format or "unknown",
   }
+
+  if type(importData.preferences) == "table" then
+    team.preferences = {
+      minHP = importData.preferences.minHP,
+      allowMM = importData.preferences.allowMM,
+      expectedDD = importData.preferences.expectedDD,
+      maxHP = importData.preferences.maxHP,
+      minXP = importData.preferences.minXP,
+      maxXP = importData.preferences.maxXP,
+    }
+  end
 
   if team.name == "" then
     team.name = L["IMPORTED_TEAM"]
@@ -848,13 +860,29 @@ function TeamService:BuildFromImport(importData, resolvedPetsBySpeciesID)
 
     if slotData then
       if slotData.special then
+        local minimumLevel = slotData.minimumLevel
+        local maximumLevel = slotData.maximumLevel
+        local minimumHealth = slotData.minimumHealth
+
+        --------------------------------------------------
+        -- Rematch leveling preferences apply to
+        -- Levelling Slots.
+        --------------------------------------------------
+        if slotData.type == "leveling"
+            and type(team.preferences) == "table" then
+          minimumLevel = minimumLevel or team.preferences.minXP
+          maximumLevel = maximumLevel or team.preferences.maxXP
+          minimumHealth = minimumHealth or team.preferences.minHP
+        end
+
         team.specialSlots[slot] = {
           type = slotData.type,
           petType = slotData.petType,
           level = slotData.level,
           rarity = slotData.rarity,
-          minimumLevel = slotData.minimumLevel,
-          minimumHealth = slotData.minimumHealth,
+          minimumLevel = minimumLevel,
+          maximumLevel = maximumLevel,
+          minimumHealth = minimumHealth,
           rawPetTag = slotData.rawPetTag,
         }
       elseif slotData.speciesID then
@@ -937,6 +965,7 @@ function TeamService:CreateFromImport(importData, options)
   team.abilities = importedTeam.abilities
   team.breeds = importedTeam.breeds
   team.specialSlots = importedTeam.specialSlots
+  team.preferences = importedTeam.preferences
   team.targetNPCIDs = importedTeam.targetNPCIDs
   team.folderID = importedTeam.folderID
   team.favorite = importedTeam.favorite
@@ -972,6 +1001,7 @@ function TeamService:OverrideFromImport(teamID, importData)
   existingTeam.abilities = importedTeam.abilities
   existingTeam.breeds = importedTeam.breeds
   existingTeam.specialSlots = importedTeam.specialSlots
+  existingTeam.preferences = importedTeam.preferences
   existingTeam.targetNPCIDs = importedTeam.targetNPCIDs
   existingTeam.folderID = importedTeam.folderID
   existingTeam.favorite = importedTeam.favorite

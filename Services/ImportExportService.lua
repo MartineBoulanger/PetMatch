@@ -147,6 +147,34 @@ local function EncodeNPCIDs(npcIDs)
   )
 end
 
+local function EncodeRematchPreferences(preferences)
+  if type(preferences) ~= "table" then
+    return ""
+  end
+
+  local hasPreferences =
+      preferences.minHP ~= nil
+      or preferences.allowMM ~= nil
+      or preferences.expectedDD ~= nil
+      or preferences.maxHP ~= nil
+      or preferences.minXP ~= nil
+      or preferences.maxXP ~= nil
+
+  if not hasPreferences then
+    return ""
+  end
+
+  return string.format(
+    "P:%s:%s:%s:%s:%s:%s:",
+    preferences.minHP or "",
+    preferences.allowMM and "1" or "",
+    preferences.expectedDD or "",
+    preferences.maxHP or "",
+    preferences.minXP or "",
+    preferences.maxXP or ""
+  )
+end
+
 local function EncodeRematchNotes(notes)
   notes = tostring(notes or "")
 
@@ -1543,13 +1571,14 @@ function ImportExportService:ParseRematchTeam(line)
     if marker == "P" then
       result.preferences = {
         minHP = tonumber(fields[index + 1]),
-        allowMM = tonumber(fields[index + 2]),
+        allowMM = tonumber(fields[index + 2]) == 1 and true or nil,
         expectedDD = tonumber(fields[index + 3]),
-        minXP = tonumber(fields[index + 4]),
-        maxXP = tonumber(fields[index + 5]),
+        maxHP = tonumber(fields[index + 4]),
+        minXP = tonumber(fields[index + 5]),
+        maxXP = tonumber(fields[index + 6]),
       }
 
-      index = index + 6
+      index = index + 7
     elseif marker == "N" then
       local noteParts = {}
 
@@ -1903,10 +1932,7 @@ function ImportExportService:ParseRematchDocumentAsync(value, options)
   )
 end
 
-function ImportExportService:ImportRematch(
-    value,
-    options
-)
+function ImportExportService:ImportRematch(value, options)
   local document, errorMessage =
       self:ParseRematchDocument(value)
 
@@ -1956,9 +1982,7 @@ function ImportExportService:DetectFormat(value)
   return nil
 end
 
-function ImportExportService:PrepareImport(
-    value
-)
+function ImportExportService:PrepareImport(value)
   local format =
       self:DetectFormat(value)
 
@@ -1989,10 +2013,7 @@ function ImportExportService:PrepareImport(
   }
 end
 
-function ImportExportService:PrepareImportAsync(
-    value,
-    options
-)
+function ImportExportService:PrepareImportAsync(value, options)
   options = options or {}
 
   local onComplete =
@@ -2088,9 +2109,7 @@ function ImportExportService:PrepareImportAsync(
   end
 end
 
-function ImportExportService:ExportRematchTeam(
-    team
-)
+function ImportExportService:ExportRematchTeam(team)
   if not team then
     return nil, L["NO_TEAM_FOUND"]
   end
@@ -2140,19 +2159,23 @@ function ImportExportService:ExportRematchTeam(
         ":"
       )
 
-  local notes =
-      EncodeRematchNotes(
-        BuildRematchNotes(
-          team.notes,
-          team.script
-        )
-      )
+  local preferences =
+      EncodeRematchPreferences(team.preferences)
+
+  if preferences ~= "" then
+    result = result .. preferences
+  end
+
+  local notes = EncodeRematchNotes(
+    BuildRematchNotes(team.notes, team.script)
+  )
 
   if notes ~= "" then
-    result =
-        result
-        .. ":N:"
-        .. notes
+    if preferences ~= "" then
+      result = result .. "N:" .. notes
+    else
+      result = result .. ":N:" .. notes
+    end
   end
 
   return result
@@ -2253,9 +2276,7 @@ function ImportExportService:ExportAll()
   return table.concat(lines, "\n")
 end
 
-function ImportExportService:ExportFolder(
-    folderKey
-)
+function ImportExportService:ExportFolder(folderKey)
   local folder =
       addon.Services.Folder:Get(folderKey)
 

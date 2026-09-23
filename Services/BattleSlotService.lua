@@ -743,29 +743,49 @@ local function ResolveHealthyDuplicate(savedPetGUID, slot, usedPetGUIDs, preserv
   end
 
   --------------------------------------------------
-  -- Check health of the pet we would keep
+  -- Determine the health state of the pet we
+  -- would normally keep.
+  --
+  -- 3 = Full health
+  -- 2 = Damaged
+  -- 1 = Dead
   --------------------------------------------------
   local health,
-  maxHealth = C_PetJournal.GetPetStats(petGUID)
+  maxHealth =
+      C_PetJournal.GetPetStats(
+        petGUID
+      )
 
-  health = tonumber(health) or 0
-  maxHealth = tonumber(maxHealth) or 0
+  health =
+      tonumber(health)
+      or 0
 
-  if maxHealth <= 0 then
+  maxHealth =
+      tonumber(maxHealth)
+      or 0
+
+  local currentHealthState
+
+  if health <= 0 then
+    currentHealthState = 1
+  elseif maxHealth > 0
+      and health >= maxHealth then
+    currentHealthState = 3
+  else
+    currentHealthState = 2
+  end
+
+  --------------------------------------------------
+  -- Full health is already the best possible
+  -- state, so keep the preferred pet.
+  --------------------------------------------------
+  if currentHealthState == 3 then
     return petGUID
   end
 
   --------------------------------------------------
-  -- 50% health or higher:
-  -- keep the current pet.
-  --------------------------------------------------
-  if health / maxHealth >= 0.5 then
-    return petGUID
-  end
-
-  --------------------------------------------------
-  -- Below 50%:
-  -- find a full-health duplicate.
+  -- Look for an available duplicate of the same
+  -- species with a better health state.
   --------------------------------------------------
   local pets =
       addon.Services.PetJournal:
@@ -775,17 +795,27 @@ local function ResolveHealthyDuplicate(savedPetGUID, slot, usedPetGUIDs, preserv
     return petGUID
   end
 
+  local bestPetGUID =
+      petGUID
+
+  local bestHealthState =
+      currentHealthState
+
   for candidateGUID, candidate
   in pairs(pets) do
     local candidateIsAvailable =
         candidateGUID == savedPetGUID
-        or not usedPetGUIDs[candidateGUID]
+        or not usedPetGUIDs[
+        candidateGUID
+        ]
 
     if candidateGUID ~= petGUID
         and candidateIsAvailable
         and type(candidate) == "table"
-        and candidate.speciesID == speciesID
-        and candidate.canBattle ~= false then
+        and candidate.speciesID
+        == speciesID
+        and candidate.canBattle ~= false
+        and tonumber(candidate.level) == 25 then
       local candidateHealth,
       candidateMaxHealth =
           C_PetJournal.GetPetStats(
@@ -802,19 +832,35 @@ local function ResolveHealthyDuplicate(savedPetGUID, slot, usedPetGUIDs, preserv
             candidateMaxHealth
           ) or 0
 
-      if candidateMaxHealth > 0 and candidateHealth
-          == candidateMaxHealth then
-        return candidateGUID
+      local candidateHealthState
+
+      if candidateHealth <= 0 then
+        candidateHealthState = 1
+      elseif candidateMaxHealth > 0
+          and candidateHealth
+          >= candidateMaxHealth then
+        candidateHealthState = 3
+      else
+        candidateHealthState = 2
+      end
+
+      ------------------------------------------------
+      -- Only replace the preferred pet when the
+      -- duplicate has a strictly better health
+      -- state.
+      ------------------------------------------------
+      if candidateHealthState
+          > bestHealthState then
+        bestPetGUID =
+            candidateGUID
+
+        bestHealthState =
+            candidateHealthState
       end
     end
   end
 
-  --------------------------------------------------
-  -- No full-health duplicate remains.
-  --
-  -- Keep whichever duplicate is already loaded.
-  --------------------------------------------------
-  return petGUID
+  return bestPetGUID
 end
 
 function BattleSlotService:LoadPets(pets, abilities, specialSlots, preserveCurrentDuplicates)
