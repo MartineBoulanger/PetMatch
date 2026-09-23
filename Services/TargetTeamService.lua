@@ -328,9 +328,7 @@ function TargetTeamService:HandleResolvedTarget(result)
   ------------------------------------------------
   -- Always hide any previous target button first
   ------------------------------------------------
-  local loadButton =
-      addon.UI
-      and addon.UI.Actions
+  local loadButton = addon.UI and addon.UI.Actions
       and addon.UI.Actions.TargetTeamLoadButton
 
   if loadButton then
@@ -341,8 +339,7 @@ function TargetTeamService:HandleResolvedTarget(result)
   -- Get target team load mode
   ------------------------------------------------
   local mode =
-      addon.Settings:Get("targetTeamLoadMode")
-      or "off"
+      addon.Settings:Get("targetTeamLoadMode") or "off"
 
   ------------------------------------------------
   -- Target team handling disabled
@@ -362,16 +359,11 @@ function TargetTeamService:HandleResolvedTarget(result)
   -- Multiple teams
   ------------------------------------------------
   if result.type == "multiple" then
-    local dialog =
-        addon.UI
-        and addon.UI.Dialogs
+    local dialog = addon.UI and addon.UI.Dialogs
         and addon.UI.Dialogs.TargetTeamSelectDialog
 
     if dialog then
-      dialog:Show(
-        result.teams,
-        result.npcID
-      )
+      dialog:Show(result.teams, result.npcID)
     end
 
     return
@@ -385,14 +377,25 @@ function TargetTeamService:HandleResolvedTarget(result)
   end
 
   ------------------------------------------------
+  -- Team already loaded
+  ------------------------------------------------
+  local teamService = addon.Services.Team
+
+  if teamService then
+    local activeTeam = teamService:GetActive()
+
+    if activeTeam
+        and activeTeam.id == result.team.id then
+      return
+    end
+  end
+
+  ------------------------------------------------
   -- Show load button
   ------------------------------------------------
   if mode == "button" then
     if loadButton then
-      loadButton:SetTeam(
-        result.team,
-        result.npcID
-      )
+      loadButton:SetTeam(result.team, result.npcID)
     end
 
     return
@@ -402,16 +405,11 @@ function TargetTeamService:HandleResolvedTarget(result)
   -- Confirm before loading
   --------------------------------------------------
   if mode == "confirm" then
-    local dialog =
-        addon.UI
-        and addon.UI.Dialogs
+    local dialog = addon.UI and addon.UI.Dialogs
         and addon.UI.Dialogs.TargetTeamConfirmDialog
 
     if dialog then
-      dialog:Show(
-        result.team,
-        result.npcID
-      )
+      dialog:Show(result.team, result.npcID)
     end
 
     return
@@ -423,8 +421,6 @@ function TargetTeamService:HandleResolvedTarget(result)
   if mode ~= "auto" then
     return
   end
-
-  local teamService = addon.Services.Team
 
   if not teamService then
     return
