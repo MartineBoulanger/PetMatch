@@ -180,6 +180,9 @@ L["INVALID_IMPORT_DATA"] = "Invalid import data"
 L["TEAM_EXISTS"] = "Team already exists"
 L["UNKNOWN_CONFLICT"] = "Unknown conflict mode"
 L["NO_TEAM_SELECTED"] = "No team selected."
+L["SHOW_HIDDEN_PETS"] = "Show Hidden Pets"
+L["UNHIDE_PET"] = "Unhide Pet"
+L["HIDE_PET"] = "Hide Pet"
 
 -- UI/Actions
 L["FOLDER"] = "Folder"

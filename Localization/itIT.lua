@@ -184,8 +184,11 @@ L["INVALID_IMPORT_DATA"] = "Dati di importazione non validi"
 L["TEAM_EXISTS"] = "La squadra esiste già"
 L["UNKNOWN_CONFLICT"] = "Modalità di conflitto sconosciuta"
 L["NO_TEAM_SELECTED"] = "Nessuna squadra selezionata."
+L["SHOW_HIDDEN_PETS"] = "Mostra animali nascosti"
+L["UNHIDE_PET"] = "Mostra animale"
+L["HIDE_PET"] = "Nascondi animale"
 
--- UI/Azioni
+-- UI/Actions
 L["FOLDER"] = "Cartella"
 L["RENAME_FOLDER"] = "Rinomina cartella"
 L["DELETE_FOLDER"] = "Elimina cartella"

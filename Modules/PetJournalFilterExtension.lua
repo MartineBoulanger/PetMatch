@@ -22,6 +22,9 @@ local ItemPool = {}
 local ActiveItems = {}
 local BuildItems = {}
 local LastNativeSearchText = nil
+local ShowHiddenPets = false
+local CollectedFilter = true
+local NotCollectedFilter = true
 
 local applyFiltersTimer = nil
 local refreshRequired = false
@@ -815,6 +818,42 @@ end
 local function RefreshSorting()
   CancelQueuedApplyFilters()
   FilterExtension:ApplyFilters()
+end
+
+local function SyncCollectionFilters()
+  local targetCollected = CollectedFilter
+  local targetNotCollected = NotCollectedFilter
+
+  if ShowHiddenPets
+      and not CollectedFilter
+      and not NotCollectedFilter then
+    targetCollected = true
+    targetNotCollected = true
+  end
+
+  local currentCollected =
+      PetJournalFilterDropdown_GetCollectedFilter()
+
+  local currentNotCollected =
+      PetJournalFilterDropdown_GetNotCollectedFilter()
+
+  local changed = false
+
+  if currentCollected ~= targetCollected then
+    changed = true
+    PetJournalFilterDropdown_SetCollectedFilter(
+      targetCollected
+    )
+  end
+
+  if currentNotCollected ~= targetNotCollected then
+    changed = true
+    PetJournalFilterDropdown_SetNotCollectedFilter(
+      targetNotCollected
+    )
+  end
+
+  return changed
 end
 
 local function HasLevel25Pet(speciesID)
@@ -2285,21 +2324,55 @@ function FilterExtension:SetupFilterDropdown()
 
       root:CreateCheckbox(
         COLLECTED,
-        PetJournalFilterDropdown_GetCollectedFilter,
+
         function()
-          PetJournalFilterDropdown_SetCollectedFilter(
-            not PetJournalFilterDropdown_GetCollectedFilter()
-          )
+          return CollectedFilter
+        end,
+
+        function()
+          CollectedFilter = not CollectedFilter
+
+          if not SyncCollectionFilters() then
+            RefreshSorting()
+          end
+
+          return MenuResponse.Refresh
         end
       )
 
       root:CreateCheckbox(
         NOT_COLLECTED,
-        PetJournalFilterDropdown_GetNotCollectedFilter,
+
         function()
-          PetJournalFilterDropdown_SetNotCollectedFilter(
-            not PetJournalFilterDropdown_GetNotCollectedFilter()
-          )
+          return NotCollectedFilter
+        end,
+
+        function()
+          NotCollectedFilter = not NotCollectedFilter
+
+          if not SyncCollectionFilters() then
+            RefreshSorting()
+          end
+
+          return MenuResponse.Refresh
+        end
+      )
+
+      root:CreateCheckbox(
+        L["SHOW_HIDDEN_PETS"],
+
+        function()
+          return ShowHiddenPets == true
+        end,
+
+        function()
+          ShowHiddenPets = not ShowHiddenPets
+
+          if not SyncCollectionFilters() then
+            RefreshSorting()
+          end
+
+          return MenuResponse.Refresh
         end
       )
 
@@ -2993,6 +3066,8 @@ function FilterExtension:ResetFiltersOnly()
   OtherFilters.duplicates = nil
   OtherFilters.level25 = nil
 
+  ShowHiddenPets = false
+
   SyncNativePetTypes()
   SyncNativeSources()
 
@@ -3067,6 +3142,8 @@ function FilterExtension:ResetAllFilters()
   SortOptions.favoritesFirst = true
   SortOptions.reverse = false
 
+  ShowHiddenPets = false
+
   wipe(SortLevels)
 
   C_PetJournal.SetPetSortParameter(
@@ -3096,15 +3173,58 @@ function FilterExtension:Refresh()
 end
 
 function FilterExtension:MatchesPet(
-    petID,
-    speciesID,
-    isOwned,
-    level,
-    petType,
-    favorite,
-    canBattle,
-    tradable
+    petID, speciesID, isOwned, level,
+    petType, favorite, canBattle, tradable
 )
+  local hiddenPetService = addon.Services
+      and addon.Services.HiddenPet
+
+  local isHidden = false
+
+  if hiddenPetService then
+    if isOwned and petID then
+      isHidden =
+          hiddenPetService:IsHidden(petID)
+    elseif not isOwned and speciesID then
+      isHidden =
+          hiddenPetService:IsSpeciesHidden(speciesID)
+    end
+  end
+
+  --------------------------------------------------
+  -- Collection / hidden pets
+  --------------------------------------------------
+  if ShowHiddenPets
+      and not CollectedFilter
+      and not NotCollectedFilter then
+    ----------------------------------------------
+    -- Show Hidden is the only collection filter:
+    -- only hidden pets should be visible.
+    ----------------------------------------------
+    if not isHidden then
+      return false
+    end
+  else
+    ----------------------------------------------
+    -- Normal collection filtering
+    ----------------------------------------------
+    if isOwned and not CollectedFilter then
+      return false
+    end
+
+    if not isOwned and not NotCollectedFilter then
+      return false
+    end
+
+    ----------------------------------------------
+    -- Hidden pets remain excluded unless
+    -- Show Hidden is enabled.
+    ----------------------------------------------
+    if isHidden and not ShowHiddenPets then
+      return false
+    end
+  end
+
   --------------------------------------------------
   -- Expansion
   --------------------------------------------------
@@ -3315,20 +3435,40 @@ function FilterExtension:MatchesPet(
   -- Advanced search
   --------------------------------------------------
   if not MatchesAdvancedSearch(
-        petID,
-        speciesID,
-        isOwned,
-        level,
-        petType,
-        favorite,
-        canBattle,
-        tradable
+        petID, speciesID, isOwned, level,
+        petType, favorite, canBattle, tradable
       ) then
     return false
   end
 
 
   return true
+end
+
+local function AddPetItem(
+    items, index, petID, speciesID,
+    isOwned, level, name, petType
+)
+  local rarity = 0
+
+  if petID then
+    rarity = select(
+      5, C_PetJournal.GetPetStats(petID)) or 0
+  end
+
+  local item = AcquireItem()
+
+  item.index = index
+  item.petID = petID
+  item.speciesID = speciesID
+  item.name = tostring(name or "")
+  item.nameLower = string.lower(item.name)
+  item.isOwned = isOwned == true
+  item.level = tonumber(level) or 0
+  item.rarity = tonumber(rarity) or 0
+  item.petType = tonumber(petType) or 0
+
+  items[#items + 1] = item
 end
 
 function FilterExtension:ApplyFilters()
@@ -3382,31 +3522,10 @@ function FilterExtension:ApplyFilters()
     end
 
     if matchesPetMatchFilter then
-      local rarity = 0
-
-      if petID then
-        rarity =
-            select(
-              5,
-              C_PetJournal.GetPetStats(
-                petID
-              )
-            ) or 0
-      end
-
-      local item = AcquireItem()
-
-      item.index = index
-      item.petID = petID
-      item.speciesID = speciesID
-      item.name = tostring(name or "")
-      item.nameLower = string.lower(item.name)
-      item.isOwned = isOwned == true
-      item.level = tonumber(level) or 0
-      item.rarity = tonumber(rarity) or 0
-      item.petType = tonumber(petType) or 0
-
-      items[#items + 1] = item
+      AddPetItem(
+        items, index, petID, speciesID,
+        isOwned, level, name, petType
+      )
     end
   end
 

@@ -184,6 +184,9 @@ L["INVALID_IMPORT_DATA"] = "導入資料無效"
 L["TEAM_EXISTS"] = "隊伍已存在"
 L["UNKNOWN_CONFLICT"] = "未知衝突模式"
 L["NO_TEAM_SELECTED"] = "未選擇隊伍"
+L["SHOW_HIDDEN_PETS"] = "顯示隱藏的寵物"
+L["UNHIDE_PET"] = "取消隱藏寵物"
+L["HIDE_PET"] = "隱藏寵物"
 
 -- UI/Actions
 L["FOLDER"] = "資料夾"

@@ -184,6 +184,9 @@ L["INVALID_IMPORT_DATA"] = "Неверные данные для импорта"
 L["TEAM_EXISTS"] = "Команда уже существует"
 L["UNKNOWN_CONFLICT"] = "Неизвестный режим конфликта"
 L["NO_TEAM_SELECTED"] = "Команда не выбрана."
+L["SHOW_HIDDEN_PETS"] = "Показать скрытых питомцев"
+L["UNHIDE_PET"] = "Показать питомца"
+L["HIDE_PET"] = "Скрыть питомца"
 
 -- UI/Actions
 L["FOLDER"] = "Папка"

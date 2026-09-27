@@ -22,7 +22,7 @@ local NORMAL_ROW_HEIGHT          = 46
 local COMPACT_ROW_HEIGHT         = 30
 
 local COMPACT_ICON_SIZE          = 30
-local COMPACT_LEVEL_SIZE         = 22
+local COMPACT_LEVEL_SIZE         = 23
 local COMPACT_FAMILY_ICON_SIZE   = 28
 
 local COMPACT_ICON_LEFT_OFFSET   = -37
@@ -866,6 +866,21 @@ local function ApplyCompactRow(button)
     end
   end
 
+  --------------------------------------------------
+  -- Pet name
+  --------------------------------------------------
+  if button.name then
+    button.name:ClearAllPoints()
+
+    button.name:SetPoint(
+      "LEFT",
+      button,
+      "LEFT",
+      COMPACT_NAME_SPACING,
+      0
+    )
+  end
+
   local familyBackground = GetPetFamilyBackground(button)
 
   if familyBackground then
@@ -967,6 +982,25 @@ local function GetOwnerPetGUID(owner)
 
   if parent and parent.petID then
     return parent.petID
+  end
+
+  return nil
+end
+
+local function GetOwnerSpeciesID(owner)
+  if not owner then
+    return nil
+  end
+
+  if owner.speciesID then
+    return tonumber(owner.speciesID)
+  end
+
+  local parent =
+      owner.GetParent and owner:GetParent()
+
+  if parent and parent.speciesID then
+    return tonumber(parent.speciesID)
   end
 
   return nil
@@ -1649,12 +1683,79 @@ local function InstallLevellingDrag(button)
   )
 end
 
+local function InstallUncollectedPetContextMenu(button)
+  if not button
+      or button.PetMatchUncollectedMenuInstalled then
+    return
+  end
+
+  button.PetMatchUncollectedMenuInstalled = true
+
+  button:HookScript(
+    "OnMouseUp",
+    function(self, mouseButton)
+      if mouseButton ~= "RightButton" then
+        return
+      end
+
+      ------------------------------------------------
+      -- Owned pets use Blizzard's normal menu
+      ------------------------------------------------
+      if self.petID then
+        return
+      end
+
+      ------------------------------------------------
+      -- Uncollected pet
+      ------------------------------------------------
+      local speciesID = tonumber(self.speciesID)
+
+      if not speciesID then
+        return
+      end
+
+      local hiddenPetService = addon.Services.HiddenPet
+
+      if not hiddenPetService then
+        return
+      end
+
+      MenuUtil.CreateContextMenu(
+        self,
+        function(owner, root)
+          root:CreateTitle(L["PETMATCH"])
+
+          if hiddenPetService:IsSpeciesHidden(speciesID) then
+            root:CreateButton(
+              L["UNHIDE_PET"],
+              function()
+                hiddenPetService:UnhideSpecies(speciesID)
+                RefreshPetJournal()
+              end
+            )
+          else
+            root:CreateButton(
+              L["HIDE_PET"],
+              function()
+                hiddenPetService:HideSpecies(speciesID)
+                RefreshPetJournal()
+              end
+            )
+          end
+        end
+      )
+    end
+  )
+end
+
 local function UpdatePetButton(button, elementData)
   if not button then
     return
   end
 
   ApplyRowLayout(button)
+
+  InstallUncollectedPetContextMenu(button)
 
   local petGUID = GetPetGUID(elementData)
 
@@ -2067,6 +2168,63 @@ function PetList:InstallPetContextMenu()
       end
 
       local petGUID = GetOwnerPetGUID(owner)
+      local speciesID = GetOwnerSpeciesID(owner)
+
+      --------------------------------------------------
+      -- Hidden Pet
+      -------------------------------------------------
+      local hiddenPetService = addon.Services.HiddenPet
+
+      if hiddenPetService then
+        ------------------------------------------------
+        -- Owned pet
+        ------------------------------------------------
+        if petGUID then
+          if hiddenPetService:IsHidden(petGUID) then
+            root:CreateButton(
+              L["UNHIDE_PET"],
+              function()
+                hiddenPetService:Unhide(petGUID)
+                RefreshPetJournal()
+              end
+            )
+          else
+            root:CreateButton(
+              L["HIDE_PET"],
+              function()
+                hiddenPetService:Hide(petGUID)
+                RefreshPetJournal()
+              end
+            )
+          end
+
+          ------------------------------------------------
+          -- Uncollected pet
+          ------------------------------------------------
+        elseif speciesID then
+          if hiddenPetService:IsSpeciesHidden(speciesID) then
+            root:CreateButton(
+              L["UNHIDE_PET"],
+              function()
+                hiddenPetService:UnhideSpecies(speciesID)
+                RefreshPetJournal()
+              end
+            )
+          else
+            root:CreateButton(
+              L["HIDE_PET"],
+              function()
+                hiddenPetService:HideSpecies(speciesID)
+                RefreshPetJournal()
+              end
+            )
+          end
+        end
+      end
+
+      --------------------------------------------------
+      -- Everything below requires an owned pet
+      --------------------------------------------------
       if not petGUID then
         return
       end

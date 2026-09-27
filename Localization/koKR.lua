@@ -184,6 +184,9 @@ L["INVALID_IMPORT_DATA"] = "유효하지 않은 가져오기 데이터"
 L["TEAM_EXISTS"] = "이미 존재하는 팀입니다"
 L["UNKNOWN_CONFLICT"] = "알 수 없는 충돌 모드"
 L["NO_TEAM_SELECTED"] = "선택된 팀이 없습니다."
+L["SHOW_HIDDEN_PETS"] = "숨겨진 펫 표시"
+L["UNHIDE_PET"] = "펫 숨김 해제"
+L["HIDE_PET"] = "펫 숨기기"
 
 -- UI/Actions
 L["FOLDER"] = "폴더"

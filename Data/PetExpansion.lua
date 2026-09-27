@@ -4,6 +4,9 @@ addon.Data = addon.Data or {}
 
 local PetExpansion = {}
 
+-- This file sets the correct expansion to each pet based on the pet ID
+-- This will be kept updated so sorting and filtering keeps working correctly as well as showing the correct expansion on each pet card
+
 local EXPANSION_RANGES = {
   [0] = { 39, 128 },     -- Classic
   [1] = { 130, 186 },    -- TBC
@@ -86,8 +89,7 @@ local EXPANSION_OUTLIERS = {
 }
 
 local function FindExpansion(speciesID, expansionID)
-  local range =
-      EXPANSION_RANGES[expansionID]
+  local range = EXPANSION_RANGES[expansionID]
 
   if not range then
     return nil
@@ -114,8 +116,7 @@ function PetExpansion:GetExpansionID(speciesID)
     return nil
   end
 
-  local outlierExpansion =
-      EXPANSION_OUTLIERS[speciesID]
+  local outlierExpansion = EXPANSION_OUTLIERS[speciesID]
 
   if outlierExpansion ~= nil then
     return outlierExpansion
@@ -131,8 +132,7 @@ function PetExpansion:GetExpansionNameByID(expansionID)
     return nil
   end
 
-  local name =
-      _G["EXPANSION_NAME" .. expansionID]
+  local name = _G["EXPANSION_NAME" .. expansionID]
 
   if type(name) ~= "string" or name == "" then
     return nil
@@ -142,18 +142,15 @@ function PetExpansion:GetExpansionNameByID(expansionID)
 end
 
 function PetExpansion:GetExpansionName(speciesID)
-  local expansionID =
-      self:GetExpansionID(speciesID)
+  local expansionID = self:GetExpansionID(speciesID)
 
   if expansionID == nil then
     return nil
   end
 
-  local expansionName =
-      _G["EXPANSION_NAME" .. expansionID]
+  local expansionName = _G["EXPANSION_NAME" .. expansionID]
 
-  if type(expansionName) ~= "string"
-      or expansionName == "" then
+  if type(expansionName) ~= "string" or expansionName == "" then
     return nil
   end
 

@@ -184,6 +184,9 @@ L["INVALID_IMPORT_DATA"] = "Datos de importación no válidos"
 L["TEAM_EXISTS"] = "El equipo ya existe"
 L["UNKNOWN_CONFLICT"] = "Modo de conflicto desconocido"
 L["NO_TEAM_SELECTED"] = "No se ha seleccionado ningún equipo."
+L["SHOW_HIDDEN_PETS"] = "Mostrar mascotas ocultas"
+L["UNHIDE_PET"] = "Mostrar mascota oculta"
+L["HIDE_PET"] = "Ocultar mascota"
 
 -- UI/Actions
 L["FOLDER"] = "Carpeta"
