@@ -38,6 +38,24 @@ local function GetFolderOrderValue(team)
   return tonumber(team.order) or 0
 end
 
+function TeamService:GetPreferencesFromSpecialSlots(specialSlots)
+  local preferences = {}
+
+  for slot = 1, 3 do
+    local specialSlot = specialSlots[slot]
+
+    if type(specialSlot) == "table"
+        and specialSlot.type == "leveling" then
+      preferences.minXP = specialSlot.minimumLevel
+      preferences.maxXP = specialSlot.maximumLevel
+      preferences.minHP = specialSlot.minimumHealth
+      break
+    end
+  end
+
+  return preferences
+end
+
 function TeamService:GetTeams()
   local profile = GetProfile()
   if not profile or not profile.teams then
@@ -203,14 +221,11 @@ function TeamService:CreateFromBattleSlots(name, folderID, pendingSpecialSlots)
     return nil, L["FOLDER_NOT_FOUND"]
   end
 
-  pendingSpecialSlots =
-      type(pendingSpecialSlots) == "table"
-      and pendingSpecialSlots
-      or {}
+  pendingSpecialSlots = type(pendingSpecialSlots) == "table"
+      and pendingSpecialSlots or {}
 
   local loadout =
-      addon.Services.BattleSlot:
-      GetCurrentLoadout()
+      addon.Services.BattleSlot:GetCurrentLoadout()
 
   local hasSlot = false
 
@@ -244,7 +259,6 @@ function TeamService:CreateFromBattleSlots(name, folderID, pendingSpecialSlots)
     ------------------------------------------------
     -- Special slot
     ------------------------------------------------
-
     if type(pending) == "table" then
       team.specialSlots[slot] = {
         type = pending.type,
@@ -275,6 +289,18 @@ function TeamService:CreateFromBattleSlots(name, folderID, pendingSpecialSlots)
     end
   end
 
+  team.preferences =
+      self:GetPreferencesFromSpecialSlots(team.specialSlots)
+
+  team.targetNPCIDs = {}
+
+  local targetNPCIDs =
+      addon.Services.TeamSetup:GetTargetNPCIDs()
+
+  for _, npcID in ipairs(targetNPCIDs) do
+    team.targetNPCIDs[#team.targetNPCIDs + 1] = npcID
+  end
+
   team.folderID = folderID
   team.modified = time()
 
@@ -297,10 +323,8 @@ function TeamService:Load(teamID)
 
   local preserveCurrentDuplicates = profile.activeTeam == teamID
 
-  addon.Services.BattleSlot:
-      SetPendingSpecialSlots(
-        team.specialSlots
-      )
+  addon.Services.TeamSetup:SetSlots(team.specialSlots)
+  addon.Services.TeamSetup:SetTargetNPCIDs(team.targetNPCIDs)
 
   local success, errorMessage =
       addon.Services.BattleSlot:LoadPets(
@@ -393,14 +417,11 @@ function TeamService:ReplacePetsFromBattleSlots(teamID, pendingSpecialSlots)
     return nil, L["NO_TEAM_FOUND"]
   end
 
-  pendingSpecialSlots =
-      type(pendingSpecialSlots) == "table"
-      and pendingSpecialSlots
-      or {}
+  pendingSpecialSlots = type(pendingSpecialSlots) == "table"
+      and pendingSpecialSlots or {}
 
   local loadout =
-      addon.Services.BattleSlot:
-      GetCurrentLoadout()
+      addon.Services.BattleSlot:GetCurrentLoadout()
 
   local newPets = {}
   local newAbilities = {}
@@ -410,13 +431,11 @@ function TeamService:ReplacePetsFromBattleSlots(teamID, pendingSpecialSlots)
   local hasSlot = false
 
   for slot = 1, 3 do
-    local pending =
-        pendingSpecialSlots[slot]
+    local pending = pendingSpecialSlots[slot]
 
     ------------------------------------------------
     -- Explicit special slot
     ------------------------------------------------
-
     if type(pending) == "table" then
       newSpecialSlots[slot] = {
         type = pending.type,
@@ -435,17 +454,14 @@ function TeamService:ReplacePetsFromBattleSlots(teamID, pendingSpecialSlots)
       -- Normal current pet
       ------------------------------------------------
     else
-      local petGUID =
-          loadout.pets[slot]
+      local petGUID = loadout.pets[slot]
 
       if petGUID then
-        newPets[slot] =
-            petGUID
+        newPets[slot] = petGUID
 
         hasSlot = true
 
-        local abilities =
-            loadout.abilities[slot]
+        local abilities = loadout.abilities[slot]
 
         if abilities then
           newAbilities[slot] = {
@@ -466,6 +482,17 @@ function TeamService:ReplacePetsFromBattleSlots(teamID, pendingSpecialSlots)
   team.abilities = newAbilities
   team.breeds = newBreeds
   team.specialSlots = newSpecialSlots
+  team.preferences =
+      self:GetPreferencesFromSpecialSlots(newSpecialSlots)
+
+  team.targetNPCIDs = {}
+
+  local targetNPCIDs =
+      addon.Services.TeamSetup:GetTargetNPCIDs()
+
+  for _, npcID in ipairs(targetNPCIDs) do
+    team.targetNPCIDs[#team.targetNPCIDs + 1] = npcID
+  end
 
   team.modified = time()
 
@@ -485,7 +512,11 @@ function TeamService:Edit(teamID, name, replacePets)
   end
 
   if replacePets then
-    team, errorMessage = self:ReplacePetsFromBattleSlots(teamID)
+    local setupSlots = addon.Services.TeamSetup:GetSlots()
+
+    team, errorMessage = self:ReplacePetsFromBattleSlots(
+      teamID, setupSlots
+    )
 
     if not team then
       return nil, errorMessage

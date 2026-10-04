@@ -2159,8 +2159,14 @@ function ImportExportService:ExportRematchTeam(team)
         ":"
       )
 
-  local preferences =
-      EncodeRematchPreferences(team.preferences)
+  local teamPreferences = team.preferences
+
+  if type(teamPreferences) ~= "table" or next(teamPreferences) == nil then
+    teamPreferences =
+        addon.Services.Team:GetPreferencesFromSpecialSlots(team.specialSlots)
+  end
+
+  local preferences = EncodeRematchPreferences(teamPreferences)
 
   if preferences ~= "" then
     result = result .. preferences

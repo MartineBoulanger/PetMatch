@@ -3,7 +3,6 @@ local _, addon = ...
 local L = addon.L
 local BattleSlotService = {}
 BattleSlotService.LoadGeneration = 0
-BattleSlotService.PendingSpecialSlots = {}
 BattleSlotService.IsLoadingTeam = false
 
 local MAX_ABILITY_ATTEMPTS = 6
@@ -157,75 +156,6 @@ local function GetFirstAbilityIDs(petGUID)
   }
 end
 
-local function AreSpecialSlotsEqual(left, right)
-  local leftIsSpecial = type(left) == "table"
-  local rightIsSpecial = type(right) == "table"
-
-  if not leftIsSpecial and not rightIsSpecial then
-    return true
-  end
-
-  if leftIsSpecial ~= rightIsSpecial then
-    return false
-  end
-
-  return left.type == right.type
-      and tonumber(left.petType or 0) == tonumber(right.petType or 0)
-      and left.rawPetTag == right.rawPetTag
-      and tonumber(left.level or 0) == tonumber(right.level or 0)
-      and tonumber(left.rarity or 0) == tonumber(right.rarity or 0)
-      and tonumber(left.minimumLevel or 0) == tonumber(right.minimumLevel or 0)
-      and tonumber(left.maximumLevel or 0) == tonumber(right.maximumLevel or 0)
-      and tonumber(left.minimumHealth or 0) == tonumber(right.minimumHealth or 0)
-end
-
-function BattleSlotService:ArePendingSpecialSlotsDifferent(savedSpecialSlots)
-  savedSpecialSlots =
-      type(savedSpecialSlots) == "table"
-      and savedSpecialSlots
-      or {}
-
-  for slot = 1, 3 do
-    local pending =
-        self.PendingSpecialSlots[
-        slot
-        ]
-
-    local saved =
-        savedSpecialSlots[
-        slot
-        ]
-
-    if not AreSpecialSlotsEqual(
-          pending,
-          saved
-        ) then
-      return true
-    end
-  end
-
-  return false
-end
-
-function BattleSlotService:SetPendingNormalSlot(slot)
-  slot = tonumber(slot)
-
-  if not slot
-      or slot < 1
-      or slot > 3 then
-    return false
-  end
-
-  --------------------------------------------------
-  -- false means:
-  -- explicitly use the current physical pet.
-  --------------------------------------------------
-
-  self.PendingSpecialSlots[slot] = false
-
-  return true
-end
-
 function BattleSlotService:GetSlot(slot)
   if slot < 1 or slot > 3 then
     return nil
@@ -261,108 +191,6 @@ function BattleSlotService:SetSlot(slot, petGUID)
   )
 
   return true
-end
-
-function BattleSlotService:SetPendingSpecialSlot(slot, specialSlot)
-  slot = tonumber(slot)
-
-  if not slot
-      or slot < 1
-      or slot > 3 then
-    return false, L["INVALID_SLOT"]
-  end
-
-  if type(specialSlot) ~= "table" then
-    return false, L["INVALID_SPECIAL_SLOT"]
-  end
-
-  self.PendingSpecialSlots[slot] = {
-    type = specialSlot.type,
-    petType = specialSlot.petType,
-    rawPetTag = specialSlot.rawPetTag,
-    level = specialSlot.level,
-    rarity = specialSlot.rarity,
-    minimumLevel = specialSlot.minimumLevel,
-    maximumLevel = specialSlot.maximumLevel,
-    minimumHealth = specialSlot.minimumHealth,
-  }
-
-  return true
-end
-
-function BattleSlotService:SetPendingSpecialSlots(specialSlots)
-  wipe(self.PendingSpecialSlots)
-
-  if type(specialSlots) ~= "table" then
-    return
-  end
-
-  for slot = 1, 3 do
-    local specialSlot = specialSlots[slot]
-
-    if type(specialSlot) == "table" then
-      self.PendingSpecialSlots[slot] = {
-        type = specialSlot.type,
-        petType = specialSlot.petType,
-        rawPetTag = specialSlot.rawPetTag,
-        level = specialSlot.level,
-        rarity = specialSlot.rarity,
-        minimumLevel = specialSlot.minimumLevel,
-        maximumLevel = specialSlot.maximumLevel,
-        minimumHealth = specialSlot.minimumHealth,
-      }
-    end
-  end
-end
-
-function BattleSlotService:GetPendingSpecialSlot(slot)
-  slot = tonumber(slot)
-
-  if not slot
-      or slot < 1
-      or slot > 3 then
-    return nil
-  end
-
-  return self.PendingSpecialSlots[slot]
-end
-
-function BattleSlotService:GetPendingSpecialSlots()
-  return self.PendingSpecialSlots
-end
-
-function BattleSlotService:HasPendingSpecialSlots()
-  return next(self.PendingSpecialSlots) ~= nil
-end
-
-function BattleSlotService:HasPendingSlotEdit(slot)
-  slot = tonumber(slot)
-
-  if not slot then
-    return false
-  end
-
-  return self.PendingSpecialSlots[slot] ~= nil
-end
-
-function BattleSlotService:ClearPendingSpecialSlot(
-    slot
-)
-  slot = tonumber(slot)
-
-  if not slot
-      or slot < 1
-      or slot > 3 then
-    return false
-  end
-
-  self.PendingSpecialSlots[slot] = nil
-
-  return true
-end
-
-function BattleSlotService:ClearPendingSpecialSlots()
-  wipe(self.PendingSpecialSlots)
 end
 
 function BattleSlotService:Debug()
@@ -605,8 +433,7 @@ function BattleSlotService:RefreshLevellingSlots()
   local changed = false
 
   for slot = 1, 3 do
-    local specialSlot =
-        self.PendingSpecialSlots[slot]
+    local specialSlot = addon.Services.TeamSetup:GetSlot(slot)
 
     local isLevellingSlot =
         type(specialSlot) == "table"
@@ -629,8 +456,7 @@ function BattleSlotService:RefreshLevellingSlots()
   -- Resolve levelling slots again from the queue.
   --------------------------------------------------
   for slot = 1, 3 do
-    local specialSlot =
-        self.PendingSpecialSlots[slot]
+    local specialSlot = addon.Services.TeamSetup:GetSlot(slot)
 
     local isLevellingSlot =
         type(specialSlot) == "table"

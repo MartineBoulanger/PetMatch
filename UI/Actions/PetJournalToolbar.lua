@@ -726,6 +726,40 @@ function PetJournalToolbar:DismissPet()
   )
 end
 
+function PetJournalToolbar:UpdateTeamSetupButton()
+  local button = self.TeamSetupButton
+  local teamSetup = addon.Services.TeamSetup
+
+  if not button or not teamSetup then
+    return
+  end
+
+  local active = teamSetup:IsActive()
+
+  if button.Border then
+    if active then
+      button.Border:SetVertexColor(0.2, 0.8, 1)
+      button.Border:SetAlpha(1)
+    else
+      button.Border:SetVertexColor(1, 1, 1)
+      button.Border:SetAlpha(1)
+    end
+  end
+end
+
+function PetJournalToolbar:ToggleTeamSetupMode()
+  local teamSetup = addon.Services.TeamSetup
+
+  if not teamSetup then
+    addon.Logger:Warn(L["TEAM_SETUP_UNAVAILABLE"])
+    return
+  end
+
+  teamSetup:Toggle()
+
+  self:UpdateTeamSetupButton()
+end
+
 function PetJournalToolbar:HandleManualSlotChange(slot, petGUID)
   if slot ~= 1 then
     return
@@ -774,6 +808,7 @@ function PetJournalToolbar:PositionButtons()
   if not self.SafariHatButton
       or not self.ImportButton
       or not self.ExportButton
+      or not self.TeamSetupButton
       or not self.DismissButton
       or not self.BandageButton then
     return
@@ -787,6 +822,7 @@ function PetJournalToolbar:PositionButtons()
   self.SafariHatButton:ClearAllPoints()
   self.ImportButton:ClearAllPoints()
   self.ExportButton:ClearAllPoints()
+  self.TeamSetupButton:ClearAllPoints()
   self.DismissButton:ClearAllPoints()
   self.BandageButton:ClearAllPoints()
 
@@ -802,6 +838,14 @@ function PetJournalToolbar:PositionButtons()
     self.SafariHatButton:SetPoint(
       "RIGHT",
       self.DismissButton,
+      "LEFT",
+      -BUTTON_SPACING,
+      0
+    )
+
+    self.TeamSetupButton:SetPoint(
+      "RIGHT",
+      self.SafariHatButton,
       "LEFT",
       -BUTTON_SPACING,
       0
@@ -851,6 +895,15 @@ function PetJournalToolbar:PositionButtons()
       0
     )
 
+    self.TeamSetupButton:SetPoint(
+      "RIGHT",
+      self.SafariHatButton,
+      "LEFT",
+      -BUTTON_SPACING,
+      0
+    )
+
+
     self.BandageButton:SetPoint(
       "RIGHT",
       healButton,
@@ -895,6 +948,14 @@ function PetJournalToolbar:PositionButtons()
     0
   )
 
+  self.TeamSetupButton:SetPoint(
+    "RIGHT",
+    self.SafariHatButton,
+    "LEFT",
+    -BUTTON_SPACING,
+    0
+  )
+
   self.BandageButton:SetPoint(
     "RIGHT",
     healButton,
@@ -930,32 +991,21 @@ function PetJournalToolbar:Create()
   end
 
   local frame =
-      CreateFrame(
-        "Frame",
-        "PetMatchPetJournalToolbar",
-        PetJournal
-      )
+      CreateFrame("Frame", "PetMatchPetJournalToolbar", PetJournal)
 
-  frame:SetSize(
-    1,
-    BUTTON_SIZE
-  )
+  frame:SetSize(1, BUTTON_SIZE)
 
   self.Frame = frame
 
   self.BandageButton =
       CreateBandageButton(
-        PetJournal,
-        "PetMatchBattlePetBandageButton",
-        C_Item.GetItemIconByID(
-          BATTLE_PET_BANDAGE_ITEM_ID
-        )
+        PetJournal, "PetMatchBattlePetBandageButton",
+        C_Item.GetItemIconByID(BATTLE_PET_BANDAGE_ITEM_ID)
       )
 
   self.SafariHatButton =
       CreateSafariHatButton(
-        PetJournal,
-        "PetMatchSafariHatButton",
+        PetJournal, "PetMatchSafariHatButton",
         GetSafariHatIcon()
       )
 
@@ -1007,15 +1057,33 @@ function PetJournalToolbar:Create()
 
   self.DismissButton = dismissControl:GetFrame()
 
+  local teamSetupControl =
+      CreateToolbarIconButton(
+        PetJournal,
+        {
+          name = "PetMatchTeamSetupButton",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\TeamSetup",
+          tooltipTitle = L["TEAM_SETUP"],
+          tooltipDescription = L["TEAM_SETUP_TOOLTIP"],
+          onClick = function()
+            self:ToggleTeamSetupMode()
+          end,
+        }
+      )
+
+  self.TeamSetupButton = teamSetupControl:GetFrame()
+
   self:HideBlizzardButtonText()
   self:PositionButtons()
   self:UpdateSafariHatButton()
   self:UpdateDismissButton()
   self:UpdateBandageButton()
+  self:UpdateTeamSetupButton()
 
   self.SafariHatButton:Hide()
   self.ImportButton:Hide()
   self.ExportButton:Hide()
+  self.TeamSetupButton:Hide()
   self.DismissButton:Hide()
   self.BandageButton:Hide()
   frame:Hide()
@@ -1117,11 +1185,13 @@ function PetJournalToolbar:Show()
   self:UpdateSafariHatButton()
   self:UpdateDismissButton()
   self:UpdateBandageButton()
+  self:UpdateTeamSetupButton()
 
   frame:Show()
   self.SafariHatButton:Show()
   self.ImportButton:Show()
   self.ExportButton:Show()
+  self.TeamSetupButton:Show()
   self.DismissButton:Show()
   self.BandageButton:Show()
 end
@@ -1141,6 +1211,10 @@ function PetJournalToolbar:Hide()
 
   if self.DismissButton then
     self.DismissButton:Hide()
+  end
+
+  if self.TeamSetupButton then
+    self.TeamSetupButton:Hide()
   end
 
   if self.BandageButton then

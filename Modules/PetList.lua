@@ -37,6 +37,7 @@ local LEVELING_PET_ICON          = "Interface\\AddOns\\PetMatch\\Media\\leveling
 local PendingSlotOverlays        = {}
 local BattleSlotTagOverlays      = {}
 local BattleSlotBreedLabels      = {}
+local TeamSetupSlotIndicators    = {}
 
 local function GetBattleSlotBreedLabel(slotIndex)
   local existing = BattleSlotBreedLabels[slotIndex]
@@ -102,6 +103,182 @@ local function GetPendingSpecialSlotIcon(specialSlot)
   end
 
   return nil
+end
+
+local function GetTeamSetupSlotIndicator(slotIndex)
+  local existing = TeamSetupSlotIndicators[slotIndex]
+
+  if existing then
+    return existing
+  end
+
+  local slotFrame =
+      _G["PetJournalLoadoutPet" .. tostring(slotIndex)]
+
+  if not slotFrame then
+    return nil
+  end
+
+  local indicator =
+      CreateFrame(
+        "Frame",
+        nil,
+        slotFrame
+      )
+
+  indicator:SetAllPoints(slotFrame)
+  indicator:SetFrameLevel(
+    slotFrame:GetFrameLevel() + 5
+  )
+
+  indicator.Top =
+      indicator:CreateTexture(
+        nil,
+        "OVERLAY"
+      )
+
+  indicator.Top:SetColorTexture(
+    0.2,
+    0.8,
+    1,
+    0.9
+  )
+
+  indicator.Top:SetPoint(
+    "TOPLEFT",
+    indicator,
+    "TOPLEFT",
+    1,
+    -2
+  )
+
+  indicator.Top:SetPoint(
+    "TOPRIGHT",
+    indicator,
+    "TOPRIGHT",
+    -1,
+    -2
+  )
+
+  indicator.Top:SetHeight(2)
+
+  indicator.Bottom =
+      indicator:CreateTexture(
+        nil,
+        "OVERLAY"
+      )
+
+  indicator.Bottom:SetColorTexture(
+    0.2,
+    0.8,
+    1,
+    0.9
+  )
+
+  indicator.Bottom:SetPoint(
+    "BOTTOMLEFT",
+    indicator,
+    "BOTTOMLEFT",
+    1,
+    2
+  )
+
+  indicator.Bottom:SetPoint(
+    "BOTTOMRIGHT",
+    indicator,
+    "BOTTOMRIGHT",
+    -1,
+    2
+  )
+
+  indicator.Bottom:SetHeight(2)
+
+  indicator.Left =
+      indicator:CreateTexture(
+        nil,
+        "OVERLAY"
+      )
+
+  indicator.Left:SetColorTexture(
+    0.2,
+    0.8,
+    1,
+    0.9
+  )
+
+  indicator.Left:SetPoint(
+    "TOPLEFT",
+    indicator,
+    "TOPLEFT",
+    1,
+    -1
+  )
+
+  indicator.Left:SetPoint(
+    "BOTTOMLEFT",
+    indicator,
+    "BOTTOMLEFT",
+    1,
+    1
+  )
+
+  indicator.Left:SetWidth(2)
+
+  indicator.Right =
+      indicator:CreateTexture(
+        nil,
+        "OVERLAY"
+      )
+
+  indicator.Right:SetColorTexture(
+    0.2,
+    0.8,
+    1,
+    0.9
+  )
+
+  indicator.Right:SetPoint(
+    "TOPRIGHT",
+    indicator,
+    "TOPRIGHT",
+    -1,
+    -1
+  )
+
+  indicator.Right:SetPoint(
+    "BOTTOMRIGHT",
+    indicator,
+    "BOTTOMRIGHT",
+    -1,
+    1
+  )
+
+  indicator.Right:SetWidth(2)
+
+  indicator:EnableMouse(false)
+  indicator:Hide()
+
+  TeamSetupSlotIndicators[slotIndex] = indicator
+
+  return indicator
+end
+
+local function RefreshTeamSetupSlotVisual(slotIndex)
+  local teamSetup = addon.Services.TeamSetup
+  local indicator = GetTeamSetupSlotIndicator(slotIndex)
+
+  if not indicator then
+    return
+  end
+
+  local active = teamSetup and teamSetup:IsActive()
+  indicator:SetShown(active == true)
+end
+
+local function RefreshAllTeamSetupSlotVisuals()
+  for slotIndex = 1, 3 do
+    RefreshTeamSetupSlotVisual(slotIndex)
+  end
 end
 
 local function GetPendingSlotOverlay(slotIndex)
@@ -296,9 +473,9 @@ local function LayoutBattleSlotBadges(slotIndex)
 end
 
 local function RefreshPendingBattleSlotVisual(slotIndex)
-  local battleSlotService = addon.Services.BattleSlot
+  local teamSetup = addon.Services.TeamSetup
 
-  if not battleSlotService then
+  if not teamSetup then
     return
   end
 
@@ -308,12 +485,12 @@ local function RefreshPendingBattleSlotVisual(slotIndex)
     return
   end
 
-  local specialSlot =
-      battleSlotService:GetPendingSpecialSlot(slotIndex)
+  local specialSlot = teamSetup:GetSlot(slotIndex)
 
-  if not specialSlot then
+  if type(specialSlot) ~= "table" then
     overlay:Hide()
     LayoutBattleSlotBadges(slotIndex)
+
     return
   end
 
@@ -322,12 +499,13 @@ local function RefreshPendingBattleSlotVisual(slotIndex)
   if not icon then
     overlay:Hide()
     LayoutBattleSlotBadges(slotIndex)
+
     return
   end
 
   overlay.Icon:SetTexture(icon)
-
   overlay:Show()
+
   LayoutBattleSlotBadges(slotIndex)
 end
 
@@ -348,13 +526,6 @@ local function BuildRandomSpecialSlot(petType)
         .. tostring(
           petType
         ),
-  }
-end
-
-local function BuildLevelingSpecialSlot()
-  return {
-    type = "leveling",
-    rawPetTag = "ZL",
   }
 end
 
@@ -1977,7 +2148,11 @@ local function HandleLevellingQueueDrop(slotIndex)
   --------------------------------------------------
   -- Replace special slot with a physical pet
   --------------------------------------------------
-  addon.Services.BattleSlot:SetPendingNormalSlot(slotIndex)
+  local teamSetup = addon.Services.TeamSetup
+
+  if teamSetup and teamSetup:IsActive() then
+    teamSetup:SetNormalSlot(slotIndex)
+  end
 
   --------------------------------------------------
   -- Load pet into Blizzard battle slot
@@ -2012,6 +2187,11 @@ end
 
 function PetList:HandleLevellingQueueDrop(slotIndex)
   return HandleLevellingQueueDrop(slotIndex)
+end
+
+function PetList:RefreshTeamSetupVisuals()
+  RefreshAllTeamSetupSlotVisuals()
+  RefreshAllPendingBattleSlotVisuals()
 end
 
 local function GetBattleSlotIndexFromOwner(owner)
@@ -2055,12 +2235,11 @@ function PetList:InstallPetContextMenu()
   Menu.ModifyMenu(
     "MENU_PET_COLLECTION_PET",
     function(owner, root)
-      local battleSlotIndex =
-          GetBattleSlotIndexFromOwner(
-            owner
-          )
+      local battleSlotIndex = GetBattleSlotIndexFromOwner(owner)
+      local teamSetup = addon.Services.TeamSetup
 
-      if battleSlotIndex then
+      if battleSlotIndex and teamSetup
+          and teamSetup:IsActive() then
         root:CreateDivider()
 
         local slotMenu =
@@ -2070,16 +2249,13 @@ function PetList:InstallPetContextMenu()
 
         slotMenu:CreateButton(
           L["USE_CURRENT_PET"],
-
           function()
-            addon.Services.BattleSlot:
-                SetPendingNormalSlot(
-                  battleSlotIndex
-                )
+            local success =
+                teamSetup:SetNormalSlot(battleSlotIndex)
 
-            RefreshPendingBattleSlotState(
-              battleSlotIndex
-            )
+            if success then
+              RefreshPendingBattleSlotState(battleSlotIndex)
+            end
           end
         )
 
@@ -2094,8 +2270,7 @@ function PetList:InstallPetContextMenu()
           L["ANY_PET"],
           function()
             local success =
-                addon.Services.BattleSlot:
-                SetPendingSpecialSlot(
+                teamSetup:SetSpecialSlot(
                   battleSlotIndex,
                   BuildRandomSpecialSlot(
                     0
@@ -2131,8 +2306,7 @@ function PetList:InstallPetContextMenu()
             name,
             function()
               local success =
-                  addon.Services.BattleSlot:
-                  SetPendingSpecialSlot(
+                  teamSetup:SetSpecialSlot(
                     battleSlotIndex,
                     BuildRandomSpecialSlot(
                       petType
@@ -2151,21 +2325,19 @@ function PetList:InstallPetContextMenu()
         slotMenu:CreateButton(
           L["LEVELLING_PET"],
           function()
-            local success =
-                addon.Services.BattleSlot:
-                SetPendingSpecialSlot(
-                  battleSlotIndex,
-                  BuildLevelingSpecialSlot()
-                )
+            local dialog =
+                addon.UI.Dialogs.LevellingSlotDialog
 
-            if success then
-              RefreshPendingBattleSlotState(
-                battleSlotIndex
-              )
+            if not dialog then
+              return
             end
+
+            dialog:Show(battleSlotIndex)
           end
         )
       end
+
+      root:CreateDivider()
 
       local petGUID = GetOwnerPetGUID(owner)
       local speciesID = GetOwnerSpeciesID(owner)
@@ -2527,6 +2699,20 @@ function PetList:Initialize()
       RefreshAllPendingBattleSlotVisuals()
       RefreshAllBattleSlotTagVisuals()
       RefreshAllBattleSlotBreedVisuals()
+    end
+  )
+
+  addon.EventBus:Register(
+    addon.Events.TEAM_SETUP_CHANGED,
+    function()
+      self:RefreshTeamSetupVisuals()
+    end
+  )
+
+  addon.EventBus:Register(
+    addon.Events.TEAM_SETUP_SLOT_CHANGED,
+    function(slotIndex)
+      RefreshPendingBattleSlotState(slotIndex)
     end
   )
 

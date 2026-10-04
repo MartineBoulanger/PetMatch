@@ -64,10 +64,12 @@ function SaveTeamDialog:Save()
   --------------------------------------------------
   -- Pending special slots
   --------------------------------------------------
-  local pendingSpecialSlots = addon.Services.BattleSlot:GetPendingSpecialSlots()
+  local setupSlots = addon.Services.TeamSetup:GetSlots()
 
   local team, errorMessage =
-      addon.Services.Team:CreateFromBattleSlots(name, folderID, pendingSpecialSlots)
+      addon.Services.Team:CreateFromBattleSlots(
+        name, folderID, setupSlots
+      )
 
   if not team then
     addon.Logger:Warn(errorMessage or L["UNABLE_SAVE_TEAM"])
@@ -77,7 +79,7 @@ function SaveTeamDialog:Save()
   end
 
   addon.Services.Team:SetActive(team.id)
-  addon.Services.BattleSlot:SetPendingSpecialSlots(team.specialSlots)
+  addon.Services.TeamSetup:SetSlots(team.specialSlots)
 
   return true
 end

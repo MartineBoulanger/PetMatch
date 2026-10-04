@@ -278,6 +278,13 @@ function Blizzard:Initialize()
 
   self.Hooked = true
 
+  local teamSetupPanel = addon.UI and addon.UI.Views
+      and addon.UI.Views.TeamSetupPanel
+
+  if teamSetupPanel then
+    teamSetupPanel:Initialize()
+  end
+
   PetJournal:HookScript(
     "OnShow",
     function()
@@ -351,6 +358,10 @@ function Blizzard:Initialize()
       )
     end
   )
+
+  if addon.Services.PetBattleTarget then
+    addon.Services.PetBattleTarget:Initialize()
+  end
 
   if addon.Services.PetJournal then
     addon.Services.PetJournal:Initialize()
