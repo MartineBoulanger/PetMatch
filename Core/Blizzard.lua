@@ -267,6 +267,58 @@ local function InitializePetCollectionButton()
   )
 end
 
+local function ApplyCompactPetCardLayout()
+  if not PetJournalPetCard
+      or not PetJournalPetCardInset
+      or not PetJournalPetCardBG
+      or not PetJournalPetCardPetInfo
+      or not PetJournalPetCardHealthFrame
+      or not PetJournalPetCardTypeInfo
+      or not PetJournalPetCardAbilitiesBG1
+      or not PetJournalPetCard.modelScene then
+    return
+  end
+
+  PetJournalPetCardInset:SetHeight(150)
+  PetJournalPetCardBG:SetHeight(146)
+
+  PetJournalPetCardHealthFrame:ClearAllPoints()
+  PetJournalPetCardHealthFrame:SetPoint(
+    "TOPLEFT",
+    PetJournalPetCardPetInfo,
+    "BOTTOMLEFT",
+    6,
+    -7
+  )
+
+  PetJournalPetCard.modelScene:ClearAllPoints()
+  PetJournalPetCard.modelScene:SetPoint(
+    "TOPLEFT",
+    PetJournalPetCard,
+    "TOPLEFT",
+    55,
+    -7
+  )
+
+  PetJournalPetCardAbilitiesBG1:ClearAllPoints()
+  PetJournalPetCardAbilitiesBG1:SetPoint(
+    "TOPRIGHT",
+    PetJournalPetCard,
+    "TOPRIGHT",
+    -119,
+    -37
+  )
+
+  PetJournalPetCardTypeInfo:ClearAllPoints()
+  PetJournalPetCardTypeInfo:SetPoint(
+    "TOPRIGHT",
+    PetJournalPetCard,
+    "TOPRIGHT",
+    -12,
+    -7
+  )
+end
+
 function Blizzard:Initialize()
   if self.Hooked then
     return
@@ -289,6 +341,7 @@ function Blizzard:Initialize()
     "OnShow",
     function()
       addon.UI.Host:Update()
+      ApplyCompactPetCardLayout()
       local team = addon.Services.Team and addon.Services.Team:GetActive()
       UpdateLoadoutTitle(team)
     end
@@ -302,6 +355,7 @@ function Blizzard:Initialize()
   )
 
   InitializePetCollectionButton()
+  ApplyCompactPetCardLayout()
 
   --------------------------------------------------
   -- Blizzard panel changes
