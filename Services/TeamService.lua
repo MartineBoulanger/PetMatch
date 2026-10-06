@@ -1275,4 +1275,16 @@ function TeamService:MoveDown(teamID)
   )
 end
 
+function TeamService:ClearActive()
+  local profile = GetProfile()
+
+  if not profile then
+    return false
+  end
+
+  profile.activeTeam = nil
+
+  return true
+end
+
 addon.Services.Team = TeamService

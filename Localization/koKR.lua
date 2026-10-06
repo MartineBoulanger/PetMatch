@@ -228,6 +228,8 @@ L["SORT_TEAMS"] = "팀 정렬"
 L["STATISTICS"] = "통계"
 L["UPDATE_TEAM"] = "팀 업데이트"
 L["UNABLE_TO_UPDATE"] = "팀을 업데이트할 수 없습니다"
+L["UNLOAD_TEAM"] = "팀 해제"
+L["UNLOAD_TEAM_DESCRIPTION"] = "전투 애완동물 슬롯에서 모든 애완동물을 제거합니다."
 
 -- UI/Base
 L["BUTTON"] = "버튼"

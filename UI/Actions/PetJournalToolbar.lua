@@ -94,7 +94,215 @@ local function CreateToolbarIconButton(parent, options)
   return addon.UI.Components.ToolbarIconButton:Create(parent, options)
 end
 
-local function AddBlizzardBorder(button)
+local function IsSafariHatActive()
+  return C_UnitAuras.GetPlayerAuraBySpellID(
+    SAFARI_HAT_BUFF_ID
+  ) ~= nil
+end
+
+local function GetSafariHatIcon()
+  local spellInfo =
+      C_Spell.GetSpellInfo(
+        SAFARI_HAT_BUFF_ID
+      )
+
+  if spellInfo then
+    return spellInfo.iconID
+  end
+
+  local _, _, toyIcon =
+      C_ToyBox.GetToyInfo(
+        SAFARI_HAT_TOY_ID
+      )
+
+  return toyIcon
+end
+
+local function GetSafariHatName()
+  local spellInfo =
+      C_Spell.GetSpellInfo(
+        SAFARI_HAT_BUFF_ID
+      )
+
+  if spellInfo then
+    return spellInfo.name
+  end
+
+  return "Safari Hat"
+end
+
+local function CreateSafariHatButton(parent, name, texture)
+  local button =
+      CreateFrame(
+        "Button",
+        name,
+        parent,
+        "SecureActionButtonTemplate"
+      )
+
+  local width, height =
+      GetToolbarButtonSize()
+
+  button:SetSize(width, height)
+
+  button:RegisterForClicks(
+    "AnyUp",
+    "AnyDown"
+  )
+
+  button:SetAttribute(
+    "useOnKeyDown",
+    false
+  )
+
+  button.Icon =
+      button:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  button.Icon:SetAllPoints(button)
+  button.Icon:SetTexture(texture)
+  button.Icon:SetTexCoord(0, 1, 0, 1)
+
+  addon.UI.Components.ToolbarIconButton:ApplyStyle(
+    button,
+    FindHealIconButton()
+  )
+
+  PetJournalToolbar:AddBlizzardBorder(button)
+
+  button.RemoveOverlay =
+      button:CreateTexture(
+        nil,
+        "OVERLAY"
+      )
+
+  button.RemoveOverlay:SetAtlas(
+    "common-icon-redx"
+  )
+
+  button.RemoveOverlay:SetSize(25, 25)
+
+  button.RemoveOverlay:SetPoint(
+    "TOPRIGHT",
+    -4,
+    -4
+  )
+
+  button.RemoveOverlay:Hide()
+
+  button:SetScript(
+    "OnEnter",
+    function(self)
+      addon.UI.Components.ToolbarIconButton:ShowTooltip(
+        self,
+        self.TooltipTitle,
+        self.TooltipDescription
+      )
+    end
+  )
+
+  button:SetScript(
+    "OnLeave",
+    function()
+      GameTooltip:Hide()
+    end
+  )
+
+  return button
+end
+
+local function CreateBandageButton(parent, name, texture)
+  local button =
+      CreateFrame(
+        "Button",
+        name,
+        parent,
+        "SecureActionButtonTemplate"
+      )
+
+  local width, height = GetToolbarButtonSize()
+
+  button:SetSize(width, height)
+
+  button:RegisterForClicks(
+    "AnyUp",
+    "AnyDown"
+  )
+
+  button:SetAttribute(
+    "useOnKeyDown",
+    false
+  )
+
+  button:SetAttribute(
+    "type",
+    "item"
+  )
+
+  button:SetAttribute(
+    "item",
+    "item:" .. BATTLE_PET_BANDAGE_ITEM_ID
+  )
+
+  button.Icon =
+      button:CreateTexture(
+        nil,
+        "ARTWORK"
+      )
+
+  button.Icon:SetAllPoints(button)
+  button.Icon:SetTexture(texture)
+  button.Icon:SetTexCoord(0, 1, 0, 1)
+
+  addon.UI.Components.ToolbarIconButton:ApplyStyle(
+    button,
+    FindHealIconButton()
+  )
+
+  PetJournalToolbar:AddBlizzardBorder(button)
+
+  button.Count =
+      button:CreateFontString(
+        nil,
+        "OVERLAY",
+        "NumberFontNormal"
+      )
+
+  button.Count:SetPoint(
+    "BOTTOMRIGHT",
+    button,
+    "BOTTOMRIGHT",
+    -2,
+    2
+  )
+
+  button.TooltipTitle = L["PET_BANDAGE"]
+  button.TooltipDescription = L["PET_BANDAGE_TOOLTIP"]
+
+  button:SetScript(
+    "OnEnter",
+    function(self)
+      addon.UI.Components.ToolbarIconButton:ShowTooltip(
+        self,
+        self.TooltipTitle,
+        self.TooltipDescription
+      )
+    end
+  )
+
+  button:SetScript(
+    "OnLeave",
+    function()
+      GameTooltip:Hide()
+    end
+  )
+
+  return button
+end
+
+function PetJournalToolbar:AddBlizzardBorder(button)
   if not button then
     return
   end
@@ -173,215 +381,6 @@ local function AddBlizzardBorder(button)
   border:Show()
 
   button.Border = border
-end
-
-local function IsSafariHatActive()
-  return C_UnitAuras.GetPlayerAuraBySpellID(
-    SAFARI_HAT_BUFF_ID
-  ) ~= nil
-end
-
-local function GetSafariHatIcon()
-  local spellInfo =
-      C_Spell.GetSpellInfo(
-        SAFARI_HAT_BUFF_ID
-      )
-
-  if spellInfo then
-    return spellInfo.iconID
-  end
-
-  local _, _, toyIcon =
-      C_ToyBox.GetToyInfo(
-        SAFARI_HAT_TOY_ID
-      )
-
-  return toyIcon
-end
-
-local function GetSafariHatName()
-  local spellInfo =
-      C_Spell.GetSpellInfo(
-        SAFARI_HAT_BUFF_ID
-      )
-
-  if spellInfo then
-    return spellInfo.name
-  end
-
-  return "Safari Hat"
-end
-
-local function CreateSafariHatButton(parent, name, texture)
-  local button =
-      CreateFrame(
-        "Button",
-        name,
-        parent,
-        "SecureActionButtonTemplate"
-      )
-
-  local width, height =
-      GetToolbarButtonSize()
-
-  button:SetSize(width, height)
-
-  button:RegisterForClicks(
-    "AnyUp",
-    "AnyDown"
-  )
-
-  button:SetAttribute(
-    "useOnKeyDown",
-    false
-  )
-
-  button.Icon =
-      button:CreateTexture(
-        nil,
-        "ARTWORK"
-      )
-
-  button.Icon:SetAllPoints(button)
-  button.Icon:SetTexture(texture)
-  button.Icon:SetTexCoord(0, 1, 0, 1)
-
-  addon.UI.Components.ToolbarIconButton:ApplyStyle(
-    button,
-    FindHealIconButton()
-  )
-
-  AddBlizzardBorder(button)
-
-  button.RemoveOverlay =
-      button:CreateTexture(
-        nil,
-        "OVERLAY"
-      )
-
-  button.RemoveOverlay:SetAtlas(
-    "common-icon-redx"
-  )
-
-  button.RemoveOverlay:SetSize(25, 25)
-
-  button.RemoveOverlay:SetPoint(
-    "TOPRIGHT",
-    -4,
-    -4
-  )
-
-  button.RemoveOverlay:Hide()
-
-  button:SetScript(
-    "OnEnter",
-    function(self)
-      addon.UI.Components.ToolbarIconButton:ShowTooltip(
-        self,
-        self.TooltipTitle,
-        self.TooltipDescription
-      )
-    end
-  )
-
-  button:SetScript(
-    "OnLeave",
-    function()
-      GameTooltip:Hide()
-    end
-  )
-
-  return button
-end
-
-local function CreateBandageButton(parent, name, texture)
-  local button =
-      CreateFrame(
-        "Button",
-        name,
-        parent,
-        "SecureActionButtonTemplate"
-      )
-
-  local width, height =
-      GetToolbarButtonSize()
-
-  button:SetSize(width, height)
-
-  button:RegisterForClicks(
-    "AnyUp",
-    "AnyDown"
-  )
-
-  button:SetAttribute(
-    "useOnKeyDown",
-    false
-  )
-
-  button:SetAttribute(
-    "type",
-    "item"
-  )
-
-  button:SetAttribute(
-    "item",
-    "item:" .. BATTLE_PET_BANDAGE_ITEM_ID
-  )
-
-  button.Icon =
-      button:CreateTexture(
-        nil,
-        "ARTWORK"
-      )
-
-  button.Icon:SetAllPoints(button)
-  button.Icon:SetTexture(texture)
-  button.Icon:SetTexCoord(0, 1, 0, 1)
-
-  addon.UI.Components.ToolbarIconButton:ApplyStyle(
-    button,
-    FindHealIconButton()
-  )
-
-  AddBlizzardBorder(button)
-
-  button.Count =
-      button:CreateFontString(
-        nil,
-        "OVERLAY",
-        "NumberFontNormal"
-      )
-
-  button.Count:SetPoint(
-    "BOTTOMRIGHT",
-    button,
-    "BOTTOMRIGHT",
-    -2,
-    2
-  )
-
-  button.TooltipTitle = L["PET_BANDAGE"]
-  button.TooltipDescription = L["PET_BANDAGE_TOOLTIP"]
-
-  button:SetScript(
-    "OnEnter",
-    function(self)
-      addon.UI.Components.ToolbarIconButton:ShowTooltip(
-        self,
-        self.TooltipTitle,
-        self.TooltipDescription
-      )
-    end
-  )
-
-  button:SetScript(
-    "OnLeave",
-    function()
-      GameTooltip:Hide()
-    end
-  )
-
-  return button
 end
 
 function PetJournalToolbar:SetButtonEnabled(button, enabled)

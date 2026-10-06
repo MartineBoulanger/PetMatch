@@ -889,6 +889,55 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots, preserveCurre
   return true
 end
 
+function BattleSlotService:Clear()
+  if C_PetBattles.IsInBattle() then
+    return false, L["LOAD_ERROR"]
+  end
+
+  if InCombatLockdown() then
+    return false, L["LOAD_COMBAT_ERROR"]
+  end
+
+  --------------------------------------------------
+  -- Cancel pending load / ability operations
+  --------------------------------------------------
+  self.LoadGeneration = self.LoadGeneration + 1
+  self.IsLoadingTeam = false
+
+  --------------------------------------------------
+  -- Suspend loadout monitoring
+  --------------------------------------------------
+  if addon.Services.LoadoutMonitor then
+    addon.Services.LoadoutMonitor:Suspend()
+  end
+
+  --------------------------------------------------
+  -- Clear all battle pet slots
+  --------------------------------------------------
+  for slot = 1, 3 do
+    C_PetJournal.SetPetLoadOutInfo(
+      slot,
+      ""
+    )
+  end
+
+  --------------------------------------------------
+  -- Refresh Blizzard loadout UI
+  --------------------------------------------------
+  if type(PetJournal_UpdatePetLoadOut) == "function" then
+    PetJournal_UpdatePetLoadOut()
+  end
+
+  --------------------------------------------------
+  -- Resume loadout monitoring
+  --------------------------------------------------
+  if addon.Services.LoadoutMonitor then
+    addon.Services.LoadoutMonitor:Resume()
+  end
+
+  return true
+end
+
 function BattleSlotService:GetSlotLoadout(slot)
   if type(slot) ~= "number"
       or slot < 1

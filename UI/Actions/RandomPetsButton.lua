@@ -217,15 +217,15 @@ function RandomPetsButton:Create()
     "ADD"
   )
 
-  local firstSlot = _G.PetJournalLoadoutPet1
+  local lastSlot = _G.PetJournalLoadoutPet3
 
-  if firstSlot then
+  if lastSlot then
     button:SetPoint(
-      "BOTTOMRIGHT",
-      firstSlot,
-      "TOPRIGHT",
-      6,
-      -1
+      "TOPLEFT",
+      lastSlot,
+      "BOTTOMLEFT",
+      -4,
+      -6
     )
   else
     button:SetPoint(

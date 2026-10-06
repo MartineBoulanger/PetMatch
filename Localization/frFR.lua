@@ -229,6 +229,8 @@ L["SORT_TEAMS"] = "Trier les équipes"
 L["STATISTICS"] = "Statistiques"
 L["UPDATE_TEAM"] = "Mettre l'équipe"
 L["UNABLE_TO_UPDATE"] = "Impossible de mettre à jour l'équipe"
+L["UNLOAD_TEAM"] = "Décharger l'équipe"
+L["UNLOAD_TEAM_DESCRIPTION"] = "Retire tous les mascottes des emplacements de combat."
 
 -- UI/Base
 L["BUTTON"] = "Bouton"

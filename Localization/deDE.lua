@@ -228,6 +228,8 @@ L["SORT_TEAMS"] = "Teams sortieren"
 L["STATISTICS"] = "Statistiken"
 L["UPDATE_TEAM"] = "Team aktualisieren"
 L["UNABLE_TO_UPDATE"] = "Team konnte nicht aktualisiert werden"
+L["UNLOAD_TEAM"] = "Team entfernen"
+L["UNLOAD_TEAM_DESCRIPTION"] = "Entfernt alle Haustiere aus den Kampfhaustier-Plätzen."
 
 -- UI/Base
 L["BUTTON"] = "Knopf"

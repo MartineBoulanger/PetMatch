@@ -224,6 +224,8 @@ L["SORT_TEAMS"] = "Sort Teams"
 L["STATISTICS"] = "Statistics"
 L["UPDATE_TEAM"] = "Update Team"
 L["UNABLE_TO_UPDATE"] = "Unable to update team"
+L["UNLOAD_TEAM"] = "Unload Team"
+L["UNLOAD_TEAM_DESCRIPTION"] = "Removes all pets from the battle pet slots."
 
 -- UI/Base
 L["BUTTON"] = "Button"

@@ -229,6 +229,8 @@ L["SORT_TEAMS"] = "Ordenar equipos"
 L["STATISTICS"] = "Estadísticas"
 L["UPDATE_TEAM"] = "Actualizar equipo"
 L["UNABLE_TO_UPDATE"] = "No se puede actualizar el equipo"
+L["UNLOAD_TEAM"] = "Descargar equipo"
+L["UNLOAD_TEAM_DESCRIPTION"] = "Elimina todas las mascotas de las ranuras de mascotas de duelo."
 
 -- UI/Base
 L["BUTTON"] = "Botón"

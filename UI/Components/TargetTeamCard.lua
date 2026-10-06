@@ -431,6 +431,37 @@ function TargetTeamCard:HandleTargetChanged(result)
   )
 end
 
+function TargetTeamCard:Clear()
+  if not self.Frame then
+    return
+  end
+
+  self.Mode = nil
+  self.TargetNPCID = nil
+  self.SuggestedPets = nil
+
+  if self.Frame.SuggestedHint then
+    self.Frame.SuggestedHint:Hide()
+  end
+
+  for index = 1, 3 do
+    local enemyPet = self.Frame.EnemyPets[index]
+    local teamPet = self.Frame.TeamPets[index]
+
+    enemyPet.speciesID = nil
+    enemyPet.Icon:SetTexture(nil)
+    enemyPet:Hide()
+
+    teamPet.petGUID = nil
+    teamPet.speciesID = nil
+    teamPet.pet = nil
+    teamPet.Icon:SetTexture(nil)
+    teamPet:Hide()
+  end
+
+  self.Frame:Hide()
+end
+
 function TargetTeamCard:ClearSuggestedTarget()
   if not self.Frame then
     return
@@ -505,6 +536,9 @@ function TargetTeamCard:LoadSuggestedTeam()
   self.Mode = nil
   self.SuggestedPets = nil
   self.TargetNPCID = nil
+
+  addon.Blizzard:UpdateLoadoutTitle(nil)
+
   --------------------------------------------------
   -- Suggested pets are concrete physical pets.
   --

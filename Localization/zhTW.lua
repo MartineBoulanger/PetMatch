@@ -228,6 +228,8 @@ L["SORT_TEAMS"] = "對團隊進行排序"
 L["STATISTICS"] = "統計資訊"
 L["UPDATE_TEAM"] = "更新團隊"
 L["UNABLE_TO_UPDATE"] = "無法更新團隊"
+L["UNLOAD_TEAM"] = "卸載隊伍"
+L["UNLOAD_TEAM_DESCRIPTION"] = "移除戰鬥寵物欄位中的所有寵物。"
 
 -- UI/Base
 L["BUTTON"] = "按鈕"

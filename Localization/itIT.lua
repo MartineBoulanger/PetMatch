@@ -229,6 +229,8 @@ L["SORT_TEAMS"] = "Ordina squadre"
 L["STATISTICS"] = "Statistiche"
 L["UPDATE_TEAM"] = "Aggiorna squadra"
 L["UNABLE_TO_UPDATE"] = "Impossibile aggiornare la squadra"
+L["UNLOAD_TEAM"] = "Scarica squadra"
+L["UNLOAD_TEAM_DESCRIPTION"] = "Rimuove tutti gli animali dagli slot per animali da combattimento."
 
 -- UI/Base
 L["BUTTON"] = "Pulsante"

@@ -228,6 +228,8 @@ L["SORT_TEAMS"] = "Сортировать команды"
 L["STATISTICS"] = "Статистика"
 L["UPDATE_TEAM"] = "Обновить команду"
 L["UNABLE_TO_UPDATE"] = "Не удалось обновить команду"
+L["UNLOAD_TEAM"] = "Убрать команду"
+L["UNLOAD_TEAM_DESCRIPTION"] = "Убирает всех питомцев из ячеек для боевых питомцев."
 
 -- UI/Base
 L["BUTTON"] = "Кнопка"

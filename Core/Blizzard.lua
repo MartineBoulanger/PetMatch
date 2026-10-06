@@ -15,15 +15,10 @@ local function UpdateLoadoutTitle(team)
     return
   end
 
-  local title =
-      BATTLE_PET_SLOTS
-      or L["SLOT_DEFAULT_NAME"]
+  local title = BATTLE_PET_SLOTS or L["SLOT_DEFAULT_NAME"]
 
-  if team
-      and type(team.name) == "string"
-      and team.name ~= "" then
-    title =
-        team.name
+  if team and type(team.name) == "string" and team.name ~= "" then
+    title = team.name
   end
 
   titleText:SetText(title)
@@ -319,6 +314,10 @@ local function ApplyCompactPetCardLayout()
   )
 end
 
+function Blizzard:UpdateLoadoutTitle(team)
+  UpdateLoadoutTitle(team)
+end
+
 function Blizzard:Initialize()
   if self.Hooked then
     return
@@ -335,6 +334,13 @@ function Blizzard:Initialize()
 
   if teamSetupPanel then
     teamSetupPanel:Initialize()
+  end
+
+  local unloadTeamButton = addon.UI and addon.UI.Actions
+      and addon.UI.Actions.UnloadTeamButton
+
+  if unloadTeamButton then
+    unloadTeamButton:Show()
   end
 
   PetJournal:HookScript(
