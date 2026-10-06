@@ -257,6 +257,8 @@ L["UNABLE_FAVORITE_UPDATE"] = "Impossibile aggiornare i preferiti"
 L["REMOVE_FAVORITE"] = "Rimuovi dai preferiti"
 L["ADD_FAVORITE"] = "Aggiungi ai preferiti"
 L["UNABLE_LOAD_TEAM"] = "Impossibile caricare la squadra"
+L['CLICK_TO_LOAD'] = "Clicca per caricare"
+L["TEST_NPC"] = "NPC di prova"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Impossibile eliminare la cartella"
@@ -458,6 +460,7 @@ L["PET_CARD_VISIBILITY_DESCRIPTION"] = "Scegli dove visualizzare la scheda della
 L["JOURNAL_LIST"] = "Elenco del Diario delle mascotte"
 L["TEAM_PETS"] = "Mascotte della squadra"
 L["QUEUE_PETS"] = "Mascotte in coda di livellamento"
+L["TARGET_PETS"] = "Bersaglia i pet della carta squadra"
 L["QUEUE_DESCRIPTION"] =
 "Scegli se aggiungere automaticamente alla coda di livellamento le nuove mascotte da combattimento di livello inferiore al 25."
 L["AUTO_ADD_PET"] = "Aggiungi automaticamente nuove mascotte"

@@ -359,6 +359,40 @@ function PetTypeFilterService:GetMatchup(petType)
   return MATCHUPS[petType]
 end
 
+function PetTypeFilterService:GetStrongAbilitiesAgainst(speciesID, level, enemyPetType)
+  enemyPetType = tonumber(enemyPetType)
+
+  if not IsValidPetType(enemyPetType) then
+    return {}
+  end
+
+  local abilityTypes,
+  abilitiesByType = GetAbilityData(speciesID, level)
+
+  local result = {}
+
+  for abilityType in pairs(abilityTypes) do
+    local matchup = self:GetMatchup(abilityType)
+
+    if matchup and matchup.strongVs == enemyPetType then
+      local abilities = abilitiesByType[abilityType]
+
+      if abilities then
+        for abilityID in pairs(abilities) do
+          result[abilityID] = true
+        end
+      end
+    end
+  end
+
+  return result
+end
+
+function PetTypeFilterService:GetAbilityTypes(speciesID, level)
+  local abilityTypes = GetAbilityData(speciesID, level)
+  return abilityTypes
+end
+
 --------------------------------------------------
 -- Matching
 --------------------------------------------------

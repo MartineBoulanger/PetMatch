@@ -155,6 +155,18 @@ function PetBattleTargetService:GetName(npcID)
   return nil
 end
 
+function PetBattleTargetService:GetPetIcon(speciesID)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return nil
+  end
+
+  local _, icon = C_PetJournal.GetPetInfoBySpeciesID(speciesID)
+
+  return icon
+end
+
 function PetBattleTargetService:GetTargetsByExpansion()
   local groups = {}
 

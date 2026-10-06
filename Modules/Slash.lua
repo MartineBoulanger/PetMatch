@@ -54,37 +54,6 @@ commands.settings = function()
   )
 end
 
-commands.stats = function()
-  DevTools_Dump({
-    overview = addon.Services.PetCollectionStats:GetOverview(),
-    -- families = addon.Services.PetCollectionStats:GetFamilyStats(),
-    -- sources = addon.Services.PetCollectionStats:GetSourceStats(),
-    -- expansions = addon.Services.PetCollectionStats:GetExpansionStats(),
-    breeds = addon.Services.PetCollectionStats:GetBreedStats()
-  })
-end
-
-commands.breeds = function(msg)
-  -- DevTools_Dump(
-  --   addon.Services.Breed:GetPossibleBreeds(39)
-  -- )
-  local speciesID = tonumber(msg)
-
-  if not speciesID then
-    print(
-      "Usage: /pmbreedtest <speciesID>"
-    )
-    return
-  end
-
-  DevTools_Dump(
-    addon.Services.Breed:
-    GetPossibleBreeds(
-      speciesID
-    )
-  )
-end
-
 function Slash:Initialize()
   SLASH_PETMATCH1 = "/petmatch"
   SLASH_PETMATCH2 = "/pm"

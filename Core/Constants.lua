@@ -111,6 +111,18 @@ addon.Constants = {
     [9] = _G.BATTLE_PET_NAME_9 or L["FAM_AQU"],
     [10] = _G.BATTLE_PET_NAME_10 or L["FAM_MEC"],
   },
+  PET_FAMILY_STRONG_AGAINST = {
+    [1] = 2,  -- Humanoid -> Dragonkin
+    [2] = 6,  -- Dragonkin -> Magic
+    [3] = 5,  -- Flying -> Critter
+    [4] = 1,  -- Undead -> Humanoid
+    [5] = 4,  -- Critter -> Undead
+    [6] = 9,  -- Magic -> Aquatic
+    [7] = 10, -- Elemental -> Mechanical
+    [8] = 3,  -- Beast -> Flying
+    [9] = 7,  -- Aquatic -> Elemental
+    [10] = 8, -- Mechanical -> Beast
+  },
 
   -- pet sources variables
   PET_SOURCE_ICONS = {

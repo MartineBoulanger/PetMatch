@@ -20,6 +20,7 @@ local VALID_SOURCES = {
   petList = true,
   teams = true,
   queue = true,
+  targets = true,
 }
 
 local function GetInteractionMode()
@@ -62,6 +63,12 @@ local function AllowsSource(source)
   if source == "queue" then
     return addon.Settings:Get(
       "petCardLevellingQueueEnabled"
+    ) ~= false
+  end
+
+  if source == "targets" then
+    return addon.Settings:Get(
+      "petCardTargetEnabled"
     ) ~= false
   end
 

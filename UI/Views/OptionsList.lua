@@ -13,7 +13,7 @@ local DUPLICATE_SECTION_HEIGHT = 104
 local BREED_SECTION_HEIGHT = 104
 local PET_LIST_SECTION_HEIGHT = 86
 local PET_CARD_SECTION_HEIGHT = 104
-local PET_CARD_VISIBILITY_SECTION_HEIGHT = 104
+local PET_CARD_VISIBILITY_SECTION_HEIGHT = 126
 local LEVELLING_QUEUE_SECTION_HEIGHT = 96
 local SUMMONED_PET_SECTION_HEIGHT = 104
 local PET_TYPE_FILTER_SECTION_HEIGHT = 104
@@ -88,7 +88,8 @@ function OptionsList:RegisterEvents()
         self:RefreshPetCardMode()
       elseif key == "petCardPetListEnabled"
           or key == "petCardTeamsEnabled"
-          or key == "petCardLevellingQueueEnabled" then
+          or key == "petCardLevellingQueueEnabled"
+          or key == "petCardTargetEnabled" then
         self:RefreshPetCardVisibilityMode()
       elseif key == "levellingQueueAutoAddMode" then
         self:RefreshLevellingQueueAutoAddMode()
@@ -156,6 +157,7 @@ function OptionsList:ClearItems()
   self.PetCardPetListCheckbox = nil
   self.PetCardTeamsCheckbox = nil
   self.PetCardLevellingQueueCheckbox = nil
+  self.PetCardTargetsCheckbox = nil
 
   -- Levelling Queue Option
   self.LevellingQueueAccordion = nil
@@ -961,6 +963,22 @@ function OptionsList:BuildPetCardVisibilityOptions(parent)
     4
   )
 
+  self.PetCardTargetsCheckbox =
+      self:CreateCheckbox(
+        parent,
+        L["TARGET_PETS"],
+        "petCardTargetEnabled",
+        self.RefreshPetCardVisibility
+      )
+
+  self.PetCardTargetsCheckbox:SetPoint(
+    "TOPLEFT",
+    self.PetCardLevellingQueueCheckbox,
+    "BOTTOMLEFT",
+    0,
+    4
+  )
+
   self:RefreshPetCardVisibilityMode()
 end
 
@@ -1574,6 +1592,14 @@ function OptionsList:RefreshPetCardVisibilityMode()
     self.PetCardLevellingQueueCheckbox:SetChecked(
       addon.Settings:Get(
         "petCardLevellingQueueEnabled"
+      ) ~= false
+    )
+  end
+
+  if self.PetCardTargetsCheckbox then
+    self.PetCardTargetsCheckbox:SetChecked(
+      addon.Settings:Get(
+        "petCardTargetEnabled"
       ) ~= false
     )
   end

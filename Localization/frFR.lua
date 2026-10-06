@@ -256,6 +256,8 @@ L["UNABLE_FAVORITE_UPDATE"] = "Impossible de mettre à jour le favori"
 L["REMOVE_FAVORITE"] = "Retirer des favoris"
 L["ADD_FAVORITE"] = "Ajouter aux favoris"
 L["UNABLE_LOAD_TEAM"] = "Impossible de charger l'équipe"
+L['CLICK_TO_LOAD'] = "Cliquez pour charger"
+L["TEST_NPC"] = "PNJ de test"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Impossible de supprimer le dossier"
@@ -457,6 +459,7 @@ L["PET_CARD_VISIBILITY_DESCRIPTION"] = "Choisissez où la fiche de mascotte sera
 L["JOURNAL_LIST"] = "Liste du journal des mascottes"
 L["TEAM_PETS"] = "Mascottes de l'équipe"
 L["QUEUE_PETS"] = "Mascottes de la file d'attente"
+L["TARGET_PETS"] = "Cibler les mascottes de la carte d'équipe"
 L["QUEUE_DESCRIPTION"] =
 "Choisissez si les mascottes de combat nouvellement acquises (niveau inférieur à 25) sont automatiquement ajoutées à la file d'attente de montée en niveau."
 L["AUTO_ADD_PET"] = "Ajouter automatiquement les nouvelles mascottes"

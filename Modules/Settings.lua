@@ -25,6 +25,7 @@ local DEFAULT_SETTINGS = {
   petCardPetListEnabled = true,
   petCardTeamsEnabled = true,
   petCardLevellingQueueEnabled = true,
+  petCardTargetEnabled = true,
   levellingQueueAutoAddMode = "disabled",
   petTypeFilterDisplayMode = "both",
   summonedPetMode = "keep",

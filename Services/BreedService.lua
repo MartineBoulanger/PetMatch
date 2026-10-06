@@ -53,9 +53,7 @@ function BreedService:GetBreedName(breedID)
   return addon.Constants.PET_BREED_NAMES[tonumber(breedID)]
 end
 
-function BreedService:GetPossibleBreeds(
-    speciesID
-)
+function BreedService:GetPossibleBreeds(speciesID)
   speciesID = tonumber(speciesID)
 
   if not speciesID then

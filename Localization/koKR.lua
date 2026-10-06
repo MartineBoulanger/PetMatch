@@ -255,6 +255,8 @@ L["UNABLE_FAVORITE_UPDATE"] = "즐겨찾기를 업데이트할 수 없습니다.
 L["REMOVE_FAVORITE"] = "즐겨찾기에서 제거"
 L["ADD_FAVORITE"] = "즐겨찾기에 추가"
 L["UNABLE_LOAD_TEAM"] = "팀을 불러올 수 없습니다."
+L['CLICK_TO_LOAD'] = "클릭하여 불러오기"
+L["TEST_NPC"] = "테스트 NPC"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "폴더를 삭제할 수 없습니다"
@@ -454,6 +456,7 @@ L["PET_CARD_VISIBILITY_DESCRIPTION"] = "펫 카드를 표시할 위치를 선택
 L["JOURNAL_LIST"] = "펫 도감 목록"
 L["TEAM_PETS"] = "팀 펫"
 L["QUEUE_PETS"] = "레벨업 대기열 펫"
+L["TARGET_PETS"] = "팀 카드 펫을 대상으로 지정"
 L["QUEUE_DESCRIPTION"] = "새로 획득한 25레벨 미만의 전투 펫을 레벨업 대기열에 자동으로 추가할지 선택하세요."
 L["AUTO_ADD_PET"] = "새 펫 자동 추가"
 L["NOT_AUTO_PET_ADD"] = "새 펫 자동 추가 안 함"

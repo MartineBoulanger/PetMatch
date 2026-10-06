@@ -251,6 +251,8 @@ L["UNABLE_FAVORITE_UPDATE"] = "Unable to update favorite"
 L["REMOVE_FAVORITE"] = "Remove from Favorites"
 L["ADD_FAVORITE"] = "Add to Favorites"
 L["UNABLE_LOAD_TEAM"] = "Unable to load team"
+L['CLICK_TO_LOAD'] = "Click to load"
+L["TEST_NPC"] = "Test NPC"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Unable to delete folder"
@@ -450,6 +452,7 @@ L["PET_CARD_VISIBILITY_DESCRIPTION"] = "Choose where the Pet Card will be visibl
 L["JOURNAL_LIST"] = "Pet Journal list"
 L["TEAM_PETS"] = "Team pets"
 L["QUEUE_PETS"] = "Levelling Queue pets"
+L["TARGET_PETS"] = "Target Team Card pets"
 L["QUEUE_DESCRIPTION"] =
 "Choose whether newly acquired battle pets below level 25 are automatically added to the Levelling Queue."
 L["AUTO_ADD_PET"] = "Automatically add new pets"

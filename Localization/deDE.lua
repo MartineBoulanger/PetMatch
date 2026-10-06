@@ -255,6 +255,8 @@ L["UNABLE_FAVORITE_UPDATE"] = "Aktualisieren der Favoriten nicht möglich"
 L["REMOVE_FAVORITE"] = "Aus den Favoriten entfernen"
 L["ADD_FAVORITE"] = "Zu den Favoriten hinzufügen"
 L["UNABLE_LOAD_TEAM"] = "Laden des Teams nicht möglich"
+L['CLICK_TO_LOAD'] = "Zum Laden klicken"
+L["TEST_NPC"] = "Test-NPC"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Löschen des Odners nicht möglich"
@@ -454,6 +456,7 @@ L["PET_CARD_VISIBILITY_DESCRIPTION"] = "Wähle aus wo die Haustierkarte sichtbar
 L["JOURNAL_LIST"] = "Haustierführerliste"
 L["TEAM_PETS"] = "Team Haustiere"
 L["QUEUE_PETS"] = "Levelwarteschlangehaustiere"
+L["TARGET_PETS"] = "Haustiere der Ziel-Teamkarte"
 L["QUEUE_DESCRIPTION"] =
 "Wähle aus, ob neu erhaltene Kampfhaustiere unter Stufe 25 automatisch zu der Levelwarteschlange hinzugefügt werden."
 L["AUTO_ADD_PET"] = "Automatisch neue Haustiere hinzufügen"

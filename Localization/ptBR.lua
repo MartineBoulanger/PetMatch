@@ -255,6 +255,8 @@ L["UNABLE_FAVORITE_UPDATE"] = "Não foi possível atualizar o favorito"
 L["REMOVE_FAVORITE"] = "Remover dos Favoritos"
 L["ADD_FAVORITE"] = "Adicionar aos Favoritos"
 L["UNABLE_LOAD_TEAM"] = "Não foi possível carregar a equipe"
+L['CLICK_TO_LOAD'] = "Clique para carregar"
+L["TEST_NPC"] = "NPC de teste"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Não foi possível excluir a pasta"
@@ -455,6 +457,7 @@ L["PET_CARD_VISIBILITY_DESCRIPTION"] = "Escolha onde o cartão do mascote será 
 L["JOURNAL_LIST"] = "Lista do Diário de Mascotes"
 L["TEAM_PETS"] = "Mascotes da equipe"
 L["QUEUE_PETS"] = "Mascotes na fila de nivelamento"
+L["TARGET_PETS"] = "Selecionar mascotes do card de equipe"
 L["QUEUE_DESCRIPTION"] =
 "Escolha se mascotes de batalha recém-adquiridos abaixo do nível 25 serão adicionados automaticamente à fila de nivelamento."
 L["AUTO_ADD_PET"] = "Adicionar novos mascotes automaticamente"

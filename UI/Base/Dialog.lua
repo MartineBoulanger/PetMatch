@@ -14,19 +14,11 @@ local CONTENT_OUTER_MARGIN = 12
 local CONTENT_TOP_SPACING = 16
 local CONTENT_BOTTOM_SPACING = 8
 
-local function CreateButton(
-    parent,
-    text,
-    width,
-    onClick
-)
+local function CreateButton(parent, text, width, onClick)
   local button
 
-  if addon.UI.Base
-      and addon.UI.Base.Button
-      and type(
-        addon.UI.Base.Button.Create
-      ) == "function" then
+  if addon.UI.Base and addon.UI.Base.Button
+      and type(addon.UI.Base.Button.Create) == "function" then
     button =
         addon.UI.Base.Button:Create(
           parent,
@@ -63,10 +55,7 @@ local function CreateButton(
   return button
 end
 
-local function NormalizeSpacing(
-    value,
-    defaultValue
-)
+local function NormalizeSpacing(value, defaultValue)
   if type(value) == "number" then
     return {
       left = value,
@@ -76,57 +65,31 @@ local function NormalizeSpacing(
     }
   end
 
-  value =
-      type(value) == "table"
-      and value
-      or {}
+  value = type(value) == "table" and value or {}
 
   return {
-    left =
-        tonumber(value.left)
-        or defaultValue,
-
-    right =
-        tonumber(value.right)
-        or defaultValue,
-
-    top =
-        tonumber(value.top)
-        or defaultValue,
-
-    bottom =
-        tonumber(value.bottom)
-        or defaultValue,
+    left = tonumber(value.left) or defaultValue,
+    right = tonumber(value.right) or defaultValue,
+    top = tonumber(value.top) or defaultValue,
+    bottom = tonumber(value.bottom) or defaultValue,
   }
 end
 
 function Dialog:Create(options)
   options = options or {}
 
-  local instance =
-      setmetatable(
-        {},
-        Dialog
-      )
+  local instance = setmetatable({}, Dialog)
 
   instance.Width = options.width or DEFAULT_WIDTH
   instance.Height = options.height or DEFAULT_HEIGHT
   instance.Padding = options.padding or DEFAULT_PADDING
-  instance.ContentMargin =
-      NormalizeSpacing(
-        options.contentMargin
-        or options.margin,
-        CONTENT_OUTER_MARGIN
-      )
-  instance.TopSpacing =
-      tonumber(
-        options.topSpacing
-      )
+  instance.ContentMargin = NormalizeSpacing(
+    options.contentMargin or options.margin,
+    CONTENT_OUTER_MARGIN
+  )
+  instance.TopSpacing = tonumber(options.topSpacing)
       or CONTENT_TOP_SPACING
-  instance.BottomSpacing =
-      tonumber(
-        options.bottomSpacing
-      )
+  instance.BottomSpacing = tonumber(options.bottomSpacing)
       or CONTENT_BOTTOM_SPACING
   instance.ShowFooter = options.showFooter ~= false
   instance.FooterHeight = options.footerHeight or DEFAULT_FOOTER_HEIGHT
@@ -154,17 +117,12 @@ function Dialog:Create(options)
 end
 
 function Dialog:CreateFrame(options)
-  local parent =
-      options.parent
-      or UIParent
+  local parent = options.parent or UIParent
 
-  local frame =
-      CreateFrame(
-        "Frame",
-        options.name,
-        parent,
-        "DefaultPanelTemplate"
-      )
+  local frame = CreateFrame(
+    "Frame", options.name, parent,
+    "DefaultPanelTemplate"
+  )
 
   frame:SetSize(
     self.Width,
@@ -184,16 +142,13 @@ function Dialog:CreateFrame(options)
   --------------------------------------------------
   -- Blizzard title
   --------------------------------------------------
-  if frame.TitleContainer
-      and frame.TitleContainer.TitleText then
+  if frame.TitleContainer and frame.TitleContainer.TitleText then
     frame.TitleContainer.TitleText:SetText(
-      options.title
-      or ""
+      options.title or ""
     )
   elseif type(frame.SetTitle) == "function" then
     frame:SetTitle(
-      options.title
-      or ""
+      options.title or ""
     )
   end
 
@@ -202,7 +157,6 @@ function Dialog:CreateFrame(options)
   --------------------------------------------------
   frame:SetScript(
     "OnDragStart",
-
     function(control)
       control:StartMoving()
     end
@@ -210,7 +164,6 @@ function Dialog:CreateFrame(options)
 
   frame:SetScript(
     "OnDragStop",
-
     function(control)
       control:StopMovingOrSizing()
     end
@@ -220,37 +173,23 @@ function Dialog:CreateFrame(options)
   -- Position
   --------------------------------------------------
   frame:SetPoint(
-    options.point
-    or "CENTER",
-
-    options.relativeTo
-    or UIParent,
-
-    options.relativePoint
-    or "CENTER",
-
-    options.offsetX
-    or 0,
-
-    options.offsetY
-    or 0
+    options.point or "CENTER",
+    options.relativeTo or UIParent,
+    options.relativePoint or "CENTER",
+    options.offsetX or 0,
+    options.offsetY or 0
   )
 
   --------------------------------------------------
   -- Escape
   --------------------------------------------------
   if self.CloseOnEscape then
-    frame:EnableKeyboard(
-      true
-    )
+    frame:EnableKeyboard(true)
 
-    frame:SetPropagateKeyboardInput(
-      true
-    )
+    frame:SetPropagateKeyboardInput(true)
 
     frame:SetScript(
       "OnKeyDown",
-
       function(_, key)
         if key == "ESCAPE" then
           self:Cancel()
@@ -263,11 +202,8 @@ function Dialog:CreateFrame(options)
 end
 
 function Dialog:CreateContent()
-  local contentFrame =
-      CreateFrame(
-        "Frame",
-        nil,
-        self.Frame,
+  local contentFrame = CreateFrame(
+        "Frame", nil, self.Frame,
         "BackdropTemplate"
       )
 
@@ -281,10 +217,7 @@ function Dialog:CreateContent()
     self.Frame.TitleContainer,
     "BOTTOMLEFT",
     margin.left,
-    -(
-      self.TopSpacing
-      + margin.top
-    )
+    -(self.TopSpacing + margin.top)
   )
 
   contentFrame:SetPoint(

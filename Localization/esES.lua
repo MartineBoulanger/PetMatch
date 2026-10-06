@@ -256,6 +256,8 @@ L["UNABLE_FAVORITE_UPDATE"] = "No se pudo actualizar el favorito"
 L["REMOVE_FAVORITE"] = "Eliminar de favoritos"
 L["ADD_FAVORITE"] = "Añadir a favoritos"
 L["UNABLE_LOAD_TEAM"] = "No se pudo cargar el equipo"
+L['CLICK_TO_LOAD'] = "Haz clic para cargar"
+L["TEST_NPC"] = "NPC de prueba"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "No se puede eliminar la carpeta"
@@ -456,6 +458,7 @@ L["PET_CARD_VISIBILITY_DESCRIPTION"] = "Elige dónde será visible la tarjeta de
 L["JOURNAL_LIST"] = "Lista del Diario de mascotas"
 L["TEAM_PETS"] = "Mascotas del equipo"
 L["QUEUE_PETS"] = "Mascotas de la cola de subida de nivel"
+L["TARGET_PETS"] = "Seleccionar mascotas de la carta de equipo"
 L["QUEUE_DESCRIPTION"] =
 "Elige si las nuevas mascotas de duelo obtenidas (por debajo del nivel 25) se añaden automáticamente a la cola de subida de nivel."
 L["AUTO_ADD_PET"] = "Añadir nuevas mascotas automáticamente"

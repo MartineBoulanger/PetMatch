@@ -9,7 +9,7 @@ local MENU_TEMPLATES = {
   "WowStyle1DropdownTemplate",
 }
 
-local TARGET_TEXT_MAX_LENGTH = 20
+local TARGET_TEXT_MAX_LENGTH = 22
 
 local function TruncateText(text)
   if type(text) ~= "string" then
@@ -20,7 +20,7 @@ local function TruncateText(text)
     return text
   end
 
-  return text:sub(1, TARGET_TEXT_MAX_LENGTH - 3) .. "..."
+  return text:sub(1, TARGET_TEXT_MAX_LENGTH - 5) .. "..."
 end
 
 local function SetMenuButtonText(dropdown, text)
@@ -103,31 +103,32 @@ function TeamSetupPanel:Create()
   )
 
   frame:SetFrameLevel(
-    PetJournal:GetFrameLevel() + 20
+    PetJournal:GetFrameLevel() + 40
   )
 
-  frame:SetSize(330, 32)
+  frame:SetSize(330, 28)
 
   frame:SetPoint(
     "BOTTOM",
-    PetJournalLoadoutBorderSlotHeaderText,
+    PetJournalLoadoutBorder,
     "TOP",
     0,
-    4
+    12
   )
 
   frame:SetBackdrop({
-    bgFile = "Interface/Buttons/WHITE8X8",
-    edgeFile = "Interface/Buttons/WHITE8X8",
-    edgeSize = 1,
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 128,
+    edgeSize = 4,
+    insets = {
+      left = 2,
+      right = 2,
+      top = 2,
+      bottom = 2,
+    },
   })
-
-  frame:SetBackdropColor(
-    0.03,
-    0.03,
-    0.03,
-    1
-  )
 
   frame:SetBackdropBorderColor(
     0.2,
@@ -164,7 +165,7 @@ function TeamSetupPanel:Create()
     "LEFT",
     title,
     "RIGHT",
-    10,
+    15,
     0
   )
 
@@ -174,7 +175,7 @@ function TeamSetupPanel:Create()
       self:CreateMenuButton(
         frame,
         L["NONE"],
-        150,
+        160,
         22,
         function(root)
           self:PopulateTargetMenu(root)

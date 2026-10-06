@@ -494,26 +494,57 @@ targetFrame:SetScript(
       return
     end
 
+    local targetTeamCard = addon.UI and addon.UI.Components.TargetTeamCard
+    local result = targetService:ResolveCurrentTarget()
+
+    --------------------------------------------------
+    -- No valid target
+    --------------------------------------------------
+    if not result.npcID then
+      if targetTeamCard then
+        targetTeamCard:ClearSuggestedTarget()
+      end
+
+      return
+    end
+
+    --------------------------------------------------
+    -- No saved team
+    --
+    -- TargetTeamCard may show a suggested team.
+    --------------------------------------------------
+    if result.type == "none" then
+      if targetTeamCard then
+        targetTeamCard:HandleTargetChanged(result)
+      end
+
+      return
+    end
+
+    --------------------------------------------------
+    -- Saved team exists
+    --
+    -- Suggested mode must no longer be shown.
+    --------------------------------------------------
+    if targetTeamCard then
+      targetTeamCard:ClearSuggestedTarget()
+    end
+
+    --------------------------------------------------
+    -- From here on, only the existing saved-team
+    -- loading feature applies.
+    --------------------------------------------------
     local mode =
-        addon.Settings:Get("targetTeamLoadMode")
-        or "off"
+        addon.Settings:Get("targetTeamLoadMode") or "off"
 
     if mode == "off" then
-      local loadButton =
-          addon.UI
-          and addon.UI.Actions
+      local loadButton = addon.UI and addon.UI.Actions
           and addon.UI.Actions.TargetTeamLoadButton
 
       if loadButton then
         loadButton:Hide()
       end
 
-      return
-    end
-
-    local result = targetService:ResolveCurrentTarget()
-
-    if not result.npcID then
       return
     end
 
