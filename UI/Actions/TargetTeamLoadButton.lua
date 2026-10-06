@@ -4,15 +4,6 @@ local L = addon.L
 local TargetTeamLoadButton = {}
 
 --------------------------------------------------
--- Find battle slot anchor
---------------------------------------------------
-local function FindBattleSlotAnchor()
-  return _G.PetJournalLoadoutPet1
-      or (PetJournal and PetJournal.Loadout)
-      or PetJournal
-end
-
---------------------------------------------------
 -- Create
 --------------------------------------------------
 function TargetTeamLoadButton:Create()
@@ -24,49 +15,54 @@ function TargetTeamLoadButton:Create()
     return nil
   end
 
-  local anchor = FindBattleSlotAnchor()
+  --------------------------------------------------
+  -- Blizzard style source
+  --------------------------------------------------
+  local healFrame = PetJournal.HealPetSpellFrame
+      or PetJournal.HealPetButton or PetJournal.HealButton
+      or _G.PetJournalHealPetSpellFrame
+      or _G.PetJournalHealPetButton
+      or _G.PetJournalHealButton
 
-  if not anchor then
-    return nil
-  end
+  local styleSource = healFrame and healFrame.Button
 
-  local button =
-      CreateFrame(
-        "Button",
-        "PetMatchTargetTeamLoadButton",
+  --------------------------------------------------
+  -- Button
+  --------------------------------------------------
+  local control =
+      addon.UI.Components.ToolbarIconButton:Create(
         PetJournal,
-        "UIPanelButtonTemplate"
+        {
+          name = "PetMatchTargetTeamLoadButton",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\load-team",
+          width = 36,
+          height = 36,
+          styleSource = styleSource,
+          tooltipTitle = L["LOAD_TEAM"],
+          onClick = function()
+            self:LoadTeam()
+          end,
+        }
       )
 
-  button:SetSize(
-    90,
-    22
-  )
+  local button = control:GetFrame()
 
-  button:SetText(L["LOAD_TEAM"])
+  --------------------------------------------------
+  -- Position
+  --------------------------------------------------
+  local anchor = _G.PetJournalLoadoutPet1
 
-  button:SetScript(
-    "OnClick",
-    function()
-      self:LoadTeam()
-    end
-  )
-
-  button:ClearAllPoints()
-
-  button:SetPoint(
-    "BOTTOMLEFT",
-    anchor,
-    "TOPLEFT",
-    -6,
-    2
-  )
-
-  button:Hide()
+  if anchor then
+    button:SetPoint(
+      "BOTTOMLEFT",
+      anchor,
+      "TOPLEFT",
+      -5,
+      5
+    )
+  end
 
   self.Frame = button
-  self.Team = nil
-  self.NPCID = nil
 
   return button
 end
