@@ -1013,7 +1013,7 @@ function PetJournalToolbar:Create()
         PetJournal,
         {
           name = "PetMatchImportButton",
-          texture = "Interface\\AddOns\\PetMatch\\Media\\Import",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\import-teams",
           tooltipTitle = L["IMPORT_TEAMS"],
           tooltipDescription = L["IMPORT_TEAM_TOOLTIP"],
           onClick = function()
@@ -1029,7 +1029,7 @@ function PetJournalToolbar:Create()
         PetJournal,
         {
           name = "PetMatchExportButton",
-          texture = "Interface\\AddOns\\PetMatch\\Media\\Export",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\export-teams",
           tooltipTitle = L["EXPORT_EVERYTHING"],
           tooltipDescription = L["EXPORT_EVERYTHING_TOOLTIP"],
           onClick = function()
@@ -1045,7 +1045,7 @@ function PetJournalToolbar:Create()
         PetJournal,
         {
           name = "PetMatchDismissPetButton",
-          texture = "Interface\\AddOns\\PetMatch\\Media\\Dismiss",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\dismiss-pet",
           tooltipTitle = L["DISMISS_PET"],
           tooltipDescription = L["DISMISS_PET_TOOLTIP"],
           onClick = function()
@@ -1061,7 +1061,7 @@ function PetJournalToolbar:Create()
         PetJournal,
         {
           name = "PetMatchTeamSetupButton",
-          texture = "Interface\\AddOns\\PetMatch\\Media\\TeamSetup",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\team-setup",
           tooltipTitle = L["TEAM_SETUP"],
           tooltipDescription = L["TEAM_SETUP_TOOLTIP"],
           onClick = function()
