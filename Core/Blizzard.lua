@@ -6,6 +6,8 @@ local L = addon.L
 
 local Blizzard = {}
 
+local layeringUpdatePending = false
+
 Blizzard.Hooked = false
 
 local function UpdateLoadoutTitle(team)
@@ -94,6 +96,19 @@ local function UpdatePetMatchLayering()
       and type(panels.UpdateLayering) == "function" then
     panels:UpdateLayering()
   end
+end
+
+local function SchedulePetMatchLayering()
+  if layeringUpdatePending then
+    return
+  end
+
+  layeringUpdatePending = true
+
+  C_Timer.After(0, function()
+    layeringUpdatePending = false
+    UpdatePetMatchLayering()
+  end)
 end
 
 local function AutoOpenPvENotes()
@@ -369,21 +384,21 @@ function Blizzard:Initialize()
   hooksecurefunc(
     "ShowUIPanel",
     function()
-      UpdatePetMatchLayering()
+      SchedulePetMatchLayering()
     end
   )
 
   hooksecurefunc(
     "HideUIPanel",
     function()
-      UpdatePetMatchLayering()
+      SchedulePetMatchLayering()
     end
   )
 
   hooksecurefunc(
     "UpdateUIPanelPositions",
     function()
-      UpdatePetMatchLayering()
+      SchedulePetMatchLayering()
     end
   )
 

@@ -218,12 +218,23 @@ function TargetTeamCard:Initialize()
     end
   )
 
+  addon.EventBus:Register(
+    addon.Events.DATABASE_READY,
+    function()
+      TargetTeamCard:RefreshActiveTeam()
+    end
+  )
+end
+
+function TargetTeamCard:RefreshActiveTeam()
+  if not self.Frame or not addon.DB then
+    return
+  end
+
   local teamService = addon.Services.Team
 
   if teamService then
-    TargetTeamCard:SetSavedTeam(
-      teamService:GetActive()
-    )
+    self:SetSavedTeam(teamService:GetActive())
   end
 end
 
@@ -563,6 +574,7 @@ loader:SetScript(
     end
 
     TargetTeamCard:Initialize()
+    TargetTeamCard:RefreshActiveTeam()
 
     self:UnregisterEvent("ADDON_LOADED")
   end
@@ -570,6 +582,7 @@ loader:SetScript(
 
 if C_AddOns.IsAddOnLoaded("Blizzard_Collections") then
   TargetTeamCard:Initialize()
+  TargetTeamCard:RefreshActiveTeam()
 end
 
 addon.UI.Components.TargetTeamCard = TargetTeamCard

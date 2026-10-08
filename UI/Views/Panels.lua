@@ -89,14 +89,11 @@ function Panels:HookCenterFrame(centerFrame)
 end
 
 function Panels:UpdateLayering()
-  if not self.Frame then
+  if not self.Frame or not self.Frame:IsShown() then
     return
   end
 
-  local centerFrame =
-      GetUIPanel
-      and GetUIPanel("center")
-      or nil
+  local centerFrame = GetUIPanel and GetUIPanel("center") or nil
 
   if centerFrame then
     self:HookCenterFrame(centerFrame)
