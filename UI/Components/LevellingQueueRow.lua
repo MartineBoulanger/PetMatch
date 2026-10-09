@@ -37,19 +37,13 @@ local function HandleSpecialPetClick(petGUID)
   end
 
   local pet =
-      addon.Services.PetJournal:
-      GetPet(
-        petGUID
-      )
+      addon.Services.PetJournal:GetPet(petGUID)
 
-  if not pet
-      or pet.canBattle ~= true then
+  if not pet or pet.canBattle ~= true then
     return false
   end
 
-  C_PetJournal.SpellTargetBattlePet(
-    petGUID
-  )
+  C_PetJournal.SpellTargetBattlePet(petGUID)
 
   return true
 end
@@ -67,7 +61,8 @@ function LevellingQueueRow:Create(parent, list)
       CreateFrame(
         "Button",
         nil,
-        parent
+        parent,
+        "BackdropTemplate"
       )
 
   frame:SetHeight(
@@ -84,62 +79,40 @@ function LevellingQueueRow:Create(parent, list)
   )
 
   --------------------------------------------------
-  -- Blizzard-style row background
+  -- Blizzard-style row
   --------------------------------------------------
-  instance.Background =
-      frame:CreateTexture(
-        nil,
-        "BACKGROUND"
-      )
-
-  instance.Background:SetAllPoints(
-    frame
-  )
-
-  instance.Background:SetColorTexture(
-    0.02,
-    0.02,
-    0.02,
-    0.58
-  )
-
-  --------------------------------------------------
-  -- Row border
-  --------------------------------------------------
-  instance.RowBorder =
-      CreateFrame(
-        "Frame",
-        nil,
-        frame,
-        "BackdropTemplate"
-      )
-
-  instance.RowBorder:SetAllPoints(
-    frame
-  )
-
-  instance.RowBorder:SetBackdrop({
+  frame:SetBackdrop({
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-
+    tile = true,
+    tileSize = 128,
     edgeSize = 8,
-
     insets = {
-      left = 2,
-      right = 2,
-      top = 2,
-      bottom = 2,
+      left = 3,
+      right = 3,
+      top = 3,
+      bottom = 3,
     },
   })
 
-  instance.RowBorder:SetBackdropBorderColor(
-    0.32,
-    0.32,
-    0.32,
-    0.9
+  frame:SetBackdropBorderColor(0.35, 0.35, 0.35, 1)
+
+  instance.BackgroundGradient = frame:CreateTexture(
+    nil,
+    "BACKGROUND",
+    nil,
+    1
   )
 
-  instance.RowBorder:SetFrameLevel(
-    frame:GetFrameLevel() + 1
+  instance.BackgroundGradient:SetPoint("TOPLEFT", 1, -1)
+  instance.BackgroundGradient:SetPoint("BOTTOMRIGHT", -1, 1)
+
+  instance.BackgroundGradient:SetColorTexture(1, 1, 1, 1)
+
+  instance.BackgroundGradient:SetGradient(
+    "VERTICAL",
+    CreateColor(0.015, 0.015, 0.015, 0.70),
+    CreateColor(0.13, 0.13, 0.13, 0.8)
   )
 
   --------------------------------------------------

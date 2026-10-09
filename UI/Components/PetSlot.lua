@@ -10,6 +10,82 @@ local ICON_HEIGHT = 24
 local RANDOM_PET_ICON = "Interface\\Icons\\INV_Misc_Dice_02"
 local LEVELING_PET_ICON = "Interface\\AddOns\\PetMatch\\Media\\levelingicon"
 
+local function CreateFamilyIconBackground(parent)
+  local background = CreateFrame(
+    "Frame",
+    nil,
+    parent,
+    "BackdropTemplate"
+  )
+
+  if addon.Settings and addon.Settings:Get("teamCardHeightMode") == "large" then
+    background:SetSize(ICON_WIDTH + 4, ICON_HEIGHT + 4)
+  else
+    background:SetSize(ICON_WIDTH + 1, ICON_HEIGHT + 1)
+  end
+
+  background:SetPoint("CENTER", parent, "CENTER", 0, 0)
+
+  background:SetBackdrop({
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    edgeSize = 8,
+    insets = {
+      left = 0,
+      right = 0,
+      top = 0,
+      bottom = 0,
+    },
+  })
+
+  background:SetBackdropBorderColor(0.45, 0.45, 0.45, 1)
+
+  background:Hide()
+
+  return background
+end
+
+local function CreatePetIcon(parent, PetSlot)
+  local instance = setmetatable({
+    Frame = parent,
+    PetGUID = nil,
+    Team = nil,
+    SlotIndex = nil,
+  }, PetSlot)
+
+  parent:SetSize(ICON_WIDTH, ICON_HEIGHT)
+
+  local icon = parent:CreateTexture(nil, "ARTWORK")
+  icon:SetAllPoints()
+
+  local EmptyIcon = parent:CreateTexture(nil, "ARTWORK")
+  EmptyIcon:SetAllPoints()
+  EmptyIcon:SetTexture("Interface/PaperDoll/UI-Backpack-EmptySlot")
+  EmptyIcon:SetVertexColor(0.45, 0.45, 0.45, 0.65)
+
+  instance.FamilyBackground = CreateFamilyIconBackground(parent)
+  local FamilyIcon = instance.FamilyBackground:CreateTexture(
+    nil,
+    "ARTWORK"
+  )
+  FamilyIcon:SetAllPoints()
+
+  instance.Icon = icon
+  instance.EmptyIcon = EmptyIcon
+  instance.FamilyIcon = FamilyIcon
+
+  return instance
+end
+
+function PetSlot:SetFamilyIcon(texture)
+  self.Icon:Hide()
+  self.EmptyIcon:Hide()
+
+  self.FamilyIcon:SetTexture(texture)
+  self.FamilyIcon:SetTexCoord(0, 1, 0, 1)
+
+  self.FamilyBackground:Show()
+end
+
 local function GetSpecialSlotIcon(specialSlot)
   if type(specialSlot) ~= "table" then
     return nil, nil
@@ -24,7 +100,10 @@ local function GetSpecialSlotIcon(specialSlot)
     local petType = tonumber(specialSlot.petType) or 0
 
     if petType > 0 then
-      return addon.Constants.PET_FAMILY_ICONS[petType], nil
+      local icon = addon.Constants.PET_FAMILY_ICONS[petType]
+      if icon then
+        return tostring(icon), nil
+      end
     end
 
     return RANDOM_PET_ICON, nil
@@ -61,35 +140,7 @@ function PetSlot:Create(parent)
     end
   )
 
-  frame:SetSize(
-    ICON_WIDTH,
-    ICON_HEIGHT
-  )
-
-  frame:SetBackdrop({
-    bgFile = "Interface/Buttons/WHITE8X8",
-    edgeFile = "Interface/Buttons/WHITE8X8",
-    edgeSize = 1,
-  })
-
-  frame:SetBackdropColor(0.04, 0.04, 0.04, 0.35)
-  frame:SetBackdropBorderColor(0.35, 0.30, 0.20, 0.8)
-
-  local instance = setmetatable({
-    Frame = frame,
-    PetGUID = nil,
-    Team = nil,
-    SlotIndex = nil,
-  }, PetSlot)
-
-  instance.Icon = frame:CreateTexture(nil, "ARTWORK")
-  instance.Icon:SetAllPoints(frame)
-  instance.Icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-
-  instance.EmptyIcon = frame:CreateTexture(nil, "ARTWORK")
-  instance.EmptyIcon:SetAllPoints(frame)
-  instance.EmptyIcon:SetTexture("Interface/PaperDoll/UI-Backpack-EmptySlot")
-  instance.EmptyIcon:SetVertexColor(0.45, 0.45, 0.45, 0.55)
+  local instance = CreatePetIcon(frame, PetSlot)
 
   instance:Clear()
 
@@ -118,6 +169,7 @@ function PetSlot:SetPet(petGUID, team, slotIndex)
   self.Frame.SlotIndex = slotIndex
 
   self.EmptyIcon:Hide()
+  self.FamilyBackground:Hide()
 
   if pet.icon then
     self.Icon:SetAtlas(nil)
@@ -126,6 +178,7 @@ function PetSlot:SetPet(petGUID, team, slotIndex)
   else
     self.Icon:SetTexture(nil)
     self.Icon:Hide()
+    self.FamilyBackground:Hide()
     self.EmptyIcon:Show()
   end
 end
@@ -143,10 +196,18 @@ function PetSlot:SetSpecialSlot(specialSlot)
 
   local texture, atlas = GetSpecialSlotIcon(specialSlot)
 
+  local isFamilyIcon = specialSlot.type == "random"
+      and (tonumber(specialSlot.petType) or 0) > 0
+      and texture ~= nil
+
+  self.FamilyBackground:Hide()
+
   self.Icon:SetAtlas(nil)
   self.Icon:SetTexture(nil)
 
-  if atlas then
+  if isFamilyIcon then
+    self:SetFamilyIcon(texture)
+  elseif atlas then
     self.Icon:SetAtlas(atlas)
     self.Icon:Show()
   elseif texture then
@@ -196,6 +257,8 @@ function PetSlot:Clear()
   self.Icon:SetAtlas(nil)
   self.Icon:SetTexture(nil)
   self.Icon:Hide()
+
+  self.FamilyBackground:Hide()
 
   self.EmptyIcon:Show()
 end

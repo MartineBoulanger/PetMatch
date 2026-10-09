@@ -50,16 +50,16 @@ function TargetTeamCard:Initialize()
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
     tile = true,
     tileSize = 128,
-    edgeSize = 4,
+    edgeSize = 8,
     insets = {
-      left = 2,
-      right = 2,
-      top = 2,
-      bottom = 2,
+      left = 1,
+      right = 1,
+      top = 1,
+      bottom = 1,
     },
   })
 
-  frame:SetBackdropBorderColor(0.35, 0.35, 0.35, 1)
+  frame:SetBackdropBorderColor(0.35, 0.35, 0.35, 1.00)
 
   --------------------------------------------------
   -- Enemy pets

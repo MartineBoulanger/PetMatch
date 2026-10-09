@@ -5,45 +5,48 @@ local AccordionHeader = {}
 local DEFAULT_WIDTH = 238
 local DEFAULT_HEIGHT = 26
 
-local COLLAPSED_ATLAS = "Options_ListExpand_Right"
-local EXPANDED_ATLAS = "Options_ListExpand_Down"
+local function CreateArrow(parent)
+  local arrow = CreateFrame("Frame", nil, parent)
+  arrow:SetSize(8, 8)
+  arrow:SetPoint("LEFT", parent, "LEFT", 10, 0)
 
-local function SetArrowAtlas(
-    texture,
-    expanded
-)
-  local atlas =
-      expanded
-      and EXPANDED_ATLAS
-      or COLLAPSED_ATLAS
+  arrow.Lines = {}
 
-  local success =
-      pcall(
-        texture.SetAtlas,
-        texture,
-        atlas,
-        true
-      )
+  for index = 1, 2 do
+    local line = arrow:CreateTexture(nil, "ARTWORK")
+    line:SetColorTexture(1, 0.82, 0, 1)
+    line:SetSize(7, 2)
+    arrow.Lines[index] = line
+  end
 
-  if not success then
-    texture:SetTexture(
-      "Interface/Buttons/UI-SpellbookIcon-NextPage-Up"
-    )
+  return arrow
+end
 
-    texture:SetRotation(
-      expanded
-      and -math.pi / 2
-      or 0
-    )
+local function SetArrowExpanded(arrow, expanded)
+  local first = arrow.Lines[1]
+  local second = arrow.Lines[2]
+
+  first:ClearAllPoints()
+  second:ClearAllPoints()
+
+  if expanded then
+    -- Chevron down
+    first:SetPoint("CENTER", arrow, "CENTER", -2, 0)
+    first:SetRotation(math.rad(-45))
+
+    second:SetPoint("CENTER", arrow, "CENTER", 2, 0)
+    second:SetRotation(math.rad(45))
   else
-    texture:SetRotation(0)
+    -- Chevron right
+    first:SetPoint("CENTER", arrow, "CENTER", 0, 2)
+    first:SetRotation(math.rad(-45))
+
+    second:SetPoint("CENTER", arrow, "CENTER", 0, -2)
+    second:SetRotation(math.rad(45))
   end
 end
 
-function AccordionHeader:Create(
-    parent,
-    options
-)
+function AccordionHeader:Create(parent, options)
   options = options or {}
 
   local button =
@@ -65,23 +68,37 @@ function AccordionHeader:Create(
   )
 
   button:SetBackdrop({
-    bgFile = "Interface/Buttons/WHITE8X8",
-    edgeFile = "Interface/Buttons/WHITE8X8",
-    edgeSize = 1,
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 128,
+    edgeSize = 8,
+    insets = {
+      left = 3,
+      right = 3,
+      top = 3,
+      bottom = 3,
+    },
   })
 
-  button:SetBackdropColor(
-    0.08,
-    0.08,
-    0.08,
-    0.88
+  button:SetBackdropBorderColor(0.35, 0.35, 0.35, 1)
+
+  button.BackgroundGradient = button:CreateTexture(
+    nil,
+    "BACKGROUND",
+    nil,
+    1
   )
 
-  button:SetBackdropBorderColor(
-    0.35,
-    0.30,
-    0.20,
-    0.85
+  button.BackgroundGradient:SetPoint("TOPLEFT", 1, -1)
+  button.BackgroundGradient:SetPoint("BOTTOMRIGHT", -1, 1)
+
+  button.BackgroundGradient:SetColorTexture(1, 1, 1, 1)
+
+  button.BackgroundGradient:SetGradient(
+    "VERTICAL",
+    CreateColor(0.015, 0.015, 0.015, 0.95),
+    CreateColor(0.13, 0.13, 0.13, 0.8)
   )
 
   button.Highlight =
@@ -90,17 +107,12 @@ function AccordionHeader:Create(
         "HIGHLIGHT"
       )
 
-  button.Highlight:SetAllPoints()
+  button.Highlight:SetAtlas(
+    "PetList-ButtonHighlight",
+    true
+  )
 
-  button.Highlight:SetColorTexture(0.1, 0.7, 1, 0.08)
-
-  button.Accent =
-      button:CreateTexture(
-        nil,
-        "ARTWORK"
-      )
-
-  button.Accent:SetPoint(
+  button.Highlight:SetPoint(
     "TOPLEFT",
     button,
     "TOPLEFT",
@@ -108,41 +120,23 @@ function AccordionHeader:Create(
     0
   )
 
-  button.Accent:SetPoint(
-    "BOTTOMLEFT",
+  button.Highlight:SetPoint(
+    "BOTTOMRIGHT",
     button,
-    "BOTTOMLEFT",
+    "BOTTOMRIGHT",
     0,
     0
   )
 
-  button.Accent:SetWidth(3)
-
-  button.Accent:SetColorTexture(
-    0.25,
-    0.55,
-    1,
-    1
+  button.Highlight:SetBlendMode(
+    "BLEND"
   )
 
-  button.Arrow =
-      button:CreateTexture(
-        nil,
-        "ARTWORK"
-      )
-
-  button.Arrow:SetSize(
-    14,
-    14
+  button:SetHighlightTexture(
+    button.Highlight
   )
 
-  button.Arrow:SetPoint(
-    "LEFT",
-    button,
-    "LEFT",
-    0,
-    0
-  )
+  button.Arrow = CreateArrow(button)
 
   button.Label =
       button:CreateFontString(
@@ -155,7 +149,7 @@ function AccordionHeader:Create(
     "LEFT",
     button.Arrow,
     "RIGHT",
-    8,
+    12,
     0
   )
 
@@ -225,46 +219,14 @@ function AccordionHeader:Create(
   function button:SetExpanded(expanded)
     self.Expanded = expanded == true
 
+    SetArrowExpanded(self.Arrow, self.Expanded)
+
     if self.Expanded then
-      self.Arrow:Hide()
-      self.Accent:Show()
-
-      self:SetBackdropBorderColor(
-        0.25,
-        0.55,
-        1,
-        1
-      )
-
-      self.Label:SetTextColor(
-        1,
-        0.82,
-        0
-      )
-
-      return
+      self:SetBackdropBorderColor(0.20, 0.70, 1.00, 1.00)
+      self.Label:SetTextColor(1, 0.82, 0)
     else
-      self.Arrow:Show()
-
-      SetArrowAtlas(
-        self.Arrow,
-        false
-      )
-
-      self.Accent:Hide()
-
-      self:SetBackdropBorderColor(
-        0.35,
-        0.30,
-        0.20,
-        0.85
-      )
-
-      self.Label:SetTextColor(
-        0.9,
-        0.9,
-        0.9
-      )
+      self:SetBackdropBorderColor(0.35, 0.30, 0.20, 0.85)
+      self.Label:SetTextColor(0.9, 0.9, 0.9)
     end
   end
 
@@ -277,8 +239,8 @@ function AccordionHeader:Create(
         "LEFT",
         self.Arrow,
         "RIGHT",
-        6,
-        -1
+        12,
+        0
       )
 
       self.Label:SetPoint(
@@ -302,7 +264,7 @@ function AccordionHeader:Create(
         "LEFT",
         self.Arrow,
         "RIGHT",
-        8,
+        12,
         0
       )
 

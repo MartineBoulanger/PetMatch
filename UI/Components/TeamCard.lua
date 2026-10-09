@@ -7,29 +7,23 @@ local PendingTargetNames = {}
 
 local CARD_WIDTH = 230
 
-local CARD_HEIGHT_NORMAL = 26
+local CARD_HEIGHT_NORMAL = 28
 local CARD_HEIGHT_LARGE = 34
 
 local SLOT_SPACING = 0
-local SLOT_START_X = 1
+local SLOT_START_X = 2
 
 local function ApplyVisualState(frame)
   if frame.Selected then
-    frame:SetBackdropColor(0.12, 0.22, 0.28, 0.95)
     frame:SetBackdropBorderColor(0.20, 0.70, 1.00, 1.00)
-  elseif frame.Hovered then
-    frame:SetBackdropColor(0.12, 0.12, 0.12, 0.90)
-    frame:SetBackdropBorderColor(0.65, 0.55, 0.30, 1.00)
   else
     frame:SetBackdropColor(0.04, 0.04, 0.04, 0.70)
-    frame:SetBackdropBorderColor(0.35, 0.30, 0.20, 0.85)
+    frame:SetBackdropBorderColor(0.35, 0.35, 0.35, 1.00)
   end
 end
 
 local function GetCardHeight()
-  local mode =
-      addon.Settings:Get("teamCardHeightMode")
-      or "normal"
+  local mode = addon.Settings:Get("teamCardHeightMode") or "normal"
 
   if mode == "large" then
     return CARD_HEIGHT_LARGE
@@ -39,9 +33,7 @@ local function GetCardHeight()
 end
 
 local function IsLargeCard()
-  return addon.Settings:Get(
-    "teamCardHeightMode"
-  ) == "large"
+  return addon.Settings:Get("teamCardHeightMode") == "large"
 end
 
 local function GetTargetName(team)
@@ -95,72 +87,6 @@ local function GetTargetName(team)
 
   return nil
 end
-
-local targetLoaderFrame =
-    CreateFrame(
-      "Frame"
-    )
-
-targetLoaderFrame:RegisterEvent(
-  "TOOLTIP_DATA_UPDATE"
-)
-
-targetLoaderFrame:SetScript(
-  "OnEvent",
-
-  function(_, _, dataInstanceID)
-    local npcID =
-        PendingTargetNames[
-        dataInstanceID
-        ]
-
-    if not npcID then
-      return
-    end
-
-    local hyperlink =
-        string.format(
-          "unit:Creature-0-0-0-0-%d-0000000000",
-          npcID
-        )
-
-    local data =
-        C_TooltipInfo.GetHyperlink(
-          hyperlink
-        )
-
-    if not data then
-      return
-    end
-
-    for _, line in ipairs(
-      data.lines or {}
-    ) do
-      if line.type == Enum.TooltipDataLineType.UnitName then
-        local leftText = line.leftText
-
-        if leftText and issecretvalue(leftText) then
-          PendingTargetNames[dataInstanceID] = nil
-          return
-        end
-
-        if leftText then
-          TargetNameCache[npcID] = leftText
-
-          PendingTargetNames[dataInstanceID] = nil
-
-          local teamList = addon.UI and addon.UI.Views and addon.UI.Views.TeamList
-
-          if teamList and type(teamList.Refresh) == "function" then
-            teamList:Refresh()
-          end
-
-          return
-        end
-      end
-    end
-  end
-)
 
 function TeamCard:Create(parent, team)
   assert(parent, L["PARENT_TEAM_ERROR"])
@@ -227,10 +153,38 @@ function TeamCard:Create(parent, team)
   frame:SetSize(CARD_WIDTH, GetCardHeight())
 
   frame:SetBackdrop({
-    bgFile = "Interface\\Buttons\\WHITE8X8",
-    edgeFile = "Interface\\Buttons\\WHITE8X8",
-    edgeSize = 1,
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 128,
+    edgeSize = 8,
+    insets = {
+      left = 3,
+      right = 3,
+      top = 3,
+      bottom = 3,
+    },
   })
+
+  frame:SetBackdropBorderColor(0.35, 0.35, 0.35, 1)
+
+  frame.BackgroundGradient = frame:CreateTexture(
+    nil,
+    "BACKGROUND",
+    nil,
+    1
+  )
+
+  frame.BackgroundGradient:SetPoint("TOPLEFT", 1, -1)
+  frame.BackgroundGradient:SetPoint("BOTTOMRIGHT", -1, 1)
+
+  frame.BackgroundGradient:SetColorTexture(1, 1, 1, 1)
+
+  frame.BackgroundGradient:SetGradient(
+    "VERTICAL",
+    CreateColor(0.015, 0.015, 0.015, 0.70),
+    CreateColor(0.13, 0.13, 0.13, 0.8)
+  )
 
   frame.Highlight =
       frame:CreateTexture(
@@ -238,8 +192,34 @@ function TeamCard:Create(parent, team)
         "HIGHLIGHT"
       )
 
-  frame.Highlight:SetAllPoints()
-  frame.Highlight:SetColorTexture(0.1, 0.7, 1, 0.08)
+  frame.Highlight:SetAtlas(
+    "PetList-ButtonHighlight",
+    true
+  )
+
+  frame.Highlight:SetPoint(
+    "TOPLEFT",
+    frame,
+    "TOPLEFT",
+    0,
+    0
+  )
+
+  frame.Highlight:SetPoint(
+    "BOTTOMRIGHT",
+    frame,
+    "BOTTOMRIGHT",
+    0,
+    0
+  )
+
+  frame.Highlight:SetBlendMode(
+    "BLEND"
+  )
+
+  frame:SetHighlightTexture(
+    frame.Highlight
+  )
 
   frame.Team = team
   frame.Selected = false
@@ -252,14 +232,14 @@ function TeamCard:Create(parent, team)
 
     if IsLargeCard() then
       petSlotFrame:SetHeight(
-        CARD_HEIGHT_LARGE - 2
+        CARD_HEIGHT_LARGE - 8
       )
       petSlotFrame:SetWidth(
         26
       )
     else
       petSlotFrame:SetHeight(
-        CARD_HEIGHT_NORMAL - 2
+        CARD_HEIGHT_NORMAL - 4
       )
     end
 
@@ -752,5 +732,58 @@ function TeamCard:Create(parent, team)
 
   return frame
 end
+
+local targetLoaderFrame = CreateFrame("Frame")
+
+targetLoaderFrame:RegisterEvent("TOOLTIP_DATA_UPDATE")
+
+targetLoaderFrame:SetScript(
+  "OnEvent",
+  function(_, _, dataInstanceID)
+    local npcID = PendingTargetNames[dataInstanceID]
+
+    if not npcID then
+      return
+    end
+
+    local hyperlink =
+        string.format(
+          "unit:Creature-0-0-0-0-%d-0000000000",
+          npcID
+        )
+
+    local data =
+        C_TooltipInfo.GetHyperlink(hyperlink)
+
+    if not data then
+      return
+    end
+
+    for _, line in ipairs(data.lines or {}) do
+      if line.type == Enum.TooltipDataLineType.UnitName then
+        local leftText = line.leftText
+
+        if leftText and issecretvalue(leftText) then
+          PendingTargetNames[dataInstanceID] = nil
+          return
+        end
+
+        if leftText then
+          TargetNameCache[npcID] = leftText
+
+          PendingTargetNames[dataInstanceID] = nil
+
+          local teamList = addon.UI and addon.UI.Views and addon.UI.Views.TeamList
+
+          if teamList and type(teamList.Refresh) == "function" then
+            teamList:Refresh()
+          end
+
+          return
+        end
+      end
+    end
+  end
+)
 
 addon.UI.Components.TeamCard = TeamCard
