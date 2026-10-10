@@ -593,9 +593,7 @@ function LevellingQueueRow:SetPet(item)
   )
 
   local showBreed =
-      addon.Settings:Get(
-        "petListBreedPosition"
-      ) ~= "hidden"
+      addon.Settings:GetUI("petListBreedPosition") ~= "hidden"
 
   if showBreed then
     local breed =

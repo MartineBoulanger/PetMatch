@@ -197,6 +197,20 @@ addon.Constants = {
     EXPANSION_NAME10,
     EXPANSION_NAME11,
   },
+  PET_EXPANSION_BACKGROUNDS = {
+    [0] = "Interface\\Glues\\Loading",                                                            -- Classic
+    [1] = "Interface\\Glues\\LoadingScreens\\LoadScreenOutlandWide",                              -- TBC
+    [2] = "Interface\\Glues\\LoadingScreens\\LoadScreenNorthrend",                                -- WotLK
+    [3] = "Interface\\Glues\\Models\\UI_MainMenu_LowBandWidth\\UI_MainMenu_Cataclysm_Low",        -- Cataclysm
+    [4] = "Interface\\Glues\\Models\\UI_MainMenu_LowBandWidth\\UI_MainMenu_Pandaria_low",         -- MoP
+    [5] = "Interface\\Glues\\LoadingScreens\\LoadScreenBlizzcon2013Wide",                         -- WoD
+    [6] = "Interface\\Glues\\LoadingScreens\\LoadingScreen_BrokenIsles_Wide",                     -- Legion
+    [7] = "Interface\\Glues\\LoadingScreens\\LoadingScreen_8XP_ForlornVictory_Wide",              -- BfA
+    [8] = "Interface\\Glues\\LoadingScreens\\Expansion08\\Main\\LoadScreen_ShadowlandsContinent", -- SL
+    [9] = "Interface\\Glues\\LoadingScreens\\Expansion09\\Main\\LoadScreen_DragonIslesContinent", -- Df
+    [10] = "Interface\\Glues\\LoadingScreens\\Expansion10\\Main\\LoadScreen_KhazAlgarContinent",  -- TWW
+    [11] = "Interface\\Glues\\LoadingScreens\\Expansion11\\Main\\LoadScreen_AssaultOnQuelDanas",  -- Midnight
+  },
 
   -- sorting and filtering
   SORT_LABELS = {

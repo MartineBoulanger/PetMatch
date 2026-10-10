@@ -2255,12 +2255,9 @@ end
 
 local function GetPetTypeFilterDisplayMode()
   local mode =
-      addon.Settings:Get("petTypeFilterDisplayMode")
-      or "both"
+      addon.Settings:GetUI("petTypeFilterDisplayMode") or "both"
 
-  if mode ~= "both"
-      and mode ~= "menu"
-      and mode ~= "bar" then
+  if mode ~= "both" and mode ~= "menu" and mode ~= "bar" then
     return "both"
   end
 
@@ -3681,7 +3678,7 @@ function FilterExtension:Initialize()
   addon.EventBus:Register(
     addon.Events.SETTINGS_CHANGED,
     function(key)
-      if key == "petTypeFilterDisplayMode" then
+      if key == "ui.petTypeFilterDisplayMode" then
         FilterExtension:UpdatePetTypeFilterDisplay()
       elseif key == "statusBarClearMode" then
         FilterExtension:RefreshFilterBar()

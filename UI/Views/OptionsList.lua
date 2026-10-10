@@ -14,6 +14,7 @@ local BREED_SECTION_HEIGHT = 104
 local PET_LIST_SECTION_HEIGHT = 86
 local PET_CARD_SECTION_HEIGHT = 104
 local PET_CARD_VISIBILITY_SECTION_HEIGHT = 126
+local PET_CARD_BACKGROUND_SECTION_HEIGHT = 146
 local LEVELLING_QUEUE_SECTION_HEIGHT = 96
 local SUMMONED_PET_SECTION_HEIGHT = 104
 local PET_TYPE_FILTER_SECTION_HEIGHT = 104
@@ -46,6 +47,7 @@ function OptionsList:Create(parent)
     teamCards = false,
     petCard = false,
     petCardVisibility = false,
+    petCardBackground = false,
     levellingQueue = false,
     summonedPet = false,
     petTypeFilters = false,
@@ -78,11 +80,11 @@ function OptionsList:RegisterEvents()
 
       if key == "duplicateTeamMode" then
         self:RefreshDuplicateMode()
-      elseif key == "petListBreedPosition" then
+      elseif key == "ui.petListBreedPosition" then
         self:RefreshBreedMode()
-      elseif key == "compactPetListRows" then
+      elseif key == "ui.compactPetListRows" then
         self:RefreshPetListMode()
-      elseif key == "teamCardHeightMode" then
+      elseif key == "ui.teamCardHeightMode" then
         self:RefreshTeamCardHeightMode()
       elseif key == "petCardInteractionMode" then
         self:RefreshPetCardMode()
@@ -91,11 +93,13 @@ function OptionsList:RegisterEvents()
           or key == "petCardLevellingQueueEnabled"
           or key == "petCardTargetEnabled" then
         self:RefreshPetCardVisibilityMode()
+      elseif key == "ui.petCardBackground" then
+        self:RefreshPetCardBackgroundMode()
       elseif key == "levellingQueueAutoAddMode" then
         self:RefreshLevellingQueueAutoAddMode()
       elseif key == "summonedPetMode" then
         self:RefreshSummonedPetMode()
-      elseif key == "petTypeFilterDisplayMode" then
+      elseif key == "ui.petTypeFilterDisplayMode" then
         self:RefreshPetTypeFilterMode()
       elseif key == "statusBarClearMode" then
         self:RefreshStatusBarMode()
@@ -114,9 +118,7 @@ function OptionsList:ClearItems()
     return
   end
 
-  for _, item in ipairs(
-    self.Frame.items or {}
-  ) do
+  for _, item in ipairs(self.Frame.items or {}) do
     item:Hide()
     item:ClearAllPoints()
     item:SetParent(nil)
@@ -158,6 +160,14 @@ function OptionsList:ClearItems()
   self.PetCardTeamsCheckbox = nil
   self.PetCardLevellingQueueCheckbox = nil
   self.PetCardTargetsCheckbox = nil
+
+  -- Pet Card Background Option
+  self.PetCardBackgroundAccordion = nil
+  self.PetCardMarbleButton = nil
+  self.PetCardPetIconButton = nil
+  self.PetCardPetPortraitButton = nil
+  self.PetCardPetFamilyButton = nil
+  self.PetCardPetExpansionButton = nil
 
   -- Levelling Queue Option
   self.LevellingQueueAccordion = nil
@@ -242,6 +252,14 @@ function OptionsList:GetSections()
       contentHeight = PET_CARD_VISIBILITY_SECTION_HEIGHT,
       build = function(content)
         self:BuildPetCardVisibilityOptions(content)
+      end,
+    },
+    {
+      key = "petCardBackground",
+      title = L["PET_CARD_BACKGROUND"],
+      contentHeight = PET_CARD_BACKGROUND_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildPetCardBackgroundOptions(content)
       end,
     },
     {
@@ -380,6 +398,10 @@ function OptionsList:CreateSection(section, currentOffset)
     self.PetCardVisibilityAccordion = accordion
   end
 
+  if section.key == "petCardBackground" then
+    self.PetCardBackgroundAccordion = accordion
+  end
+
   if section.key == "levellingQueue" then
     self.LevellingQueueAccordion = accordion
   end
@@ -410,11 +432,7 @@ function OptionsList:CreateSection(section, currentOffset)
 end
 
 function OptionsList:CreateRadioButton(
-    parent,
-    label,
-    settingKey,
-    mode,
-    refreshCallback
+    parent, label, settingKey, mode, refreshCallback
 )
   local button = CreateFrame(
     "CheckButton",
@@ -428,10 +446,18 @@ function OptionsList:CreateRadioButton(
   button:SetScript(
     "OnClick",
     function()
-      addon.Settings:Set(
-        settingKey,
-        mode
-      )
+      if settingKey:sub(1, 3) == "ui." then
+        addon.Settings:SetUI(
+          settingKey:sub(4),
+          mode
+        )
+      else
+        addon.Settings:Set(
+          settingKey,
+          mode
+        )
+      end
+
 
       if refreshCallback then
         refreshCallback(self)
@@ -443,10 +469,7 @@ function OptionsList:CreateRadioButton(
 end
 
 function OptionsList:CreateCheckbox(
-    parent,
-    label,
-    settingKey,
-    refreshCallback
+    parent, label, settingKey, refreshCallback
 )
   local button =
       CreateFrame(
@@ -473,10 +496,19 @@ function OptionsList:CreateCheckbox(
   button:SetScript(
     "OnClick",
     function()
-      addon.Settings:Set(
-        settingKey,
-        button:GetChecked() == true
-      )
+      local checked = button:GetChecked() == true
+
+      if settingKey:sub(1, 3) == "ui." then
+        addon.Settings:SetUI(
+          settingKey:sub(4),
+          checked
+        )
+      else
+        addon.Settings:Set(
+          settingKey,
+          checked
+        )
+      end
 
       if refreshCallback then
         refreshCallback(self)
@@ -609,7 +641,7 @@ function OptionsList:BuildBreedOptions(parent)
       self:CreateRadioButton(
         parent,
         L["RIGHT_SIDE"],
-        "petListBreedPosition",
+        "ui.petListBreedPosition",
         "right",
         self.RefreshBreedMode
       )
@@ -626,7 +658,7 @@ function OptionsList:BuildBreedOptions(parent)
       self:CreateRadioButton(
         parent,
         L["AFTER_NAME"],
-        "petListBreedPosition",
+        "ui.petListBreedPosition",
         "afterName",
         self.RefreshBreedMode
       )
@@ -643,7 +675,7 @@ function OptionsList:BuildBreedOptions(parent)
       self:CreateRadioButton(
         parent,
         L["HIDDEN"],
-        "petListBreedPosition",
+        "ui.petListBreedPosition",
         "hidden",
         self.RefreshBreedMode
       )
@@ -695,7 +727,7 @@ function OptionsList:BuildPetListOptions(parent)
       self:CreateRadioButton(
         parent,
         L["NORMAL_ROWS"],
-        "compactPetListRows",
+        "ui.compactPetListRows",
         false,
         self.RefreshPetListMode
       )
@@ -712,7 +744,7 @@ function OptionsList:BuildPetListOptions(parent)
       self:CreateRadioButton(
         parent,
         L["COMPACT_ROWS"],
-        "compactPetListRows",
+        "ui.compactPetListRows",
         true,
         self.RefreshPetListMode
       )
@@ -764,7 +796,7 @@ function OptionsList:BuildTeamCardOptions(parent)
       self:CreateRadioButton(
         parent,
         L["NORMAL_HEIGHT"],
-        "teamCardHeightMode",
+        "ui.teamCardHeightMode",
         "normal",
         self.RefreshTeamCardHeightMode
       )
@@ -781,7 +813,7 @@ function OptionsList:BuildTeamCardOptions(parent)
       self:CreateRadioButton(
         parent,
         L["LARGE_HEIGHT"],
-        "teamCardHeightMode",
+        "ui.teamCardHeightMode",
         "large",
         self.RefreshTeamCardHeightMode
       )
@@ -982,6 +1014,106 @@ function OptionsList:BuildPetCardVisibilityOptions(parent)
   self:RefreshPetCardVisibilityMode()
 end
 
+function OptionsList:BuildPetCardBackgroundOptions(parent)
+  local description = parent:CreateFontString(
+    nil,
+    "OVERLAY",
+    "GameFontHighlightSmall"
+  )
+
+  description:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+  description:SetPoint("RIGHT", parent, "RIGHT", 0, 0)
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+
+  description:SetText(
+    L["PET_CARD_BACKGROUND_DESCRIPTION"]
+  )
+
+  self.PetCardMarbleButton = self:CreateRadioButton(
+    parent,
+    L["MARBLE"],
+    "ui.petCardBackground",
+    "marble",
+    self.RefreshPetCardBackgroundMode
+  )
+
+  self.PetCardMarbleButton:SetPoint(
+    "TOPLEFT",
+    description,
+    "BOTTOMLEFT",
+    0,
+    -7
+  )
+
+  self.PetCardPetIconButton = self:CreateRadioButton(
+    parent,
+    L["PET_ICON"],
+    "ui.petCardBackground",
+    "petIcon",
+    self.RefreshPetCardBackgroundMode
+  )
+
+  self.PetCardPetIconButton:SetPoint(
+    "TOPLEFT",
+    self.PetCardMarbleButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.PetCardPetPortraitButton = self:CreateRadioButton(
+    parent,
+    L["PET_PORTRAIT"],
+    "ui.petCardBackground",
+    "petPortrait",
+    self.RefreshPetCardBackgroundMode
+  )
+
+  self.PetCardPetPortraitButton:SetPoint(
+    "TOPLEFT",
+    self.PetCardPetIconButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.PetCardPetFamilyButton = self:CreateRadioButton(
+    parent,
+    L["PET_FAMILY"],
+    "ui.petCardBackground",
+    "petFamily",
+    self.RefreshPetCardBackgroundMode
+  )
+
+  self.PetCardPetFamilyButton:SetPoint(
+    "TOPLEFT",
+    self.PetCardPetPortraitButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self.PetCardPetExpansionButton = self:CreateRadioButton(
+    parent,
+    L["PET_EXPANSION"],
+    "ui.petCardBackground",
+    "petExpansion",
+    self.RefreshPetCardBackgroundMode
+  )
+
+  self.PetCardPetExpansionButton:SetPoint(
+    "TOPLEFT",
+    self.PetCardPetFamilyButton,
+    "BOTTOMLEFT",
+    0,
+    -2
+  )
+
+  self:RefreshPetCardBackgroundMode()
+end
+
 function OptionsList:BuildLevellingQueueOptions(parent)
   local description =
       parent:CreateFontString(
@@ -1173,7 +1305,7 @@ function OptionsList:BuildPetTypeFilterOptions(parent)
       self:CreateRadioButton(
         parent,
         L["FILTER_BAR_AND_MENU"],
-        "petTypeFilterDisplayMode",
+        "ui.petTypeFilterDisplayMode",
         "both",
         self.RefreshPetTypeFilterMode
       )
@@ -1190,7 +1322,7 @@ function OptionsList:BuildPetTypeFilterOptions(parent)
       self:CreateRadioButton(
         parent,
         L["FILTER_MENU_ONLY"],
-        "petTypeFilterDisplayMode",
+        "ui.petTypeFilterDisplayMode",
         "menu",
         self.RefreshPetTypeFilterMode
       )
@@ -1207,7 +1339,7 @@ function OptionsList:BuildPetTypeFilterOptions(parent)
       self:CreateRadioButton(
         parent,
         L["FILTER_BAR_ONLY"],
-        "petTypeFilterDisplayMode",
+        "ui.petTypeFilterDisplayMode",
         "bar",
         self.RefreshPetTypeFilterMode
       )
@@ -1469,8 +1601,7 @@ function OptionsList:RefreshDuplicateMode()
     return
   end
 
-  local mode =
-      addon.Settings:Get("duplicateTeamMode")
+  local mode = addon.Settings:Get("duplicateTeamMode")
 
   self.SkipButton:SetChecked(
     mode == "skip"
@@ -1490,8 +1621,7 @@ function OptionsList:RefreshBreedMode()
     return
   end
 
-  local mode =
-      addon.Settings:Get("petListBreedPosition")
+  local mode = addon.Settings:GetUI("petListBreedPosition")
 
   self.RightBreedButton:SetChecked(
     mode == "right"
@@ -1512,8 +1642,7 @@ function OptionsList:RefreshPetListMode()
     return
   end
 
-  local compact =
-      addon.Settings:Get("compactPetListRows") == true
+  local compact = addon.Settings:GetUI("compactPetListRows") == true
 
   self.NormalRowsButton:SetChecked(
     not compact
@@ -1530,11 +1659,7 @@ function OptionsList:RefreshTeamCardHeightMode()
     return
   end
 
-  local mode =
-      addon.Settings:Get(
-        "teamCardHeightMode"
-      )
-      or "normal"
+  local mode = addon.Settings:GetUI("teamCardHeightMode") or "normal"
 
   self.TeamCardNormalHeightButton:
       SetChecked(
@@ -1554,9 +1679,7 @@ function OptionsList:RefreshPetCardMode()
     return
   end
 
-  local mode =
-      addon.Settings:Get("petCardInteractionMode")
-      or "hover"
+  local mode = addon.Settings:Get("petCardInteractionMode") or "hover"
 
   self.PetCardHoverButton:SetChecked(
     mode == "hover"
@@ -1574,35 +1697,45 @@ end
 function OptionsList:RefreshPetCardVisibilityMode()
   if self.PetCardPetListCheckbox then
     self.PetCardPetListCheckbox:SetChecked(
-      addon.Settings:Get(
-        "petCardPetListEnabled"
-      ) ~= false
+      addon.Settings:Get("petCardPetListEnabled") ~= false
     )
   end
 
   if self.PetCardTeamsCheckbox then
     self.PetCardTeamsCheckbox:SetChecked(
-      addon.Settings:Get(
-        "petCardTeamsEnabled"
-      ) ~= false
+      addon.Settings:Get("petCardTeamsEnabled") ~= false
     )
   end
 
   if self.PetCardLevellingQueueCheckbox then
     self.PetCardLevellingQueueCheckbox:SetChecked(
-      addon.Settings:Get(
-        "petCardLevellingQueueEnabled"
-      ) ~= false
+      addon.Settings:Get("petCardLevellingQueueEnabled") ~= false
     )
   end
 
   if self.PetCardTargetsCheckbox then
     self.PetCardTargetsCheckbox:SetChecked(
-      addon.Settings:Get(
-        "petCardTargetEnabled"
-      ) ~= false
+      addon.Settings:Get("petCardTargetEnabled") ~= false
     )
   end
+end
+
+function OptionsList:RefreshPetCardBackgroundMode()
+  if not self.PetCardMarbleButton
+      or not self.PetCardPetIconButton
+      or not self.PetCardPetPortraitButton
+      or not self.PetCardPetFamilyButton
+      or not self.PetCardPetExpansionButton then
+    return
+  end
+
+  local mode = addon.Settings:GetUI("petCardBackground")
+
+  self.PetCardMarbleButton:SetChecked(mode == "marble")
+  self.PetCardPetIconButton:SetChecked(mode == "petIcon")
+  self.PetCardPetPortraitButton:SetChecked(mode == "petPortrait")
+  self.PetCardPetFamilyButton:SetChecked(mode == "petFamily")
+  self.PetCardPetExpansionButton:SetChecked(mode == "petExpansion")
 end
 
 function OptionsList:RefreshLevellingQueueAutoAddMode()
@@ -1612,8 +1745,7 @@ function OptionsList:RefreshLevellingQueueAutoAddMode()
   end
 
   local mode =
-      addon.Settings:Get("levellingQueueAutoAddMode")
-      or "disabled"
+      addon.Settings:Get("levellingQueueAutoAddMode") or "disabled"
 
   self.LevellingQueueAutoAddEnabledButton:SetChecked(
     mode == "enabled"
@@ -1631,9 +1763,7 @@ function OptionsList:RefreshSummonedPetMode()
     return
   end
 
-  local mode =
-      addon.Settings:Get("summonedPetMode")
-      or "keep"
+  local mode = addon.Settings:Get("summonedPetMode") or "keep"
 
   self.AutoDismissPetButton:SetChecked(
     mode == "dismiss"
@@ -1656,8 +1786,7 @@ function OptionsList:RefreshPetTypeFilterMode()
   end
 
   local mode =
-      addon.Settings:Get("petTypeFilterDisplayMode")
-      or "both"
+      addon.Settings:GetUI("petTypeFilterDisplayMode") or "both"
 
   self.PetTypeFilterBothButton:SetChecked(mode == "both")
   self.PetTypeFilterMenuButton:SetChecked(mode == "menu")
@@ -1670,9 +1799,7 @@ function OptionsList:RefreshStatusBarMode()
     return
   end
 
-  local mode =
-      addon.Settings:Get("statusBarClearMode")
-      or "all"
+  local mode = addon.Settings:Get("statusBarClearMode") or "all"
 
   self.StatusBarAllButton:SetChecked(
     mode == "all"
@@ -1686,17 +1813,13 @@ end
 function OptionsList:RefreshPetBattlesMode()
   if self.AutoOpenPvENotesCheckbox then
     self.AutoOpenPvENotesCheckbox:SetChecked(
-      addon.Settings:Get(
-        "autoOpenNotesOnPvEBattle"
-      ) == true
+      addon.Settings:Get("autoOpenNotesOnPvEBattle") == true
     )
   end
 
   if self.AutoOpenPetJournalCheckbox then
     self.AutoOpenPetJournalCheckbox:SetChecked(
-      addon.Settings:Get(
-        "autoOpenPetJournalAfterBattle"
-      ) ~= false
+      addon.Settings:Get("autoOpenPetJournalAfterBattle") ~= false
     )
   end
 end
@@ -1709,9 +1832,7 @@ function OptionsList:RefreshTargetTeamLoadMode()
     return
   end
 
-  local mode =
-      addon.Settings:Get("targetTeamLoadMode")
-      or "off"
+  local mode = addon.Settings:Get("targetTeamLoadMode") or "off"
 
   self.TargetDisabledModeButton:
       SetChecked(

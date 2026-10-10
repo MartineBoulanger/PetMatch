@@ -195,7 +195,7 @@ function TeamList:RegisterEvents()
   addon.EventBus:Register(
     addon.Events.SETTINGS_CHANGED,
     function(key)
-      if key ~= "teamCardHeightMode" then
+      if key ~= "ui.teamCardHeightMode" then
         return
       end
 
@@ -461,21 +461,13 @@ function TeamList:CreateTeamCards(folderKey, currentOffset)
 end
 
 function TeamList:UpdateCardSelection()
-  local selectedTeamID =
-      addon.Services.Team:GetSelectedID()
+  local selectedTeamID = addon.Services.Team:GetSelectedID()
 
-  for _, card in ipairs(
-    self.Frame.cards or {}
-  ) do
-    local cardTeamID =
-        card.Team
-        and card.Team.id
+  for _, card in ipairs(self.Frame.cards or {}) do
+    local cardTeamID = card.Team and card.Team.id
 
-    local selected =
-        selectedTeamID ~= nil
-        and cardTeamID ~= nil
-        and tostring(cardTeamID)
-        == tostring(selectedTeamID)
+    local selected = selectedTeamID ~= nil and cardTeamID ~= nil
+        and tostring(cardTeamID) == tostring(selectedTeamID)
 
     card:SetSelected(selected)
   end

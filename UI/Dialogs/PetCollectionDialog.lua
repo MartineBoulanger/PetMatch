@@ -239,7 +239,7 @@ function PetCollectionDialog:Create()
 
   local breedEnabled = breedService
       and breedService:IsAvailable()
-      and addon.Settings:Get("petListBreedPosition") ~= "hidden"
+      and addon.Settings:GetUI("petListBreedPosition") ~= "hidden"
 
   if not breedEnabled and self.Tabs.breeds then
     self.Tabs.breeds:Hide()

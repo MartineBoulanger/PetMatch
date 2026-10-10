@@ -49,27 +49,19 @@ local function AllowsSource(source)
   end
 
   if source == "petList" then
-    return addon.Settings:Get(
-      "petCardPetListEnabled"
-    ) ~= false
+    return addon.Settings:Get("petCardPetListEnabled") ~= false
   end
 
   if source == "teams" then
-    return addon.Settings:Get(
-      "petCardTeamsEnabled"
-    ) ~= false
+    return addon.Settings:Get("petCardTeamsEnabled") ~= false
   end
 
   if source == "queue" then
-    return addon.Settings:Get(
-      "petCardLevellingQueueEnabled"
-    ) ~= false
+    return addon.Settings:Get("petCardLevellingQueueEnabled") ~= false
   end
 
   if source == "targets" then
-    return addon.Settings:Get(
-      "petCardTargetEnabled"
-    ) ~= false
+    return addon.Settings:Get("petCardTargetEnabled") ~= false
   end
 
   return true

@@ -51,6 +51,15 @@ function PetCard:Create(parent)
 
   instance.Frame:Hide()
 
+  addon.EventBus:Register(
+    addon.Events.SETTINGS_CHANGED,
+    function(key)
+      if key == "ui.petCardBackground" then
+        instance.Details.Background:Refresh()
+      end
+    end
+  )
+
   return instance
 end
 

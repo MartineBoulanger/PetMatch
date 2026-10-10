@@ -971,12 +971,8 @@ function ImportExportService:ImportRematchDocument(document, options)
     defaultFolderID = options.defaultFolderID
   end
 
-  local conflictMode =
-      options.conflictMode
-      or addon.Settings:Get(
-        "duplicateTeamMode"
-      )
-      or "replace"
+  local conflictMode = options.conflictMode
+      or addon.Settings:Get("duplicateTeamMode") or "replace"
 
   local result = {
     teams = {},
@@ -1115,12 +1111,8 @@ function ImportExportService:ImportRematchDocumentAsync(document, options)
     defaultFolderID = options.defaultFolderID
   end
 
-  local conflictMode =
-      options.conflictMode
-      or addon.Settings:Get(
-        "duplicateTeamMode"
-      )
-      or "replace"
+  local conflictMode = options.conflictMode
+      or addon.Settings:Get("duplicateTeamMode") or "replace"
 
   local batchSize =
       tonumber(options.batchSize)

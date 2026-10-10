@@ -46,7 +46,7 @@ end
 commands.settings = function()
   Print(
     "Theme:",
-    addon.Settings:Get("theme")
+    addon.Settings:GetUI("theme")
   )
   Print(
     "Scale:",

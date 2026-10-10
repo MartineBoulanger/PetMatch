@@ -23,7 +23,7 @@ local function ApplyVisualState(frame)
 end
 
 local function GetCardHeight()
-  local mode = addon.Settings:Get("teamCardHeightMode") or "normal"
+  local mode = addon.Settings:GetUI("teamCardHeightMode") or "normal"
 
   if mode == "large" then
     return CARD_HEIGHT_LARGE
@@ -33,7 +33,7 @@ local function GetCardHeight()
 end
 
 local function IsLargeCard()
-  return addon.Settings:Get("teamCardHeightMode") == "large"
+  return addon.Settings:GetUI("teamCardHeightMode") == "large"
 end
 
 local function GetTargetName(team)
@@ -712,10 +712,7 @@ function TeamCard:Create(parent, team)
       return
     end
 
-    addon.Settings:SetUI(
-      "selectedTeamID",
-      team.id
-    )
+    addon.Settings:Set("selectedTeamID", team.id)
 
     addon.EventBus:Fire(
       addon.Events.TEAM_SELECTED,

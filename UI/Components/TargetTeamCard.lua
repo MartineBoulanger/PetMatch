@@ -16,7 +16,54 @@ local function CreatePetIcon(parent)
 
   button.Icon = icon
 
+  --------------------------------------------------
+  -- Rarity border
+  --------------------------------------------------
+  local rarityBorder = CreateFrame(
+    "Frame",
+    nil,
+    button,
+    "BackdropTemplate"
+  )
+
+  rarityBorder:SetAllPoints(button)
+
+  rarityBorder:SetBackdrop({
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    edgeSize = 8,
+    insets = {
+      left = 0,
+      right = 0,
+      top = 0,
+      bottom = 0,
+    },
+  })
+
+  rarityBorder:SetFrameLevel(button:GetFrameLevel() + 1)
+  rarityBorder:EnableMouse(false)
+  rarityBorder:Hide()
+
+  button.RarityBorder = rarityBorder
+
   return button
+end
+
+local function SetPetRarityBorder(button, quality)
+  local color = addon.Constants.PET_RARITY_COLORS[quality]
+
+  if not color then
+    button.RarityBorder:Hide()
+    return
+  end
+
+  button.RarityBorder:SetBackdropBorderColor(
+    color.r,
+    color.g,
+    color.b,
+    1
+  )
+
+  button.RarityBorder:Show()
 end
 
 function TargetTeamCard:Initialize()
@@ -173,14 +220,22 @@ function TargetTeamCard:Initialize()
       "ANCHOR_LEFT",
       "targets",
       function()
-        if TargetTeamCard.Mode ~= "suggested" then
-          return nil
+        if TargetTeamCard.Mode == "suggested" then
+          local pet = TargetTeamCard.SuggestedPets
+              and TargetTeamCard.SuggestedPets[index]
+
+          return pet and pet.suggestedAbilities or nil
         end
 
-        local pet = TargetTeamCard.SuggestedPets
-            and TargetTeamCard.SuggestedPets[index]
+        local team = TargetTeamCard.SavedTeam
 
-        return pet and pet.suggestedAbilities or nil
+        if team and type(team.abilities) == "table" then
+          return team.abilities[index]
+        end
+
+        local abilities = TargetTeamCard.LoadedSuggestedAbilities
+
+        return abilities and abilities[index] or nil
       end
     )
 
@@ -289,9 +344,12 @@ function TargetTeamCard:SetSavedTeam(team)
     return
   end
 
+  self.SavedTeam = type(team) == "table" and team or nil
+
   self.Mode = nil
   self.SuggestedPets = nil
   self.TargetNPCID = nil
+  self.LoadedSuggestedAbilities = nil
 
   if self.Frame.SuggestedButton then
     self.Frame.SuggestedButton:Hide()
@@ -344,6 +402,10 @@ function TargetTeamCard:SetSavedTeam(team)
       button.pet = pet
 
       button.Icon:SetTexture(pet.icon)
+
+      local _, _, _, _, quality = C_PetJournal.GetPetStats(petGUID)
+      SetPetRarityBorder(button, quality)
+
       button:Show()
     else
       button.petGUID = nil
@@ -351,6 +413,7 @@ function TargetTeamCard:SetSavedTeam(team)
       button.pet = nil
 
       button.Icon:SetTexture(nil)
+      SetPetRarityBorder(button, nil)
       button:Hide()
     end
   end
@@ -360,6 +423,9 @@ function TargetTeamCard:SetSuggestedTarget(npcID)
   if not self.Frame then
     return
   end
+
+  self.SavedTeam = nil
+  self.LoadedSuggestedAbilities = nil
 
   npcID = tonumber(npcID)
 
@@ -391,12 +457,25 @@ function TargetTeamCard:SetSuggestedTarget(npcID)
       button.speciesID = pet.speciesID
 
       button.Icon:SetTexture(pet.icon)
+
+      local quality
+
+      if pet.petGUID then
+        local _, _, _, _, petQuality =
+            C_PetJournal.GetPetStats(pet.petGUID)
+
+        quality = petQuality
+      end
+
+      SetPetRarityBorder(button, quality)
+
       button:Show()
     else
       button.petGUID = nil
       button.speciesID = nil
 
       button.Icon:SetTexture(nil)
+      SetPetRarityBorder(button, nil)
       button:Hide()
     end
   end
@@ -450,6 +529,8 @@ function TargetTeamCard:Clear()
   self.Mode = nil
   self.TargetNPCID = nil
   self.SuggestedPets = nil
+  self.SavedTeam = nil
+  self.LoadedSuggestedAbilities = nil
 
   if self.Frame.SuggestedHint then
     self.Frame.SuggestedHint:Hide()
@@ -467,6 +548,8 @@ function TargetTeamCard:Clear()
     teamPet.speciesID = nil
     teamPet.pet = nil
     teamPet.Icon:SetTexture(nil)
+    SetPetRarityBorder(enemyPet, nil)
+    SetPetRarityBorder(teamPet, nil)
     teamPet:Hide()
   end
 
@@ -536,6 +619,8 @@ function TargetTeamCard:LoadSuggestedTeam()
     end
     return
   end
+
+  self.LoadedSuggestedAbilities = abilities
 
   --------------------------------------------------
   -- Suggested team is now loaded

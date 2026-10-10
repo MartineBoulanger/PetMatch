@@ -599,7 +599,7 @@ local function RefreshBattleSlotBreedVisual(slotIndex)
     return
   end
 
-  if addon.Settings:Get("petListBreedPosition") == "hidden" then
+  if addon.Settings:GetUI("petListBreedPosition") == "hidden" then
     label:SetText("")
     label:Hide()
     return
@@ -642,11 +642,11 @@ local function RefreshAllBattleSlotBreedVisuals()
 end
 
 local function IsBreedVisible()
-  return addon.Settings:Get("petListBreedPosition") ~= "hidden"
+  return addon.Settings:GetUI("petListBreedPosition") ~= "hidden"
 end
 
 local function GetBreedPosition()
-  return addon.Settings:Get("petListBreedPosition") or "right"
+  return addon.Settings:GetUI("petListBreedPosition") or "right"
 end
 
 local function UsesRightSideBreed()
@@ -654,7 +654,7 @@ local function UsesRightSideBreed()
 end
 
 local function UsesCompactRows()
-  return addon.Settings:Get("compactPetListRows") == true
+  return addon.Settings:GetUI("compactPetListRows") == true
 end
 
 local function GetPetJournalScrollBox()
@@ -2643,12 +2643,12 @@ function PetList:OnAddonLoaded(name)
 end
 
 function PetList:OnSettingChanged(key)
-  if key == "compactPetListRows" then
+  if key == "ui.compactPetListRows" then
     self:ApplyPetListLayout()
     return
   end
 
-  if key ~= "petListBreedPosition" then
+  if key ~= "ui.petListBreedPosition" then
     return
   end
 
@@ -2675,7 +2675,7 @@ function PetList:Initialize()
     function(key)
       self:OnSettingChanged(key)
 
-      if key == "petListBreedPosition" then
+      if key == "ui.petListBreedPosition" then
         RefreshAllBattleSlotBreedVisuals()
       end
     end

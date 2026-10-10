@@ -62,6 +62,8 @@ function Details:Create(parent)
     1
   )
 
+  instance.Background = addon.UI.PetCard.Background:Create(instance.Frame)
+
   instance.Model =
       CreateFrame(
         "ModelScene",
@@ -208,10 +210,12 @@ function Details:SetPet(pet)
   if not pet then
     self:CancelModelTimer()
     self:SetPetModel(nil, nil)
+    self.Background:SetPet(nil)
     self.Stats:SetPet(nil)
     return
   end
 
+  self.Background:SetPet(pet)
   self.Stats:SetPet(pet)
 
   self:SchedulePetModel(
@@ -289,6 +293,10 @@ function Details:SetPetModel(displayID, speciesID)
     self.CurrentSpeciesID = nil
 
     return
+  end
+
+  if actor.SetScale then
+    actor:SetScale(2)
   end
 
   if actor.SetAnimationBlendOperation then

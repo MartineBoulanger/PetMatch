@@ -190,10 +190,7 @@ function TeamService:Delete(teamID)
   end
 
   if self:GetSelectedID() == teamID then
-    addon.Settings:SetUI(
-      "selectedTeamID",
-      nil
-    )
+    addon.Settings:Set("selectedTeamID", nil)
 
     addon.EventBus:Fire(
       addon.Events.TEAM_SELECTED,
@@ -635,10 +632,7 @@ end
 
 function TeamService:SelectForUI(teamID)
   if teamID == nil then
-    addon.Settings:SetUI(
-      "selectedTeamID",
-      nil
-    )
+    addon.Settings:Set("selectedTeamID", nil)
 
     addon.EventBus:Fire(
       addon.Events.TEAM_SELECTED,
@@ -655,10 +649,7 @@ function TeamService:SelectForUI(teamID)
     return nil
   end
 
-  addon.Settings:SetUI(
-    "selectedTeamID",
-    teamID
-  )
+  addon.Settings:Set("selectedTeamID", teamID)
 
   addon.EventBus:Fire(
     addon.Events.TEAM_SELECTED,
@@ -670,10 +661,7 @@ function TeamService:SelectForUI(teamID)
 end
 
 function TeamService:GetSelectedID()
-  local teamID =
-      addon.Settings:GetUI(
-        "selectedTeamID"
-      )
+  local teamID = addon.Settings:Get("selectedTeamID")
 
   if teamID and self:Get(teamID) then
     return teamID
@@ -702,10 +690,7 @@ function TeamService:SetSortMode(sortMode)
     return false
   end
 
-  addon.Settings:SetUI(
-    "teamSortMode",
-    sortMode
-  )
+  addon.Settings:Set("teamSortMode", sortMode)
 
   addon.EventBus:Fire(
     addon.Events.TEAM_SORT_CHANGED,
@@ -716,9 +701,7 @@ function TeamService:SetSortMode(sortMode)
 end
 
 function TeamService:GetSortMode()
-  return addon.Settings:GetUI(
-    "teamSortMode"
-  ) or "name"
+  return addon.Settings:Get("teamSortMode") or "name"
 end
 
 function TeamService:SetFavorite(teamID, favorite)

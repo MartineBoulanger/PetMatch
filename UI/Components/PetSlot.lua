@@ -18,7 +18,7 @@ local function CreateFamilyIconBackground(parent)
     "BackdropTemplate"
   )
 
-  if addon.Settings and addon.Settings:Get("teamCardHeightMode") == "large" then
+  if addon.Settings and addon.Settings:GetUI("teamCardHeightMode") == "large" then
     background:SetSize(ICON_WIDTH + 4, ICON_HEIGHT + 4)
   else
     background:SetSize(ICON_WIDTH + 1, ICON_HEIGHT + 1)
@@ -62,6 +62,35 @@ local function CreatePetIcon(parent, PetSlot)
   EmptyIcon:SetTexture("Interface/PaperDoll/UI-Backpack-EmptySlot")
   EmptyIcon:SetVertexColor(0.45, 0.45, 0.45, 0.65)
 
+  --------------------------------------------------
+  -- Rarity border for normal pets
+  --------------------------------------------------
+  local rarityBorder = CreateFrame(
+    "Frame",
+    nil,
+    parent,
+    "BackdropTemplate"
+  )
+
+  rarityBorder:SetAllPoints(parent)
+
+  rarityBorder:SetBackdrop({
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    edgeSize = 8,
+    insets = {
+      left = 0,
+      right = 0,
+      top = 0,
+      bottom = 0,
+    },
+  })
+
+  rarityBorder:SetFrameLevel(parent:GetFrameLevel() + 1)
+  rarityBorder:EnableMouse(false)
+  rarityBorder:Hide()
+
+  instance.RarityBorder = rarityBorder
+
   instance.FamilyBackground = CreateFamilyIconBackground(parent)
   local FamilyIcon = instance.FamilyBackground:CreateTexture(
     nil,
@@ -84,6 +113,24 @@ function PetSlot:SetFamilyIcon(texture)
   self.FamilyIcon:SetTexCoord(0, 1, 0, 1)
 
   self.FamilyBackground:Show()
+end
+
+function PetSlot:SetRarityBorder(quality)
+  local color = addon.Constants.PET_RARITY_COLORS[quality]
+
+  if not color then
+    self.RarityBorder:Hide()
+    return
+  end
+
+  self.RarityBorder:SetBackdropBorderColor(
+    color.r,
+    color.g,
+    color.b,
+    1
+  )
+
+  self.RarityBorder:Show()
 end
 
 local function GetSpecialSlotIcon(specialSlot)
@@ -171,6 +218,9 @@ function PetSlot:SetPet(petGUID, team, slotIndex)
   self.EmptyIcon:Hide()
   self.FamilyBackground:Hide()
 
+  local _, _, _, _, quality = C_PetJournal.GetPetStats(petGUID)
+  self:SetRarityBorder(quality)
+
   if pet.icon then
     self.Icon:SetAtlas(nil)
     self.Icon:SetTexture(pet.icon)
@@ -188,6 +238,8 @@ function PetSlot:SetSpecialSlot(specialSlot)
     self:Clear()
     return
   end
+
+  self:SetRarityBorder(nil)
 
   self.PetGUID = nil
   self.Frame.petGUID = nil
@@ -246,6 +298,8 @@ function PetSlot:SetSize(width, height)
 end
 
 function PetSlot:Clear()
+  self:SetRarityBorder(nil)
+
   self.PetGUID = nil
   self.Team = nil
   self.SlotIndex = nil

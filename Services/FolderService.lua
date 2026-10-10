@@ -124,10 +124,7 @@ function FolderService:Delete(folderID, deleteTeams)
   folders[folderID] = nil
 
   if self:GetSelectedKey() == folderID then
-    addon.Settings:SetUI(
-      "selectedFolderKey",
-      self.UNSORTED
-    )
+    addon.Settings:Set("selectedFolderKey", self.UNSORTED)
   end
 
   addon.EventBus:Fire(
@@ -151,10 +148,7 @@ function FolderService:Select(folderKey)
     return false
   end
 
-  addon.Settings:SetUI(
-    "selectedFolderKey",
-    folderKey
-  )
+  addon.Settings:Set("selectedFolderKey", folderKey)
 
   addon.EventBus:Fire(
     addon.Events.FOLDER_SELECTED,
@@ -281,10 +275,7 @@ function FolderService:MoveDown(folderID)
 end
 
 function FolderService:GetSelectedKey()
-  local selectedKey =
-      addon.Settings:GetUI(
-        "selectedFolderKey"
-      )
+  local selectedKey = addon.Settings:Get("selectedFolderKey")
 
   if selectedKey == self.ALL
       or selectedKey == self.UNSORTED

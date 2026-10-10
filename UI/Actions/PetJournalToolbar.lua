@@ -563,9 +563,7 @@ local function FinalDismiss(attempt, expectedPetGUID, previousSummonedPetGUID, g
     return
   end
 
-  local mode =
-      addon.Settings:Get("summonedPetMode")
-      or "keep"
+  local mode = addon.Settings:Get("summonedPetMode") or "keep"
 
   if mode ~= "dismiss"
       and mode ~= "restore" then
@@ -629,9 +627,7 @@ local function FinalDismiss(attempt, expectedPetGUID, previousSummonedPetGUID, g
 end
 
 function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation, previousSummonedPetGUID)
-  local mode =
-      addon.Settings:Get("summonedPetMode")
-      or "keep"
+  local mode = addon.Settings:Get("summonedPetMode") or "keep"
 
   if mode ~= "dismiss"
       and mode ~= "restore" then

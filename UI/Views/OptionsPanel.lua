@@ -25,10 +25,7 @@ function OptionsPanel:Create(parent)
 end
 
 function OptionsPanel:RefreshDuplicateMode()
-  local mode =
-      addon.Settings:Get(
-        "duplicateTeamMode"
-      )
+  local mode = addon.Settings:Get("duplicateTeamMode")
 
   self.SkipButton:SetChecked(
     mode == "skip"

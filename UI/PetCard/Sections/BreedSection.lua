@@ -387,9 +387,7 @@ function BreedSection:HideBreedTooltip()
 end
 
 function BreedSection:SetPet(pet)
-  if addon.Settings:Get(
-        "petListBreedPosition"
-      ) == "hidden" then
+  if addon.Settings:GetUI("petListBreedPosition") == "hidden" then
     self.Pet = nil
     self.Breeds:SetText("")
     self.HoverButton:Hide()

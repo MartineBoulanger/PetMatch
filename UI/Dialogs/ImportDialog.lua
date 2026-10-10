@@ -1020,9 +1020,7 @@ function ImportDialog:HandlePreparedImport(
             defaultFolderSpecified = true,
             defaultFolderID = self.SelectedFolderID,
             conflictMode =
-                addon.Settings:Get(
-                  "duplicateTeamMode"
-                )
+                addon.Settings:Get("duplicateTeamMode")
                 or "replace",
           }
         )
@@ -1049,9 +1047,7 @@ function ImportDialog:HandlePreparedImport(
           defaultFolderSpecified = true,
           defaultFolderID = self.SelectedFolderID,
           conflictMode =
-              addon.Settings:Get(
-                "duplicateTeamMode"
-              )
+              addon.Settings:Get("duplicateTeamMode")
               or "replace",
         }
       )

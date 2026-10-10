@@ -7,27 +7,28 @@ local DEFAULT_SETTINGS = {
   -- options for each profile
   scale = 1,
   debug = false,
+  selectedFolderKey = "__UNSORTED__",
+  selectedTeamID = nil,
+  teamSortMode = "name",
 
+  -- options that changes the UI of the addon and the Pet Journal
   ui = {
-    theme = "Dark",
-    petCardBackground = "Marble",
-    selectedFolderKey = "__UNSORTED__",
-    selectedTeamID = nil,
-    teamSortMode = "name",
+    theme = "dark", -- should become "default", then I can add Elvui and ElsmereUI to this option
+    petCardBackground = "marble",
+    compactPetListRows = false,
+    teamCardHeightMode = "normal",
+    petTypeFilterDisplayMode = "both",
+    petListBreedPosition = "right",
   },
 
   -- options panel list options
   duplicateTeamMode = "replace",
-  petListBreedPosition = "right",
-  compactPetListRows = false,
-  teamCardHeightMode = "normal",
   petCardInteractionMode = "hover",
   petCardPetListEnabled = true,
   petCardTeamsEnabled = true,
   petCardLevellingQueueEnabled = true,
   petCardTargetEnabled = true,
   levellingQueueAutoAddMode = "disabled",
-  petTypeFilterDisplayMode = "both",
   summonedPetMode = "keep",
   restorePreviousSummonedPet = false,
   autoOpenNotesOnPvEBattle = false,

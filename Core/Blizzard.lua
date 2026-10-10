@@ -329,6 +329,33 @@ local function ApplyCompactPetCardLayout()
   )
 end
 
+local function UpdatePetLoadoutRarityColors()
+  for slot = 1, 3 do
+    local petGUID = C_PetJournal.GetPetLoadOutInfo(slot)
+
+    local slotFrame = _G["PetJournalLoadoutPet" .. slot]
+
+    if slotFrame and slotFrame.name then
+      local color = nil
+
+      if petGUID then
+        local _, _, _, _, quality = C_PetJournal.GetPetStats(petGUID)
+        color = addon.Constants.PET_RARITY_COLORS[quality]
+      end
+
+      if color then
+        slotFrame.name:SetTextColor(
+          color.r,
+          color.g,
+          color.b
+        )
+      else
+        slotFrame.name:SetTextColor(1, 0.82, 0)
+      end
+    end
+  end
+end
+
 function Blizzard:UpdateLoadoutTitle(team)
   UpdateLoadoutTitle(team)
 end
@@ -365,6 +392,7 @@ function Blizzard:Initialize()
       ApplyCompactPetCardLayout()
       local team = addon.Services.Team and addon.Services.Team:GetActive()
       UpdateLoadoutTitle(team)
+      UpdatePetLoadoutRarityColors()
     end
   )
 
@@ -400,6 +428,11 @@ function Blizzard:Initialize()
     function()
       SchedulePetMatchLayering()
     end
+  )
+
+  hooksecurefunc(
+    "PetJournal_UpdatePetLoadOut",
+    UpdatePetLoadoutRarityColors
   )
 
   addon.EventBus:Register(
