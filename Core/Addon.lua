@@ -39,7 +39,7 @@ local function Enable()
     end
   )
 
-  addon.Logger:Info("v1.23.15 " .. L["LOADED"])
+  addon.Logger:Info("v1.23.18 " .. L["LOADED"])
 end
 
 frame:RegisterEvent("ADDON_LOADED")

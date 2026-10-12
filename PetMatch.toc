@@ -1,5 +1,5 @@
 ## Interface: 120100,120105
-## Version: 1.23.15
+## Version: 1.23.18
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
@@ -45,6 +45,7 @@ Modules/Settings.lua
 
 Data/PetExpansion.lua
 Data/PetBattleTargets.lua
+Data/IconSearchIndex.lua
 
 Models/Base.lua
 Models/Pet.lua
@@ -123,6 +124,7 @@ UI/Dialogs/DeleteFolderDialog.lua
 UI/Dialogs/DeleteTeamDialog.lua
 UI/Dialogs/EditTeamDialog.lua
 UI/Dialogs/ExportDialog.lua
+UI/Dialogs/IconPickerDialog.lua
 UI/Dialogs/FolderDialog.lua
 UI/Dialogs/ImportDialog.lua
 UI/Dialogs/ImportPreviewDialog.lua
@@ -159,7 +161,8 @@ UI/Views/TeamList.lua
 UI/Views/Panels.lua
 UI/Views/TeamSetupPanel.lua
 
-Modules/PetList.lua
 # Modules/Slash.lua
+Modules/PetList.lua
+Modules/AbilitySearch.lua
 Modules/PetJournalFilterExtension.lua
 Core/Addon.lua

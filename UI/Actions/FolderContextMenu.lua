@@ -57,15 +57,15 @@ function FolderContextMenu:Show(owner, folderKey)
 
       rootDescription:CreateDivider()
 
-      local renameButton =
+      local editButton =
           rootDescription:CreateButton(
-            L["RENAME_FOLDER"],
+            L["EDIT_FOLDER"],
             function()
-              self:RenameFolder(folderKey)
+              self:EditFolder(folderKey)
             end
           )
 
-      renameButton:SetEnabled(
+      editButton:SetEnabled(
         not isVirtual
         and folder ~= nil
       )
@@ -108,14 +108,14 @@ function FolderContextMenu:Show(owner, folderKey)
   )
 end
 
-function FolderContextMenu:RenameFolder(folderKey)
+function FolderContextMenu:EditFolder(folderKey)
   local folder = addon.Services.Folder:Get(folderKey)
 
   if not folder then
     return
   end
 
-  addon.UI.Dialogs.FolderDialog:ShowRename(
+  addon.UI.Dialogs.FolderDialog:ShowEdit(
     folder
   )
 end

@@ -46,6 +46,28 @@ local function SetArrowExpanded(arrow, expanded)
   end
 end
 
+local function GetFolderColor(hex)
+  if type(hex) ~= "string" then
+    return nil
+  end
+
+  hex = hex:gsub("^#", "")
+
+  if #hex == 8 then
+    hex = hex:sub(3)
+  end
+
+  if #hex ~= 6 or not hex:match("^%x+$") then
+    return nil
+  end
+
+  local r = tonumber(hex:sub(1, 2), 16)
+  local g = tonumber(hex:sub(3, 4), 16)
+  local b = tonumber(hex:sub(5, 6), 16)
+
+  return r / 255, g / 255, b / 255
+end
+
 function AccordionHeader:Create(parent, options)
   options = options or {}
 
@@ -179,6 +201,80 @@ function AccordionHeader:Create(parent, options)
     0
   )
 
+  --------------------------------------------------
+  -- Folder icon
+  --------------------------------------------------
+  button.Icon = button:CreateTexture(nil, "ARTWORK")
+  button.Icon:SetSize(16, 16)
+
+  button.Icon:SetPoint(
+    "RIGHT",
+    button,
+    "RIGHT",
+    -8,
+    0
+  )
+
+  function button:SetIcon(icon)
+    self.FolderIcon = icon
+
+    if icon then
+      self.Icon:SetTexture(icon)
+      self.Icon:Show()
+    else
+      self.Icon:SetTexture(nil)
+      self.Icon:Hide()
+    end
+
+    self:UpdateLayout()
+  end
+
+  --------------------------------------------------
+  -- Update header layout
+  --------------------------------------------------
+  function button:UpdateLayout()
+    local hasCount = self.Count:IsShown()
+    local hasIcon = self.FolderIcon ~= nil
+
+    self.Count:ClearAllPoints()
+
+    if hasIcon then
+      self.Count:SetPoint(
+        "RIGHT",
+        self.Icon,
+        "LEFT",
+        -8,
+        0
+      )
+    else
+      self.Count:SetPoint(
+        "RIGHT",
+        self,
+        "RIGHT",
+        -8,
+        0
+      )
+    end
+
+    self.Label:ClearAllPoints()
+
+    self.Label:SetPoint(
+      "LEFT",
+      self.Arrow,
+      "RIGHT",
+      12,
+      0
+    )
+
+    self.Label:SetPoint(
+      "RIGHT",
+      self,
+      "RIGHT",
+      hasIcon and -66 or (hasCount and -34 or -8),
+      0
+    )
+  end
+
   function button:SetLabel(label)
     self.Label:SetText(
       label or ""
@@ -189,31 +285,12 @@ function AccordionHeader:Create(parent, options)
     if count == nil then
       self.Count:SetText("")
       self.Count:Hide()
-
-      self.Label:SetPoint(
-        "RIGHT",
-        self,
-        "RIGHT",
-        -8,
-        0
-      )
-
-      return
+    else
+      self.Count:SetText(tostring(count))
+      self.Count:Show()
     end
 
-    self.Count:SetText(
-      tostring(count)
-    )
-
-    self.Count:Show()
-
-    self.Label:SetPoint(
-      "RIGHT",
-      self,
-      "RIGHT",
-      -34,
-      0
-    )
+    self:UpdateLayout()
   end
 
   function button:SetExpanded(expanded)
@@ -223,62 +300,31 @@ function AccordionHeader:Create(parent, options)
 
     if self.Expanded then
       self:SetBackdropBorderColor(0.20, 0.70, 1.00, 1.00)
-      self.Label:SetTextColor(1, 0.82, 0)
     else
       self:SetBackdropBorderColor(0.35, 0.30, 0.20, 0.85)
+    end
+
+    local r, g, b = GetFolderColor(self.FolderColor)
+
+    if r then
+      self.Label:SetTextColor(r, g, b, 1)
+      self.Count:SetTextColor(r, g, b, 0.55)
+    elseif self.Expanded then
+      self.Label:SetTextColor(1, 0.82, 0)
+      self.Count:SetTextColor(0.5, 0.5, 0.5, 1)
+    else
       self.Label:SetTextColor(0.9, 0.9, 0.9)
+      self.Count:SetTextColor(0.5, 0.5, 0.5, 1)
     end
   end
 
-  button:SetScript(
-    "OnMouseDown",
-    function(self)
-      self.Label:ClearAllPoints()
+  button:SetScript("OnMouseDown", function(self)
+    self:UpdateLayout()
+  end)
 
-      self.Label:SetPoint(
-        "LEFT",
-        self.Arrow,
-        "RIGHT",
-        12,
-        0
-      )
-
-      self.Label:SetPoint(
-        "RIGHT",
-        self,
-        "RIGHT",
-        self.Count:IsShown()
-        and -34
-        or -8,
-        0
-      )
-    end
-  )
-
-  button:SetScript(
-    "OnMouseUp",
-    function(self)
-      self.Label:ClearAllPoints()
-
-      self.Label:SetPoint(
-        "LEFT",
-        self.Arrow,
-        "RIGHT",
-        12,
-        0
-      )
-
-      self.Label:SetPoint(
-        "RIGHT",
-        self,
-        "RIGHT",
-        self.Count:IsShown()
-        and -34
-        or -8,
-        0
-      )
-    end
-  )
+  button:SetScript("OnMouseUp", function(self)
+    self:UpdateLayout()
+  end)
 
   button:SetScript(
     "OnClick",
@@ -302,17 +348,12 @@ function AccordionHeader:Create(parent, options)
     end
   )
 
-  button:SetLabel(
-    options.label
-  )
+  button.FolderColor = options.color
 
-  button:SetCount(
-    options.count
-  )
-
-  button:SetExpanded(
-    options.expanded
-  )
+  button:SetLabel(options.label)
+  button:SetCount(options.count)
+  button:SetIcon(options.icon)
+  button:SetExpanded(options.expanded)
 
   return button
 end

@@ -264,6 +264,8 @@ function TeamList:CreateFolderHeader(section, currentOffset)
           label = section.label,
           count = #teams,
           expanded = expanded,
+          color = section.folder and section.folder.color,
+          icon = section.folder and section.folder.icon,
         }
       )
 
@@ -423,10 +425,14 @@ function TeamList:CreateTeamCards(folderKey, currentOffset)
   end
 
   for _, team in ipairs(teams) do
+    local folder = team.folderID
+        and addon.Services.Folder:Get(team.folderID)
+
     local card =
         addon.UI.Components.TeamCard:Create(
           self.Frame.Content,
-          team
+          team,
+          folder and folder.color
         )
 
     card.FolderKey = folderKey

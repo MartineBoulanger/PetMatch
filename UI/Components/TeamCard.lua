@@ -88,7 +88,28 @@ local function GetTargetName(team)
   return nil
 end
 
-function TeamCard:Create(parent, team)
+local function GetFolderColor(hex)
+  if type(hex) ~= "string" then
+    return nil
+  end
+
+  hex = hex:gsub("^#", "")
+
+  if #hex == 8 then
+    hex = hex:sub(3)
+  end
+
+  if #hex ~= 6 or not hex:match("^%x+$") then
+    return nil
+  end
+
+  return
+      tonumber(hex:sub(1, 2), 16) / 255,
+      tonumber(hex:sub(3, 4), 16) / 255,
+      tonumber(hex:sub(5, 6), 16) / 255
+end
+
+function TeamCard:Create(parent, team, folderColor)
   assert(parent, L["PARENT_TEAM_ERROR"])
   assert(team, L["TEAM_CARD_ERROR"])
 
@@ -225,6 +246,7 @@ function TeamCard:Create(parent, team)
   frame.Selected = false
   frame.Hovered = false
   frame.PetSlots = {}
+  frame.FolderColor = folderColor
 
   for slotIndex = 1, 3 do
     local petSlot = addon.UI.Components.PetSlot:Create(frame)
@@ -499,6 +521,14 @@ function TeamCard:Create(parent, team)
     local title = newTeam.name or "Unnamed Team"
 
     self.Title:SetText(title)
+
+    local r, g, b = GetFolderColor(self.FolderColor)
+
+    if r then
+      self.Title:SetTextColor(r, g, b, 1)
+    else
+      self.Title:SetTextColor(1, 0.82, 0, 1)
+    end
 
     local targetName = GetTargetName(newTeam)
 

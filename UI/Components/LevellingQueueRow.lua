@@ -688,6 +688,28 @@ function LevellingQueueRow:OpenContextMenu()
       local count = service:GetCount()
 
       --------------------------------------------------
+      -- Summon / Dismiss Pet
+      --------------------------------------------------
+      local isSummoned =
+          C_PetJournal.GetSummonedPetGUID() == petGUID
+
+      local summon = root:CreateButton(
+        isSummoned and L["DISMISS_LEVELLING_PET"] or L["SUMMON_LEVELLING_PET"],
+        function()
+          if InCombatLockdown() then
+            return
+          end
+
+          C_PetJournal.SummonPetByGUID(petGUID)
+        end
+      )
+
+      summon:SetEnabled(not InCombatLockdown())
+
+
+      root:CreateDivider()
+
+      --------------------------------------------------
       -- Move Up
       --------------------------------------------------
       local moveUp =

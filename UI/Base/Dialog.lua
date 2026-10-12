@@ -4,6 +4,11 @@ local L = addon.L
 local Dialog = {}
 Dialog.__index = Dialog
 
+local dialogStack = {}
+
+local BASE_FRAME_LEVEL = 100
+local FRAME_LEVEL_STEP = 1000
+
 local DEFAULT_WIDTH = 360
 local DEFAULT_HEIGHT = 100
 local DEFAULT_FOOTER_HEIGHT = 48
@@ -75,6 +80,37 @@ local function NormalizeSpacing(value, defaultValue)
   }
 end
 
+local function UpdateDialogStack()
+  for index, dialog in ipairs(dialogStack) do
+    local frame = dialog.Frame
+
+    if frame then
+      frame:SetFrameStrata("FULLSCREEN_DIALOG")
+      frame:SetFrameLevel(
+        BASE_FRAME_LEVEL + (index - 1) * FRAME_LEVEL_STEP
+      )
+    end
+  end
+end
+
+local function RemoveFromDialogStack(dialog)
+  for index = #dialogStack, 1, -1 do
+    if dialogStack[index] == dialog then
+      table.remove(dialogStack, index)
+    end
+  end
+end
+
+local function BringDialogToFront(dialog)
+  RemoveFromDialogStack(dialog)
+
+  table.insert(dialogStack, dialog)
+
+  UpdateDialogStack()
+
+  dialog.Frame:Raise()
+end
+
 function Dialog:Create(options)
   options = options or {}
 
@@ -130,9 +166,10 @@ function Dialog:CreateFrame(options)
   )
 
   frame:SetFrameStrata(
-    options.frameStrata
-    or "DIALOG"
+    options.frameStrata or "FULLSCREEN_DIALOG"
   )
+
+  frame:SetToplevel(false)
 
   frame:SetClampedToScreen(true)
   frame:SetMovable(true)
@@ -203,9 +240,9 @@ end
 
 function Dialog:CreateContent()
   local contentFrame = CreateFrame(
-        "Frame", nil, self.Frame,
-        "BackdropTemplate"
-      )
+    "Frame", nil, self.Frame,
+    "BackdropTemplate"
+  )
 
   local margin = self.ContentMargin
 
@@ -684,10 +721,7 @@ function Dialog:GetFooterFrame()
   return self.Footer
 end
 
-function Dialog:SetSize(
-    width,
-    height
-)
+function Dialog:SetSize(width, height)
   if width then
     self.Width = width
 
@@ -712,18 +746,21 @@ end
 
 function Dialog:Show()
   self.Frame:Show()
-  self.Frame:Raise()
+
+  BringDialogToFront(self)
 
   self:RefreshLayout()
 end
 
 function Dialog:Hide()
+  RemoveFromDialogStack(self)
+
   self.Frame:Hide()
 
+  UpdateDialogStack()
+
   if self.OnClose then
-    self.OnClose(
-      self
-    )
+    self.OnClose(self)
   end
 end
 

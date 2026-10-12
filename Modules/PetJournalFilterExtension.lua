@@ -3497,6 +3497,29 @@ function FilterExtension:ApplyFilters()
     canBattle,
     tradable = C_PetJournal.GetPetInfoByIndex(index)
 
+    local searchText = string.lower(
+      AdvancedSearch.nativeText or ""
+    )
+
+    local matchesSearch = true
+
+    if searchText ~= "" then
+      local petName = string.lower(name or "")
+      local customName = string.lower(_customName or "")
+      local sourceText = string.lower(_sourceText or "")
+      local description = string.lower(_description or "")
+
+      matchesSearch =
+          string.find(petName, searchText, 1, true) ~= nil
+          or string.find(customName, searchText, 1, true) ~= nil
+          or string.find(sourceText, searchText, 1, true) ~= nil
+          or string.find(description, searchText, 1, true) ~= nil
+          or addon.AbilitySearch:MatchesSpecies(
+            speciesID,
+            searchText
+          )
+    end
+
     local matchesPetMatchFilter =
         self:MatchesPet(
           petID,
@@ -3509,7 +3532,7 @@ function FilterExtension:ApplyFilters()
           tradable == true
         )
 
-    if matchesPetMatchFilter and typeFilter then
+    if matchesSearch and matchesPetMatchFilter and typeFilter then
       matchesPetMatchFilter =
           typeFilter:DoesPetDataMatch(
             level,
@@ -3518,7 +3541,7 @@ function FilterExtension:ApplyFilters()
           )
     end
 
-    if matchesPetMatchFilter then
+    if matchesSearch and matchesPetMatchFilter then
       AddPetItem(
         items, index, petID, speciesID,
         isOwned, level, name, petType
@@ -3571,6 +3594,10 @@ function FilterExtension:ApplyFilters()
   self:UpdateFilterBar(#ActiveItems)
 end
 
+function FilterExtension:GetSearchText()
+  return AdvancedSearch.nativeText or ""
+end
+
 function FilterExtension:HookPetJournal()
   if self.PetJournalHooked then
     return
@@ -3619,14 +3646,13 @@ function FilterExtension:HookSearchBox()
 
       if nativeText ~= LastNativeSearchText then
         LastNativeSearchText = nativeText
-        C_PetJournal.SetSearchFilter(nativeText)
-      else
-        --------------------------------------------------
-        -- Native Blizzard search did not change.
-        -- Only our advanced filters changed.
-        --------------------------------------------------
-        QueueImmediateApplyFilters()
+
+        -- Keep Blizzard's search clear so ability
+        -- descriptions cannot be filtered out early.
+        C_PetJournal.SetSearchFilter("")
       end
+
+      QueueImmediateApplyFilters()
     end
   )
 end

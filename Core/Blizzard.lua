@@ -31,10 +31,12 @@ local function GetSearchAbilityHighlights(control)
     return nil
   end
 
-  local searchText = PetJournal.searchBox:GetText()
+  local filterExtension = addon.PetJournalFilterExtension
 
-  searchText = tostring(searchText or "")
-  searchText = string.lower(searchText)
+  local searchText = filterExtension
+      and filterExtension:GetSearchText() or ""
+
+  searchText = string.lower(tostring(searchText))
   searchText = searchText:match("^%s*(.-)%s*$") or ""
 
   if searchText == "" then
@@ -69,17 +71,12 @@ local function GetSearchAbilityHighlights(control)
   )
 
   local matches = nil
+  local abilitySearch = addon.AbilitySearch
 
   for _, abilityID in ipairs(abilityIDs) do
-    local abilityName = C_PetJournal.GetPetAbilityInfo(abilityID)
-
-    if abilityName then
-      local abilityNameLower = string.lower(abilityName)
-
-      if string.find(abilityNameLower, searchText, 1, true) then
-        matches = matches or {}
-        matches[tonumber(abilityID)] = true
-      end
+    if abilitySearch:Matches(abilityID, searchText) then
+      matches = matches or {}
+      matches[tonumber(abilityID)] = true
     end
   end
 

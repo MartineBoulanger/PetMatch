@@ -25,7 +25,7 @@ function FolderService:Get(folderID)
   return self:GetFolders()[folderID]
 end
 
-function FolderService:Create(name)
+function FolderService:Create(name, color, icon)
   name = addon.Utils:Trim(name or "")
 
   if name == "" then
@@ -41,6 +41,8 @@ function FolderService:Create(name)
   end
 
   local folder = addon.Models.Folder:Create(name)
+  folder.color = color
+  folder.icon = icon
 
   local highestOrder = 0
 
@@ -85,6 +87,41 @@ function FolderService:Rename(folderID, name)
   end
 
   folder.name = name
+  folder.modified = time()
+
+  addon.EventBus:Fire(
+    addon.Events.FOLDER_UPDATED,
+    folder
+  )
+
+  return folder
+end
+
+function FolderService:Update(folderID, name, color, icon)
+  local folder = self:Get(folderID)
+
+  if not folder then
+    return nil, L["FOLDER_NOT_FOUND"]
+  end
+
+  name = addon.Utils:Trim(name or "")
+
+  if name == "" then
+    return nil, L["FOLDER_NAME_ERROR"]
+  end
+
+  local normalizedName = string.lower(name)
+
+  for otherID, otherFolder in pairs(self:GetFolders()) do
+    if otherID ~= folderID
+        and string.lower(otherFolder.name or "") == normalizedName then
+      return nil, L["EXIST_FOLDER"]
+    end
+  end
+
+  folder.name = name
+  folder.color = color
+  folder.icon = icon
   folder.modified = time()
 
   addon.EventBus:Fire(

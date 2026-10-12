@@ -34,6 +34,9 @@ local function CreateFilteredDocument(dialog)
     local groupControls = dialog.GroupControls[groupIndex]
     local filteredGroup = {
       name = groupData.name,
+      order = groupData.order,
+      icon = groupData.icon,
+      color = groupData.color,
       teams = {},
     }
 

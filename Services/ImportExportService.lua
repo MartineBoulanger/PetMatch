@@ -715,6 +715,60 @@ local function FindRematchCore(service, fields)
   return nil
 end
 
+local function BuildFolderHeader(folder)
+  local name = folder.name or ""
+  local order = tonumber(folder.order) or 0
+
+  local icon = ""
+  if folder.icon then
+    icon = EncodeBase32(folder.icon) or ""
+  end
+
+  local color = ""
+  if type(folder.color) == "string" then
+    color = folder.color:gsub("^#", ""):upper()
+
+    if #color == 8 then
+      color = color:sub(3)
+    end
+  end
+
+  return string.format(
+    "__ %s:%s:%s:%s:: __",
+    name,
+    tostring(order),
+    icon,
+    color
+  )
+end
+
+local function ResolveImportedFolder(groupData, defaultFolderID)
+  if not groupData.name then
+    return defaultFolderID, nil
+  end
+
+  local name = addon.Utils:Trim(groupData.name)
+
+  if string.lower(name) == "unsorted" then
+    return nil, nil
+  end
+
+  local folderService = addon.Services.Folder
+  local folder = folderService:FindByName(name)
+
+  if not folder then
+    folder = folderService:Create(
+      name, groupData.color, groupData.icon
+    )
+  end
+
+  if not folder then
+    return defaultFolderID, nil
+  end
+
+  return folder.id, folder
+end
+
 function ImportExportService:NeedsPreview(document)
   if not document
       or not document.groups then
@@ -985,40 +1039,16 @@ function ImportExportService:ImportRematchDocument(document, options)
   local resolvedPetsBySpeciesID = {}
 
   for _, groupData in ipairs(document.groups or {}) do
-    local folderID = defaultFolderID
+    local folderID, folder = ResolveImportedFolder(
+      groupData, defaultFolderID
+    )
 
-    if groupData.name then
-      if string.lower(
-            addon.Utils:Trim(groupData.name)
-          ) == "unsorted" then
-        folderID = nil
-      else
-        local folder =
-            addon.Services.Folder:FindByName(
-              groupData.name
-            )
-
-        if not folder then
-          folder =
-              addon.Services.Folder:Create(
-                groupData.name
-              )
-        end
-
-        if folder then
-          folderID = folder.id
-
-          result.folders[
-          #result.folders + 1
-          ] = folder
-        else
-          result.warnings[
-          #result.warnings + 1
-          ] =
-              L["UNABLE_FOLDER_CREATE"]
-              .. groupData.name
-        end
-      end
+    if folder then
+      result.folders[#result.folders + 1] = folder
+    elseif groupData.name
+        and string.lower(addon.Utils:Trim(groupData.name)) ~= "unsorted" then
+      result.warnings[#result.warnings + 1] =
+          L["UNABLE_FOLDER_CREATE"] .. groupData.name
     end
 
     for _, teamData in ipairs(groupData.teams or {}) do
@@ -1141,54 +1171,20 @@ function ImportExportService:ImportRematchDocumentAsync(document, options)
 
   local workItems = {}
 
-  for _, groupData in ipairs(
-    document.groups or {}
-  ) do
-    local folderID = defaultFolderID
+  for _, groupData in ipairs(document.groups or {}) do
+    local folderID, folder = ResolveImportedFolder(
+      groupData, defaultFolderID
+    )
 
-    if groupData.name then
-      if string.lower(
-            addon.Utils:Trim(
-              groupData.name
-            )
-          ) == "unsorted" then
-        folderID = nil
-      else
-        local folder =
-            addon.Services.Folder:
-            FindByName(
-              groupData.name
-            )
-
-        if not folder then
-          folder =
-              addon.Services.Folder:
-              Create(
-                groupData.name
-              )
-        end
-
-        if folder then
-          folderID =
-              folder.id
-
-          result.folders[
-          #result.folders + 1
-          ] =
-              folder
-        else
-          result.warnings[
-          #result.warnings + 1
-          ] =
-              L["UNABLE_FOLDER_CREATE"]
-              .. groupData.name
-        end
-      end
+    if folder then
+      result.folders[#result.folders + 1] = folder
+    elseif groupData.name
+        and string.lower(addon.Utils:Trim(groupData.name)) ~= "unsorted" then
+      result.warnings[#result.warnings + 1] =
+          L["UNABLE_FOLDER_CREATE"] .. groupData.name
     end
 
-    for _, teamData in ipairs(
-      groupData.teams or {}
-    ) do
+    for _, teamData in ipairs(groupData.teams or {}) do
       workItems[
       #workItems + 1
       ] = {
@@ -1600,6 +1596,7 @@ function ImportExportService:ParseRematchGroupHeader(line)
     return nil, L["NO_FOLDER_NAME"]
   end
 
+  -- Old format: __ Folder Name __
   if not inner:find(":", 1, true) then
     return {
       name = inner,
@@ -1607,13 +1604,40 @@ function ImportExportService:ParseRematchGroupHeader(line)
     }
   end
 
+  -- New format: __ Folder Name:<order>:<icon>:<color>:: __
   local fields = SplitPreservingEmpty(inner, ":")
 
+  local name = Trim(fields[1] or "")
+
+  if name == "" then
+    return nil, L["NO_FOLDER_NAME"]
+  end
+
+  local order = tonumber(fields[2])
+
+  -- Rematch Base32 icon -> PetMatch numeric Texture ID
+  local icon = nil
+  if fields[3] and fields[3] ~= "" then
+    icon = DecodeBase32(fields[3])
+  end
+
+  -- Rematch RRGGBB -> PetMatch AARRGGBB
+  local color = nil
+  if fields[4] and fields[4] ~= "" then
+    local hex = fields[4]:gsub("^#", ""):upper()
+
+    if #hex == 6 and hex:match("^[0-9A-F]+$") then
+      color = "FF" .. hex
+    elseif #hex == 8 and hex:match("^[0-9A-F]+$") then
+      color = hex
+    end
+  end
+
   return {
-    name = Trim(fields[1]),
-    sort = tonumber(fields[2]),
-    icon = fields[3] ~= "" and fields[3] or nil,
-    color = fields[4] ~= "" and fields[4] or nil,
+    name = name,
+    order = order,
+    icon = icon,
+    color = color,
     teams = {},
   }
 end
@@ -1647,12 +1671,9 @@ function ImportExportService:ParseRematchDocument(value)
             self:ParseRematchGroupHeader(line)
 
         if not group then
-          document.warnings[#document.warnings + 1] =
-              errorMessage
+          document.warnings[#document.warnings + 1] = errorMessage
         else
-          document.groups[#document.groups + 1] =
-              group
-
+          document.groups[#document.groups + 1] = group
           currentGroup = group
         end
       else
@@ -1826,18 +1847,10 @@ function ImportExportService:ParseRematchDocumentAsync(value, options)
               )
 
           if not group then
-            document.warnings[
-            #document.warnings + 1
-            ] =
-                errorMessage
+            document.warnings[#document.warnings + 1] = errorMessage
           else
-            document.groups[
-            #document.groups + 1
-            ] =
-                group
-
-            currentGroup =
-                group
+            document.groups[#document.groups + 1] = group
+            currentGroup = group
           end
         else
           local team,
@@ -2198,8 +2211,7 @@ function ImportExportService:ExportAll()
     end
 
     if #teams > 0 then
-      lines[#lines + 1] =
-          "__ " .. folder.name .. " __"
+      lines[#lines + 1] = BuildFolderHeader(folder)
 
       for _, team in ipairs(teams) do
         local exportString,
@@ -2297,9 +2309,8 @@ function ImportExportService:ExportFolder(folderKey)
   end
 
   local lines = {
-    "__ " .. folder.name .. " __",
+    BuildFolderHeader(folder),
   }
-
   for _, team in ipairs(teams) do
     local exportString,
     errorMessage =
