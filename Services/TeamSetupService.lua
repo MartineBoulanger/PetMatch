@@ -281,4 +281,21 @@ function TeamSetupService:IsTargetDifferent(targetNPCIDs)
   return false
 end
 
+function TeamSetupService:Initialize()
+  if self.Initialized then
+    return
+  end
+
+  self.Initialized = true
+
+  addon.EventBus:Register(
+    addon.Events.PROFILE_CHANGED,
+    function()
+      self:Exit()
+      self:ClearSlots()
+      self:ClearTargetNPC()
+    end
+  )
+end
+
 addon.Services.TeamSetup = TeamSetupService

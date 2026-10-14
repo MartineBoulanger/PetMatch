@@ -75,6 +75,16 @@ function LoadoutMonitorService:Initialize()
     end
   )
 
+  --------------------------------------------------
+  -- Profile changed
+  --------------------------------------------------
+  addon.EventBus:Register(
+    addon.Events.PROFILE_CHANGED,
+    function()
+      self:ScheduleCheck()
+    end
+  )
+
   self:ScheduleCheck()
 end
 

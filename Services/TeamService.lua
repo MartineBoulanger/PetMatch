@@ -1,7 +1,9 @@
 local _, addon = ...
 
 local L = addon.L
-local TeamService = {}
+local TeamService = {
+  LoadedTeam = nil,
+}
 
 local function GetProfile()
   return addon.Profiles:GetCurrentProfile()
@@ -110,6 +112,20 @@ function TeamService:GetActive()
   return self:Get(profile.activeTeam)
 end
 
+function TeamService:GetLoadedTeam()
+  local loaded = self.LoadedTeam
+
+  if not loaded then
+    return nil
+  end
+
+  if loaded.profileName ~= addon.Profiles:GetCurrentProfileName() then
+    return nil
+  end
+
+  return self:Get(loaded.teamID)
+end
+
 function TeamService:AddToFolder(teamID, folderID)
   local team = self:Get(teamID)
   if not team then
@@ -182,6 +198,14 @@ function TeamService:Delete(teamID)
   end
 
   teams[teamID] = nil
+
+  local loaded = self.LoadedTeam
+
+  if loaded
+      and loaded.profileName == addon.Profiles:GetCurrentProfileName()
+      and loaded.teamID == teamID then
+    self.LoadedTeam = nil
+  end
 
   local profile = addon.Profiles:GetCurrentProfile()
 
@@ -317,7 +341,6 @@ function TeamService:Load(teamID)
   end
 
   local profile = GetProfile()
-
   local preserveCurrentDuplicates = profile.activeTeam == teamID
 
   addon.Services.TeamSetup:SetSlots(team.specialSlots)
@@ -336,6 +359,11 @@ function TeamService:Load(teamID)
   end
 
   self:SetActive(team.id)
+
+  self.LoadedTeam = {
+    profileName = addon.Profiles:GetCurrentProfileName(),
+    teamID = team.id,
+  }
 
   addon.EventBus:Fire(
     addon.Events.TEAM_LOADED,
@@ -1056,6 +1084,8 @@ function TeamService:LoadFromImport(importData)
     return false, loadError, missingSpecies
   end
 
+  self.LoadedTeam = nil
+
   addon.EventBus:Fire(
     addon.Events.TEAM_LOADED,
     importedTeam
@@ -1107,7 +1137,7 @@ function TeamService:GetUniqueName(name, folderID)
 end
 
 function TeamService:SetSelected(id)
-  addon.Settings:SetUI(
+  addon.Settings:Set(
     "selectedTeamID",
     id
   )

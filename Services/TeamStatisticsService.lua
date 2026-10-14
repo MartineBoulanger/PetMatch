@@ -185,8 +185,7 @@ function TeamStatisticsService:RecordResult(team, battleType, result)
 end
 
 function TeamStatisticsService:StartBattle()
-  local team =
-      addon.Services.Team:GetActive()
+  local team = addon.Services.Team:GetLoadedTeam()
 
   if not team then
     self.ActiveBattle = nil
@@ -194,6 +193,7 @@ function TeamStatisticsService:StartBattle()
   end
 
   self.ActiveBattle = {
+    profileName = addon.Profiles:GetCurrentProfileName(),
     teamID = team.id,
     battleType = GetBattleType(),
     result = nil,
@@ -225,8 +225,11 @@ function TeamStatisticsService:EndBattle()
     return
   end
 
-  local team =
-      addon.Services.Team:Get(battle.teamID)
+  if battle.profileName ~= addon.Profiles:GetCurrentProfileName() then
+    return
+  end
+
+  local team = addon.Services.Team:Get(battle.teamID)
 
   if not team then
     return

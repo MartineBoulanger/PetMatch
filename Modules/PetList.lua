@@ -2730,10 +2730,6 @@ function PetList:Initialize()
   )
 
   self:RegisterRefreshEvent(
-    addon.Events.TEAM_LOADED
-  )
-
-  self:RegisterRefreshEvent(
     addon.Events.TEAM_UPDATED
   )
 

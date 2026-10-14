@@ -314,9 +314,7 @@ end
 function FolderService:GetSelectedKey()
   local selectedKey = addon.Settings:Get("selectedFolderKey")
 
-  if selectedKey == self.ALL
-      or selectedKey == self.UNSORTED
-      or selectedKey == self.FAVORITES then
+  if selectedKey == self.UNSORTED or selectedKey == self.FAVORITES then
     return selectedKey
   end
 
@@ -325,7 +323,7 @@ function FolderService:GetSelectedKey()
     return selectedKey
   end
 
-  return self.ALL
+  return self.UNSORTED
 end
 
 function FolderService:GetSortedFolders()

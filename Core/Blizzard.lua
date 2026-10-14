@@ -131,7 +131,7 @@ local function AutoOpenPvENotes()
     return
   end
 
-  local team = teamService:GetActive()
+  local team = teamService:GetLoadedTeam()
 
   if not team then
     return
@@ -387,7 +387,7 @@ function Blizzard:Initialize()
     function()
       addon.UI.Host:Update()
       ApplyCompactPetCardLayout()
-      local team = addon.Services.Team and addon.Services.Team:GetActive()
+      local team = addon.Services.Team and addon.Services.Team:GetLoadedTeam()
       UpdateLoadoutTitle(team)
       UpdatePetLoadoutRarityColors()
     end
@@ -439,6 +439,14 @@ function Blizzard:Initialize()
     end
   )
 
+  addon.EventBus:Register(
+    addon.Events.PROFILE_CHANGED,
+    function()
+      local team = addon.Services.Team:GetLoadedTeam()
+      UpdateLoadoutTitle(team)
+    end
+  )
+
   hooksecurefunc(
     "PetJournal_InitPetButton",
     function(button)
@@ -474,6 +482,10 @@ function Blizzard:Initialize()
 
   if addon.Services.LevellingQueue then
     addon.Services.LevellingQueue:Initialize()
+  end
+
+  if addon.Services.TeamSetup then
+    addon.Services.TeamSetup:Initialize()
   end
 
   if addon.Services.LoadoutMonitor then

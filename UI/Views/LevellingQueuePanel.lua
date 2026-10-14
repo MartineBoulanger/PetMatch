@@ -751,6 +751,20 @@ function LevellingQueuePanel:RegisterEvents()
   )
 
   --------------------------------------------------
+  -- Profile changed
+  --------------------------------------------------
+  addon.EventBus:Register(
+    addon.Events.PROFILE_CHANGED,
+    function()
+      if not self.Frame then
+        return
+      end
+
+      self:Refresh()
+    end
+  )
+
+  --------------------------------------------------
   -- Pet data changed
   --------------------------------------------------
   addon.EventBus:Register(

@@ -31,6 +31,7 @@ function UnloadTeamButton:Unload()
 
   if teamService then
     teamService:ClearActive()
+    teamService.LoadedTeam = nil
   end
 
   --------------------------------------------------

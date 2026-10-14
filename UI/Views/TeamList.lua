@@ -202,6 +202,19 @@ function TeamList:RegisterEvents()
       self:Refresh()
     end
   )
+
+  addon.EventBus:Register(
+    addon.Events.PROFILE_CHANGED,
+    function()
+      if not self.Frame then
+        return
+      end
+
+      self.ExpandedFolderKey = addon.Services.Folder.UNSORTED
+
+      self:Refresh()
+    end
+  )
 end
 
 function TeamList:ClearItems()

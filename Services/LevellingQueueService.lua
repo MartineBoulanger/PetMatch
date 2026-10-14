@@ -40,8 +40,7 @@ local function GetPetInfo(petGUID)
     return nil
   end
 
-  local petService =
-      addon.Services.PetJournal
+  local petService = addon.Services.PetJournal
 
   if not petService then
     return nil
@@ -110,17 +109,10 @@ function LevellingQueueService:RemoveCompletedPets()
     local pet = GetPetInfo(petGUID)
 
     if pet then
-      local level =
-          tonumber(
-            pet.level
-          )
+      local level = tonumber(pet.level)
 
-      if level
-          and level >= MAX_PET_LEVEL then
-        table.remove(
-          queue,
-          index
-        )
+      if level and level >= MAX_PET_LEVEL then
+        table.remove(queue, index)
 
         addon.EventBus:Fire(
           addon.Events.LEVELLING_QUEUE_PET_REMOVED,
@@ -140,15 +132,13 @@ function LevellingQueueService:RemoveCompletedPets()
       0,
       function()
         local battleSlotService =
-            addon.Services
-            and addon.Services.BattleSlot
+            addon.Services and addon.Services.BattleSlot
 
         if battleSlotService
             and type(
               battleSlotService.RefreshLevellingSlots
             ) == "function" then
-          battleSlotService:
-              RefreshLevellingSlots()
+          battleSlotService:RefreshLevellingSlots()
         end
       end
     )
@@ -165,9 +155,7 @@ function LevellingQueueService:GetIndex(petGUID)
     return nil
   end
 
-  for index, queuedGUID in ipairs(
-    self:GetAll()
-  ) do
+  for index, queuedGUID in ipairs(self:GetAll()) do
     if queuedGUID == petGUID then
       return index
     end
@@ -252,10 +240,7 @@ function LevellingQueueService:Remove(petGUID)
 
   local queue = self:GetAll()
 
-  table.remove(
-    queue,
-    index
-  )
+  table.remove(queue, index)
 
   addon.EventBus:Fire(
     addon.Events.LEVELLING_QUEUE_PET_REMOVED,
@@ -317,10 +302,7 @@ function LevellingQueueService:Move(petGUID, targetIndex)
     return false
   end
 
-  targetIndex =
-      tonumber(
-        targetIndex
-      )
+  targetIndex = tonumber(targetIndex)
 
   if not targetIndex then
     return false
@@ -328,28 +310,14 @@ function LevellingQueueService:Move(petGUID, targetIndex)
 
   targetIndex = math.floor(targetIndex)
   targetIndex =
-      math.max(
-        1,
-        math.min(
-          #queue,
-          targetIndex
-        )
-      )
+      math.max(1, math.min(#queue, targetIndex))
 
   if currentIndex == targetIndex then
     return true
   end
 
-  table.remove(
-    queue,
-    currentIndex
-  )
-
-  table.insert(
-    queue,
-    targetIndex,
-    petGUID
-  )
+  table.remove(queue, currentIndex)
+  table.insert(queue, targetIndex, petGUID)
 
   addon.EventBus:Fire(
     addon.Events.LEVELLING_QUEUE_ORDER_CHANGED,
@@ -370,10 +338,7 @@ function LevellingQueueService:MoveUp(petGUID)
     return false
   end
 
-  return self:Move(
-    petGUID,
-    index - 1
-  )
+  return self:Move(petGUID, index - 1)
 end
 
 function LevellingQueueService:MoveDown(petGUID)
@@ -384,10 +349,7 @@ function LevellingQueueService:MoveDown(petGUID)
     return false
   end
 
-  return self:Move(
-    petGUID,
-    index + 1
-  )
+  return self:Move(petGUID, index + 1)
 end
 
 --------------------------------------------------
@@ -484,8 +446,7 @@ function LevellingQueueService:Sort(sortMode)
       -- Keep the existing relative order whenever
       -- the selected sort value is equal.
       ------------------------------------------------
-      return
-          (originalIndex[leftGUID] or 0) < (originalIndex[rightGUID] or 0)
+      return (originalIndex[leftGUID] or 0) < (originalIndex[rightGUID] or 0)
     end
   )
 
@@ -505,22 +466,14 @@ local function GetLevellingProgress(pet)
   local fraction = 0
 
   if maxXP > 0 then
-    fraction =
-        math.max(
-          0,
-          math.min(
-            1,
-            xp / maxXP
-          )
-        )
+    fraction = math.max(0, math.min(1, xp / maxXP))
   end
 
   return level + fraction
 end
 
 function LevellingQueueService:GetFillCandidates()
-  local petService =
-      addon.Services.PetJournal
+  local petService = addon.Services.PetJournal
 
   if not petService then
     return {}
@@ -540,17 +493,14 @@ function LevellingQueueService:GetFillCandidates()
   --------------------------------------------------
   local queued = {}
 
-  for _, queuedGUID in ipairs(
-    self:GetAll()
-  ) do
+  for _, queuedGUID in ipairs(self:GetAll()) do
     queued[queuedGUID] = true
   end
 
   local candidates = {}
 
   for petGUID, cachedPet in pairs(cache) do
-    if type(cachedPet) == "table"
-        and queued[petGUID] ~= true
+    if type(cachedPet) == "table" and queued[petGUID] ~= true
         and CanBeLevelled(cachedPet) then
       --------------------------------------------------
       -- The cache has no experience, so read the
@@ -558,8 +508,7 @@ function LevellingQueueService:GetFillCandidates()
       --------------------------------------------------
       local pet = GetPetInfo(petGUID)
 
-      if pet
-          and CanBeLevelled(pet) then
+      if pet and CanBeLevelled(pet) then
         candidates[#candidates + 1] = {
           petGUID = petGUID,
           pet = pet,
@@ -598,8 +547,7 @@ function LevellingQueueService:GetFillCandidates()
 end
 
 function LevellingQueueService:HasFillCandidates()
-  local petService =
-      addon.Services.PetJournal
+  local petService = addon.Services.PetJournal
 
   if not petService then
     return false
@@ -613,15 +561,12 @@ function LevellingQueueService:HasFillCandidates()
 
   local queued = {}
 
-  for _, queuedGUID in ipairs(
-    self:GetAll()
-  ) do
+  for _, queuedGUID in ipairs(self:GetAll()) do
     queued[queuedGUID] = true
   end
 
   for petGUID, cachedPet in pairs(cache) do
-    if type(cachedPet) == "table"
-        and queued[petGUID] ~= true
+    if type(cachedPet) == "table" and queued[petGUID] ~= true
         and CanBeLevelled(cachedPet) then
       return true
     end
@@ -637,10 +582,8 @@ function LevellingQueueService:Fill(candidates)
     return 0
   end
 
-  candidates =
-      type(candidates) == "table"
-      and candidates
-      or self:GetFillCandidates()
+  candidates = type(candidates) == "table"
+      and candidates or self:GetFillCandidates()
 
   if #candidates == 0 then
     return 0
@@ -660,27 +603,21 @@ function LevellingQueueService:Fill(candidates)
     queued[queuedGUID] = true
   end
 
-  local cache =
-      addon.Services.PetJournal
+  local cache = addon.Services.PetJournal
       and addon.Services.PetJournal:GetAll()
 
   local function IsStillEligible(candidate)
     local petGUID = candidate.petGUID
 
-    if not petGUID
-        or queued[petGUID] == true then
+    if not petGUID or queued[petGUID] == true then
       return false
     end
 
     if type(cache) == "table" then
-      return CanBeLevelled(
-        cache[petGUID]
-      )
+      return CanBeLevelled(cache[petGUID])
     end
 
-    return CanBeLevelled(
-      candidate.pet
-    )
+    return CanBeLevelled(candidate.pet)
   end
 
   for _, candidate in ipairs(candidates) do
@@ -721,9 +658,7 @@ end
 function LevellingQueueService:GetPets()
   local result = {}
 
-  for index, petGUID in ipairs(
-    self:GetAll()
-  ) do
+  for index, petGUID in ipairs(self:GetAll()) do
     local pet = GetPetInfo(petGUID)
 
     if pet then
@@ -771,7 +706,6 @@ function LevellingQueueService:HandlePetJournalUpdated(cache)
   -- Later scans:
   -- detect genuinely new pets.
   --------------------------------------------------
-
   local autoAdd = addon.Settings:Get("levellingQueueAutoAddMode") == "enabled"
 
   for petGUID, pet in pairs(cache) do
@@ -783,14 +717,10 @@ function LevellingQueueService:HandlePetJournalUpdated(cache)
     -- This is intentional even when auto-add
     -- is disabled.
     --------------------------------------------------
-
     data.knownPets[petGUID] = true
 
-    if isNew
-        and autoAdd
-        and type(pet) == "table"
-        and CanBeLevelled(pet)
-        and not self:Contains(petGUID) then
+    if isNew and autoAdd and type(pet) == "table"
+        and CanBeLevelled(pet) and not self:Contains(petGUID) then
       self:Add(petGUID)
     end
   end

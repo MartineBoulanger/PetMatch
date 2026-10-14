@@ -111,6 +111,20 @@ function OptionsList:RegisterEvents()
       end
     end
   )
+
+  --------------------------------------------------
+  -- Profile changed
+  --------------------------------------------------
+  addon.EventBus:Register(
+    addon.Events.PROFILE_CHANGED,
+    function()
+      if not self.Frame then
+        return
+      end
+
+      self:Refresh()
+    end
+  )
 end
 
 function OptionsList:ClearItems()
