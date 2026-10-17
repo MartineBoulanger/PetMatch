@@ -479,6 +479,8 @@ function OptionsList:CreateRadioButton(
     end
   )
 
+  addon.SkinManager:ApplyCheckButton(button)
+
   return button
 end
 
@@ -529,6 +531,8 @@ function OptionsList:CreateCheckbox(
       end
     end
   )
+
+  addon.SkinManager:ApplyCheckButton(button)
 
   return button
 end

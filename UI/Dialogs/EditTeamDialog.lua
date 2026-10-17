@@ -159,6 +159,8 @@ function EditTeamDialog:CreateContent(dialog)
   --------------------------------------------------
   self.NameInput:SetScript("OnEnterPressed", function() dialog:Cancel() end)
   self.NameInput:SetScript("OnEscapePressed", function() dialog:Cancel() end)
+
+  addon.SkinManager:ApplyEditBox(self.NameInput)
 end
 
 --------------------------------------------------

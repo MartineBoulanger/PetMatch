@@ -146,7 +146,7 @@ function DeleteFolderDialog:Show(folder)
   else
     teamText =
         tostring(teamCount)
-        .. L["TEAMS"]
+        .. L["DEL_TEAMS"]
   end
 
   dialogInstance.folder = folder

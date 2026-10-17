@@ -6,7 +6,9 @@ local Database = {}
 local DEFAULT_DATABASE = {
   version = 1,
   global = {
-    settings = {},
+    settings = {
+      uiSkin = "default",
+    },
   },
   profiles = {
     Default = {

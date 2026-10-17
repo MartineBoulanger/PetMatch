@@ -45,6 +45,8 @@ local function CreatePetIcon(parent)
 
   button.RarityBorder = rarityBorder
 
+  addon.SkinManager:ApplyPetIcon(button)
+
   return button
 end
 
@@ -107,6 +109,8 @@ function TargetTeamCard:Initialize()
   })
 
   frame:SetBackdropBorderColor(0.35, 0.35, 0.35, 1.00)
+
+  addon.SkinManager:ApplyTargetTeamCard(frame)
 
   --------------------------------------------------
   -- Enemy pets

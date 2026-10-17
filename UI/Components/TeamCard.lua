@@ -14,6 +14,29 @@ local SLOT_SPACING = 0
 local SLOT_START_X = 2
 
 local function ApplyVisualState(frame)
+  --------------------------------------------------
+  -- ElvUI skin
+  --------------------------------------------------
+  if frame.PetMatchElvUITeamCardSkinned then
+    frame:SetBackdropColor(0.06, 0.06, 0.06, 0.90)
+
+    if frame.Selected then
+      -- Selected: blue border
+      frame:SetBackdropBorderColor(0.15, 0.55, 1, 1)
+    elseif frame.Hovered then
+      -- Hover: subtle blue border
+      frame:SetBackdropBorderColor(0.15, 0.55, 1, 0.85)
+    else
+      -- Normal: black border
+      frame:SetBackdropBorderColor(0, 0, 0, 1)
+    end
+
+    return
+  end
+
+  --------------------------------------------------
+  -- Default PetMatch skin
+  --------------------------------------------------
   if frame.Selected then
     frame:SetBackdropBorderColor(0.20, 0.70, 1.00, 1.00)
   else
@@ -755,6 +778,9 @@ function TeamCard:Create(parent, team, folderColor)
   end)
 
   frame:SetTeam(team)
+
+  addon.SkinManager:ApplyTeamCard(frame)
+
   ApplyVisualState(frame)
 
   return frame

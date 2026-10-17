@@ -262,6 +262,11 @@ L["DELETE_PROFILE_PROMPT"] =
 L["DELETE_PROFILE_INFO"] = "Profilo eliminato: "
 L["DELETE_PROFILE_ERROR"] = "Impossibile eliminare il profilo."
 L["NO_DELETE_DEFAULT"] = "L'impostazione predefinita non può essere eliminata."
+L["UI_SKIN"] = "Aspetto dell'interfaccia"
+L["UI_SKIN_DESCRIPTION"] =
+"Seleziona l'aspetto dell'interfaccia per PetMatch. Questa impostazione si applica a tutti i profili.\nÈ necessario ricaricare l'interfaccia per visualizzare la modifica."
+L["UI_SKIN_DEFAULT"] = "Predefinito di PetMatch"
+L["RELOAD_UI"] = "Ricarica interfaccia"
 
 -- UI/Base
 L["BUTTON"] = "Pulsante"
@@ -300,7 +305,7 @@ L["UNABLE_DELETE_FOLDER"] = "Impossibile eliminare la cartella"
 L["MOVE_TO_UNSORTED"] = "Sposta in Non classificati"
 L["DELETE_TEAMS"] = "Elimina squadre"
 L["ONE_TEAM"] = "1 squadra"
-L["TEAMS"] = " squadre"
+L["DEL_TEAMS"] = " squadre"
 L["TEAM"] = "Squadra"
 L["DELETE_FOLDER1"] = "Elimina cartella \""
 L["DELETE_FOLDER2"] = "Questa cartella contiene "

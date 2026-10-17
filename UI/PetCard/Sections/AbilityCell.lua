@@ -270,6 +270,9 @@ function AbilityCell:Create(parent)
     end
   )
 
+  addon.SkinManager:ApplyPetCardAbilityCell(self)
+  addon.SkinManager:ApplyPetCardAbilityIcon(self)
+
   return self
 end
 

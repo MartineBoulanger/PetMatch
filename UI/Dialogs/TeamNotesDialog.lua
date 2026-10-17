@@ -203,6 +203,11 @@ function TeamNotesDialog:CreateContent(dialog)
 
   self.ScrollFrame:SetScrollChild(self.Input)
 
+  addon.SkinManager:ApplyMultiLineEditBox(
+    self.InputBackground,
+    self.ScrollFrame
+  )
+
   --------------------------------------------------
   -- Keep scroll range correct
   --------------------------------------------------

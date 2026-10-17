@@ -259,6 +259,11 @@ L["DELETE_PROFILE_PROMPT"] = "您確定要刪除設定檔“%s”嗎？\n\n此�
 L["DELETE_PROFILE_INFO"] = "個人資料已刪除："
 L["DELETE_PROFILE_ERROR"] = "無法刪除個人資料。"
 L["NO_DELETE_DEFAULT"] = "預設值無法刪除。"
+L["UI_SKIN"] = "使用者介面皮膚"
+L["UI_SKIN_DESCRIPTION"] =
+"選擇 PetMatch 的使用者介面皮膚。此設定將套用於所有個人資料。\n您需要重新載入使用者介面才能看到皮膚變更。"
+L["UI_SKIN_DEFAULT"] = "PetMatch 預設皮膚"
+L["RELOAD_UI"] = "重新載入使用者介面"
 
 -- UI/Base
 L["BUTTON"] = "按鈕"
@@ -296,7 +301,7 @@ L["UNABLE_DELETE_FOLDER"] = "無法刪除資料夾"
 L["MOVE_TO_UNSORTED"] = "移動到未分類資料夾"
 L["DELETE_TEAMS"] = "刪除團隊"
 L["ONE_TEAM"] = "1 個團隊"
-L["TEAMS"] = " 個團隊"
+L["DEL_TEAMS"] = " 個團隊"
 L["TEAM"] = "團隊"
 L["DELETE_FOLDER1"] = "刪除資料夾"
 L["DELETE_FOLDER2"] = "此資料夾包含"

@@ -33,6 +33,8 @@ function Button:Create(parent, options)
     )
   end
 
+  addon.SkinManager:ApplyButton(button)
+
   return button
 end
 

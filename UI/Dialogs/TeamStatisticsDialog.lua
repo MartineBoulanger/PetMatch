@@ -253,6 +253,10 @@ function TeamStatisticsDialog:CreateContent(dialog)
     end
   )
 
+  addon.SkinManager:ApplyDialogTab(self.OverallTab)
+  addon.SkinManager:ApplyDialogTab(self.PvETab)
+  addon.SkinManager:ApplyDialogTab(self.PvPTab)
+
   --------------------------------------------------
   -- Statistics labels
   --------------------------------------------------

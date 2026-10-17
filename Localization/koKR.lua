@@ -261,6 +261,11 @@ L["DELETE_PROFILE_PROMPT"] =
 L["DELETE_PROFILE_INFO"] = "프로필이 삭제되었습니다: "
 L["DELETE_PROFILE_ERROR"] = "프로필을 삭제할 수 없습니다."
 L["NO_DELETE_DEFAULT"] = "기본값은 삭제할 수 없습니다."
+L["UI_SKIN"] = "UI 스킨"
+L["UI_SKIN_DESCRIPTION"] =
+"PetMatch의 UI 스킨을 선택하세요. 이 설정은 모든 프로필에 적용됩니다.\n스킨 변경 사항을 확인하려면 UI를 새로고침해야 합니다."
+L["UI_SKIN_DEFAULT"] = "PetMatch 기본값"
+L["RELOAD_UI"] = "UI 새로고침"
 
 -- UI/Base
 L["BUTTON"] = "버튼"
@@ -298,7 +303,7 @@ L["UNABLE_DELETE_FOLDER"] = "폴더를 삭제할 수 없습니다"
 L["MOVE_TO_UNSORTED"] = "미분류로 이동"
 L["DELETE_TEAMS"] = "팀 삭제"
 L["ONE_TEAM"] = "1개 팀"
-L["TEAMS"] = "개 팀"
+L["DEL_TEAMS"] = "개 팀"
 L["TEAM"] = "팀"
 L["DELETE_FOLDER1"] = "\""
 L["DELETE_FOLDER2"] = "폴더에 포함된 항목: "

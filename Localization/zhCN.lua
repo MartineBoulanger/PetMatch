@@ -259,6 +259,11 @@ L["DELETE_PROFILE_PROMPT"] = "您确定要删除配置文件“%s”吗？\n\n�
 L["DELETE_PROFILE_INFO"] = "个人资料已删除："
 L["DELETE_PROFILE_ERROR"] = "无法删除个人资料。"
 L["NO_DELETE_DEFAULT"] = "默认值无法删除。"
+L["UI_SKIN"] = "界面外观"
+L["UI_SKIN_DESCRIPTION"] =
+"为 PetMatch 选择界面外观。此设置适用于所有配置文件。\n更改外观后，需要重新加载界面才能生效。"
+L["UI_SKIN_DEFAULT"] = "PetMatch 默认"
+L["RELOAD_UI"] = "重新加载界面"
 
 -- UI/Base
 L["BUTTON"] = "按钮"
@@ -296,7 +301,7 @@ L["UNABLE_DELETE_FOLDER"] = "无法删除文件夹"
 L["MOVE_TO_UNSORTED"] = "移动到未分类"
 L["DELETE_TEAMS"] = "删除队伍"
 L["ONE_TEAM"] = "1 支队伍"
-L["TEAMS"] = " 支队伍"
+L["DEL_TEAMS"] = " 支队伍"
 L["TEAM"] = "队伍"
 L["DELETE_FOLDER1"] = "删除文件夹 \""
 L["DELETE_FOLDER2"] = "此文件夹包含 "

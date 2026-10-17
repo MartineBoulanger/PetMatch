@@ -47,6 +47,9 @@ function PetCard:Create(parent)
   instance:CreateAbilityGrid()
   instance:CreateBreedSection()
 
+  addon.SkinManager:ApplyPetCard(instance.Frame)
+  addon.SkinManager:ApplyCloseButton(instance.CloseButton)
+
   instance:SetPinned(false)
 
   instance.Frame:Hide()

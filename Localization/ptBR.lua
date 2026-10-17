@@ -261,6 +261,11 @@ L["DELETE_PROFILE_PROMPT"] =
 L["DELETE_PROFILE_INFO"] = "Perfil excluído: "
 L["DELETE_PROFILE_ERROR"] = "Não foi possível excluir o perfil."
 L["NO_DELETE_DEFAULT"] = "O padrão não pode ser excluído."
+L["UI_SKIN"] = "Visual da Interface"
+L["UI_SKIN_DESCRIPTION"] =
+"Selecione o visual da interface para o PetMatch. Esta configuração se aplica a todos os perfis.\nVocê precisará recarregar a interface para visualizar a alteração."
+L["UI_SKIN_DEFAULT"] = "Padrão do PetMatch"
+L["RELOAD_UI"] = "Recarregar Interface"
 
 -- UI/Base
 L["BUTTON"] = "Botão"
@@ -298,7 +303,7 @@ L["UNABLE_DELETE_FOLDER"] = "Não foi possível excluir a pasta"
 L["MOVE_TO_UNSORTED"] = "Mover para Não Classificados"
 L["DELETE_TEAMS"] = "Excluir Equipes"
 L["ONE_TEAM"] = "1 equipe"
-L["TEAMS"] = " equipes"
+L["DEL_TEAMS"] = " equipes"
 L["TEAM"] = "Equipe"
 L["DELETE_FOLDER1"] = "Excluir pasta \""
 L["DELETE_FOLDER2"] = "Esta pasta contém "

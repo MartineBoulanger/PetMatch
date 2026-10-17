@@ -269,6 +269,8 @@ function IconPicker:CreateContent(dialog)
     input:ClearFocus()
   end)
 
+  addon.SkinManager:ApplyEditBox(self.SearchInput)
+
   local grid = CreateFrame("Frame", nil, content)
 
   grid:SetSize(
@@ -349,6 +351,7 @@ function IconPicker:CreateContent(dialog)
       GameTooltip:Hide()
     end)
 
+    addon.SkinManager:ApplyIconPickerButton(button)
 
     iconButtons[index] = button
   end
@@ -384,6 +387,8 @@ function IconPicker:CreateContent(dialog)
   scrollbar:SetScript("OnValueChanged", function(_, value)
     self:SetScrollOffset(value)
   end)
+
+  addon.SkinManager:ApplyScrollBar(scrollbar)
 
   self.Scrollbar = scrollbar
 end

@@ -255,6 +255,8 @@ function Panels:UpdatePosition()
     -6,
     0
   )
+
+  addon.SkinManager:PositionMainFrame(self.Frame)
 end
 
 function Panels:Create()
@@ -294,6 +296,8 @@ function Panels:Create()
 
   self.Frame = frame
   self:UpdatePosition()
+
+  addon.SkinManager:ApplyMainFrame(frame)
 
   --------------------------------------------------
   -- Blizzard title
@@ -436,6 +440,11 @@ function Panels:Create()
     1
   )
 
+  --------------------------------------------------
+  -- Apply selected UI skin
+  --------------------------------------------------
+  addon.SkinManager:ApplyBackdrop(self.OptionsBackground)
+
   self.OptionsBackground:SetPoint(
     "TOPLEFT",
     self.OptionsFrame,
@@ -575,6 +584,11 @@ function Panels:Create()
     0.35,
     1
   )
+
+  --------------------------------------------------
+  -- Apply selected UI skin
+  --------------------------------------------------
+  addon.SkinManager:ApplyBackdrop(self.TeamListBackground)
 
   self.TeamListBackground:SetPoint(
     "TOPLEFT",
@@ -795,6 +809,10 @@ function Panels:CreateTabs(parent)
   teamsTab:SetFrameLevel(tabLevel)
   levellingTab:SetFrameLevel(tabLevel)
   optionsTab:SetFrameLevel(tabLevel)
+
+  addon.SkinManager:ApplyTab(teamsTab)
+  addon.SkinManager:ApplyTab(levellingTab)
+  addon.SkinManager:ApplyTab(optionsTab)
 end
 
 function Panels:SelectTab(tabKey)
@@ -810,6 +828,10 @@ function Panels:SelectTab(tabKey)
       PanelTemplates_SelectTab(tab.button)
     else
       PanelTemplates_DeselectTab(tab.button)
+    end
+
+    if tab.button.PetMatchUpdateSkin then
+      tab.button:PetMatchUpdateSkin(selected)
     end
   end
 

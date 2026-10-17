@@ -227,6 +227,10 @@ function AccordionHeader:Create(parent, options)
     end
 
     self:UpdateLayout()
+
+    if self.PetMatchIconBorder then
+      self.PetMatchIconBorder:SetShown(icon ~= nil)
+    end
   end
 
   --------------------------------------------------
@@ -354,6 +358,8 @@ function AccordionHeader:Create(parent, options)
   button:SetCount(options.count)
   button:SetIcon(options.icon)
   button:SetExpanded(options.expanded)
+
+  addon.SkinManager:ApplyAccordionHeader(button)
 
   return button
 end

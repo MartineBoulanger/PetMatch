@@ -207,6 +207,8 @@ function ScrollBox:Create(parent, options)
   container.Content = content
   container.UpdateScrollRange = UpdateScrollRange
 
+  addon.SkinManager:ApplyScrollBar(scrollBar)
+
   return container
 end
 

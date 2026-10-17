@@ -147,6 +147,8 @@ function Dialog:Create(options)
 
   instance:CreateCloseButton(options)
 
+  addon.SkinManager:ApplyDialog(instance)
+
   instance.Frame:Hide()
 
   return instance
@@ -395,6 +397,8 @@ function Dialog:CreateCloseButton(options)
       self:Cancel()
     end
   )
+
+  addon.SkinManager:ApplyCloseButton(button)
 
   self.CloseButton = button
 end

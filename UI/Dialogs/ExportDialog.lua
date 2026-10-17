@@ -224,6 +224,11 @@ function ExportDialog:CreateContent(dialog)
 
   self.Input:SetHeight(INPUT_HEIGHT - 20)
   self.ScrollFrame:SetScrollChild(self.Input)
+
+  addon.SkinManager:ApplyMultiLineEditBox(
+    self.InputBackground,
+    self.ScrollFrame
+  )
 end
 
 --------------------------------------------------

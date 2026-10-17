@@ -261,6 +261,11 @@ L["DELETE_PROFILE_PROMPT"] =
 L["DELETE_PROFILE_INFO"] = "Profil gelöscht: "
 L["DELETE_PROFILE_ERROR"] = "Profil konnte nicht gelöscht werden."
 L["NO_DELETE_DEFAULT"] = "Standard kann nicht gelöscht werden."
+L["UI_SKIN"] = "UI-Skin"
+L["UI_SKIN_DESCRIPTION"] =
+"Wähle den UI-Skin für PetMatch aus. Diese Einstellung gilt für alle Profile.\nDu musst die Benutzeroberfläche neu laden, damit die Änderung des Skins wirksam wird."
+L["UI_SKIN_DEFAULT"] = "PetMatch-Standard"
+L["RELOAD_UI"] = "Benutzeroberfläche neu laden"
 
 -- UI/Base
 L["BUTTON"] = "Knopf"
@@ -298,7 +303,7 @@ L["UNABLE_DELETE_FOLDER"] = "Löschen des Odners nicht möglich"
 L["MOVE_TO_UNSORTED"] = "In die unsortierte Gruppe verschieben"
 L["DELETE_TEAMS"] = "Teams löschen"
 L["ONE_TEAM"] = "1 Team"
-L["TEAMS"] = " Teams"
+L["DEL_TEAMS"] = " Teams"
 L["TEAM"] = "Team"
 L["DELETE_FOLDER1"] = "Ordner löschen \""
 L["DELETE_FOLDER2"] = "Dieser Ordner enthält "

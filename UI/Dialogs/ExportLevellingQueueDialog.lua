@@ -234,6 +234,11 @@ function ExportLevellingQueueDialog:CreateContent(dialog)
   self.ScrollFrame:SetScrollChild(
     self.Input
   )
+
+  addon.SkinManager:ApplyMultiLineEditBox(
+    self.InputBackground,
+    self.ScrollFrame
+  )
 end
 
 --------------------------------------------------

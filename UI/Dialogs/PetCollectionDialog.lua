@@ -232,6 +232,8 @@ function PetCollectionDialog:Create()
       end
     )
 
+    addon.SkinManager:ApplyDialogTab(button)
+
     self.Tabs[tabInfo.key] = button
   end
 

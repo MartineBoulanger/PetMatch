@@ -216,57 +216,27 @@ function TargetTeamSelectDialog:CreateTeamRow(team, index)
     )
   )
 
-  ------------------------------------------------
-  -- Background
-  ------------------------------------------------
+  --------------------------------------------------
+  -- Default PetMatch team card styling
+  --------------------------------------------------
   row:SetBackdrop({
-    bgFile = "Interface\\Buttons\\WHITE8X8",
-    edgeFile = "Interface\\Buttons\\WHITE8X8",
-    edgeSize = 1,
+    bgFile = "Interface\\FrameGeneral\\UI-Background-Marble",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    tile = true,
+    tileSize = 128,
+    edgeSize = 8,
+    insets = {
+      left = 3,
+      right = 3,
+      top = 3,
+      bottom = 3,
+    },
   })
 
-  local colors = addon.UI.Theme.Colors
+  row:SetBackdropColor(0.08, 0.08, 0.08, 0.85)
+  row:SetBackdropBorderColor(0.35, 0.35, 0.35, 1)
 
-  local normalBackground =
-      colors.Background
-      or {
-        r = 0.08,
-        g = 0.08,
-        b = 0.08,
-        a = 0.65,
-      }
-
-  local borderColor =
-      colors.Border
-      or {
-        r = 0.25,
-        g = 0.25,
-        b = 0.25,
-        a = 1,
-      }
-
-  local hoverBackground =
-      colors.Hover
-      or {
-        r = 0.15,
-        g = 0.15,
-        b = 0.15,
-        a = 1,
-      }
-
-  row:SetBackdropColor(
-    normalBackground.r or 0.08,
-    normalBackground.g or 0.08,
-    normalBackground.b or 0.08,
-    normalBackground.a or 0.65
-  )
-
-  row:SetBackdropBorderColor(
-    borderColor.r or 0.35,
-    borderColor.g or 0.35,
-    borderColor.b or 0.35,
-    borderColor.a or 1
-  )
+  addon.SkinManager:ApplyTargetTeamRow(row)
 
   ------------------------------------------------
   -- Pet icons
@@ -364,29 +334,33 @@ function TargetTeamSelectDialog:CreateTeamRow(team, index)
   ------------------------------------------------
   row:EnableMouse(true)
 
-  row:SetScript(
-    "OnEnter",
-    function()
-      row:SetBackdropColor(
-        hoverBackground.r or 0.15,
-        hoverBackground.g or 0.15,
-        hoverBackground.b or 0.15,
-        hoverBackground.a or 1
-      )
+  row:SetScript("OnEnter", function()
+    if addon.SkinManager:GetActive() == "elvui" then
+      -- row:SetBackdropColor(0.08, 0.08, 0.08, 1)
+      row:SetBackdropBorderColor(0.15, 0.55, 1, 1)
+    else
+      -- row:SetBackdropColor(0.15, 0.15, 0.15, 1)
+      row:SetBackdropBorderColor(0.15, 0.55, 1, 1)
     end
-  )
+  end)
 
-  row:SetScript(
-    "OnLeave",
-    function()
-      row:SetBackdropColor(
-        normalBackground.r or 0.08,
-        normalBackground.g or 0.08,
-        normalBackground.b or 0.08,
-        normalBackground.a or 0.85
-      )
+  row:SetScript("OnLeave", function()
+    if addon.SkinManager:GetActive() == "elvui" then
+      -- row:SetBackdropColor(0.04, 0.04, 0.04, 0.9)
+      row:SetBackdropBorderColor(0, 0, 0, 1)
+    else
+      -- row:SetBackdropColor(0.08, 0.08, 0.08, 0.85)
+      row:SetBackdropBorderColor(0.35, 0.35, 0.35, 1)
     end
-  )
+  end)
+
+  row:SetScript("OnMouseUp", function(_, button)
+    if button ~= "LeftButton" then
+      return
+    end
+
+    self:LoadTeam(team)
+  end)
 
   row:SetScript(
     "OnMouseUp",

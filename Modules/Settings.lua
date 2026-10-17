@@ -55,8 +55,7 @@ local function ApplyDefaults(defaults, target)
 end
 
 function Settings:Initialize()
-  local profile =
-      addon.Profiles:GetCurrentProfile()
+  local profile = addon.Profiles:GetCurrentProfile()
 
   profile.settings = profile.settings or {}
 
@@ -67,8 +66,7 @@ function Settings:Initialize()
 end
 
 function Settings:Get(key)
-  local profile =
-      addon.Profiles:GetCurrentProfile()
+  local profile = addon.Profiles:GetCurrentProfile()
 
   profile.settings = profile.settings or {}
 
@@ -81,8 +79,7 @@ function Settings:Get(key)
 end
 
 function Settings:Set(key, value)
-  local profile =
-      addon.Profiles:GetCurrentProfile()
+  local profile = addon.Profiles:GetCurrentProfile()
 
   profile.settings = profile.settings or {}
 
@@ -96,8 +93,7 @@ function Settings:Set(key, value)
 end
 
 function Settings:GetUI(key)
-  local profile =
-      addon.Profiles:GetCurrentProfile()
+  local profile = addon.Profiles:GetCurrentProfile()
 
   profile.settings = profile.settings or {}
   profile.settings.ui = profile.settings.ui or {}
@@ -122,6 +118,20 @@ function Settings:SetUI(key, value)
   addon.EventBus:Fire(
     addon.Events.SETTINGS_CHANGED,
     "ui." .. key,
+    value
+  )
+end
+
+function Settings:GetGlobal(key)
+  return addon.DB.global.settings[key]
+end
+
+function Settings:SetGlobal(key, value)
+  addon.DB.global.settings[key] = value
+
+  addon.EventBus:Fire(
+    addon.Events.SETTINGS_CHANGED,
+    "global." .. key,
     value
   )
 end

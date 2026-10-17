@@ -283,6 +283,12 @@ function FolderDialog:CreateContent(dialog)
   self.ColorPreview:SetAllPoints()
   self.ColorPreview:SetColorTexture(1, 1, 1, 1)
 
+  addon.SkinManager:ApplyFolderPreview(
+    self.ColorPreviewFrame,
+    self.ColorPreview,
+    false
+  )
+
   --------------------------------------------------
   -- Choose color
   --------------------------------------------------
@@ -354,6 +360,12 @@ function FolderDialog:CreateContent(dialog)
   self.IconPreview = self.IconPreviewFrame:CreateTexture(nil, "ARTWORK")
   self.IconPreview:SetAllPoints()
 
+  addon.SkinManager:ApplyFolderPreview(
+    self.IconPreviewFrame,
+    self.IconPreview,
+    true
+  )
+
   --------------------------------------------------
   -- Choose icon
   --------------------------------------------------
@@ -412,6 +424,8 @@ function FolderDialog:CreateContent(dialog)
       dialog:Cancel()
     end
   )
+
+  addon.SkinManager:ApplyEditBox(self.NameInput)
 end
 
 --------------------------------------------------

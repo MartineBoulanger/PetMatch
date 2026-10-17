@@ -189,6 +189,8 @@ function PetSlot:Create(parent)
 
   local instance = CreatePetIcon(frame, PetSlot)
 
+  addon.SkinManager:ApplyPetIcon(instance)
+
   instance:Clear()
 
   return instance

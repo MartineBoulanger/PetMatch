@@ -503,6 +503,11 @@ function ImportLevellingQueueDialog:CreateContent(dialog)
     self.Input
   )
 
+  addon.SkinManager:ApplyMultiLineEditBox(
+    self.InputBackground,
+    self.ScrollFrame
+  )
+
   --------------------------------------------------
   -- Sort dropdown
   --------------------------------------------------
@@ -531,6 +536,8 @@ function ImportLevellingQueueDialog:CreateContent(dialog)
   )
 
   self.SortDropdown:SetHeight(26)
+
+  addon.SkinManager:ApplyBlizzardDropdown(self.SortDropdown)
 
   --------------------------------------------------
   -- Status

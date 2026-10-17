@@ -2886,6 +2886,8 @@ function FilterExtension:CreateFilterBar()
 
   bar.Close:EnableMouse(true)
 
+  addon.SkinManager:ApplyFilterStatusBar(bar)
+
   bar:Hide()
 
   self.FilterBar = bar

@@ -268,6 +268,8 @@ function LevellingQueuePanel:CreateMenuButton(parent, text, width, height, popul
     end
   )
 
+  addon.SkinManager:ApplyDropdown(dropdown)
+
   return dropdown
 end
 
@@ -350,6 +352,8 @@ function LevellingQueuePanel:CreateSortButton()
     -5,
     -8
   )
+
+  addon.SkinManager:ApplyDropdown(button)
 
   self.SortButton = button
 end
@@ -530,6 +534,11 @@ function LevellingQueuePanel:Create(parent)
     0.35,
     1
   )
+
+  --------------------------------------------------
+  -- Apply selected UI skin
+  --------------------------------------------------
+  addon.SkinManager:ApplyBackdrop(self.ListBackground)
 
   self.ListBackground:SetPoint(
     "TOPLEFT",

@@ -470,6 +470,11 @@ function ImportDialog:CreateContent(dialog)
 
   self.ScrollFrame:SetScrollChild(self.Input)
 
+  addon.SkinManager:ApplyMultiLineEditBox(
+    self.InputBackground,
+    self.ScrollFrame
+  )
+
   --------------------------------------------------
   -- Folder dropdown
   --------------------------------------------------
@@ -498,6 +503,8 @@ function ImportDialog:CreateContent(dialog)
   )
 
   self.FolderDropdown:SetHeight(26)
+
+  addon.SkinManager:ApplyBlizzardDropdown(self.FolderDropdown)
 
   --------------------------------------------------
   -- Save as new team
@@ -541,6 +548,10 @@ function ImportDialog:CreateContent(dialog)
     function()
       self:SetSaveMode("new")
     end
+  )
+
+  addon.SkinManager:ApplyCheckButton(
+    self.NewTeamRadio
   )
 
   --------------------------------------------------
@@ -587,6 +598,10 @@ function ImportDialog:CreateContent(dialog)
     function()
       self:SetSaveMode("override")
     end
+  )
+
+  addon.SkinManager:ApplyCheckButton(
+    self.OverrideRadio
   )
 
   --------------------------------------------------

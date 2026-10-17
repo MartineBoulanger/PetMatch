@@ -166,6 +166,8 @@ function SaveTeamDialog:CreateContent(dialog)
       dialog:Cancel()
     end
   )
+
+  addon.SkinManager:ApplyEditBox(self.NameInput)
 end
 
 --------------------------------------------------

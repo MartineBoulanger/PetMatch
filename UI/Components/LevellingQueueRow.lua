@@ -48,6 +48,22 @@ local function HandleSpecialPetClick(petGUID)
   return true
 end
 
+local function UpdateVisualState(instance)
+  local frame = instance.Frame
+
+  if not frame or not instance.PetMatchElvUILevellingSkinned then
+    return
+  end
+
+  if instance.ItemTargeting then
+    frame:SetBackdropBorderColor(1, 0.82, 0, 1)
+  elseif instance.Hovered then
+    frame:SetBackdropBorderColor(0.15, 0.55, 1, 0.85)
+  else
+    frame:SetBackdropBorderColor(0, 0, 0, 1)
+  end
+end
+
 function LevellingQueueRow:Create(parent, list)
   local instance =
       setmetatable(
@@ -486,6 +502,20 @@ function LevellingQueueRow:Create(parent, list)
     end
   )
 
+  addon.SkinManager:ApplyLevellingQueueRow(instance)
+  addon.SkinManager:ApplyLevellingXPBar(instance)
+  addon.SkinManager:ApplyPetIcon(instance)
+
+  frame:HookScript("OnEnter", function()
+    instance.Hovered = true
+    UpdateVisualState(instance)
+  end)
+
+  frame:HookScript("OnLeave", function()
+    instance.Hovered = false
+    UpdateVisualState(instance)
+  end)
+
   frame:Hide()
 
   return instance
@@ -525,13 +555,19 @@ function LevellingQueueRow:SetPet(item)
     1
   )
 
+  --------------------------------------------------
+  -- Default rarity border
+  --------------------------------------------------
   if self.IconBorder then
-    self.IconBorder:SetVertexColor(
-      r,
-      g,
-      b,
-      1
-    )
+    self.IconBorder:SetVertexColor(r, g, b, 1)
+  end
+
+  --------------------------------------------------
+  -- ElvUI rarity border
+  --------------------------------------------------
+  if self.RarityBorder and self.PetMatchElvUIIconSkinned then
+    self.RarityBorder:SetBackdropBorderColor(r, g, b, 1)
+    self.RarityBorder:Show()
   end
 
   local level = tonumber(pet.level) or 0
@@ -655,20 +691,15 @@ end
 function LevellingQueueRow:SetItemTargeting(enabled)
   self.ItemTargeting = enabled == true
 
+  if self.PetMatchElvUILevellingSkinned then
+    UpdateVisualState(self)
+    return
+  end
+
   if self.ItemTargeting then
-    self.Frame:SetBackdropBorderColor(
-      1,
-      0.82,
-      0,
-      1
-    )
+    self.Frame:SetBackdropBorderColor(1, 0.82, 0, 1)
   else
-    self.Frame:SetBackdropBorderColor(
-      0.35,
-      0.30,
-      0.20,
-      0.90
-    )
+    self.Frame:SetBackdropBorderColor(0.35, 0.30, 0.20, 0.90)
   end
 end
 

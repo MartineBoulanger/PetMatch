@@ -78,6 +78,8 @@ function TeamSetupPanel:CreateMenuButton(parent, text, width, height, populateMe
     end
   )
 
+  addon.SkinManager:ApplyDropdown(dropdown)
+
   return dropdown
 end
 
@@ -196,6 +198,8 @@ function TeamSetupPanel:Create()
 
   self.Frame = frame
   self.TargetSelector = selector
+
+  addon.SkinManager:ApplyTeamSetup(frame)
 
   frame:Hide()
 

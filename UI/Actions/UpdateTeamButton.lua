@@ -49,6 +49,8 @@ function UpdateTeamButton:Create()
 
   button:Hide()
 
+  addon.SkinManager:ApplyButton(button)
+
   self.Frame = button
 
   self:RegisterEvents()

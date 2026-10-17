@@ -109,6 +109,8 @@ function TeamListControls:Create(parent)
     end
   )
 
+  addon.SkinManager:ApplyEditBox(self.SearchInput, true)
+
   local sortModes = {
     "name",
     "modified",
@@ -174,6 +176,8 @@ function TeamListControls:Create(parent)
         end
       end
     )
+
+    addon.SkinManager:ApplyDropdown(dropdown)
 
     self.SortButton = dropdown
   end

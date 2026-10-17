@@ -118,6 +118,8 @@ function SaveTeamButton:Create()
 
   button:Hide()
 
+  addon.SkinManager:ApplyButton(button)
+
   self.Frame = button
 
   return button

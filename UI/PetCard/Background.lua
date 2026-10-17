@@ -35,6 +35,7 @@ local function ApplyCover(texture, frame, sourceWidth, sourceHeight)
 end
 
 function Background:ShowMarble()
+  self.IsShowingMarble = true
   self.Frame:SetBackdropColor(0.55, 0.55, 0.55, 0.95)
 end
 
@@ -159,6 +160,8 @@ function Background:SetPet(pet)
 end
 
 function Background:Refresh()
+  self.IsShowingMarble = false
+
   local backgroundType = addon.Settings:GetUI("petCardBackground")
 
   self.Texture:Hide()
@@ -175,6 +178,11 @@ function Background:Refresh()
   else
     self:ShowMarble()
   end
+
+  addon.SkinManager:ApplyPetCardBackground(
+    self,
+    self.IsShowingMarble
+  )
 end
 
 addon.UI.PetCard.Background = Background

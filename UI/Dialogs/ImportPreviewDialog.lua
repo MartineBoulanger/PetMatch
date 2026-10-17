@@ -186,6 +186,8 @@ local function CreateCheckButton(parent, label, level)
   text:SetWidth(300)
   checkbox.Label = text
 
+  addon.SkinManager:ApplyCheckButton(checkbox)
+
   return checkbox
 end
 
@@ -612,6 +614,8 @@ local function CreateContent(dialog)
 
   dialog.PreviewContent:SetHeight(1)
   dialog.ScrollFrame:SetScrollChild(dialog.PreviewContent)
+
+  addon.SkinManager:ApplyScrollBar(dialog.ScrollFrame)
 
   --------------------------------------------------
   -- Keep scroll child width aligned

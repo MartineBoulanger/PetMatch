@@ -375,6 +375,8 @@ function ToolbarIconButton:Create(parent, options)
     )
   end
 
+  addon.SkinManager:ApplyToolbarIcon(button)
+
   return instance
 end
 

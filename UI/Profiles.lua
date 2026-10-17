@@ -393,6 +393,170 @@ function ProfileSettings:Initialize()
   end)
 
   --------------------------------------------------
+  -- Section divider
+  --------------------------------------------------
+  local divider = panel:CreateTexture(
+    nil,
+    "ARTWORK"
+  )
+
+  divider:SetTexture(
+    "Interface\\Common\\UI-TooltipDivider-Transparent"
+  )
+
+  divider:SetHeight(16)
+
+  divider:SetPoint(
+    "TOPLEFT",
+    createButton,
+    "BOTTOMLEFT",
+    0,
+    -22
+  )
+
+  divider:SetPoint(
+    "RIGHT",
+    deleteButton,
+    "RIGHT",
+    0,
+    0
+  )
+
+  --------------------------------------------------
+  -- UI Skin (global setting)
+  --------------------------------------------------
+  local skinTitle = panel:CreateFontString(
+    nil,
+    "ARTWORK",
+    "GameFontNormalLarge"
+  )
+
+  skinTitle:SetPoint(
+    "TOPLEFT",
+    divider,
+    "BOTTOMLEFT",
+    0,
+    -12
+  )
+
+  skinTitle:SetText(L["UI_SKIN"])
+
+  local skinDescription = panel:CreateFontString(
+    nil,
+    "ARTWORK",
+    "GameFontHighlight"
+  )
+
+  skinDescription:SetPoint(
+    "TOPLEFT",
+    skinTitle,
+    "BOTTOMLEFT",
+    0,
+    -10
+  )
+
+  skinDescription:SetText(L["UI_SKIN_DESCRIPTION"])
+
+  local skinDropdown = CreateFrame(
+    "DropdownButton",
+    nil,
+    panel,
+    "WowStyle1DropdownTemplate"
+  )
+
+  skinDropdown:SetPoint(
+    "TOPLEFT",
+    skinDescription,
+    "BOTTOMLEFT",
+    0,
+    -12
+  )
+
+  skinDropdown:SetWidth(220)
+
+  local skins = {
+    { id = "default", label = L["UI_SKIN_DEFAULT"] },
+    { id = "elvui",   label = "ElvUI" },
+  }
+
+  local function RefreshSkinDropdown()
+    local selected = addon.SkinManager:GetSelected()
+
+    for _, skin in ipairs(skins) do
+      if skin.id == selected then
+        skinDropdown:SetDefaultText(skin.label)
+        break
+      end
+    end
+
+    skinDropdown:GenerateMenu()
+  end
+
+  skinDropdown:SetupMenu(function(_, rootDescription)
+    local selected = addon.SkinManager:GetSelected()
+
+    for _, skin in ipairs(skins) do
+      local skinID = skin.id
+      local skinLabel = skin.label
+
+      local option = rootDescription:CreateRadio(
+        skinLabel,
+        function()
+          return addon.SkinManager:GetSelected() == skinID
+        end,
+        function()
+          addon.Settings:SetGlobal("uiSkin", skinID)
+          RefreshSkinDropdown()
+        end
+      )
+
+      if not addon.SkinManager:IsAvailable(skinID) then
+        option:SetEnabled(false)
+      end
+    end
+  end)
+
+  RefreshSkinDropdown()
+
+  --------------------------------------------------
+  -- Reload UI
+  --------------------------------------------------
+  local reloadButton = CreateFrame(
+    "Button",
+    nil,
+    panel,
+    "UIPanelButtonTemplate"
+  )
+
+  reloadButton:SetSize(150, 25)
+
+  reloadButton:SetPoint(
+    "TOPLEFT",
+    skinDropdown,
+    "BOTTOMLEFT",
+    0,
+    -16
+  )
+
+  reloadButton:SetText(L["RELOAD_UI"])
+
+  reloadButton:SetScript("OnClick", function()
+    ReloadUI()
+  end)
+
+  --------------------------------------------------
+  -- Apply UI skins
+  --------------------------------------------------
+  addon.SkinManager:ApplyBlizzardDropdown(dropdown)
+  addon.SkinManager:ApplyBlizzardDropdown(copyDropdown)
+  addon.SkinManager:ApplyBlizzardDropdown(skinDropdown)
+
+  addon.SkinManager:ApplyButton(createButton)
+  addon.SkinManager:ApplyButton(renameButton)
+  addon.SkinManager:ApplyButton(deleteButton)
+  addon.SkinManager:ApplyButton(reloadButton)
+
+  --------------------------------------------------
   -- Register changes
   --------------------------------------------------
   local function RefreshProfileButtons()

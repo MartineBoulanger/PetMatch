@@ -647,6 +647,8 @@ function PetTypeFilterBar:Create(parent)
 
   instance:Refresh()
 
+  addon.SkinManager:ApplyPetTypeFilterBar(instance)
+
   return instance
 end
 
@@ -726,12 +728,9 @@ function PetTypeFilterBar:Refresh()
     if button then
       local selected = service:IsTypeSelected(petType)
 
-      button:SetBackdropBorderColor(
-        0.30,
-        0.30,
-        0.30,
-        1
-      )
+      button:SetBackdropBorderColor(0.30, 0.30, 0.30, 1)
+
+      addon.SkinManager:RefreshPetTypeFilterButton(button)
 
       if selected then
         button.Icon:SetDesaturated(
