@@ -210,6 +210,67 @@ end
 --------------------------------------------------
 -- Get NPC ID from unit
 --------------------------------------------------
+function TargetTeamService:GetNPCIDFromWildPetSpecies(unitToken)
+  if not UnitIsWildBattlePet or not UnitBattlePetSpeciesID then
+    return nil
+  end
+
+  local isWild = UnitIsWildBattlePet(unitToken)
+
+  if issecretvalue and issecretvalue(isWild) then
+    return nil
+  end
+
+  if not isWild then
+    return nil
+  end
+
+  local speciesID = UnitBattlePetSpeciesID(unitToken)
+
+  if not speciesID
+      or (issecretvalue and issecretvalue(speciesID)) then
+    return nil
+  end
+
+  local targetService = addon.Services.PetBattleTarget
+
+  if not targetService then
+    return nil
+  end
+
+  local mapID = C_Map.GetBestMapForUnit("player")
+  local mapMatch
+  local allMatch
+  local mapCount = 0
+  local allCount = 0
+
+  for _, target in ipairs(addon.Data.PetBattleTargets) do
+    local leadPet = targetService:ParsePet(target[6])
+
+    if leadPet and leadPet.speciesID == speciesID then
+      local npcID = targetService:GetNPCID(target)
+
+      allCount = allCount + 1
+      allMatch = npcID
+
+      if mapID and targetService:GetMapID(target) == mapID then
+        mapCount = mapCount + 1
+        mapMatch = npcID
+      end
+    end
+  end
+
+  if mapCount == 1 then
+    return NormalizeNPCID(mapMatch)
+  end
+
+  if mapCount == 0 and allCount == 1 then
+    return NormalizeNPCID(allMatch)
+  end
+
+  return nil
+end
+
 function TargetTeamService:GetNPCIDFromUnit(unitToken)
   unitToken = unitToken or "target"
 
@@ -217,42 +278,36 @@ function TargetTeamService:GetNPCIDFromUnit(unitToken)
     return nil
   end
 
-  ------------------------------------------------
-  -- Unit identity can be secret in Midnight.
-  --
-  -- Some modern targets expose secret identity
-  -- data. Target-based team loading is only
-  -- needed for older pet battle NPCs anyway.
-  ------------------------------------------------
+  -- Blizzard may protect unit identity in instances
+  -- or other restricted environments.
   if C_Secrets
       and C_Secrets.ShouldUnitIdentityBeSecret
-      and C_Secrets.ShouldUnitIdentityBeSecret(
-        unitToken
-      ) then
-    return nil
+      and C_Secrets.ShouldUnitIdentityBeSecret(unitToken) then
+    return self:GetNPCIDFromWildPetSpecies(unitToken)
   end
 
   local guid = UnitGUID(unitToken)
 
-  if type(guid) ~= "string" or guid == "" then
-    return nil
+  if not guid
+      or (issecretvalue and issecretvalue(guid)) then
+    return self:GetNPCIDFromWildPetSpecies(unitToken)
   end
 
-  ------------------------------------------------
-  -- Creature / Vehicle GUID:
-  --
-  -- Type-0-Server-Instance-Zone-NPCID-SpawnID
-  ------------------------------------------------
-  local unitType,
-  npcID = guid:match(
+  if type(guid) ~= "string" or guid == "" then
+    return self:GetNPCIDFromWildPetSpecies(unitToken)
+  end
+
+  local unitType, npcID = guid:match(
     "^([^-]+)%-[^-]+%-[^-]+%-[^-]+%-[^-]+%-([^-]+)%-"
   )
 
   if unitType ~= "Creature" and unitType ~= "Vehicle" then
-    return nil
+    return self:GetNPCIDFromWildPetSpecies(unitToken)
   end
 
-  return NormalizeNPCID(npcID)
+  npcID = NormalizeNPCID(npcID)
+
+  return npcID or self:GetNPCIDFromWildPetSpecies(unitToken)
 end
 
 --------------------------------------------------
@@ -380,14 +435,14 @@ function TargetTeamService:HandleResolvedTarget(result)
   -- Team already loaded
   ------------------------------------------------
   local teamService = addon.Services.Team
+  local activeTeam = teamService and teamService:GetActive()
+  local compareService = addon.Services.TeamCompare
 
-  if teamService then
-    local activeTeam = teamService:GetActive()
-
-    if activeTeam
-        and activeTeam.id == result.team.id then
-      return
-    end
+  if activeTeam
+      and activeTeam.id == result.team.id
+      and compareService
+      and not compareService:CompareWithCurrentSlots(result.team) then
+    return
   end
 
   ------------------------------------------------
@@ -426,7 +481,11 @@ function TargetTeamService:HandleResolvedTarget(result)
     return
   end
 
-  teamService:Load(result.team.id)
+  local success, errorMessage = teamService:Load(result.team.id)
+
+  if not success and errorMessage then
+    addon.Logger:Warn(errorMessage)
+  end
 end
 
 addon.Services.TargetTeam = TargetTeamService

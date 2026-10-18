@@ -330,11 +330,8 @@ function Dialog:CreateContent()
     (self.Padding * 2) + 1
   )
 
-  self.ContentFrame =
-      contentFrame
-
-  self.Content =
-      content
+  self.ContentFrame = contentFrame
+  self.Content = content
 end
 
 function Dialog:CreateFooter()

@@ -610,6 +610,8 @@ function PetTypeFilterBar:Create(parent)
     -5
   )
 
+  addon.SkinManager:ApplyBlizzardDropdown(instance.ModeDropdown)
+
   --------------------------------------------------
   -- Type buttons
   --------------------------------------------------

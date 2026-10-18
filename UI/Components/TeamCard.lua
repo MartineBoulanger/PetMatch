@@ -2,7 +2,6 @@ local _, addon = ...
 
 local L = addon.L
 local TeamCard = {}
-local TargetNameCache = {}
 local PendingTargetNames = {}
 
 local CARD_WIDTH = 230
@@ -29,6 +28,21 @@ local function ApplyVisualState(frame)
     else
       -- Normal: black border
       frame:SetBackdropBorderColor(0, 0, 0, 1)
+    end
+
+    return
+  end
+
+  --------------------------------------------------
+  -- EllesmereUI skin
+  --------------------------------------------------
+  if frame.PetMatchEllesmereUITeamCardSkinned then
+    if frame.Selected then
+      frame:SetBackdropBorderColor(0.25, 1, 0.85, 1)
+    elseif frame.Hovered then
+      frame:SetBackdropBorderColor(0.25, 1, 0.85, 0.85)
+    else
+      frame:SetBackdropBorderColor(0.35, 0.35, 0.35, 1)
     end
 
     return
@@ -70,45 +84,36 @@ local function GetTargetName(team)
     return nil
   end
 
-  --------------------------------------------------
-  -- Already resolved
-  --------------------------------------------------
-  if TargetNameCache[npcID] then
-    return TargetNameCache[npcID]
-  end
+  local targetService = addon.Services.PetBattleTarget
 
-  --------------------------------------------------
-  -- Request tooltip data
-  --------------------------------------------------
-  local hyperlink = string.format("unit:Creature-0-0-0-0-%d-0000000000", npcID)
-  local data = C_TooltipInfo.GetHyperlink(hyperlink)
-
-  if not data then
+  if not targetService then
     return nil
   end
 
-  --------------------------------------------------
-  -- Try to resolve immediately
-  --------------------------------------------------
-  for _, line in ipairs(data.lines or {}) do
-    if line.type == Enum.TooltipDataLineType.UnitName then
-      local leftText = line.leftText
+  -- Localized Blizzard name, cached name,
+  -- or hardcoded fallback.
+  local name = targetService:GetName(npcID)
 
-      if leftText and not issecretvalue(leftText) then
-        TargetNameCache[npcID] = leftText
-        return leftText
-      end
+  -- Register pending tooltip updates if Blizzard
+  -- has not yet provided a localized name.
+  if not targetService.NameCache[npcID] then
+    local hyperlink = string.format(
+      "unit:Creature-0-0-0-0-%d-0000000000",
+      npcID
+    )
+
+    local data = C_TooltipInfo.GetHyperlink(hyperlink)
+
+    if data and data.dataInstanceID
+        and not (
+          issecretvalue
+          and issecretvalue(data.dataInstanceID)
+        ) then
+      PendingTargetNames[data.dataInstanceID] = npcID
     end
   end
 
-  --------------------------------------------------
-  -- Tooltip data is still loading
-  --------------------------------------------------
-  if data.dataInstanceID then
-    PendingTargetNames[data.dataInstanceID] = npcID
-  end
-
-  return nil
+  return name
 end
 
 local function GetFolderColor(hex)
@@ -821,8 +826,12 @@ targetLoaderFrame:SetScript(
           return
         end
 
-        if leftText then
-          TargetNameCache[npcID] = leftText
+        if leftText and not issecretvalue(leftText) then
+          local targetService = addon.Services.PetBattleTarget
+
+          if targetService then
+            targetService.NameCache[npcID] = leftText
+          end
 
           PendingTargetNames[dataInstanceID] = nil
 

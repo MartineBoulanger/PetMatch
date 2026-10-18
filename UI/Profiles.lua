@@ -475,8 +475,9 @@ function ProfileSettings:Initialize()
   skinDropdown:SetWidth(220)
 
   local skins = {
-    { id = "default", label = L["UI_SKIN_DEFAULT"] },
-    { id = "elvui",   label = "ElvUI" },
+    { id = "default",     label = L["UI_SKIN_DEFAULT"] },
+    { id = "elvui",       label = "ElvUI" },
+    { id = "ellesmereui", label = "EllesmereUI" }
   }
 
   local function RefreshSkinDropdown()

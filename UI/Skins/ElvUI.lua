@@ -1276,7 +1276,7 @@ function ElvUISkin:SkinAccordionHeader(header)
   self:SkinAccordionIcon(header)
 end
 
--- tabs
+-- tabs in dialogs
 function ElvUISkin:SkinDialogTab(button)
   if not button or not self:IsAvailable() then
     return

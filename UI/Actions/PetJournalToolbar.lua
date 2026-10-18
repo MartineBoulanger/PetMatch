@@ -651,8 +651,7 @@ function PetJournalToolbar:AutoDismissPet(expectedPetGUID, attempt, generation, 
 
   attempt = attempt or 1
 
-  local summonedPetGUID =
-      C_PetJournal.GetSummonedPetGUID()
+  local summonedPetGUID = C_PetJournal.GetSummonedPetGUID()
 
   --------------------------------------------------
   -- Exact expected pet is summoned
@@ -1075,6 +1074,8 @@ function PetJournalToolbar:Create()
   self:UpdateBandageButton()
   self:UpdateTeamSetupButton()
 
+  addon.SkinManager:ApplyToolbarPosition(self, "petJournal")
+
   self.SafariHatButton:Hide()
   self.ImportButton:Hide()
   self.ExportButton:Hide()
@@ -1181,6 +1182,8 @@ function PetJournalToolbar:Show()
   self:UpdateDismissButton()
   self:UpdateBandageButton()
   self:UpdateTeamSetupButton()
+
+  addon.SkinManager:ApplyToolbarPosition(self, "petJournal")
 
   frame:Show()
   self.SafariHatButton:Show()

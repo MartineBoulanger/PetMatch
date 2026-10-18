@@ -479,6 +479,7 @@ function OptionsList:CreateRadioButton(
     end
   )
 
+  button.PetMatchIsRadioButton = true
   addon.SkinManager:ApplyCheckButton(button)
 
   return button

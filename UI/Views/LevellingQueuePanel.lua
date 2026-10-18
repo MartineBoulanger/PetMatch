@@ -475,6 +475,7 @@ function LevellingQueuePanel:Create(parent)
   )
 
   self.Toolbar:SetHeight(TOOLBAR_HEIGHT)
+  addon.SkinManager:ApplyToolbarPosition(self.Toolbar, "levellingQueue")
 
   --------------------------------------------------
   -- Leveling items
@@ -538,7 +539,8 @@ function LevellingQueuePanel:Create(parent)
   --------------------------------------------------
   -- Apply selected UI skin
   --------------------------------------------------
-  addon.SkinManager:ApplyBackdrop(self.ListBackground)
+  -- addon.SkinManager:ApplyBackdrop(self.ListBackground)
+  addon.SkinManager:ApplyListPanel(self.ListBackground)
 
   self.ListBackground:SetPoint(
     "TOPLEFT",

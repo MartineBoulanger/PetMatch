@@ -90,6 +90,20 @@ function SkinManager:PositionMainFrame(frame)
   end
 end
 
+function SkinManager:ApplyListPanel(background)
+  if not background then
+    return
+  end
+
+  local skin = self:Get(self:GetActive())
+
+  if skin and skin.SkinListPanel then
+    skin:SkinListPanel(background)
+  else
+    self:ApplyBackdrop(background)
+  end
+end
+
 function SkinManager:ApplyScrollBar(scrollBar)
   if not scrollBar then
     return
@@ -315,6 +329,18 @@ function SkinManager:ApplyToolbarIcon(button)
 
   if skin and skin.SkinToolbarIcon then
     skin:SkinToolbarIcon(button)
+  end
+end
+
+function SkinManager:ApplyToolbarPosition(toolbar, toolbarType)
+  if not toolbar then
+    return
+  end
+
+  local skin = self:Get(self:GetActive())
+
+  if skin and skin.SkinToolbarPosition then
+    skin:SkinToolbarPosition(toolbar, toolbarType)
   end
 end
 

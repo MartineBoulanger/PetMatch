@@ -196,7 +196,7 @@ function IconPicker:CreateContent(dialog)
   --------------------------------------------------
   -- Search placeholder
   --------------------------------------------------
-  self.SearchPlaceholder = content:CreateFontString(
+  self.SearchPlaceholder = self.SearchInput:CreateFontString(
     nil,
     "OVERLAY",
     "GameFontDisable"
@@ -269,6 +269,7 @@ function IconPicker:CreateContent(dialog)
     input:ClearFocus()
   end)
 
+  self.SearchInput.Instructions = self.SearchPlaceholder
   addon.SkinManager:ApplyEditBox(self.SearchInput)
 
   local grid = CreateFrame("Frame", nil, content)

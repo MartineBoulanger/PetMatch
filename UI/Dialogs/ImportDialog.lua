@@ -550,9 +550,8 @@ function ImportDialog:CreateContent(dialog)
     end
   )
 
-  addon.SkinManager:ApplyCheckButton(
-    self.NewTeamRadio
-  )
+  self.NewTeamRadio.PetMatchIsRadioButton = true
+  addon.SkinManager:ApplyCheckButton(self.NewTeamRadio)
 
   --------------------------------------------------
   -- Override selected team
@@ -600,9 +599,8 @@ function ImportDialog:CreateContent(dialog)
     end
   )
 
-  addon.SkinManager:ApplyCheckButton(
-    self.OverrideRadio
-  )
+  self.OverrideRadio.PetMatchIsRadioButton = true
+  addon.SkinManager:ApplyCheckButton(self.OverrideRadio)
 
   --------------------------------------------------
   -- Status

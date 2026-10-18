@@ -443,7 +443,8 @@ function Panels:Create()
   --------------------------------------------------
   -- Apply selected UI skin
   --------------------------------------------------
-  addon.SkinManager:ApplyBackdrop(self.OptionsBackground)
+  -- addon.SkinManager:ApplyBackdrop(self.OptionsBackground)
+  addon.SkinManager:ApplyListPanel(self.OptionsBackground)
 
   self.OptionsBackground:SetPoint(
     "TOPLEFT",
@@ -588,7 +589,8 @@ function Panels:Create()
   --------------------------------------------------
   -- Apply selected UI skin
   --------------------------------------------------
-  addon.SkinManager:ApplyBackdrop(self.TeamListBackground)
+  -- addon.SkinManager:ApplyBackdrop(self.TeamListBackground)
+  addon.SkinManager:ApplyListPanel(self.TeamListBackground)
 
   self.TeamListBackground:SetPoint(
     "TOPLEFT",

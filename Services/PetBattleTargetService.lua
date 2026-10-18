@@ -9,6 +9,7 @@ local EXPANSION_ID = 4
 local QUEST_ID = 5
 local FIRST_PET = 6
 local LAST_PET = 8
+local NAME = 9
 
 PetBattleTargetService.ByNPCID = {}
 PetBattleTargetService.NameCache = {}
@@ -131,28 +132,31 @@ function PetBattleTargetService:GetName(npcID)
     return self.NameCache[npcID]
   end
 
-  local hyperlink =
-      string.format(
-        "unit:Creature-0-0-0-0-%d-0000000000",
-        npcID
-      )
+  local target = self:GetByNPCID(npcID)
+  local fallbackName = target and target[NAME]
+
+  local hyperlink = string.format(
+    "unit:Creature-0-0-0-0-%d-0000000000",
+    npcID
+  )
 
   local data = C_TooltipInfo.GetHyperlink(hyperlink)
 
-  if not data or not data.lines then
-    return nil
-  end
+  if data and data.lines then
+    for _, line in ipairs(data.lines) do
+      if line.type == Enum.TooltipDataLineType.UnitName then
+        local leftText = line.leftText
 
-  for _, line in ipairs(data.lines) do
-    if line.type == Enum.TooltipDataLineType.UnitName
-        and line.leftText and line.leftText ~= "" then
-      self.NameCache[npcID] = line.leftText
-
-      return line.leftText
+        if not (issecretvalue and issecretvalue(leftText))
+            and leftText and leftText ~= "" then
+          self.NameCache[npcID] = leftText
+          return leftText
+        end
+      end
     end
   end
 
-  return nil
+  return fallbackName
 end
 
 function PetBattleTargetService:GetPetIcon(speciesID)
