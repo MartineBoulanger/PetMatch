@@ -768,6 +768,8 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots, preserveCurre
           )
 
       if resolveError then
+        self.IsLoadingTeam = false
+
         if addon.Services.LoadoutMonitor then
           addon.Services.LoadoutMonitor:Resume()
         end
@@ -815,6 +817,8 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots, preserveCurre
       local pet = addon.Services.PetJournal:GetPet(petGUID)
 
       if not pet then
+        self.IsLoadingTeam = false
+
         if addon.Services.LoadoutMonitor then
           addon.Services.LoadoutMonitor:Resume()
         end
@@ -837,16 +841,18 @@ function BattleSlotService:LoadPets(pets, abilities, specialSlots, preserveCurre
   self.IsLoadingTeam = false
 
   --------------------------------------------------
-  -- Auto dismiss summoned pet
+  -- Handle summoned pet after team load
   --------------------------------------------------
-  if changedSlots > 0
-      and resolvedPets[1]
-      and addon.UI
-      and addon.UI.Actions
-      and addon.UI.Actions.PetJournalToolbar
-      and addon.UI.Actions.PetJournalToolbar.AutoDismissPet then
-    addon.UI.Actions.PetJournalToolbar:
-        AutoDismissPet(resolvedPets[1], 1, generation, previousSummonedPetGUID)
+  local summonedPetService = addon.Services.SummonedPet
+
+  if summonedPetService then
+    if changedSlots > 0 and resolvedPets[1] then
+      summonedPetService:HandleTeamLoad(
+        resolvedPets[1], previousSummonedPetGUID
+      )
+    else
+      summonedPetService:Cancel()
+    end
   end
 
   --------------------------------------------------

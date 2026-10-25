@@ -541,3 +541,15 @@ L["PET_ICON"] = "펫 아이콘 배경"
 L["PET_PORTRAIT"] = "펫 초상화 배경"
 L["PET_FAMILY"] = "펫 종류 배경"
 L["PET_EXPANSION"] = "펫 확장팩 배경"
+L["CAGE_CONFIRMATION"] = "애완동물 우리에 갇히기"
+L["CAGE_CONFIRMATION_DESCRIPTION"] =
+"전투 애완동물을 우리에 가두기 전에 블리자드의 확인 대화 상자를 표시할지 여부를 선택하세요."
+L["CAGE_CONFIRMATION_WARNING"] =
+"|cffffcc00경고:|r 확인을 비활성화하면 애완동물이 즉시 케이지에 갇힐 수 있습니다. 항상 선택한 애완동물을 확인하세요."
+L["RELEASE_CONFIRMATION"] = "애완동물 풀어주기"
+L["RELEASE_CONFIRMATION_DESCRIPTION"] =
+"전투 애완동물을 출시하기 전에 블리자드의 확인 대화 상자를 표시할지 여부를 선택하세요."
+L["RELEASE_CONFIRMATION_WARNING"] =
+"|cffff4040경고 - 영구적인 애완동물 손실!|r 확인을 비활성화하면 추가 경고 없이 애완동물이 영구적으로 풀려날 수 있습니다. 이 작업은 취소할 수 없습니다."
+L["DEFAULT_BLIZZARD_BEHAVIOUR"] = "기본 블리자드 동작"
+L["TURN_CONFIRMATION_OFF"] = "확인 대화상자 끄기"

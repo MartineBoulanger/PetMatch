@@ -546,3 +546,15 @@ L["PET_ICON"] = "Sfondo dell'icona del pet"
 L["PET_PORTRAIT"] = "Sfondo del ritratto del pet"
 L["PET_FAMILY"] = "Sfondo della famiglia del pet"
 L["PET_EXPANSION"] = "Sfondo dell'espansione del pet"
+L["CAGE_CONFIRMATION"] = "Gabbia per animali domestici"
+L["CAGE_CONFIRMATION_DESCRIPTION"] =
+"Scegli se visualizzare la finestra di dialogo di conferma di Blizzard prima di ingabbiare un animale domestico da battaglia."
+L["CAGE_CONFIRMATION_WARNING"] =
+"|cffffcc00ATTENZIONE:|r La disabilitazione della conferma potrebbe mettere in gabbia immediatamente un animale domestico. Controlla sempre l'animale selezionato."
+L["RELEASE_CONFIRMATION"] = "Rilascio dell'animale domestico"
+L["RELEASE_CONFIRMATION_DESCRIPTION"] =
+"Scegli se visualizzare la finestra di dialogo di conferma di Blizzard prima di rilasciare un animale domestico da battaglia."
+L["RELEASE_CONFIRMATION_WARNING"] =
+"|cffff4040ATTENZIONE - PERDITA ANIMALE PERMANENTE!|r La disabilitazione della conferma può rilasciare permanentemente un animale domestico senza ulteriori avvisi. Questa azione non può essere annullata."
+L["DEFAULT_BLIZZARD_BEHAVIOUR"] = "Comportamento Blizzard predefinito"
+L["TURN_CONFIRMATION_OFF"] = "Disattiva la finestra di dialogo di conferma"

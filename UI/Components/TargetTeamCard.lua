@@ -280,9 +280,17 @@ function TargetTeamCard:Initialize()
   addon.EventBus:Register(
     addon.Events.DATABASE_READY,
     function()
+      if TargetTeamCard.Frame then
+        addon.SkinManager:ApplyTargetTeamCard(TargetTeamCard.Frame)
+      end
+
       TargetTeamCard:RefreshActiveTeam()
     end
   )
+
+  if addon.DB then
+    addon.SkinManager:ApplyTargetTeamCard(frame)
+  end
 end
 
 function TargetTeamCard:RefreshActiveTeam()

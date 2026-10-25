@@ -22,6 +22,8 @@ local STATUS_BAR_SECTION_HEIGHT = 86
 local TEAM_CARD_SECTION_HEIGHT = 86
 local PVE_BATTLE_SECTION_HEIGHT = 86
 local TARGETS_SECTION_HEIGHT = 126
+local CAGE_CONFIRMATION_SECTION_HEIGHT = 146
+local RELEASE_CONFIRMATION_SECTION_HEIGHT = 156
 
 function OptionsList:Create(parent)
   local frame =
@@ -54,6 +56,8 @@ function OptionsList:Create(parent)
     statusBar = false,
     petBattles = false,
     targets = false,
+    cageConfirmation = false,
+    releaseConfirmation = false,
   }
 
   self:RegisterEvents()
@@ -108,6 +112,10 @@ function OptionsList:RegisterEvents()
         self:RefreshPetBattlesMode()
       elseif key == "targetTeamLoadMode" then
         self:RefreshTargetTeamLoadMode()
+      elseif key == "cageConfirmationMode" then
+        self:RefreshCageConfirmationMode()
+      elseif key == "releaseConfirmationMode" then
+        self:RefreshReleaseConfirmationMode()
       end
     end
   )
@@ -216,6 +224,16 @@ function OptionsList:ClearItems()
   self.TargetButtonModeButton = nil
   self.TargetAutoModeButton = nil
   self.TargetConfirmModeButton = nil
+
+  -- Cage Confirmation
+  self.CageConfirmationAccordion = nil
+  self.CageDefaultButton = nil
+  self.CageSkipButton = nil
+
+  -- Release Confirmation
+  self.ReleaseConfirmationAccordion = nil
+  self.ReleaseDefaultButton = nil
+  self.ReleaseSkipButton = nil
 end
 
 function OptionsList:GetSections()
@@ -324,41 +342,50 @@ function OptionsList:GetSections()
         self:BuildTargetOptions(content)
       end,
     },
+    {
+      key = "cageConfirmation",
+      title = L["CAGE_CONFIRMATION"],
+      contentHeight = CAGE_CONFIRMATION_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildCageConfirmationOptions(content)
+      end,
+    },
+    {
+      key = "releaseConfirmation",
+      title = L["RELEASE_CONFIRMATION"],
+      contentHeight = RELEASE_CONFIRMATION_SECTION_HEIGHT,
+      build = function(content)
+        self:BuildReleaseConfirmationOptions(content)
+      end,
+    },
   }
 end
 
 function OptionsList:CreateSection(section, currentOffset)
-  local expanded =
-      self.ExpandedSections[section.key] == true
+  local expanded = self.ExpandedSections[section.key] == true
 
-  local accordion =
-      addon.UI.Components.Accordion:Create(
-        self.Frame.Content,
-        {
-          title = section.title,
-          width = CONTENT_WIDTH,
-          expanded = expanded,
-          contentHeight = section.contentHeight,
-          contentPadding = 8,
-          onToggle = function(
-              control,
-              isExpanded
-          )
-            self.ExpandedSections[
-            section.key
-            ] = isExpanded
+  local accordion = addon.UI.Components.Accordion:Create(
+    self.Frame.Content,
+    {
+      title = section.title,
+      width = CONTENT_WIDTH,
+      expanded = expanded,
+      contentHeight = section.contentHeight,
+      contentPadding = 8,
+      onToggle = function(control, isExpanded)
+        self.ExpandedSections[section.key] = isExpanded
 
-            C_Timer.After(
-              0,
-              function()
-                if self.Frame then
-                  self:UpdateContentHeight()
-                end
-              end
-            )
-          end,
-        }
-      )
+        C_Timer.After(
+          0,
+          function()
+            if self.Frame then
+              self:UpdateContentHeight()
+            end
+          end
+        )
+      end,
+    }
+  )
 
   accordion.SectionKey = section.key
   accordion:ClearAllPoints()
@@ -440,9 +467,15 @@ function OptionsList:CreateSection(section, currentOffset)
     self.TargetsAccordion = accordion
   end
 
-  return currentOffset
-      + accordion:GetHeight()
-      + SECTION_SPACING
+  if section.key == "cageConfirmation" then
+    self.CageConfirmationAccordion = accordion
+  end
+
+  if section.key == "releaseConfirmation" then
+    self.ReleaseConfirmationAccordion = accordion
+  end
+
+  return currentOffset + accordion:GetHeight() + SECTION_SPACING
 end
 
 function OptionsList:CreateRadioButton(
@@ -1613,6 +1646,110 @@ function OptionsList:BuildTargetOptions(parent)
   self:RefreshTargetTeamLoadMode()
 end
 
+function OptionsList:BuildCageConfirmationOptions(parent)
+  local description = parent:CreateFontString(
+    nil, "OVERLAY", "GameFontHighlightSmall"
+  )
+
+  description:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+  description:SetPoint("RIGHT", parent, "RIGHT", 0, 0)
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+  description:SetText(L["CAGE_CONFIRMATION_DESCRIPTION"])
+
+  self.CageDefaultButton = self:CreateRadioButton(
+    parent,
+    L["DEFAULT_BLIZZARD_BEHAVIOUR"],
+    "cageConfirmationMode",
+    "default",
+    self.RefreshCageConfirmationMode
+  )
+
+  self.CageDefaultButton:SetPoint(
+    "TOPLEFT", description, "BOTTOMLEFT", 0, -7
+  )
+
+  self.CageSkipButton = self:CreateRadioButton(
+    parent,
+    L["TURN_CONFIRMATION_OFF"],
+    "cageConfirmationMode",
+    "skip",
+    self.RefreshCageConfirmationMode
+  )
+
+  self.CageSkipButton:SetPoint(
+    "TOPLEFT", self.CageDefaultButton, "BOTTOMLEFT", 0, -2
+  )
+
+  local warning = parent:CreateFontString(
+    nil, "OVERLAY", "GameFontHighlightSmall"
+  )
+
+  warning:SetPoint(
+    "TOPLEFT", self.CageSkipButton, "BOTTOMLEFT", 0, -12
+  )
+  warning:SetPoint("RIGHT", parent, "RIGHT", 0, 0)
+  warning:SetJustifyH("LEFT")
+  warning:SetJustifyV("TOP")
+  warning:SetWordWrap(true)
+  warning:SetText(L["CAGE_CONFIRMATION_WARNING"])
+
+  self:RefreshCageConfirmationMode()
+end
+
+function OptionsList:BuildReleaseConfirmationOptions(parent)
+  local description = parent:CreateFontString(
+    nil, "OVERLAY", "GameFontHighlightSmall"
+  )
+
+  description:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, 0)
+  description:SetPoint("RIGHT", parent, "RIGHT", 0, 0)
+  description:SetJustifyH("LEFT")
+  description:SetJustifyV("TOP")
+  description:SetWordWrap(true)
+  description:SetText(L["RELEASE_CONFIRMATION_DESCRIPTION"])
+
+  self.ReleaseDefaultButton = self:CreateRadioButton(
+    parent,
+    L["DEFAULT_BLIZZARD_BEHAVIOUR"],
+    "releaseConfirmationMode",
+    "default",
+    self.RefreshReleaseConfirmationMode
+  )
+
+  self.ReleaseDefaultButton:SetPoint(
+    "TOPLEFT", description, "BOTTOMLEFT", 0, -7
+  )
+
+  self.ReleaseSkipButton = self:CreateRadioButton(
+    parent,
+    L["TURN_CONFIRMATION_OFF"],
+    "releaseConfirmationMode",
+    "skip",
+    self.RefreshReleaseConfirmationMode
+  )
+
+  self.ReleaseSkipButton:SetPoint(
+    "TOPLEFT", self.ReleaseDefaultButton, "BOTTOMLEFT", 0, -2
+  )
+
+  local warning = parent:CreateFontString(
+    nil, "OVERLAY", "GameFontHighlightSmall"
+  )
+
+  warning:SetPoint(
+    "TOPLEFT", self.ReleaseSkipButton, "BOTTOMLEFT", 0, -12
+  )
+  warning:SetPoint("RIGHT", parent, "RIGHT", 0, 0)
+  warning:SetJustifyH("LEFT")
+  warning:SetJustifyV("TOP")
+  warning:SetWordWrap(true)
+  warning:SetText(L["RELEASE_CONFIRMATION_WARNING"])
+
+  self:RefreshReleaseConfirmationMode()
+end
+
 function OptionsList:RefreshDuplicateMode()
   if not self.SkipButton
       or not self.ReplaceButton
@@ -1872,6 +2009,28 @@ function OptionsList:RefreshTargetTeamLoadMode()
       SetChecked(
         mode == "confirm"
       )
+end
+
+function OptionsList:RefreshCageConfirmationMode()
+  if not self.CageDefaultButton or not self.CageSkipButton then
+    return
+  end
+
+  local mode = addon.Settings:Get("cageConfirmationMode") or "default"
+
+  self.CageDefaultButton:SetChecked(mode == "default")
+  self.CageSkipButton:SetChecked(mode == "skip")
+end
+
+function OptionsList:RefreshReleaseConfirmationMode()
+  if not self.ReleaseDefaultButton or not self.ReleaseSkipButton then
+    return
+  end
+
+  local mode = addon.Settings:Get("releaseConfirmationMode") or "default"
+
+  self.ReleaseDefaultButton:SetChecked(mode == "default")
+  self.ReleaseSkipButton:SetChecked(mode == "skip")
 end
 
 function OptionsList:UpdateContentHeight()

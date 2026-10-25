@@ -546,3 +546,15 @@ L["PET_ICON"] = "Arrière-plan (icône du familier)"
 L["PET_PORTRAIT"] = "Arrière-plan (portrait du familier)"
 L["PET_FAMILY"] = "Arrière-plan (famille du familier)"
 L["PET_EXPANSION"] = "Arrière-plan (extension du familier)"
+L["CAGE_CONFIRMATION"] = "Cage pour animaux"
+L["CAGE_CONFIRMATION_DESCRIPTION"] =
+"Choisissez d'afficher ou non la boîte de dialogue de confirmation de Blizzard avant de mettre en cage un familier de combat."
+L["CAGE_CONFIRMATION_WARNING"] =
+"|cffffcc00AVERTISSEMENT : |r La désactivation de la confirmation peut immédiatement mettre un animal en cage. Vérifiez toujours l'animal sélectionné."
+L["RELEASE_CONFIRMATION"] = "Lâcher un animal"
+L["RELEASE_CONFIRMATION_DESCRIPTION"] =
+"Choisissez d'afficher ou non la boîte de dialogue de confirmation de Blizzard avant de libérer un familier de combat."
+L["RELEASE_CONFIRMATION_WARNING"] =
+"|cffff4040AVERTISSEMENT – PERTE PERMANENTE D'ANIMAL !|r La désactivation de la confirmation peut libérer définitivement un animal sans autre avertissement. Cette action ne peut pas être annulée."
+L["DEFAULT_BLIZZARD_BEHAVIOUR"] = "Comportement Blizzard par défaut"
+L["TURN_CONFIRMATION_OFF"] = "Désactiver la boîte de dialogue de confirmation"

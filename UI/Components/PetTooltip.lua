@@ -80,11 +80,15 @@ local function GetPetCard()
 
   Card = component:Create(UIParent)
 
-  Card:SetCloseHandler(
-    function()
+  Card:SetCloseHandler(function()
+    PetTooltip:Unpin()
+  end)
+
+  Card:GetFrame():HookScript("OnHide", function()
+    if PetTooltip:IsPinned() then
       PetTooltip:Unpin()
     end
-  )
+  end)
 
   return Card
 end

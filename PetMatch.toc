@@ -1,5 +1,5 @@
 ## Interface: 120100,120105
-## Version: 1.24.4
+## Version: 1.24.7
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
 ## Author: FwenTheHunter
@@ -22,7 +22,7 @@ PetMatch.lua
 
 Localization\Localization.lua
 Localization\enUS.lua
-Localization\deDE.lua
+Localization\deDE.lua 
 Localization\esES.lua
 Localization\esMX.lua
 Localization\frFR.lua
@@ -57,6 +57,7 @@ Services/PetService.lua
 Services/PetJournalService.lua
 Services/SearchService.lua
 Services/BattleSlotService.lua
+Services/SummonedPetService.lua
 Services/LevellingQueueService.lua
 Services/TeamCompareService.lua
 Services/TeamService.lua
@@ -170,4 +171,5 @@ UI/Views/TeamSetupPanel.lua
 Modules/PetList.lua
 Modules/AbilitySearch.lua
 Modules/PetJournalFilterExtension.lua
+Modules/PetConfirmation.lua
 Core/Addon.lua

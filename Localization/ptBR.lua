@@ -543,3 +543,15 @@ L["PET_ICON"] = "Fundo do Ícone do Mascote"
 L["PET_PORTRAIT"] = "Fundo do Retrato do Mascote"
 L["PET_FAMILY"] = "Fundo da Família do Mascote"
 L["PET_EXPANSION"] = "Fundo da Expansão do Mascote"
+L["CAGE_CONFIRMATION"] = "Enjaulamento para animais de estimação"
+L["CAGE_CONFIRMATION_DESCRIPTION"] =
+"Escolha se deseja exibir a caixa de diálogo de confirmação da Blizzard antes de enjaular um animal de estimação de batalha."
+L["CAGE_CONFIRMATION_WARNING"] =
+"|cffffcc00AVISO:|r Desativar a confirmação pode prender um animal de estimação imediatamente. Sempre verifique o animal de estimação selecionado."
+L["RELEASE_CONFIRMATION"] = "Liberação do animal de estimação"
+L["RELEASE_CONFIRMATION_DESCRIPTION"] =
+"Escolha se deseja exibir a caixa de diálogo de confirmação da Blizzard antes de lançar um animal de estimação de batalha."
+L["RELEASE_CONFIRMATION_WARNING"] =
+"|cffff4040AVISO - PERDA PERMANENTE DO ANIMAL DE ESTIMAÇÃO!|r Desativar a confirmação pode liberar permanentemente um animal de estimação sem aviso prévio. Esta ação não pode ser desfeita."
+L["DEFAULT_BLIZZARD_BEHAVIOUR"] = "Comportamento padrão da Blizzard"
+L["TURN_CONFIRMATION_OFF"] = "Desativar caixa de diálogo de confirmação"

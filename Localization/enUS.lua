@@ -538,3 +538,15 @@ L["PET_ICON"] = "Pet Icon Background"
 L["PET_PORTRAIT"] = "Pet Portrait Background"
 L["PET_FAMILY"] = "Pet Family Background"
 L["PET_EXPANSION"] = "Pet Expansion Background"
+L["CAGE_CONFIRMATION"] = "Pet Caging"
+L["CAGE_CONFIRMATION_DESCRIPTION"] =
+"Choose whether to display Blizzard's confirmation dialog before caging a battle pet."
+L["CAGE_CONFIRMATION_WARNING"] =
+"|cffffcc00WARNING:|r Disabling confirmation may cage a pet immediately. Always check the selected pet."
+L["RELEASE_CONFIRMATION"] = "Pet Releasing"
+L["RELEASE_CONFIRMATION_DESCRIPTION"] =
+"Choose whether to display Blizzard's confirmation dialog before releasing a battle pet."
+L["RELEASE_CONFIRMATION_WARNING"] =
+"|cffff4040WARNING - PERMANENT PET LOSS!|r Disabling confirmation may permanently release a pet without further warning. This action cannot be undone."
+L["DEFAULT_BLIZZARD_BEHAVIOUR"] = "Default Blizzard Behaviour"
+L["TURN_CONFIRMATION_OFF"] = "Turn Confirmation Dialog Off"

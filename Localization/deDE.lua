@@ -543,3 +543,15 @@ L["PET_ICON"] = "Hintergrund des Haustiersymbols"
 L["PET_PORTRAIT"] = "Hintergrund des Haustierporträts"
 L["PET_FAMILY"] = "Hintergrund der Haustierfamilie"
 L["PET_EXPANSION"] = "Hintergrund der Haustier-Erweiterung"
+L["CAGE_CONFIRMATION"] = "Haustierkäfig"
+L["CAGE_CONFIRMATION_DESCRIPTION"] =
+"Wählen Sie, ob Blizzards Bestätigungsdialog angezeigt werden soll, bevor ein Kampfhaustier eingesperrt wird."
+L["CAGE_CONFIRMATION_WARNING"] =
+"|cffffcc00WARNUNG:|r Das Deaktivieren der Bestätigung kann dazu führen, dass ein Haustier sofort eingesperrt wird. Überprüfen Sie immer das ausgewählte Haustier."
+L["RELEASE_CONFIRMATION"] = "Haustierfreigabe"
+L["RELEASE_CONFIRMATION_DESCRIPTION"] =
+"Wählen Sie, ob Blizzards Bestätigungsdialog angezeigt werden soll, bevor ein Kampfhaustier freigegeben wird."
+L["RELEASE_CONFIRMATION_WARNING"] =
+"|cffff4040WARNUNG – DAUERHAFTER HAUSTIERVERLUST!|r Durch das Deaktivieren der Bestätigung kann ein Haustier ohne weitere Warnung dauerhaft freigelassen werden. Diese Aktion kann nicht rückgängig gemacht werden."
+L["DEFAULT_BLIZZARD_BEHAVIOUR"] = "Standardverhalten von Blizzard"
+L["TURN_CONFIRMATION_OFF"] = "Bestätigungsdialog ausschalten"

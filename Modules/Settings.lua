@@ -35,6 +35,8 @@ local DEFAULT_SETTINGS = {
   autoOpenPetJournalAfterBattle = true,
   statusBarClearMode = "all",
   targetTeamLoadMode = "off",
+  cageConfirmationMode = "default",
+  releaseConfirmationMode = "default",
 }
 
 local function ApplyDefaults(defaults, target)
@@ -123,7 +125,13 @@ function Settings:SetUI(key, value)
 end
 
 function Settings:GetGlobal(key)
-  return addon.DB.global.settings[key]
+  local db = addon.DB
+
+  if not db or not db.global or not db.global.settings then
+    return nil
+  end
+
+  return db.global.settings[key]
 end
 
 function Settings:SetGlobal(key, value)

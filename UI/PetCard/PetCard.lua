@@ -12,6 +12,18 @@ local CONTENT_PADDING = 14
 local CONTENT_TOP_SPACING = 0
 local SECTION_SPACING = 8
 
+local function RegisterEscapeHandler()
+  local name = "PetMatchPinnedPetCard"
+
+  for _, registeredName in ipairs(UISpecialFrames) do
+    if registeredName == name then
+      return
+    end
+  end
+
+  table.insert(UISpecialFrames, name)
+end
+
 function PetCard:Create(parent)
   assert(parent, L["PARENT_PET_CARD"])
 
@@ -20,11 +32,28 @@ function PetCard:Create(parent)
   --------------------------------------------------
   -- Frame
   --------------------------------------------------
-  instance.Frame = CreateFrame("Frame", nil, parent, "DefaultPanelTemplate")
+  instance.Frame = CreateFrame("Frame", "PetMatchPinnedPetCard", UIParent, "DefaultPanelTemplate")
+  instance.Frame:SetAttribute("UIPanelLayout-enabled", false)
+
+  RegisterEscapeHandler()
+
   instance.Frame:SetWidth(CARD_WIDTH)
   instance.Frame:SetFrameStrata("DIALOG")
   instance.Frame:SetFrameLevel(100)
   instance.Frame:SetClampedToScreen(true)
+
+  instance.Frame:SetMovable(true)
+  instance.Frame:RegisterForDrag("LeftButton")
+
+  instance.Frame:SetScript("OnDragStart", function(frame)
+    if instance:IsPinned() then
+      frame:StartMoving()
+    end
+  end)
+
+  instance.Frame:SetScript("OnDragStop", function(frame)
+    frame:StopMovingOrSizing()
+  end)
 
   --------------------------------------------------
   -- Blizzard title
@@ -41,6 +70,12 @@ function PetCard:Create(parent)
   --------------------------------------------------
   instance:CreateContent()
   instance:CreateCloseButton()
+
+  instance.Frame:HookScript("OnHide", function()
+    if instance:IsPinned() then
+      instance:SetPinned(false)
+    end
+  end)
 
   instance:CreateHeader()
   instance:CreateDetails()

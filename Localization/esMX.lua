@@ -544,3 +544,15 @@ L["PET_ICON"] = "Fondo del icono de mascota"
 L["PET_PORTRAIT"] = "Fondo del retrato de mascota"
 L["PET_FAMILY"] = "Fondo de la familia de mascota"
 L["PET_EXPANSION"] = "Fondo de la expansión de mascota"
+L["CAGE_CONFIRMATION"] = "Enjaulamiento de mascotas"
+L["CAGE_CONFIRMATION_DESCRIPTION"] =
+"Elige si deseas mostrar el cuadro de diálogo de confirmación de Blizzard antes de enjaular a una mascota de duelo."
+L["CAGE_CONFIRMATION_WARNING"] =
+"|cffffcc00ADVERTENCIA:|r Desactivar la confirmación puede enjaular a una mascota inmediatamente. Verifique siempre la mascota seleccionada."
+L["RELEASE_CONFIRMATION"] = "Liberación de mascotas"
+L["RELEASE_CONFIRMATION_DESCRIPTION"] =
+"Elija si desea mostrar el cuadro de diálogo de confirmación de Blizzard antes de liberar una mascota de duelo."
+L["RELEASE_CONFIRMATION_WARNING"] =
+"|cffff4040ADVERTENCIA - ¡PÉRDIDA PERMANENTE DE MASCOTA!|r Desactivar la confirmación puede liberar permanentemente a una mascota sin previo aviso. Esta acción no se puede deshacer."
+L["DEFAULT_BLIZZARD_BEHAVIOUR"] = "Comportamiento predeterminado de Blizzard"
+L["TURN_CONFIRMATION_OFF"] = "Desactivar el cuadro de diálogo de confirmación"

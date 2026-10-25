@@ -2577,23 +2577,23 @@ function PetList:InstallHook()
         return
       end
 
+      -- Team loading is handled by BattleSlotService.
       if addon.Services.BattleSlot
           and addon.Services.BattleSlot.IsLoadingTeam then
         return
       end
 
-      local toolbar =
-          addon.UI
-          and addon.UI.Actions
-          and addon.UI.Actions.PetJournalToolbar
+      local summonedPetService = addon.Services.SummonedPet
 
-      if toolbar
-          and toolbar.HandleManualSlotChange then
-        toolbar:HandleManualSlotChange(
-          slot,
-          petGUID
-        )
+      if not summonedPetService then
+        return
       end
+
+      local previousSummonedPetGUID = C_PetJournal.GetSummonedPetGUID()
+
+      summonedPetService:HandleManualSlotChange(
+        petGUID, previousSummonedPetGUID
+      )
     end
   )
 

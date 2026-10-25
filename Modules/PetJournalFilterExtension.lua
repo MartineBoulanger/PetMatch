@@ -565,6 +565,21 @@ local function CompareSearchValue(actual, operator, expected)
   return false
 end
 
+local function GetBreedName(petID, _speciesID)
+  if type(petID) ~= "string" or petID == "" then
+    return nil
+  end
+
+  local breedService = addon.Services and addon.Services.Breed
+
+  if not breedService
+      or type(breedService.GetJournalBreed) ~= "function" then
+    return nil
+  end
+
+  return breedService:GetJournalBreed(petID)
+end
+
 local function MatchesAdvancedSearch(
     petID,
     speciesID,
@@ -1066,21 +1081,6 @@ local function GetExpansionName(_petID, speciesID)
   end
 
   return petExpansion:GetExpansionName(speciesID)
-end
-
-local function GetBreedName(petID, _speciesID)
-  if type(petID) ~= "string" or petID == "" then
-    return nil
-  end
-
-  local breedService = addon.Services and addon.Services.Breed
-
-  if not breedService
-      or type(breedService.GetJournalBreed) ~= "function" then
-    return nil
-  end
-
-  return breedService:GetJournalBreed(petID)
 end
 
 local function GetLevelRangeKey(level)
