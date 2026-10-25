@@ -93,7 +93,7 @@ function UnloadTeamButton:Create()
     PetJournal,
     {
       name = "PetMatchUnloadTeamButton",
-      texture = "Interface\\AddOns\\PetMatch\\Media\\unload-team",
+      texture = "Interface\\AddOns\\PetMatch\\Media\\unload-team2",
       width = 36,
       height = 36,
       styleSource = styleSource,

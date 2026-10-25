@@ -34,7 +34,7 @@ function TargetTeamLoadButton:Create()
         PetJournal,
         {
           name = "PetMatchTargetTeamLoadButton",
-          texture = "Interface\\AddOns\\PetMatch\\Media\\load-team",
+          texture = "Interface\\AddOns\\PetMatch\\Media\\load-team2",
           width = 36,
           height = 36,
           styleSource = styleSource,
