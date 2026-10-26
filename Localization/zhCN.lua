@@ -264,6 +264,13 @@ L["UI_SKIN_DESCRIPTION"] =
 "为 PetMatch 选择界面外观。此设置适用于所有配置文件。\n更改外观后，需要重新加载界面才能生效。"
 L["UI_SKIN_DEFAULT"] = "PetMatch 默认"
 L["RELOAD_UI"] = "重新加载界面"
+L["SUPPORT_AND_RESOURCES"] = "支持与资源"
+L["SUPPORT_DESCRIPTION1"] = "发现错误、需要帮助，或是想提出功能建议？"
+L["SUPPORT_DESCRIPTION2"] = "您可以通过 Discord 联系我，在 CurseForge 上留言，"
+L["SUPPORT_DESCRIPTION3"] = "或者在 GitHub 上提交问题（Issue）。\n\n"
+L["SUPPORT_DESCRIPTION4"] = "如需了解 PetMatch 的相关说明与信息，"
+L["SUPPORT_DESCRIPTION5"] = "您可以查阅或下载完整的用户指南。"
+L["SUPPORT_DIALOG"] = "请复制下方链接并在浏览器中打开："
 
 -- UI/Base
 L["BUTTON"] = "按钮"

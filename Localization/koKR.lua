@@ -266,6 +266,13 @@ L["UI_SKIN_DESCRIPTION"] =
 "PetMatch의 UI 스킨을 선택하세요. 이 설정은 모든 프로필에 적용됩니다.\n스킨 변경 사항을 확인하려면 UI를 새로고침해야 합니다."
 L["UI_SKIN_DEFAULT"] = "PetMatch 기본값"
 L["RELOAD_UI"] = "UI 새로고침"
+L["SUPPORT_AND_RESOURCES"] = "지원 및 리소스"
+L["SUPPORT_DESCRIPTION1"] = "버그를 발견하셨나요? 도움이 필요하시거나 새로운 기능을 제안하고 싶으신가요?"
+L["SUPPORT_DESCRIPTION2"] = "Discord를 통해 연락하시거나, CurseForge에 댓글을 남기시거나,"
+L["SUPPORT_DESCRIPTION3"] = "GitHub에 이슈를 등록해 주세요.\n\n"
+L["SUPPORT_DESCRIPTION4"] = "PetMatch 사용 방법 및 관련 정보는"
+L["SUPPORT_DESCRIPTION5"] = "전체 사용자 가이드를 읽거나 다운로드하여 확인하실 수 있습니다."
+L["SUPPORT_DIALOG"] = "아래 링크를 복사하여 브라우저에서 열어주세요:"
 
 -- UI/Base
 L["BUTTON"] = "버튼"

@@ -264,6 +264,13 @@ L["UI_SKIN_DESCRIPTION"] =
 "選擇 PetMatch 的使用者介面皮膚。此設定將套用於所有個人資料。\n您需要重新載入使用者介面才能看到皮膚變更。"
 L["UI_SKIN_DEFAULT"] = "PetMatch 預設皮膚"
 L["RELOAD_UI"] = "重新載入使用者介面"
+L["SUPPORT_AND_RESOURCES"] = "支援與資源"
+L["SUPPORT_DESCRIPTION1"] = "發現錯誤、需要幫助或有功能請求？"
+L["SUPPORT_DESCRIPTION2"] = "請在 Discord 上聯絡我，在 CurseForge 上留言，"
+L["SUPPORT_DESCRIPTION3"] = "或在 GitHub 上提交 issue。\n\n"
+L["SUPPORT_DESCRIPTION4"] = "有關 PetMatch 的說明和信息，"
+L["SUPPORT_DESCRIPTION5"] = "您可以閱讀或下載完整的使用者指南。"
+L["SUPPORT_DIALOG"] = "複製以下連結並在瀏覽器中開啟："
 
 -- UI/Base
 L["BUTTON"] = "按鈕"

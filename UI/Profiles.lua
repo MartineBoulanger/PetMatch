@@ -455,6 +455,8 @@ function ProfileSettings:Initialize()
     -10
   )
 
+  skinDescription:SetWidth(500)
+  skinDescription:SetJustifyH("LEFT")
   skinDescription:SetText(L["UI_SKIN_DESCRIPTION"])
 
   local skinDropdown = CreateFrame(
@@ -469,7 +471,7 @@ function ProfileSettings:Initialize()
     skinDescription,
     "BOTTOMLEFT",
     0,
-    -12
+    -20
   )
 
   skinDropdown:SetWidth(220)
@@ -503,7 +505,7 @@ function ProfileSettings:Initialize()
       local option = rootDescription:CreateRadio(
         skinLabel,
         function()
-          return addon.SkinManager:GetSelected() == skinID
+          return selected == skinID
         end,
         function()
           addon.Settings:SetGlobal("uiSkin", skinID)
@@ -536,7 +538,7 @@ function ProfileSettings:Initialize()
     skinDropdown,
     "BOTTOMLEFT",
     0,
-    -16
+    -20
   )
 
   reloadButton:SetText(L["RELOAD_UI"])
@@ -544,6 +546,164 @@ function ProfileSettings:Initialize()
   reloadButton:SetScript("OnClick", function()
     ReloadUI()
   end)
+
+  --------------------------------------------------
+  -- Section divider
+  --------------------------------------------------
+  local supportDivider = panel:CreateTexture(
+    nil,
+    "ARTWORK"
+  )
+
+  supportDivider:SetTexture(
+    "Interface\\Common\\UI-TooltipDivider-Transparent"
+  )
+
+  supportDivider:SetHeight(16)
+
+  supportDivider:SetPoint(
+    "TOPLEFT",
+    reloadButton,
+    "BOTTOMLEFT",
+    0,
+    -22
+  )
+
+  supportDivider:SetPoint(
+    "RIGHT",
+    deleteButton,
+    "RIGHT",
+    0,
+    0
+  )
+
+  --------------------------------------------------
+  -- Support & Resources
+  --------------------------------------------------
+  local supportTitle = panel:CreateFontString(
+    nil,
+    "ARTWORK",
+    "GameFontNormalLarge"
+  )
+
+  supportTitle:SetPoint(
+    "TOPLEFT",
+    supportDivider,
+    "BOTTOMLEFT",
+    0,
+    -12
+  )
+
+  supportTitle:SetText(L["SUPPORT_AND_RESOURCES"])
+
+  local supportDescription = panel:CreateFontString(
+    nil,
+    "ARTWORK",
+    "GameFontHighlight"
+  )
+
+  supportDescription:SetPoint(
+    "TOPLEFT",
+    supportTitle,
+    "BOTTOMLEFT",
+    0,
+    -10
+  )
+
+  supportDescription:SetWidth(500)
+  supportDescription:SetJustifyH("LEFT")
+  supportDescription:SetText(
+    L["SUPPORT_DESCRIPTION1"] ..
+    L["SUPPORT_DESCRIPTION2"] ..
+    L["SUPPORT_DESCRIPTION3"] ..
+    L["SUPPORT_DESCRIPTION4"] ..
+    L["SUPPORT_DESCRIPTION5"]
+  )
+
+  --------------------------------------------------
+  -- Copyable URL dialog
+  --------------------------------------------------
+  StaticPopupDialogs["PETMATCH_RESOURCE_LINK"] = {
+    text = L["SUPPORT_DIALOG"],
+    button1 = CLOSE,
+    hasEditBox = true,
+    editBoxWidth = 320,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    preferredIndex = 3,
+
+    OnShow = function(self, url)
+      local editBox = self.EditBox
+
+      editBox:SetText(url or "")
+      editBox:SetFocus()
+      editBox:HighlightText()
+    end,
+
+    EditBoxOnEnterPressed = function(self)
+      self:GetParent():Hide()
+    end,
+  }
+
+  --------------------------------------------------
+  -- Resource buttons
+  --------------------------------------------------
+  local resources = {
+    {
+      label = "CurseForge",
+      url = "https://www.curseforge.com/wow/addons/petmatch/comments",
+    },
+    {
+      label = "GitHub",
+      url = "https://github.com/MartineBoulanger/PetMatch/issues",
+    },
+    {
+      label = "User Guide",
+      url = "https://drive.google.com/file/d/1xtvIXC4X2RywS5PIb8rX7uJ5DAVemDUf/view?usp=sharing",
+    },
+  }
+
+  local resourceButtons = {}
+
+  for index, resource in ipairs(resources) do
+    local button = CreateFrame(
+      "Button",
+      nil,
+      panel,
+      "UIPanelButtonTemplate"
+    )
+
+    button:SetSize(150, 25)
+
+    if index == 1 then
+      button:SetPoint(
+        "TOPLEFT",
+        supportDescription,
+        "BOTTOMLEFT",
+        0,
+        -20
+      )
+    else
+      button:SetPoint(
+        "LEFT",
+        resourceButtons[index - 1],
+        "RIGHT",
+        20,
+        0
+      )
+    end
+
+    button:SetText(resource.label)
+
+    local url = resource.url
+
+    button:SetScript("OnClick", function()
+      StaticPopup_Show("PETMATCH_RESOURCE_LINK", nil, nil, url)
+    end)
+
+    resourceButtons[index] = button
+  end
 
   --------------------------------------------------
   -- Apply UI skins
@@ -556,6 +716,10 @@ function ProfileSettings:Initialize()
   addon.SkinManager:ApplyButton(renameButton)
   addon.SkinManager:ApplyButton(deleteButton)
   addon.SkinManager:ApplyButton(reloadButton)
+
+  for _, button in ipairs(resourceButtons) do
+    addon.SkinManager:ApplyButton(button)
+  end
 
   --------------------------------------------------
   -- Register changes

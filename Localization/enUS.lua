@@ -262,6 +262,13 @@ L["UI_SKIN_DESCRIPTION"] =
 "Select the UI skin for PetMatch. This setting applies to all profiles.\nYou will need to reload the UI to see the skin changed."
 L["UI_SKIN_DEFAULT"] = "PetMatch Default"
 L["RELOAD_UI"] = "Reload UI"
+L["SUPPORT_AND_RESOURCES"] = "Support & Resources"
+L["SUPPORT_DESCRIPTION1"] = "Found a bug, need help, or have a feature request? "
+L["SUPPORT_DESCRIPTION2"] = "Contact me on Discord, leave a comment on CurseForge, "
+L["SUPPORT_DESCRIPTION3"] = "or open an issue on GitHub.\n\n"
+L["SUPPORT_DESCRIPTION4"] = "For instructions and information about PetMatch, "
+L["SUPPORT_DESCRIPTION5"] = "you can read or download the complete User Guide."
+L["SUPPORT_DIALOG"] = "Copy the link below and open it in your browser:"
 
 -- UI/Base
 L["BUTTON"] = "Button"
