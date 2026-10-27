@@ -353,6 +353,54 @@ local function UpdatePetLoadoutRarityColors()
   end
 end
 
+local function ShowPetJournalLoadout()
+  if not PetJournal or not PetJournal:IsShown() then
+    return
+  end
+
+  local frames = {
+    PetJournalLoadout,
+    PetJournalLoadoutBorder,
+    PetJournalFindBattle,
+  }
+
+  for _, frame in ipairs(frames) do
+    if frame and not frame:IsShown() then
+      frame:Show()
+    end
+  end
+end
+
+local function InitializeLoadoutVisibility()
+  local restoring = false
+
+  local function RestoreLoadout()
+    if restoring then
+      return
+    end
+
+    if not PetJournal or not PetJournal:IsShown() then
+      return
+    end
+
+    restoring = true
+    ShowPetJournalLoadout()
+    restoring = false
+  end
+
+  local frames = {
+    PetJournalLoadout,
+    PetJournalLoadoutBorder,
+    PetJournalFindBattle,
+  }
+
+  for _, frame in ipairs(frames) do
+    if frame then
+      frame:HookScript("OnHide", RestoreLoadout)
+    end
+  end
+end
+
 function Blizzard:UpdateLoadoutTitle(team)
   UpdateLoadoutTitle(team)
 end
@@ -400,6 +448,7 @@ function Blizzard:Initialize()
     end
   )
 
+  InitializeLoadoutVisibility()
   InitializePetCollectionButton()
   ApplyCompactPetCardLayout()
 
