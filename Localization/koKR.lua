@@ -304,6 +304,8 @@ L['CLICK_TO_LOAD'] = "클릭하여 불러오기"
 L["TEST_NPC"] = "테스트 NPC"
 L["SUMMON_LEVELLING_PET"] = "소환"
 L["DISMISS_LEVELLING_PET"] = "해제"
+L["MOVE_TO_TOP"] = "맨 위로 이동"
+L["MOVE_TO_BOTTOM"] = "맨 아래로 이동"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "폴더를 삭제할 수 없습니다"

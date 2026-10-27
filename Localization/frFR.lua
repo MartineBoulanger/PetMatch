@@ -305,6 +305,8 @@ L['CLICK_TO_LOAD'] = "Cliquez pour charger"
 L["TEST_NPC"] = "PNJ de test"
 L["SUMMON_LEVELLING_PET"] = "Invoquer"
 L["DISMISS_LEVELLING_PET"] = "Renvoyer"
+L["MOVE_TO_TOP"] = "Déplacer vers le haut"
+L["MOVE_TO_BOTTOM"] = "Déplacer vers le bas"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Impossible de supprimer le dossier"

@@ -779,6 +779,40 @@ function LevellingQueueRow:OpenContextMenu()
       root:CreateDivider()
 
       --------------------------------------------------
+      -- Move To Top
+      --------------------------------------------------
+
+      local moveToTop = root:CreateButton(
+        L["MOVE_TO_TOP"],
+        function()
+          service:Move(petGUID, 1)
+        end
+      )
+
+      moveToTop:SetEnabled(
+        index ~= nil
+        and index > 1
+      )
+
+      --------------------------------------------------
+      -- Move To Bottom
+      --------------------------------------------------
+
+      local moveToBottom = root:CreateButton(
+        L["MOVE_TO_BOTTOM"],
+        function()
+          service:Move(petGUID, count)
+        end
+      )
+
+      moveToBottom:SetEnabled(
+        index ~= nil
+        and index < count
+      )
+
+      root:CreateDivider()
+
+      --------------------------------------------------
       -- Remove
       --------------------------------------------------
       root:CreateButton(

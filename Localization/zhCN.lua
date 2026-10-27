@@ -302,6 +302,8 @@ L['CLICK_TO_LOAD'] = "点击加载"
 L["TEST_NPC"] = "测试 NPC"
 L["SUMMON_LEVELLING_PET"] = "召唤"
 L["DISMISS_LEVELLING_PET"] = "解散"
+L["MOVE_TO_TOP"] = "移至顶部"
+L["MOVE_TO_BOTTOM"] = "移至底部"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "无法删除文件夹"

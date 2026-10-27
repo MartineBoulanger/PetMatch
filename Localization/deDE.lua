@@ -304,6 +304,8 @@ L['CLICK_TO_LOAD'] = "Zum Laden klicken"
 L["TEST_NPC"] = "Test-NPC"
 L["SUMMON_LEVELLING_PET"] = "Beschwören"
 L["DISMISS_LEVELLING_PET"] = "Zurückschicken"
+L["MOVE_TO_TOP"] = "Nach oben verschieben"
+L["MOVE_TO_BOTTOM"] = "Nach unten verschieben"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Löschen des Odners nicht möglich"

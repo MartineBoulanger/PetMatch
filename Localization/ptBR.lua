@@ -304,6 +304,8 @@ L['CLICK_TO_LOAD'] = "Clique para carregar"
 L["TEST_NPC"] = "NPC de teste"
 L["SUMMON_LEVELLING_PET"] = "Invocar"
 L["DISMISS_LEVELLING_PET"] = "Dispensar"
+L["MOVE_TO_TOP"] = "Mover para o topo"
+L["MOVE_TO_BOTTOM"] = "Mover para a parte inferior"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Não foi possível excluir a pasta"

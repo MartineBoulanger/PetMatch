@@ -305,6 +305,8 @@ L['CLICK_TO_LOAD'] = "Haz clic para cargar"
 L["TEST_NPC"] = "NPC de prueba"
 L["SUMMON_LEVELLING_PET"] = "Invocar"
 L["DISMISS_LEVELLING_PET"] = "Despedir"
+L["MOVE_TO_TOP"] = "Mover al principio"
+L["MOVE_TO_BOTTOM"] = "Mover al final"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "No se puede eliminar la carpeta"

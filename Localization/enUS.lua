@@ -300,6 +300,8 @@ L['CLICK_TO_LOAD'] = "Click to load"
 L["TEST_NPC"] = "Test NPC"
 L["SUMMON_LEVELLING_PET"] = "Summon"
 L["DISMISS_LEVELLING_PET"] = "Dismiss"
+L["MOVE_TO_TOP"] = "Move to Top"
+L["MOVE_TO_BOTTOM"] = "Move to Bottom"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Unable to delete folder"

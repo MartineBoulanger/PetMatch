@@ -304,6 +304,8 @@ L['CLICK_TO_LOAD'] = "Нажмите для загрузки"
 L["TEST_NPC"] = "Тестовый NPC"
 L["SUMMON_LEVELLING_PET"] = "Призвать"
 L["DISMISS_LEVELLING_PET"] = "Отпустить"
+L["MOVE_TO_TOP"] = "Переместить в начало"
+L["MOVE_TO_BOTTOM"] = "Переместить в конец"
 
 -- UI/Dialogs
 L["UNABLE_DELETE_FOLDER"] = "Не удалось удалить папку"
