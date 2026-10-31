@@ -14,6 +14,7 @@ local DEFAULT_PROFILE = {
   favorites = {},
   settings = {},
   folders = {},
+  savedFilters = {},
   activeTeam = nil,
   levellingQueue = {
     pets = {},
@@ -84,6 +85,39 @@ function Profiles:GetCurrentProfile()
   local profileName = self:GetCurrentProfileName()
 
   return GetProfilesTable()[profileName]
+end
+
+--------------------------------------------------
+-- Saved filters
+--------------------------------------------------
+function Profiles:GetSavedFilters()
+  local profile = self:GetCurrentProfile()
+
+  if not profile then
+    return nil
+  end
+
+  if type(profile.savedFilters) ~= "table" then
+    profile.savedFilters = {}
+  end
+
+  return profile.savedFilters
+end
+
+function Profiles:GetSavedFilter(name)
+  if not IsValidName(name) then
+    return nil
+  end
+
+  name = addon.Utils:Trim(name)
+
+  local savedFilters = self:GetSavedFilters()
+
+  if not savedFilters then
+    return nil
+  end
+
+  return savedFilters[name]
 end
 
 --------------------------------------------------

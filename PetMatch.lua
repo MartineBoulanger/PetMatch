@@ -1,7 +1,7 @@
 local _, addon = ...
 
 addon.Name = "PetMatch"
-addon.Version = "1.24.10"
+addon.Version = "1.24.12"
 
 addon.Modules = {}
 addon.Services = {}

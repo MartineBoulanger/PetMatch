@@ -1896,6 +1896,27 @@ local function InstallUncollectedPetContextMenu(button)
         function(owner, root)
           root:CreateTitle(L["PETMATCH"])
 
+          root:CreateButton(
+            L["PET_NOTES"],
+            function()
+              local dialog = addon.UI.Dialogs.PetNotesDialog
+
+              if not dialog then
+                return
+              end
+
+              local petName
+
+              if C_PetJournal.GetPetInfoBySpeciesID then
+                petName = C_PetJournal.GetPetInfoBySpeciesID(
+                  speciesID
+                )
+              end
+
+              dialog:Show(nil, speciesID, petName)
+            end
+          )
+
           if hiddenPetService:IsSpeciesHidden(speciesID) then
             root:CreateButton(
               L["UNHIDE_PET"],
@@ -2341,6 +2362,47 @@ function PetList:InstallPetContextMenu()
 
       local petGUID = GetOwnerPetGUID(owner)
       local speciesID = GetOwnerSpeciesID(owner)
+
+      --------------------------------------------------
+      -- Pet Notes
+      --------------------------------------------------
+      if petGUID or speciesID then
+        root:CreateButton(
+          L["PET_NOTES"],
+          function()
+            local dialog = addon.UI.Dialogs.PetNotesDialog
+
+            if not dialog then
+              return
+            end
+
+            local petService = addon.Services.PetJournal
+            local pet = petGUID and petService
+                and petService:GetPet(petGUID)
+
+            local resolvedSpeciesID =
+                speciesID or (pet and tonumber(pet.speciesID))
+
+            if not resolvedSpeciesID then
+              return
+            end
+
+            local petName = pet and pet.name
+
+            if not petName and C_PetJournal.GetPetInfoBySpeciesID then
+              petName = C_PetJournal.GetPetInfoBySpeciesID(
+                resolvedSpeciesID
+              )
+            end
+
+            dialog:Show(
+              petGUID,
+              resolvedSpeciesID,
+              petName
+            )
+          end
+        )
+      end
 
       --------------------------------------------------
       -- Hidden Pet

@@ -19,6 +19,7 @@ local PET_SOURCES = {}
 
 local ItemPool = {}
 
+local LastInstalledDataProvider = nil
 local ActiveItems = {}
 local BuildItems = {}
 local LastNativeSearchText = nil
@@ -30,6 +31,7 @@ local applyFiltersTimer = nil
 local refreshRequired = false
 local currentFilterBarShown = nil
 local applyFiltersQueued = false
+local restoringSavedFilter = false
 
 local APPLY_FILTERS_DELAY = 0.4
 
@@ -162,6 +164,7 @@ local OtherFilters = {
   team = nil,
   duplicates = nil,
   level25 = nil,
+  withoutRares = nil,
 }
 
 local TAG_FILTER_OPTIONS = {
@@ -250,6 +253,16 @@ local ADVANCED_SEARCH_FIELDS = {
   canbattle = "boolean",
   tradable = "boolean",
   owned = "boolean",
+}
+
+local SAVED_FILTER_VERSION = 1
+
+local PET_TYPE_FILTER_MODES = {
+  "petType",
+  "strongVs",
+  "weakVs",
+  "takesMoreFrom",
+  "takesLessFrom",
 }
 
 local function QueueApplyFilters()
@@ -542,6 +555,138 @@ local function ParseAdvancedSearch(text)
   }
 end
 
+local function CopyFilterSelections(source)
+  local result = {}
+
+  if type(source) ~= "table" then
+    return result
+  end
+
+  for key, value in pairs(source) do
+    if value == true then
+      result[key] = true
+    end
+  end
+
+  return result
+end
+
+local function RestoreFilterSelections(target, source)
+  wipe(target)
+
+  if type(source) ~= "table" then
+    return
+  end
+
+  for key, value in pairs(source) do
+    if value == true then
+      target[key] = true
+    end
+  end
+end
+
+function FilterExtension:CreateFilterSnapshot()
+  local snapshot = {
+    version = SAVED_FILTER_VERSION,
+
+    filters = {},
+    otherFilters = {},
+
+    collected = CollectedFilter,
+    notCollected = NotCollectedFilter,
+    showHidden = ShowHiddenPets,
+
+    searchText = AdvancedSearch.rawText or "",
+
+    petTypeFilter = {
+      mode = "petType",
+      level25Only = false,
+      selectedTypes = {},
+    },
+  }
+
+  --------------------------------------------------
+  -- Standard filters
+  --------------------------------------------------
+  for group, selections in pairs(Filters) do
+    snapshot.filters[group] = CopyFilterSelections(selections)
+  end
+
+  --------------------------------------------------
+  -- Other filters
+  --------------------------------------------------
+  for group, value in pairs(OtherFilters) do
+    snapshot.otherFilters[group] = value
+  end
+
+  --------------------------------------------------
+  -- Pet type filters
+  --------------------------------------------------
+  local service = addon.Services and addon.Services.PetTypeFilter
+
+  if service then
+    snapshot.petTypeFilter.mode = service:GetMode()
+    snapshot.petTypeFilter.level25Only = service:IsLevel25Only()
+
+    for _, mode in ipairs(PET_TYPE_FILTER_MODES) do
+      snapshot.petTypeFilter.selectedTypes[mode] =
+          CopyFilterSelections(service:GetSelectedTypes(mode))
+    end
+  end
+
+  return snapshot
+end
+
+function FilterExtension:SaveFilter(name)
+  if type(name) ~= "string" then
+    return false
+  end
+
+  name = addon.Utils:Trim(name)
+
+  if name == "" then
+    return false
+  end
+
+  local savedFilters = addon.Profiles:GetSavedFilters()
+
+  if not savedFilters then
+    return false
+  end
+
+  savedFilters[name] = self:CreateFilterSnapshot()
+
+  return true
+end
+
+function FilterExtension:LoadFilter(name)
+  local snapshot = addon.Profiles:GetSavedFilter(name)
+
+  if not snapshot then
+    return false
+  end
+
+  return self:RestoreFilterSnapshot(snapshot)
+end
+
+function FilterExtension:DeleteFilter(name)
+  if type(name) ~= "string" then
+    return false
+  end
+
+  name = addon.Utils:Trim(name)
+
+  local savedFilters = addon.Profiles:GetSavedFilters()
+
+  if not savedFilters or not savedFilters[name] then
+    return false
+  end
+
+  savedFilters[name] = nil
+
+  return true
+end
+
 local function CompareSearchValue(actual, operator, expected)
   actual = tonumber(actual)
   expected = tonumber(expected)
@@ -581,19 +726,12 @@ local function GetBreedName(petID, _speciesID)
 end
 
 local function MatchesAdvancedSearch(
-    petID,
-    speciesID,
-    isOwned,
-    level,
-    petType,
-    favorite,
-    canBattle,
-    tradable
+    petID, speciesID, isOwned, level,
+    petType, favorite, canBattle, tradable
 )
   local filters = AdvancedSearch.filters
 
-  if type(filters) ~= "table"
-      or #filters == 0 then
+  if type(filters) ~= "table" or #filters == 0 then
     return true
   end
 
@@ -618,12 +756,8 @@ local function MatchesAdvancedSearch(
       return
     end
 
-    local currentHealth,
-    _maxHealth,
-    currentPower,
-    currentSpeed,
-    currentRarity =
-        C_PetJournal.GetPetStats(petID)
+    local currentHealth, _maxHealth, currentPower, currentSpeed,
+    currentRarity = C_PetJournal.GetPetStats(petID)
 
     health = tonumber(currentHealth)
     power = tonumber(currentPower)
@@ -642,40 +776,28 @@ local function MatchesAdvancedSearch(
     ----------------------------------------------
     if field == "level" then
       if not CompareSearchValue(
-            level,
-            filter.operator,
-            filter.value
-          ) then
+            level, filter.operator, filter.value) then
         return false
       end
     elseif field == "health" then
       EnsureStats()
 
       if not CompareSearchValue(
-            health,
-            filter.operator,
-            filter.value
-          ) then
+            health, filter.operator, filter.value) then
         return false
       end
     elseif field == "power" then
       EnsureStats()
 
       if not CompareSearchValue(
-            power,
-            filter.operator,
-            filter.value
-          ) then
+            power, filter.operator, filter.value) then
         return false
       end
     elseif field == "speed" then
       EnsureStats()
 
       if not CompareSearchValue(
-            speed,
-            filter.operator,
-            filter.value
-          ) then
+            speed, filter.operator, filter.value) then
         return false
       end
 
@@ -766,14 +888,12 @@ local function InitializeNativeOptions()
 
   for petType = 1,
   C_PetJournal.GetNumPetTypes() do
-    PET_TYPES[#PET_TYPES + 1] =
-        petType
+    PET_TYPES[#PET_TYPES + 1] = petType
   end
 
   for source = 1,
   C_PetJournal.GetNumPetSources() do
-    PET_SOURCES[#PET_SOURCES + 1] =
-        source
+    PET_SOURCES[#PET_SOURCES + 1] = source
   end
 end
 
@@ -839,8 +959,7 @@ local function SyncCollectionFilters()
   local targetCollected = CollectedFilter
   local targetNotCollected = NotCollectedFilter
 
-  if ShowHiddenPets
-      and not CollectedFilter
+  if ShowHiddenPets and not CollectedFilter
       and not NotCollectedFilter then
     targetCollected = true
     targetNotCollected = true
@@ -887,8 +1006,7 @@ local function HasLevel25Pet(speciesID)
 
   petJournalService:EnsureIndex()
 
-  local petGUIDs =
-      petJournalService.OwnedPetsBySpeciesID[speciesID]
+  local petGUIDs = petJournalService.OwnedPetsBySpeciesID[speciesID]
 
   if type(petGUIDs) ~= "table" then
     return false
@@ -898,6 +1016,39 @@ local function HasLevel25Pet(speciesID)
     local pet = petJournalService.Cache[petGUID]
 
     if pet and tonumber(pet.level) == 25 then
+      return true
+    end
+  end
+
+  return false
+end
+
+local function HasRarePet(speciesID)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    return false
+  end
+
+  local petJournalService = addon.Services
+      and addon.Services.PetJournal
+
+  if not petJournalService then
+    return false
+  end
+
+  petJournalService:EnsureIndex()
+
+  local petGUIDs = petJournalService.OwnedPetsBySpeciesID[speciesID]
+
+  if type(petGUIDs) ~= "table" then
+    return false
+  end
+
+  for _, petGUID in ipairs(petGUIDs) do
+    local _, _, _, _, quality = C_PetJournal.GetPetStats(petGUID)
+
+    if tonumber(quality) == 4 then
       return true
     end
   end
@@ -916,6 +1067,7 @@ local function HasOtherFilters()
       or OtherFilters.team ~= nil
       or OtherFilters.duplicates ~= nil
       or OtherFilters.level25 ~= nil
+      or OtherFilters.withoutRares ~= nil
 end
 
 local function ResetOtherFilters()
@@ -925,6 +1077,7 @@ local function ResetOtherFilters()
   OtherFilters.team = nil
   OtherFilters.duplicates = nil
   OtherFilters.level25 = nil
+  OtherFilters.withoutRares = nil
 
   RefreshSorting()
 end
@@ -1019,44 +1172,28 @@ local function AddCheckAllButtons(submenu, filter, options, onChanged)
 end
 
 local function SyncNativePetTypes()
-  if HasSelection(
-        Filters.petTypes,
-        PET_TYPES
-      ) then
-    PetJournalFilterDropdown_SetAllPetTypes(false)
+  local hasSelection = HasSelection(Filters.petTypes, PET_TYPES)
 
-    for _, petType in ipairs(PET_TYPES) do
-      if Filters.petTypes[petType] then
-        C_PetJournal.SetPetTypeFilter(
-          petType,
-          true
-        )
-      end
+  for _, petType in ipairs(PET_TYPES) do
+    local shouldBeChecked =
+        not hasSelection or Filters.petTypes[petType] == true
+
+    if C_PetJournal.IsPetTypeChecked(petType) ~= shouldBeChecked then
+      C_PetJournal.SetPetTypeFilter(petType, shouldBeChecked)
     end
-  else
-    PetJournalFilterDropdown_SetAllPetTypes(true)
   end
 end
 
 local function SyncNativeSources()
-  if HasSelection(
-        Filters.sources,
-        PET_SOURCES
-      ) then
-    PetJournalFilterDropdown_SetAllPetSources(false)
+  local hasSelection = HasSelection(Filters.sources, PET_SOURCES)
 
-    for _, sourceIndex in ipairs(
-      PET_SOURCES
-    ) do
-      if Filters.sources[sourceIndex] then
-        C_PetJournal.SetPetSourceChecked(
-          sourceIndex,
-          true
-        )
-      end
+  for _, sourceIndex in ipairs(PET_SOURCES) do
+    local shouldBeChecked =
+        not hasSelection or Filters.sources[sourceIndex] == true
+
+    if C_PetJournal.IsPetSourceChecked(sourceIndex) ~= shouldBeChecked then
+      C_PetJournal.SetPetSourceChecked(sourceIndex, shouldBeChecked)
     end
-  else
-    PetJournalFilterDropdown_SetAllPetSources(true)
   end
 end
 
@@ -1064,6 +1201,106 @@ local function SyncNativeFilters()
   SyncNativePetTypes()
   SyncNativeSources()
   RefreshSorting()
+end
+
+function FilterExtension:RestoreFilterSnapshot(snapshot)
+  if type(snapshot) ~= "table"
+      or snapshot.version ~= SAVED_FILTER_VERSION
+      or type(snapshot.filters) ~= "table"
+      or type(snapshot.otherFilters) ~= "table"
+      or type(snapshot.petTypeFilter) ~= "table" then
+    return false
+  end
+
+  --------------------------------------------------
+  -- Standard filters
+  --------------------------------------------------
+  for group, selections in pairs(Filters) do
+    RestoreFilterSelections(selections, snapshot.filters[group])
+  end
+
+  --------------------------------------------------
+  -- Other filters
+  --------------------------------------------------
+  for group in pairs(OtherFilters) do
+    OtherFilters[group] = nil
+  end
+
+  for group, value in pairs(snapshot.otherFilters) do
+    if OtherFilters[group] == nil then
+      OtherFilters[group] = value
+    end
+  end
+
+  --------------------------------------------------
+  -- Collection filters
+  --------------------------------------------------
+  CollectedFilter = snapshot.collected == true
+  NotCollectedFilter = snapshot.notCollected == true
+  ShowHiddenPets = snapshot.showHidden == true
+
+  --------------------------------------------------
+  -- Pet type filters
+  --------------------------------------------------
+  local service = addon.Services and addon.Services.PetTypeFilter
+
+  if service then
+    service:ClearAll()
+
+    service:SetMode(snapshot.petTypeFilter.mode or "petType")
+    service:SetLevel25Only(snapshot.petTypeFilter.level25Only == true)
+
+    local selectedTypes = snapshot.petTypeFilter.selectedTypes or {}
+
+    for _, mode in ipairs(PET_TYPE_FILTER_MODES) do
+      local selections = selectedTypes[mode]
+
+      if type(selections) == "table" then
+        for petType, selected in pairs(selections) do
+          if selected == true then
+            service:SetTypeSelected(tonumber(petType), true, mode)
+          end
+        end
+      end
+    end
+  end
+
+  --------------------------------------------------
+  -- Search
+  --------------------------------------------------
+  local searchText = snapshot.searchText or ""
+
+  restoringSavedFilter = true
+  AdvancedSearch = ParseAdvancedSearch(searchText)
+  LastNativeSearchText = AdvancedSearch.nativeText or ""
+
+  if PetJournal and PetJournal.searchBox
+      and PetJournal.searchBox:GetText() ~= searchText then
+    PetJournal.searchBox:SetText(searchText)
+  end
+
+  --------------------------------------------------
+  -- Sync Blizzard filters
+  --------------------------------------------------
+  SyncNativePetTypes()
+  SyncNativeSources()
+  SyncCollectionFilters()
+
+  --------------------------------------------------
+  -- Refresh UI
+  --------------------------------------------------
+  if self.PetTypeFilterBar then
+    self.PetTypeFilterBar:Refresh()
+  end
+
+  CancelQueuedApplyFilters()
+  QueueImmediateApplyFilters()
+
+  C_Timer.After(0, function()
+    restoringSavedFilter = false
+  end)
+
+  return true
 end
 
 local function GetExpansionName(_petID, speciesID)
@@ -1391,6 +1628,8 @@ local function CreateOtherMenu(owner, root)
     end
   )
 
+  submenu:CreateDivider()
+
   submenu:CreateCheckbox(
     L["WITHOUT_LEVEL_25"],
 
@@ -1405,6 +1644,26 @@ local function CreateOtherMenu(owner, root)
       SetOtherFilter(
         "level25",
         "withoutLevel25"
+      )
+
+      return MenuResponse.Refresh
+    end
+  )
+
+  submenu:CreateCheckbox(
+    L["WITHOUT_RARES"],
+
+    function()
+      return IsOtherFilterChecked(
+        "withoutRares",
+        "withoutRares"
+      )
+    end,
+
+    function()
+      SetOtherFilter(
+        "withoutRares",
+        "withoutRares"
       )
 
       return MenuResponse.Refresh
@@ -2044,8 +2303,7 @@ local function SortItems(items)
       -- Level 1 -> 2 -> 3
       ------------------------------------------------
       for _, sortKey in ipairs(SortLevels) do
-        local comparison =
-            CompareSortLevel(sortKey, a, b)
+        local comparison = CompareSortLevel(sortKey, a, b)
 
         if comparison ~= 0 then
           if SortOptions.reverse then
@@ -2059,11 +2317,7 @@ local function SortItems(items)
       ------------------------------------------------
       -- Name fallback
       ------------------------------------------------
-      local comparison =
-          CompareValues(
-            a.nameLower or "",
-            b.nameLower or ""
-          )
+      local comparison = CompareValues(a.nameLower or "", b.nameLower or "")
 
       if SortOptions.reverse then
         comparison = -comparison
@@ -2243,6 +2497,35 @@ local function ReleaseItemList(list)
   end
 end
 
+local function HaveSameItems(previous, current)
+  if #previous ~= #current then
+    return false
+  end
+
+  for index = 1, #current do
+    local oldItem = previous[index]
+    local newItem = current[index]
+
+    if oldItem.petID ~= newItem.petID
+        or oldItem.speciesID ~= newItem.speciesID
+        or oldItem.index ~= newItem.index
+        or oldItem.name ~= newItem.name
+        or oldItem.level ~= newItem.level
+        or oldItem.rarity ~= newItem.rarity
+        or oldItem.petType ~= newItem.petType
+        or oldItem.isOwned ~= newItem.isOwned
+        or oldItem.isFavorite ~= newItem.isFavorite
+        or oldItem.health ~= newItem.health
+        or oldItem.power ~= newItem.power
+        or oldItem.speed ~= newItem.speed
+        or oldItem.isInTeam ~= newItem.isInTeam then
+      return false
+    end
+  end
+
+  return true
+end
+
 function FilterExtension:RequestRefresh()
   refreshRequired = true
 
@@ -2292,6 +2575,160 @@ local function GetStatusBarClearMode()
   return mode
 end
 
+local function ShowSavedFilterNameDialog(mode, oldName)
+  local dialogKey = "PETMATCH_SAVED_FILTER_NAME"
+
+  if not StaticPopupDialogs[dialogKey] then
+    StaticPopupDialogs[dialogKey] = {
+      text = L["FILTER_NAME"],
+      button1 = ACCEPT,
+      button2 = CANCEL,
+      hasEditBox = true,
+      maxLetters = 60,
+      timeout = 0,
+      whileDead = true,
+      hideOnEscape = true,
+
+      OnShow = function(self, data)
+        local editBox = self.EditBox or self.editBox
+        if editBox then
+          editBox:SetText(data.oldName or "")
+          editBox:SetFocus()
+          editBox:HighlightText()
+        end
+      end,
+
+      OnAccept = function(self, data)
+        local editBox = self.EditBox or self.editBox
+        if not editBox then return end
+
+        local name = addon.Utils:Trim(editBox:GetText())
+        if name == "" then return end
+
+        local saved = addon.Profiles:GetSavedFilters()
+        if not saved then return end
+
+        if data.mode == "rename" then
+          if name ~= data.oldName and saved[name] then
+            addon.Logger:Warn(L["FILTER_NAME_EXISTS"])
+            return
+          end
+
+          if not saved[data.oldName] then return end
+
+          saved[name] = saved[data.oldName]
+          saved[data.oldName] = nil
+        else
+          if saved[name] then
+            addon.Logger:Warn(L["FILTER_NAME_EXISTS"])
+            return
+          end
+
+          FilterExtension:SaveFilter(name)
+        end
+
+        addon.Logger:Info(L["FILTER_SAVED"] .. name)
+      end,
+    }
+  end
+
+  StaticPopup_Show(dialogKey, nil, nil, {
+    mode = mode,
+    oldName = oldName,
+  })
+end
+
+local function ShowDeleteSavedFilterDialog(name)
+  local dialogKey = "PETMATCH_DELETE_SAVED_FILTER"
+
+  if not StaticPopupDialogs[dialogKey] then
+    StaticPopupDialogs[dialogKey] = {
+      text = L["DELETE_FILTER"],
+      button1 = DELETE,
+      button2 = CANCEL,
+      timeout = 0,
+      whileDead = true,
+      hideOnEscape = true,
+      showAlert = true,
+
+      OnAccept = function(_, filterName)
+        FilterExtension:DeleteFilter(filterName)
+      end,
+    }
+  end
+
+  StaticPopup_Show(dialogKey, name, nil, name)
+end
+
+local function CreateSavedFiltersMenu(root)
+  local submenu = root:CreateButton(L["SAVED_FILTERS"])
+
+  submenu:CreateButton(
+    L["SAVE_FILTER"],
+    function()
+      ShowSavedFilterNameDialog("save")
+    end
+  )
+
+  local savedFilters = addon.Profiles:GetSavedFilters()
+
+  if not savedFilters then
+    return
+  end
+
+  local names = {}
+
+  for name in pairs(savedFilters) do
+    names[#names + 1] = name
+  end
+
+  table.sort(names, function(a, b)
+    return a:lower() < b:lower()
+  end)
+
+  if #names == 0 then
+    submenu:CreateTitle(L["NO_SAVED_FILTERS"])
+    return
+  end
+
+  submenu:CreateDivider()
+
+  for _, name in ipairs(names) do
+    local filterName = name
+    local filterMenu = submenu:CreateButton(filterName)
+
+    filterMenu:CreateButton(
+      L["LOAD"],
+      function()
+        FilterExtension:LoadFilter(filterName)
+      end
+    )
+
+    filterMenu:CreateButton(
+      L["UPDATE_SAVED_FILTER"],
+      function()
+        FilterExtension:SaveFilter(filterName)
+      end
+    )
+
+    filterMenu:CreateButton(
+      L["RENAME"],
+      function()
+        ShowSavedFilterNameDialog("rename", filterName)
+      end
+    )
+
+    filterMenu:CreateDivider()
+
+    filterMenu:CreateButton(
+      L["DELETE"],
+      function()
+        ShowDeleteSavedFilterDialog(filterName)
+      end
+    )
+  end
+end
+
 function FilterExtension:SetupFilterDropdown()
   if not PetJournal or not PetJournal.FilterDropdown then
     return
@@ -2318,6 +2755,10 @@ function FilterExtension:SetupFilterDropdown()
       root:SetTag(
         "MENU_PET_COLLECTION_FILTER"
       )
+
+      CreateSavedFiltersMenu(root)
+
+      root:CreateDivider()
 
       root:CreateCheckbox(
         COLLECTED,
@@ -2637,11 +3078,8 @@ function FilterExtension:LayoutPetList(filterBarShown)
     PetJournal.LeftInset,
     "TOPLEFT",
     3,
-    (
-      currentFilterBarShown
-      and PET_LIST_FILTERED_TOP_OFFSET
-      or PET_LIST_NORMAL_TOP_OFFSET
-    )
+    (currentFilterBarShown and PET_LIST_FILTERED_TOP_OFFSET
+      or PET_LIST_NORMAL_TOP_OFFSET)
     + layoutOffset
   )
 
@@ -2725,17 +3163,11 @@ function FilterExtension:CreateFilterBar()
     return
   end
 
-  local bar =
-      CreateFrame(
-        "Frame",
-        nil,
-        PetJournal.LeftInset,
-        "BackdropTemplate"
-      )
-
-  bar:SetHeight(
-    FILTER_BAR_HEIGHT
+  local bar = CreateFrame(
+    "Frame", nil, PetJournal.LeftInset, "BackdropTemplate"
   )
+
+  bar:SetHeight(FILTER_BAR_HEIGHT)
 
   local layoutOffset = GetPetTypeFilterLayoutOffset()
 
@@ -2773,9 +3205,7 @@ function FilterExtension:CreateFilterBar()
   bar:SetBackdrop({
     bgFile = "Interface\\Buttons\\WHITE8X8",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-
     edgeSize = 10,
-
     insets = {
       left = 2,
       right = 2,
@@ -3005,6 +3435,17 @@ function FilterExtension:UpdatePetTypeFilterDisplay()
   end
 end
 
+local function ClearSearchFilter()
+  local searchBox = PetJournal and PetJournal.searchBox
+
+  if searchBox and searchBox:GetText() ~= "" then
+    searchBox:SetText("")
+  end
+
+  AdvancedSearch = ParseAdvancedSearch("")
+  LastNativeSearchText = ""
+end
+
 function FilterExtension:ResetFiltersOnly()
   SetAll(
     Filters.petTypes,
@@ -3064,8 +3505,11 @@ function FilterExtension:ResetFiltersOnly()
   OtherFilters.team = nil
   OtherFilters.duplicates = nil
   OtherFilters.level25 = nil
+  OtherFilters.withoutRares = nil
 
   ShowHiddenPets = false
+
+  ClearSearchFilter()
 
   SyncNativePetTypes()
   SyncNativeSources()
@@ -3137,11 +3581,14 @@ function FilterExtension:ResetAllFilters()
   OtherFilters.team = nil
   OtherFilters.duplicates = nil
   OtherFilters.level25 = nil
+  OtherFilters.withoutRares = nil
 
   SortOptions.favoritesFirst = true
   SortOptions.reverse = false
 
   ShowHiddenPets = false
+
+  ClearSearchFilter()
 
   wipe(SortLevels)
 
@@ -3369,6 +3816,15 @@ function FilterExtension:MatchesPet(
   end
 
   --------------------------------------------------
+  -- Other: Without Rares
+  --------------------------------------------------
+  if OtherFilters.withoutRares == "withoutRares" then
+    if not isOwned or HasRarePet(speciesID) then
+      return false
+    end
+  end
+
+  --------------------------------------------------
   -- Other: Tradable
   --------------------------------------------------
   if OtherFilters.tradable == "tradable"
@@ -3556,6 +4012,18 @@ function FilterExtension:ApplyFilters()
   --------------------------------------------------
   SortItems(items)
 
+  local scrollBox = PetJournal.ScrollBox
+  local resultsUnchanged = HaveSameItems(ActiveItems, items)
+
+  if resultsUnchanged
+      and LastInstalledDataProvider
+      and scrollBox:GetDataProvider() == LastInstalledDataProvider then
+    -- The visible results are already correct.
+    ReleaseItemList(BuildItems)
+    self:UpdateFilterBar(#ActiveItems)
+    return
+  end
+
   --------------------------------------------------
   -- Build a fresh provider using the new buffer
   --------------------------------------------------
@@ -3571,11 +4039,11 @@ function FilterExtension:ApplyFilters()
   -- Only after this point is the old provider no
   -- longer the active one for the ScrollBox.
   --------------------------------------------------
-  PetJournal.ScrollBox:
-      SetDataProvider(
-        dataProvider,
-        ScrollBoxConstants.RetainScrollPosition
-      )
+  PetJournal.ScrollBox:SetDataProvider(
+    dataProvider,
+    ScrollBoxConstants.RetainScrollPosition
+  )
+  LastInstalledDataProvider = dataProvider
 
   --------------------------------------------------
   -- The old active item buffer can now be recycled
@@ -3613,9 +4081,24 @@ function FilterExtension:HookPetJournal()
 
   hooksecurefunc(
     "PetJournal_UpdatePetList",
-
     function()
-      QueueImmediateApplyFilters()
+      if restoringSavedFilter then
+        return
+      end
+
+      local scrollBox = PetJournal and PetJournal.ScrollBox
+
+      if not scrollBox then
+        return
+      end
+
+      if scrollBox:GetDataProvider() == LastInstalledDataProvider then
+        return
+      end
+
+      -- Restore PetMatch's filtered list synchronously
+      -- after Blizzard updates its data provider.
+      CancelQueuedApplyFilters()
       FilterExtension:ApplyFilters()
     end
   )
@@ -3638,6 +4121,10 @@ function FilterExtension:HookSearchBox()
     "OnTextChanged",
     function(self)
       SearchBoxTemplate_OnTextChanged(self)
+
+      if restoringSavedFilter then
+        return
+      end
 
       local text = self:GetText() or ""
       local parsed = ParseAdvancedSearch(text)
@@ -3684,6 +4171,9 @@ function FilterExtension:Initialize()
           SyncNativeFilters()
         end
       elseif event == "PET_JOURNAL_LIST_UPDATE" then
+        if restoringSavedFilter then
+          return
+        end
         FilterExtension:HookPetJournal()
         FilterExtension:HookSearchBox()
         QueueApplyFilters()

@@ -737,6 +737,29 @@ function LevellingQueueRow:OpenContextMenu()
 
       summon:SetEnabled(not InCombatLockdown())
 
+      --------------------------------------------------
+      -- Pet Notes
+      --------------------------------------------------
+      local pet = addon.Services.PetJournal:GetPet(petGUID)
+
+      if pet and pet.speciesID then
+        root:CreateButton(
+          L["PET_NOTES"],
+          function()
+            local dialog = addon.UI.Dialogs.PetNotesDialog
+
+            if not dialog then
+              return
+            end
+
+            dialog:Show(
+              petGUID,
+              pet.speciesID,
+              pet.name
+            )
+          end
+        )
+      end
 
       root:CreateDivider()
 
