@@ -1,4 +1,4 @@
-## Interface: 120100,120105
+## Interface: 120105,120107
 ## Version: 1.24.16
 ## Title: PetMatch
 ## Notes: Advanced pet battle management system.
