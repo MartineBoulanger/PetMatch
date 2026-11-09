@@ -476,6 +476,7 @@ L["PET_CARD_ERROR"] = "PetCard：SetCloseHandler 需要函数或 nil。"
 L["POSSIBLE_BREEDS"] = "可能的品种"
 L["NO_DESCRIPTION"] = "无可用描述。"
 L["NOT_COLLECTED"] = "未收集"
+L["COLLECTED_COUNT"] = "已收集 %d/%d"
 
 -- UI/Views
 L["QUEUE"] = "队列"

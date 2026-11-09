@@ -480,6 +480,7 @@ L["PET_CARD_ERROR"] = "PetCard: SetCloseHandler requiere una función o nula."
 L["POSSIBLE_BREEDS"] = "Razas posibles"
 L["NO_DESCRIPTION"] = "No hay descripción disponible."
 L["NOT_COLLECTED"] = "No recopilado"
+L["COLLECTED_COUNT"] = "Recogido %d/%d"
 
 -- UI/Views
 L["QUEUE"] = "Cola"

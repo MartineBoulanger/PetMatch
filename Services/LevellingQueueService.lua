@@ -206,7 +206,7 @@ end
 --------------------------------------------------
 -- Add
 --------------------------------------------------
-function LevellingQueueService:Add(petGUID)
+function LevellingQueueService:Add(petGUID, targetIndex)
   local allowed, errorMessage = self:CanAdd(petGUID)
 
   if not allowed then
@@ -215,12 +215,16 @@ function LevellingQueueService:Add(petGUID)
 
   local queue = self:GetAll()
 
-  queue[#queue + 1] = petGUID
+  targetIndex = tonumber(targetIndex) or (#queue + 1)
+  targetIndex = math.floor(targetIndex)
+  targetIndex = math.max(1, math.min(#queue + 1, targetIndex))
+
+  table.insert(queue, targetIndex, petGUID)
 
   addon.EventBus:Fire(
     addon.Events.LEVELLING_QUEUE_PET_ADDED,
     petGUID,
-    #queue
+    targetIndex
   )
 
   FireChanged()

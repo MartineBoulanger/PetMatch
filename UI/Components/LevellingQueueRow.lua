@@ -502,11 +502,38 @@ function LevellingQueueRow:Create(parent, list)
     end
   )
 
+  frame:SetScript("OnReceiveDrag", function()
+    local panel = addon.UI.Views.LevellingQueuePanel
+
+    if panel then
+      panel:HandleExternalDrop()
+    end
+  end)
+
+  frame:HookScript("OnMouseUp", function(_, button)
+    if button ~= "LeftButton" then
+      return
+    end
+
+    local panel = addon.UI.Views.LevellingQueuePanel
+
+    if panel then
+      panel:HandleExternalDrop()
+    end
+  end)
+
   addon.SkinManager:ApplyLevellingQueueRow(instance)
   addon.SkinManager:ApplyLevellingXPBar(instance)
   addon.SkinManager:ApplyPetIcon(instance)
 
   frame:HookScript("OnEnter", function()
+    local drag = addon.UI.Components.LevellingQueueDrag
+
+    if drag and drag:IsDragging()
+        and drag:GetSource() == "petJournal" then
+      addon.UI.Views.LevellingQueueList:BeginExternalDrag()
+    end
+
     instance.Hovered = true
     UpdateVisualState(instance)
   end)
@@ -887,8 +914,7 @@ function LevellingQueueRow:StopDrag()
   C_Timer.After(
     0,
     function()
-      local drag =
-          addon.UI.Components.LevellingQueueDrag
+      local drag = addon.UI.Components.LevellingQueueDrag
 
       if drag then
         drag:Clear()

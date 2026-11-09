@@ -122,7 +122,7 @@ local function CreateDialog()
   dialog:GetFrame():HookScript(
     "OnHide",
     function()
-      dialog.Folder = nil
+      dialog.folder = nil
     end
   )
 
@@ -151,20 +151,30 @@ function DeleteFolderDialog:Show(folder)
 
   dialogInstance.folder = folder
 
-  dialogInstance.Message:SetText(
-    L["DELETE_FOLDER1"]
-    .. folder.name
-    .. "\"?\n\n"
-    .. L["DELETE_FOLDER2"]
-    .. teamText
-    .. ".\n"
-    .. L["DELETE_FOLDER3"]
-    .. L["DELETE_FOLDER4"]
-  )
+  local message =
+      L["DELETE_FOLDER1"]
+      .. folder.name
+      .. "\"?\n\n"
+      .. L["DELETE_FOLDER2"]
+      .. teamText
+      .. "."
 
-  dialogInstance.DeleteButton:SetEnabled(
-    teamCount > 0
-  )
+  if teamCount > 0 then
+    message = message
+        .. "\n"
+        .. L["DELETE_FOLDER3"]
+        .. L["DELETE_FOLDER4"]
+  end
+
+  dialogInstance.Message:SetText(message)
+
+  if teamCount > 0 then
+    dialogInstance.MoveButton:SetText(L["MOVE_TO_UNSORTED"])
+    dialogInstance.DeleteButton:Show()
+  else
+    dialogInstance.MoveButton:SetText(L["DELETE_FOLDER"])
+    dialogInstance.DeleteButton:Hide()
+  end
 
   dialogInstance:Show()
 end

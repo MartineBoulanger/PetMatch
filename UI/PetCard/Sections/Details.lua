@@ -1,5 +1,7 @@
 local _, addon = ...
 
+local L = addon.L
+
 local Details = {}
 Details.__index = Details
 
@@ -135,6 +137,24 @@ function Details:Create(parent)
     0
   )
 
+  instance.CollectedText =
+      instance.Frame:CreateFontString(
+        nil,
+        "OVERLAY",
+        "GameFontHighlightSmall"
+      )
+
+  instance.CollectedText:SetPoint(
+    "BOTTOMLEFT",
+    instance.Frame,
+    "BOTTOMLEFT",
+    INNER_PADDING,
+    INNER_PADDING
+  )
+
+  instance.CollectedText:SetJustifyH("LEFT")
+  instance.CollectedText:SetText("")
+
   return instance
 end
 
@@ -206,17 +226,41 @@ function Details:SchedulePetModel(displayID, speciesID)
       )
 end
 
+function Details:UpdateCollected(speciesID)
+  speciesID = tonumber(speciesID)
+
+  if not speciesID then
+    self.CollectedText:SetText("")
+    return
+  end
+
+  local collected, limit = C_PetJournal.GetNumCollectedInfo(speciesID)
+
+  collected = tonumber(collected) or 0
+  limit = tonumber(limit) or 3
+
+  self.CollectedText:SetText(
+    string.format(
+      L["COLLECTED_COUNT"],
+      collected,
+      limit
+    )
+  )
+end
+
 function Details:SetPet(pet)
   if not pet then
     self:CancelModelTimer()
     self:SetPetModel(nil, nil)
     self.Background:SetPet(nil)
     self.Stats:SetPet(nil)
+    self:UpdateCollected(nil)
     return
   end
 
   self.Background:SetPet(pet)
   self.Stats:SetPet(pet)
+  self:UpdateCollected(pet.speciesID)
 
   self:SchedulePetModel(
     pet.displayID,

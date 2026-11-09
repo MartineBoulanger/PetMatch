@@ -594,6 +594,31 @@ function LevellingQueuePanel:Create(parent)
     -4
   )
 
+  self.List:EnableMouse(true)
+
+  self.List:SetScript("OnReceiveDrag", function()
+    self:HandleExternalDrop()
+  end)
+
+  self.List:HookScript("OnMouseUp", function(_, button)
+    if button ~= "LeftButton" then
+      return
+    end
+
+    self:HandleExternalDrop()
+  end)
+
+  local list = addon.UI.Views.LevellingQueueList
+
+  self.List:HookScript("OnEnter", function()
+    local drag = addon.UI.Components.LevellingQueueDrag
+
+    if drag and drag:IsDragging()
+        and drag:GetSource() == "petJournal" then
+      list:BeginExternalDrag()
+    end
+  end)
+
   --------------------------------------------------
   -- Empty state
   --------------------------------------------------
@@ -636,50 +661,46 @@ end
 function LevellingQueuePanel:HandleExternalDrop()
   local drag = addon.UI.Components.LevellingQueueDrag
 
-  if not drag
-      or not drag:IsDragging() then
+  if not drag or not drag:IsDragging()
+      or drag:GetSource() ~= "petJournal" then
     return false
   end
 
-  if drag:GetSource()
-      ~= "petJournal" then
-    return false
-  end
-
-  local petGUID =
-      drag:GetPetGUID()
+  local petGUID = drag:GetPetGUID()
 
   if not petGUID then
     return false
   end
 
-  local success,
-  errorMessage =
-      addon.Services.LevellingQueue:
-      Add(
-        petGUID
-      )
+  local list = addon.UI.Views.LevellingQueueList
+  local service = addon.Services.LevellingQueue
 
-  if not success then
-    drag:Clear()
+  local insertIndex = list:GetInsertIndex()
 
-    if errorMessage then
-      addon.Logger:Warn(
-        errorMessage
-      )
-    end
-
-    return false
+  -- An empty queue or a drop on the unused list area
+  -- should retain the original append behaviour.
+  if not insertIndex then
+    insertIndex = service:GetCount() + 1
   end
 
-  --------------------------------------------------
-  -- Clear both PetMatch drag state
-  -- and Blizzard's cursor payload
-  --------------------------------------------------
+  local success, errorMessage = service:Add(
+    petGUID,
+    insertIndex
+  )
+
+  list:EndExternalDrag()
   drag:Clear()
 
   if type(ClearCursor) == "function" then
     ClearCursor()
+  end
+
+  if not success then
+    if errorMessage then
+      addon.Logger:Warn(errorMessage)
+    end
+
+    return false
   end
 
   return true

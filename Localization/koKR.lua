@@ -478,6 +478,7 @@ L["PET_CARD_ERROR"] = "PetCard: SetCloseHandler에는 함수 또는 nil 값이 �
 L["POSSIBLE_BREEDS"] = "가능한 품종"
 L["NO_DESCRIPTION"] = "설명이 없습니다."
 L["NOT_COLLECTED"] = "수집하지 않음"
+L["COLLECTED_COUNT"] = "수집됨 %d/%d"
 
 -- UI/Views
 L["QUEUE"] = "대기열"

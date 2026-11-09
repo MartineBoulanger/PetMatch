@@ -919,13 +919,10 @@ local function RestoreNormalRow(button)
   )
 
   if levelText then
-    local textWidth = levelText:GetStringWidth()
-    local currentWidth = levelText:GetWidth()
-
-    if textWidth and currentWidth
-        and currentWidth < textWidth then
-      levelText:SetWidth(math.ceil(textWidth) + 2)
-    end
+    levelText:SetWidth(28)
+    levelText:SetWordWrap(false)
+    levelText:SetNonSpaceWrap(false)
+    levelText:SetMaxLines(1)
   end
 
   local iconBorder = button.iconBorder or button.IconBorder

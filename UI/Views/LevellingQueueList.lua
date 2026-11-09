@@ -132,6 +132,49 @@ function LevellingQueueList:GetDropPosition()
   return nil, nil
 end
 
+function LevellingQueueList:BeginExternalDrag()
+  if self.DraggedRow then
+    return
+  end
+
+  self.Frame:SetScript("OnUpdate", function()
+    local drag = addon.UI.Components.LevellingQueueDrag
+
+    if not drag or not drag:IsDragging()
+        or drag:GetSource() ~= "petJournal" then
+      self:EndExternalDrag()
+      return
+    end
+
+    self:UpdateRowDrag()
+  end)
+end
+
+function LevellingQueueList:EndExternalDrag()
+  if self.DraggedRow then
+    return
+  end
+
+  self.Frame:SetScript("OnUpdate", nil)
+  self.DropIndicator:Hide()
+  self.DropTargetIndex = nil
+  self.DropInsertAfter = nil
+end
+
+function LevellingQueueList:GetInsertIndex()
+  local targetIndex, insertAfter = self:GetDropPosition()
+
+  if not targetIndex then
+    return nil
+  end
+
+  if insertAfter then
+    return targetIndex + 1
+  end
+
+  return targetIndex
+end
+
 function LevellingQueueList:BeginRowDrag(row)
   if not row then
     return
@@ -148,7 +191,12 @@ function LevellingQueueList:BeginRowDrag(row)
 end
 
 function LevellingQueueList:UpdateRowDrag()
-  if not self.DraggedRow then
+  local drag = addon.UI.Components.LevellingQueueDrag
+
+  if not drag or not drag:IsDragging() then
+    self.DropTargetIndex = nil
+    self.DropInsertAfter = nil
+    self.DropIndicator:Hide()
     return
   end
 
@@ -164,10 +212,7 @@ function LevellingQueueList:UpdateRowDrag()
   self.DropTargetIndex = targetIndex
   self.DropInsertAfter = insertAfter
 
-  self:ShowDropIndicator(
-    targetIndex,
-    insertAfter
-  )
+  self:ShowDropIndicator(targetIndex, insertAfter)
 end
 
 local function GetBattleSlotUnderMouse()
